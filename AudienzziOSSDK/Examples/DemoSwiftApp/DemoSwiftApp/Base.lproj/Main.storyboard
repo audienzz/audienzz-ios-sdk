@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="22505" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22504"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Examples View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ExamplesViewController" customModule="DemoSwiftApp" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="csb-zR-ZVX">
+                                <rect key="frame" x="0.0" y="59" width="393" height="759"/>
+                                <subviews>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="B7R-n9-0Lf" userLabel="AdContainerView">
+                                        <rect key="frame" x="0.0" y="0.0" width="391" height="500"/>
+                                        <color key="backgroundColor" systemColor="systemTealColor"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="500" id="OIk-8B-rzI"/>
+                                        </constraints>
+                                    </view>
+                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" scrollEnabled="NO" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" editable="NO" textAlignment="natural" selectable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Qic-Yl-uBa">
+                                        <rect key="frame" x="0.0" y="499.99999999999994" width="391" height="951.66666666666652"/>
+                                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="280" id="7DY-yV-Oqn"/>
+                                        </constraints>
+                                        <mutableString key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda. Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda. Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.  Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda. Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda. Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. </mutableString>
+                                        <color key="textColor" systemColor="labelColor"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                    </textView>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="56A-po-MQA" userLabel="LazyAdContainerView">
+                                        <rect key="frame" x="0.0" y="1451.6666666666667" width="391" height="216"/>
+                                        <color key="backgroundColor" systemColor="systemPurpleColor"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="216" id="b8Q-UL-V6g"/>
+                                        </constraints>
+                                    </view>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="Qic-Yl-uBa" firstAttribute="width" secondItem="B7R-n9-0Lf" secondAttribute="width" id="1Ew-yF-hDZ"/>
+                                    <constraint firstItem="Qic-Yl-uBa" firstAttribute="top" secondItem="B7R-n9-0Lf" secondAttribute="bottom" id="6Ll-g7-Gfc"/>
+                                    <constraint firstItem="56A-po-MQA" firstAttribute="top" secondItem="Qic-Yl-uBa" secondAttribute="bottom" id="DZf-VF-6Vz"/>
+                                    <constraint firstAttribute="trailing" secondItem="56A-po-MQA" secondAttribute="trailing" id="LVZ-bo-hH3"/>
+                                    <constraint firstItem="56A-po-MQA" firstAttribute="width" secondItem="Qic-Yl-uBa" secondAttribute="width" id="WHb-ye-AZJ"/>
+                                    <constraint firstAttribute="trailing" secondItem="Qic-Yl-uBa" secondAttribute="trailing" id="WKc-i1-hAd"/>
+                                    <constraint firstItem="B7R-n9-0Lf" firstAttribute="top" secondItem="csb-zR-ZVX" secondAttribute="top" id="Xfn-cB-hiJ"/>
+                                    <constraint firstAttribute="bottom" secondItem="56A-po-MQA" secondAttribute="bottom" id="cW1-XZ-xfz"/>
+                                    <constraint firstItem="Qic-Yl-uBa" firstAttribute="leading" secondItem="csb-zR-ZVX" secondAttribute="leading" id="jNH-fx-0bg"/>
+                                    <constraint firstItem="B7R-n9-0Lf" firstAttribute="leading" secondItem="csb-zR-ZVX" secondAttribute="leading" id="kZu-yc-iCf"/>
+                                    <constraint firstItem="56A-po-MQA" firstAttribute="leading" secondItem="csb-zR-ZVX" secondAttribute="leading" id="t9L-2C-1mL"/>
+                                    <constraint firstAttribute="trailing" secondItem="B7R-n9-0Lf" secondAttribute="trailing" id="tXC-86-Ygp"/>
+                                </constraints>
+                            </scrollView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="csb-zR-ZVX" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="Dh8-Jg-V5x"/>
+                            <constraint firstItem="csb-zR-ZVX" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="PGu-vH-Kv6"/>
+                            <constraint firstItem="csb-zR-ZVX" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="fyO-US-myl"/>
+                            <constraint firstItem="B7R-n9-0Lf" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="width" multiplier="0.994911" id="mjE-7R-8me"/>
+                            <constraint firstItem="csb-zR-ZVX" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="nzz-vb-M8A"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="adContainerView" destination="B7R-n9-0Lf" id="2LC-yd-5H3"/>
+                        <outlet property="exampleScrollView" destination="csb-zR-ZVX" id="92p-RU-GeR"/>
+                        <outlet property="lazyAdContainerView" destination="56A-po-MQA" id="RCp-rf-h6Q"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="139.69465648854961" y="3.5211267605633805"/>
+        </scene>
+    </scenes>
+    <resources>
+        <systemColor name="labelColor">
+            <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="systemPurpleColor">
+            <color red="0.68627450980392157" green="0.32156862745098042" blue="0.87058823529411766" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+        <systemColor name="systemTealColor">
+            <color red="0.18823529411764706" green="0.69019607843137254" blue="0.7803921568627451" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+    </resources>
+</document>
