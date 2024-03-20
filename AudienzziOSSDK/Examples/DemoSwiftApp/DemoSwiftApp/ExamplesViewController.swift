@@ -10,7 +10,7 @@ import UIKit
 class ExamplesViewController: UIViewController {
     @IBOutlet private weak var exampleScrollView: UIScrollView!
     @IBOutlet private weak var adContainerView: UIView!
-    @IBOutlet private weak var lazyAdContainerView: UIView!
+    @IBOutlet private weak var lazyAdContainerView: LazyAdContainerView!
     
     override func viewDidLoad() {
         super.viewDidLoad()

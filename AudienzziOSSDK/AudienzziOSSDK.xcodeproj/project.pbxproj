@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2FBBEEB8B63BE73E689ED0B8 /* Pods_AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53C1A867916BBD019FEDE9A4 /* Pods_AudienzziOSSDK.framework */; };
 		5413AF6F6B6A631071B063BC /* Pods_AudienzziOSSDK_AudienzziOSSDKTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9820DF1F4371524A02DEF868 /* Pods_AudienzziOSSDK_AudienzziOSSDKTests.framework */; };
+		587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 587512A22BA36053004BB7E9 /* VisibleView.swift */; };
 		58F8779F2BA09CE90093CD63 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58F877962BA09CE90093CD63 /* AudienzziOSSDK.framework */; };
 		58F877A42BA09CE90093CD63 /* AudienzziOSSDKTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F877A32BA09CE90093CD63 /* AudienzziOSSDKTests.swift */; };
 		58F877A52BA09CE90093CD63 /* AudienzziOSSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -26,6 +27,7 @@
 
 /* Begin PBXFileReference section */
 		53C1A867916BBD019FEDE9A4 /* Pods_AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		587512A22BA36053004BB7E9 /* VisibleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisibleView.swift; sourceTree = "<group>"; };
 		58F877962BA09CE90093CD63 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AudienzziOSSDK.h; sourceTree = "<group>"; };
 		58F8779E2BA09CE90093CD63 /* AudienzziOSSDKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AudienzziOSSDKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -66,8 +68,15 @@
 				ED3170C86BAA9A470E1C0F0C /* Pods-AudienzziOSSDK-AudienzziOSSDKTests.debug.xcconfig */,
 				F70F618EF4925ACC2F89BE2C /* Pods-AudienzziOSSDK-AudienzziOSSDKTests.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		587512A12BA3603C004BB7E9 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				587512A22BA36053004BB7E9 /* VisibleView.swift */,
+			);
+			path = Helpers;
 			sourceTree = "<group>";
 		};
 		58F8778C2BA09CE90093CD63 = {
@@ -94,6 +103,7 @@
 			isa = PBXGroup;
 			children = (
 				58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */,
+				587512A12BA3603C004BB7E9 /* Helpers */,
 			);
 			path = AudienzziOSSDK;
 			sourceTree = "<group>";
@@ -180,6 +190,7 @@
 				TargetAttributes = {
 					58F877952BA09CE90093CD63 = {
 						CreatedOnToolsVersion = 15.2;
+						LastSwiftMigration = 1520;
 					};
 					58F8779D2BA09CE90093CD63 = {
 						CreatedOnToolsVersion = 15.2;
@@ -291,6 +302,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -442,6 +454,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 8A90DF0355405D0592538444 /* Pods-AudienzziOSSDK.debug.xcconfig */;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
@@ -468,6 +481,7 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -477,6 +491,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = AFACF0755B247F8E186C48E6 /* Pods-AudienzziOSSDK.release.xcconfig */;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
@@ -512,6 +527,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = ED3170C86BAA9A470E1C0F0C /* Pods-AudienzziOSSDK-AudienzziOSSDKTests.debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -531,6 +547,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F70F618EF4925ACC2F89BE2C /* Pods-AudienzziOSSDK-AudienzziOSSDKTests.release.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
