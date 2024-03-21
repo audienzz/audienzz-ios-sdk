@@ -7,15 +7,37 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2FBBEEB8B63BE73E689ED0B8 /* Pods_AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53C1A867916BBD019FEDE9A4 /* Pods_AudienzziOSSDK.framework */; };
-		5413AF6F6B6A631071B063BC /* Pods_AudienzziOSSDK_AudienzziOSSDKTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9820DF1F4371524A02DEF868 /* Pods_AudienzziOSSDK_AudienzziOSSDKTests.framework */; };
 		587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 587512A22BA36053004BB7E9 /* VisibleView.swift */; };
+		58E024D22BAAE77F0051E8D6 /* PrebidMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; };
+		58E024D32BAAE77F0051E8D6 /* PrebidMobile.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		58E029752BAAE9EF0051E8D6 /* Audienzz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E029742BAAE9EF0051E8D6 /* Audienzz.swift */; };
 		58F8779F2BA09CE90093CD63 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58F877962BA09CE90093CD63 /* AudienzziOSSDK.framework */; };
 		58F877A42BA09CE90093CD63 /* AudienzziOSSDKTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F877A32BA09CE90093CD63 /* AudienzziOSSDKTests.swift */; };
 		58F877A52BA09CE90093CD63 /* AudienzziOSSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		58E024C62BAAE6A40051E8D6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 58C73F9A2B9F0C7000AE52EC;
+			remoteInfo = DemoSwiftApp;
+		};
+		58E024CE2BAAE7010051E8D6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = FAAA00BD2322733E009DC7D6;
+			remoteInfo = PrebidMobile;
+		};
+		58E024D02BAAE7010051E8D6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 60D792FB217E229B0080F428;
+			remoteInfo = PrebidMobileTests;
+		};
 		58F877A02BA09CE90093CD63 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 58F8778D2BA09CE90093CD63 /* Project object */;
@@ -25,18 +47,29 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		58E024D42BAAE77F0051E8D6 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				58E024D32BAAE77F0051E8D6 /* PrebidMobile.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
-		53C1A867916BBD019FEDE9A4 /* Pods_AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		587512A22BA36053004BB7E9 /* VisibleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisibleView.swift; sourceTree = "<group>"; };
+		58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = DemoSwiftApp.xcodeproj; path = Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj; sourceTree = "<group>"; };
+		58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = PrebidMobile.xcodeproj; path = PrebidMobile/PrebidMobile.xcodeproj; sourceTree = "<group>"; };
+		58E029742BAAE9EF0051E8D6 /* Audienzz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Audienzz.swift; sourceTree = "<group>"; };
 		58F877962BA09CE90093CD63 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AudienzziOSSDK.h; sourceTree = "<group>"; };
 		58F8779E2BA09CE90093CD63 /* AudienzziOSSDKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AudienzziOSSDKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		58F877A32BA09CE90093CD63 /* AudienzziOSSDKTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudienzziOSSDKTests.swift; sourceTree = "<group>"; };
-		8A90DF0355405D0592538444 /* Pods-AudienzziOSSDK.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDK.debug.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK.debug.xcconfig"; sourceTree = "<group>"; };
-		9820DF1F4371524A02DEF868 /* Pods_AudienzziOSSDK_AudienzziOSSDKTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AudienzziOSSDK_AudienzziOSSDKTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		AFACF0755B247F8E186C48E6 /* Pods-AudienzziOSSDK.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDK.release.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK.release.xcconfig"; sourceTree = "<group>"; };
-		ED3170C86BAA9A470E1C0F0C /* Pods-AudienzziOSSDK-AudienzziOSSDKTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDK-AudienzziOSSDKTests.debug.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDK-AudienzziOSSDKTests/Pods-AudienzziOSSDK-AudienzziOSSDKTests.debug.xcconfig"; sourceTree = "<group>"; };
-		F70F618EF4925ACC2F89BE2C /* Pods-AudienzziOSSDK-AudienzziOSSDKTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDK-AudienzziOSSDKTests.release.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDK-AudienzziOSSDKTests/Pods-AudienzziOSSDK-AudienzziOSSDKTests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,7 +77,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2FBBEEB8B63BE73E689ED0B8 /* Pods_AudienzziOSSDK.framework in Frameworks */,
+				58E024D22BAAE77F0051E8D6 /* PrebidMobile.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,22 +86,25 @@
 			buildActionMask = 2147483647;
 			files = (
 				58F8779F2BA09CE90093CD63 /* AudienzziOSSDK.framework in Frameworks */,
-				5413AF6F6B6A631071B063BC /* Pods_AudienzziOSSDK_AudienzziOSSDKTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0CB271BBA4A124A8B4108099 /* Pods */ = {
+		582745812BAAFDF200FE77D6 /* AdUnits */ = {
 			isa = PBXGroup;
 			children = (
-				8A90DF0355405D0592538444 /* Pods-AudienzziOSSDK.debug.xcconfig */,
-				AFACF0755B247F8E186C48E6 /* Pods-AudienzziOSSDK.release.xcconfig */,
-				ED3170C86BAA9A470E1C0F0C /* Pods-AudienzziOSSDK-AudienzziOSSDKTests.debug.xcconfig */,
-				F70F618EF4925ACC2F89BE2C /* Pods-AudienzziOSSDK-AudienzziOSSDKTests.release.xcconfig */,
+				582745852BAAFDFC00FE77D6 /* Bunner */,
 			);
-			path = Pods;
+			path = AdUnits;
+			sourceTree = "<group>";
+		};
+		582745852BAAFDFC00FE77D6 /* Bunner */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Bunner;
 			sourceTree = "<group>";
 		};
 		587512A12BA3603C004BB7E9 /* Helpers */ = {
@@ -79,14 +115,32 @@
 			path = Helpers;
 			sourceTree = "<group>";
 		};
+		58E024C32BAAE6A40051E8D6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				58E024C72BAAE6A40051E8D6 /* DemoSwiftApp.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		58E024C92BAAE7010051E8D6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */,
+				58E024D12BAAE7010051E8D6 /* PrebidMobileTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		58F8778C2BA09CE90093CD63 = {
 			isa = PBXGroup;
 			children = (
 				58F877982BA09CE90093CD63 /* AudienzziOSSDK */,
 				58F877A22BA09CE90093CD63 /* AudienzziOSSDKTests */,
 				58F877972BA09CE90093CD63 /* Products */,
-				0CB271BBA4A124A8B4108099 /* Pods */,
 				83CC1E59E1C5A08EEB684217 /* Frameworks */,
+				58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */,
+				58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */,
 			);
 			sourceTree = "<group>";
 		};
@@ -103,6 +157,8 @@
 			isa = PBXGroup;
 			children = (
 				58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */,
+				58E029742BAAE9EF0051E8D6 /* Audienzz.swift */,
+				582745812BAAFDF200FE77D6 /* AdUnits */,
 				587512A12BA3603C004BB7E9 /* Helpers */,
 			);
 			path = AudienzziOSSDK;
@@ -119,8 +175,6 @@
 		83CC1E59E1C5A08EEB684217 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				53C1A867916BBD019FEDE9A4 /* Pods_AudienzziOSSDK.framework */,
-				9820DF1F4371524A02DEF868 /* Pods_AudienzziOSSDK_AudienzziOSSDKTests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -143,11 +197,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 58F877A82BA09CE90093CD63 /* Build configuration list for PBXNativeTarget "AudienzziOSSDK" */;
 			buildPhases = (
-				316A4342AA01D72237CBFEBC /* [CP] Check Pods Manifest.lock */,
 				58F877912BA09CE90093CD63 /* Headers */,
 				58F877922BA09CE90093CD63 /* Sources */,
 				58F877932BA09CE90093CD63 /* Frameworks */,
 				58F877942BA09CE90093CD63 /* Resources */,
+				58E024D42BAAE77F0051E8D6 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -162,11 +216,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 58F877AB2BA09CE90093CD63 /* Build configuration list for PBXNativeTarget "AudienzziOSSDKTests" */;
 			buildPhases = (
-				F10B6A18DD7C9B31036768E9 /* [CP] Check Pods Manifest.lock */,
 				58F8779A2BA09CE90093CD63 /* Sources */,
 				58F8779B2BA09CE90093CD63 /* Frameworks */,
 				58F8779C2BA09CE90093CD63 /* Resources */,
-				48DCCDCE638818E740F9832B /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -208,6 +260,16 @@
 			mainGroup = 58F8778C2BA09CE90093CD63;
 			productRefGroup = 58F877972BA09CE90093CD63 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 58E024C32BAAE6A40051E8D6 /* Products */;
+					ProjectRef = 58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */;
+				},
+				{
+					ProductGroup = 58E024C92BAAE7010051E8D6 /* Products */;
+					ProjectRef = 58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				58F877952BA09CE90093CD63 /* AudienzziOSSDK */,
@@ -215,6 +277,30 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		58E024C72BAAE6A40051E8D6 /* DemoSwiftApp.app */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.application;
+			path = DemoSwiftApp.app;
+			remoteRef = 58E024C62BAAE6A40051E8D6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = PrebidMobile.framework;
+			remoteRef = 58E024CE2BAAE7010051E8D6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		58E024D12BAAE7010051E8D6 /* PrebidMobileTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = PrebidMobileTests.xctest;
+			remoteRef = 58E024D02BAAE7010051E8D6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		58F877942BA09CE90093CD63 /* Resources */ = {
@@ -233,76 +319,13 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		316A4342AA01D72237CBFEBC /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-AudienzziOSSDK-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		48DCCDCE638818E740F9832B /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDK-AudienzziOSSDKTests/Pods-AudienzziOSSDK-AudienzziOSSDKTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDK-AudienzziOSSDKTests/Pods-AudienzziOSSDK-AudienzziOSSDKTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDK-AudienzziOSSDKTests/Pods-AudienzziOSSDK-AudienzziOSSDKTests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F10B6A18DD7C9B31036768E9 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-AudienzziOSSDK-AudienzziOSSDKTests-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
 		58F877922BA09CE90093CD63 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */,
+				58E029752BAAE9EF0051E8D6 /* Audienzz.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -452,7 +475,6 @@
 		};
 		58F877A92BA09CE90093CD63 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8A90DF0355405D0592538444 /* Pods-AudienzziOSSDK.debug.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
@@ -489,7 +511,6 @@
 		};
 		58F877AA2BA09CE90093CD63 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = AFACF0755B247F8E186C48E6 /* Pods-AudienzziOSSDK.release.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
@@ -525,7 +546,6 @@
 		};
 		58F877AC2BA09CE90093CD63 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = ED3170C86BAA9A470E1C0F0C /* Pods-AudienzziOSSDK-AudienzziOSSDKTests.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
@@ -545,7 +565,6 @@
 		};
 		58F877AD2BA09CE90093CD63 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F70F618EF4925ACC2F89BE2C /* Pods-AudienzziOSSDK-AudienzziOSSDKTests.release.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
