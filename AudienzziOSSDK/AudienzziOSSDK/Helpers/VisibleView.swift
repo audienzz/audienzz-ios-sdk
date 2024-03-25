@@ -51,7 +51,7 @@ open class VisibleView: UIView {
         }
     }
     
-    open func detectVisible() {
+    internal func detectVisible() {
     }
     
     private func observeSuperviewsOnOffsetChange() {

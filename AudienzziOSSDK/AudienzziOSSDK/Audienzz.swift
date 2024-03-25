@@ -71,6 +71,33 @@ public class Audienzz: NSObject {
         }
     }
     
+    public static func configureSDK(gadMobileAdsVersion: String? = nil) {
+        Prebid.shared.prebidServerAccountId = prebidServerAccountId
+        try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
+        
+        Prebid.initializeSDK(gadMobileAdsVersion: gadMobileAdsVersion) { status, error in
+            if let error = error {
+                print("Initialization Error: \(error.localizedDescription)")
+                return
+            }
+            
+            switch status {
+            case .succeeded:
+                print("Audienzz Status: succeeded")
+            case .failed:
+                print("Audienzz Status: failed")
+            case .serverStatusWarning:
+                print("Audienzz Status: serverStatusWarning")
+            @unknown default:
+                print("Audienzz Status: Unexpected Error")
+            }
+            
+            if let error = error {
+                print("Error: \(error)")
+            }
+        }
+    }
+    
     // MARK: - Public Properties (Audienzz)
     
     public var prebidServerHost: PrebidHost = .Custom {
