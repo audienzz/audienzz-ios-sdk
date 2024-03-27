@@ -40,6 +40,10 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
     private var bannerVideoView: AUBannerVideoView!
     private var bannerMultiplatformView: AUBannerMultiplatformView!
     
+    private var interstitialView: AUInterstitialView!
+    private var interstitialVideoView: AUInterstitialVideoView!
+    private var interstitialMultiplatformView: AUInterstitialMultiplatformView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         exampleScrollView.backgroundColor = .black
@@ -48,6 +52,10 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
         createVideoBannerView()
         createBannerMultiplatformView()
         createBannerLazyView()
+        
+        createInterstitialView()
+        createInterstitialVideoView()
+        createInterstitialMultiplatformView()
     }
     
     // MARK: - GADBannerViewDelegate
@@ -154,7 +162,7 @@ fileprivate extension ExamplesViewController {
         let gamRequest = GAMRequest()
         
         bannerLazyView = AUBannerView(configId: storedImpDisplayBanner, adSize: adSize, isLazyLoad: true)
-        bannerLazyView.frame = CGRect(origin: CGPoint(x: 0, y: 0), size: adSize)
+        bannerLazyView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)), size: adSize)
         bannerLazyView.backgroundColor = .green
         lazyAdContainerView.addSubview(bannerLazyView)
         
@@ -167,6 +175,118 @@ fileprivate extension ExamplesViewController {
             }
             gamBanner.load(request)
         }
+    }
+}
+
+fileprivate let storedImpDisplayInterstitial = "prebid-demo-display-interstitial-320-480"
+fileprivate let gamAdUnitDisplayInterstitialOriginal = "/21808260008/prebid-demo-app-original-api-display-interstitial"
+
+fileprivate let storedImpVideoInterstitial = "prebid-demo-video-interstitial-320-480-original-api"
+fileprivate let gamAdUnitVideoInterstitialOriginal = "/21808260008/prebid-demo-app-original-api-video-interstitial"
+
+fileprivate extension ExamplesViewController {
+    func createInterstitialView() {
+        let gamRequest = GAMRequest()
+        
+        interstitialView = AUInterstitialView(configId: storedImpDisplayInterstitial, adSize: CGSize(width: 320, height: 480), isLazyLoad: true)
+        interstitialView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
+                                        size: CGSize(width: 320, height: 50))
+        interstitialView.backgroundColor = .systemPink
+        lazyAdContainerView.addSubview(interstitialView)
+        
+        interstitialView.createAd(with: gamRequest)
+        
+        interstitialView.onLoadRequest = { [weak self] gamRequest in
+            guard let request = gamRequest as? GAMRequest else {
+                print("Faild request unwrap")
+                return
+            }
+            GAMInterstitialAd.load(withAdManagerAdUnitID: gamAdUnitDisplayInterstitialOriginal, request: request) { ad, error in
+                guard let self = self else { return }
+                if let error = error {
+                    print("Failed to load interstitial ad with error: \(error.localizedDescription)")
+                } else if let ad = ad {
+                    ad.fullScreenContentDelegate = self
+                    
+                    // 4. Present the interstitial ad
+                    ad.present(fromRootViewController: self)
+                }
+            }
+        }
+    }
+    
+    func createInterstitialVideoView() {
+        let gamRequest = GAMRequest()
+        
+        let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
+        videoParameters.protocols = [AdVideoParameters.Protocols.VAST_2_0]
+        videoParameters.playbackMethod = [AdVideoParameters.PlaybackMethod.AutoPlaySoundOff]
+        videoParameters.placement = AdVideoParameters.Placement.InBanner
+        
+        let interstitialVideoView = AUInterstitialVideoView(configId: storedImpVideoInterstitial, adSize: CGSize(width: 320, height: 480), isLazyLoad: true)
+        interstitialVideoView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
+                                        size: CGSize(width: 320, height: 50))
+        interstitialVideoView.backgroundColor = .yellow
+        lazyAdContainerView.addSubview(interstitialVideoView)
+        
+        interstitialVideoView.parameters = videoParameters
+        interstitialVideoView.createAd(with: gamRequest)
+        
+        interstitialVideoView.onLoadRequest = { [weak self] gamRequest in
+            guard let request = gamRequest as? GAMRequest else {
+                print("Faild request unwrap")
+                return
+            }
+            GAMInterstitialAd.load(withAdManagerAdUnitID: gamAdUnitVideoInterstitialOriginal, request: request) { ad, error in
+                guard let self = self else { return }
+                if let error = error {
+                    print("Failed to load interstitial ad with error: \(error.localizedDescription)")
+                } else if let ad = ad {
+                    ad.fullScreenContentDelegate = self
+                    ad.present(fromRootViewController: self)
+                }
+            }
+        }
+    }
+    
+    func createInterstitialMultiplatformView() {
+        let gamRequest = GAMRequest()
+        
+        let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
+        videoParameters.protocols = [AdVideoParameters.Protocols.VAST_2_0]
+        videoParameters.playbackMethod = [AdVideoParameters.PlaybackMethod.AutoPlaySoundOff]
+        videoParameters.placement = AdVideoParameters.Placement.InBanner
+        
+        let interstitialVideoView = AUInterstitialVideoView(configId: storedImpVideoInterstitial, adSize: CGSize(width: 320, height: 480), isLazyLoad: true)
+        interstitialVideoView.frame = CGRect(origin:CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
+                                        size: CGSize(width: 320, height: 50))
+        interstitialVideoView.backgroundColor = .yellow
+        lazyAdContainerView.addSubview(interstitialVideoView)
+        
+        interstitialVideoView.parameters = videoParameters
+        interstitialVideoView.createAd(with: gamRequest)
+        
+        interstitialVideoView.onLoadRequest = { [weak self] gamRequest in
+            guard let request = gamRequest as? GAMRequest else {
+                print("Faild request unwrap")
+                return
+            }
+            GAMInterstitialAd.load(withAdManagerAdUnitID: gamAdUnitVideoInterstitialOriginal, request: request) { ad, error in
+                guard let self = self else { return }
+                if let error = error {
+                    print("Failed to load interstitial ad with error: \(error.localizedDescription)")
+                } else if let ad = ad {
+                    ad.fullScreenContentDelegate = self
+                    ad.present(fromRootViewController: self)
+                }
+            }
+        }
+    }
+}
+
+extension ExamplesViewController: GADFullScreenContentDelegate {
+    func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+        print("Failed to present interstitial ad with error: \(error.localizedDescription)")
     }
 }
 

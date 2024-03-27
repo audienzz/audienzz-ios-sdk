@@ -66,6 +66,7 @@ open class VisibleView: UIView {
     private func removeAsSuperviewObserver() {
         guard let superviews = self.getAllSuperviews() else { return }
         for superview in superviews {
+            guard superview.observationInfo != nil else { continue }
             superview.removeObserver(self, forKeyPath: "contentOffset")
         }
     }

@@ -19,9 +19,15 @@
 		585608722BADE36E00F9F073 /* AUBannerMultiplatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608702BADE36E00F9F073 /* AUBannerMultiplatformView.swift */; };
 		585608742BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608732BB18E2F00F9F073 /* AUVideoParameters.swift */; };
 		585608752BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608732BB18E2F00F9F073 /* AUVideoParameters.swift */; };
+		585608772BB190BE00F9F073 /* AUInterstitialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608762BB190BE00F9F073 /* AUInterstitialView.swift */; };
+		585608782BB190BE00F9F073 /* AUInterstitialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608762BB190BE00F9F073 /* AUInterstitialView.swift */; };
+		5856087A2BB1BB8500F9F073 /* AUInterstitialVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608792BB1BB8400F9F073 /* AUInterstitialVideoView.swift */; };
+		5856087B2BB1BB8500F9F073 /* AUInterstitialVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608792BB1BB8400F9F073 /* AUInterstitialVideoView.swift */; };
+		5856087D2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5856087C2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift */; };
+		5856087E2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5856087C2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift */; };
+		585608852BB2E11000F9F073 /* PrebidMobile.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 587512A22BA36053004BB7E9 /* VisibleView.swift */; };
 		58E024D22BAAE77F0051E8D6 /* PrebidMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; };
-		58E024D32BAAE77F0051E8D6 /* PrebidMobile.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		58E029752BAAE9EF0051E8D6 /* Audienzz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E029742BAAE9EF0051E8D6 /* Audienzz.swift */; };
 		58F8779F2BA09CE90093CD63 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58F877962BA09CE90093CD63 /* AudienzziOSSDK.framework */; };
 		58F877A42BA09CE90093CD63 /* AudienzziOSSDKTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F877A32BA09CE90093CD63 /* AudienzziOSSDKTests.swift */; };
@@ -29,6 +35,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		585608862BB2EC6800F9F073 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = FAAA00BC2322733E009DC7D6;
+			remoteInfo = PrebidMobile;
+		};
 		58E024C62BAAE6A40051E8D6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */;
@@ -62,14 +75,14 @@
 /* Begin PBXCopyFilesBuildPhase section */
 		58E024D42BAAE77F0051E8D6 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 8;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				58E024D32BAAE77F0051E8D6 /* PrebidMobile.framework in Embed Frameworks */,
+				585608852BB2E11000F9F073 /* PrebidMobile.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
+			runOnlyForDeploymentPostprocessing = 1;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -80,6 +93,9 @@
 		5856086D2BADD62A00F9F073 /* AdVideoParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdVideoParameters.swift; sourceTree = "<group>"; };
 		585608702BADE36E00F9F073 /* AUBannerMultiplatformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerMultiplatformView.swift; sourceTree = "<group>"; };
 		585608732BB18E2F00F9F073 /* AUVideoParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUVideoParameters.swift; sourceTree = "<group>"; };
+		585608762BB190BE00F9F073 /* AUInterstitialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialView.swift; sourceTree = "<group>"; };
+		585608792BB1BB8400F9F073 /* AUInterstitialVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialVideoView.swift; sourceTree = "<group>"; };
+		5856087C2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialMultiplatformView.swift; sourceTree = "<group>"; };
 		587512A22BA36053004BB7E9 /* VisibleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisibleView.swift; sourceTree = "<group>"; };
 		58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = DemoSwiftApp.xcodeproj; path = Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj; sourceTree = "<group>"; };
 		58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = PrebidMobile.xcodeproj; path = PrebidMobile/PrebidMobile.xcodeproj; sourceTree = "<group>"; };
@@ -148,6 +164,9 @@
 		5856084D2BAC81E100F9F073 /* Interstitial */ = {
 			isa = PBXGroup;
 			children = (
+				585608762BB190BE00F9F073 /* AUInterstitialView.swift */,
+				585608792BB1BB8400F9F073 /* AUInterstitialVideoView.swift */,
+				5856087C2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift */,
 			);
 			path = Interstitial;
 			sourceTree = "<group>";
@@ -254,6 +273,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				585608872BB2EC6800F9F073 /* PBXTargetDependency */,
 			);
 			name = AudienzziOSSDK;
 			productName = AudienzziOSSDK;
@@ -374,11 +394,14 @@
 			files = (
 				5856086B2BADB85D00F9F073 /* AUBannerVideoView.swift in Sources */,
 				585608462BAC4C7500F9F073 /* AUBannerView.swift in Sources */,
+				5856087A2BB1BB8500F9F073 /* AUInterstitialVideoView.swift in Sources */,
 				587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */,
 				585608742BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */,
 				58E029752BAAE9EF0051E8D6 /* Audienzz.swift in Sources */,
+				5856087D2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */,
 				5856086E2BADD62A00F9F073 /* AdVideoParameters.swift in Sources */,
 				5856084B2BAC7A3B00F9F073 /* AUAdView.swift in Sources */,
+				585608772BB190BE00F9F073 /* AUInterstitialView.swift in Sources */,
 				585608712BADE36E00F9F073 /* AUBannerMultiplatformView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -387,9 +410,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				585608782BB190BE00F9F073 /* AUInterstitialView.swift in Sources */,
 				585608752BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */,
 				5856086F2BADD62A00F9F073 /* AdVideoParameters.swift in Sources */,
+				5856087E2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */,
 				585608722BADE36E00F9F073 /* AUBannerMultiplatformView.swift in Sources */,
+				5856087B2BB1BB8500F9F073 /* AUInterstitialVideoView.swift in Sources */,
 				5856086C2BADB85D00F9F073 /* AUBannerVideoView.swift in Sources */,
 				585608472BAC4C7500F9F073 /* AUBannerView.swift in Sources */,
 				5856084C2BAC7A3B00F9F073 /* AUAdView.swift in Sources */,
@@ -400,6 +426,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		585608872BB2EC6800F9F073 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = PrebidMobile;
+			targetProxy = 585608862BB2EC6800F9F073 /* PBXContainerItemProxy */;
+		};
 		58F877A12BA09CE90093CD63 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 58F877952BA09CE90093CD63 /* AudienzziOSSDK */;

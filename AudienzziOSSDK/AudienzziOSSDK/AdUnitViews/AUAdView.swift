@@ -45,4 +45,32 @@ public class AUAdView: VisibleView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    
+    internal func fillVideoParams(_ parameters: AUVideoParameters?) -> VideoParameters {
+        guard let videoParams = parameters else {
+            let videoParameters = VideoParameters(mimes: ["video/mp4"])
+            videoParameters.protocols = [Signals.Protocols.VAST_2_0]
+            videoParameters.playbackMethod = [Signals.PlaybackMethod.AutoPlaySoundOff]
+            videoParameters.placement = Signals.Placement.InBanner
+            return videoParameters
+        }
+        
+        let parameters = VideoParameters(mimes: videoParams.mimes)
+        parameters.protocols = videoParams.toProtocols()
+        parameters.playbackMethod = videoParams.toPlaybackMethods()
+        parameters.placement = videoParams.placement?.toPlacement
+        
+        parameters.api = videoParams.toApi()
+        parameters.startDelay = videoParams.startDelay?.toStartDelay
+        parameters.adSize = videoParams.adSize
+        
+        parameters.maxBitrate = videoParams.toSingleContainerInt(videoParams.maxBitrate)
+        parameters.minBitrate = videoParams.toSingleContainerInt(videoParams.minBitrate)
+        parameters.maxDuration = videoParams.toSingleContainerInt(videoParams.maxDuration)
+        parameters.minDuration = videoParams.toSingleContainerInt(videoParams.minDuration)
+        parameters.linearity = videoParams.toSingleContainerInt(videoParams.linearity)
+        
+        return parameters
+    }
 }
