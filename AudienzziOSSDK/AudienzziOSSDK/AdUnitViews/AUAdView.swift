@@ -43,9 +43,15 @@ public class AUAdView: VisibleView {
     }
     
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        self.configId = ""
+        self.adSize = .zero
+        self.isLazyLoad = false
+        super.init(coder: coder)
     }
     
+    public func setConfigId(_ configId: String) {
+        self.configId = configId
+    }
     
     internal func fillVideoParams(_ parameters: AUVideoParameters?) -> VideoParameters {
         guard let videoParams = parameters else {

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		58249AF02BBEB13100E5C4C6 /* ExampleNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249AEF2BBEB13100E5C4C6 /* ExampleNativeView.swift */; };
+		58249AF22BBEB19400E5C4C6 /* ExampleNativeView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 58249AF12BBEB19400E5C4C6 /* ExampleNativeView.xib */; };
 		585608492BAC700F00F9F073 /* GoogleMobileAds.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 585608482BAC700F00F9F073 /* GoogleMobileAds.xcframework */; };
 		587512972BA1A764004BB7E9 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; };
 		587512982BA1A764004BB7E9 /* AudienzziOSSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -35,6 +37,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		58249AEF2BBEB13100E5C4C6 /* ExampleNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleNativeView.swift; sourceTree = "<group>"; };
+		58249AF12BBEB19400E5C4C6 /* ExampleNativeView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ExampleNativeView.xib; sourceTree = "<group>"; };
 		585608482BAC700F00F9F073 /* GoogleMobileAds.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:CSTR6SUWN9:AdMob, Inc."; lastKnownFileType = wrapper.xcframework; path = GoogleMobileAds.xcframework; sourceTree = "<group>"; };
 		587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5875129D2BA2FF9A004BB7E9 /* AdContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdContainerView.swift; sourceTree = "<group>"; };
@@ -66,6 +70,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		58249AEE2BBEB11B00E5C4C6 /* NativeView */ = {
+			isa = PBXGroup;
+			children = (
+				58249AEF2BBEB13100E5C4C6 /* ExampleNativeView.swift */,
+				58249AF12BBEB19400E5C4C6 /* ExampleNativeView.xib */,
+			);
+			path = NativeView;
+			sourceTree = "<group>";
+		};
 		5875129C2BA2FE9E004BB7E9 /* AdContainer */ = {
 			isa = PBXGroup;
 			children = (
@@ -99,6 +112,7 @@
 				58C73F9D2B9F0C7000AE52EC /* AppDelegate.swift */,
 				58C73F9F2B9F0C7000AE52EC /* SceneDelegate.swift */,
 				58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */,
+				58249AEE2BBEB11B00E5C4C6 /* NativeView */,
 				5875129C2BA2FE9E004BB7E9 /* AdContainer */,
 				58C73FA32B9F0C7000AE52EC /* Main.storyboard */,
 				58C73FA62B9F0C7200AE52EC /* Assets.xcassets */,
@@ -179,6 +193,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				58249AF22BBEB19400E5C4C6 /* ExampleNativeView.xib in Resources */,
 				58C73FAA2B9F0C7200AE52EC /* LaunchScreen.storyboard in Resources */,
 				58C73FA72B9F0C7200AE52EC /* Assets.xcassets in Resources */,
 				58C73FA52B9F0C7000AE52EC /* Main.storyboard in Resources */,
@@ -192,6 +207,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				58249AF02BBEB13100E5C4C6 /* ExampleNativeView.swift in Sources */,
 				587512A02BA30F18004BB7E9 /* LazyAdContainerView.swift in Sources */,
 				58C73FB22B9F0EB500AE52EC /* ExamplesViewController.swift in Sources */,
 				58C73F9E2B9F0C7000AE52EC /* AppDelegate.swift in Sources */,

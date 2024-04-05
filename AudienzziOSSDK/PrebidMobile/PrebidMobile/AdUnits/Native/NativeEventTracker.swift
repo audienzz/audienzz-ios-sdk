@@ -15,7 +15,7 @@ limitations under the License.
 
 import UIKit
 
-@objc public class NativeEventTracker: NSObject {
+@objc open class NativeEventTracker: NSObject {
     
     var event: EventType
     var methods: Array<EventTracking>

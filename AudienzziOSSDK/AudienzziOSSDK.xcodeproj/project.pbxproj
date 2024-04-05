@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		58249AF42BBEB89400E5C4C6 /* AUNativeBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249AF32BBEB89400E5C4C6 /* AUNativeBannerView.swift */; };
+		584392002BBD63640053B583 /* AUContextType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584391FF2BBD63640053B583 /* AUContextType.swift */; };
+		584392022BBD84E20053B583 /* AUContextSubType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584392012BBD84E20053B583 /* AUContextSubType.swift */; };
+		584392042BBD88A50053B583 /* AUPlacementType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584392032BBD88A50053B583 /* AUPlacementType.swift */; };
+		584392062BBD908A0053B583 /* AUAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584392052BBD908A0053B583 /* AUAssets.swift */; };
+		584392082BBD931F0053B583 /* AUNativeRequestParameter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584392072BBD931F0053B583 /* AUNativeRequestParameter.swift */; };
 		585608462BAC4C7500F9F073 /* AUBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608452BAC4C7500F9F073 /* AUBannerView.swift */; };
 		585608472BAC4C7500F9F073 /* AUBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608452BAC4C7500F9F073 /* AUBannerView.swift */; };
 		5856084B2BAC7A3B00F9F073 /* AUAdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5856084A2BAC7A3B00F9F073 /* AUAdView.swift */; };
@@ -26,6 +32,7 @@
 		5856087D2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5856087C2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift */; };
 		5856087E2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5856087C2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift */; };
 		585608852BB2E11000F9F073 /* PrebidMobile.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		585608922BB4563C00F9F073 /* AUNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608912BB4563C00F9F073 /* AUNativeView.swift */; };
 		587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 587512A22BA36053004BB7E9 /* VisibleView.swift */; };
 		58E024D22BAAE77F0051E8D6 /* PrebidMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; };
 		58E029752BAAE9EF0051E8D6 /* Audienzz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E029742BAAE9EF0051E8D6 /* Audienzz.swift */; };
@@ -87,6 +94,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		58249AF32BBEB89400E5C4C6 /* AUNativeBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeBannerView.swift; sourceTree = "<group>"; };
+		584391FF2BBD63640053B583 /* AUContextType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUContextType.swift; sourceTree = "<group>"; };
+		584392012BBD84E20053B583 /* AUContextSubType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUContextSubType.swift; sourceTree = "<group>"; };
+		584392032BBD88A50053B583 /* AUPlacementType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUPlacementType.swift; sourceTree = "<group>"; };
+		584392052BBD908A0053B583 /* AUAssets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAssets.swift; sourceTree = "<group>"; };
+		584392072BBD931F0053B583 /* AUNativeRequestParameter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeRequestParameter.swift; sourceTree = "<group>"; };
 		585608452BAC4C7500F9F073 /* AUBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerView.swift; sourceTree = "<group>"; };
 		5856084A2BAC7A3B00F9F073 /* AUAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdView.swift; sourceTree = "<group>"; };
 		5856086A2BADB85D00F9F073 /* AUBannerVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerVideoView.swift; sourceTree = "<group>"; };
@@ -96,6 +109,7 @@
 		585608762BB190BE00F9F073 /* AUInterstitialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialView.swift; sourceTree = "<group>"; };
 		585608792BB1BB8400F9F073 /* AUInterstitialVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialVideoView.swift; sourceTree = "<group>"; };
 		5856087C2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialMultiplatformView.swift; sourceTree = "<group>"; };
+		585608912BB4563C00F9F073 /* AUNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeView.swift; sourceTree = "<group>"; };
 		587512A22BA36053004BB7E9 /* VisibleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisibleView.swift; sourceTree = "<group>"; };
 		58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = DemoSwiftApp.xcodeproj; path = Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj; sourceTree = "<group>"; };
 		58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = PrebidMobile.xcodeproj; path = PrebidMobile/PrebidMobile.xcodeproj; sourceTree = "<group>"; };
@@ -141,12 +155,25 @@
 			path = Banner;
 			sourceTree = "<group>";
 		};
+		584391FE2BBD63500053B583 /* AUNativeApi */ = {
+			isa = PBXGroup;
+			children = (
+				584391FF2BBD63640053B583 /* AUContextType.swift */,
+				584392012BBD84E20053B583 /* AUContextSubType.swift */,
+				584392032BBD88A50053B583 /* AUPlacementType.swift */,
+				584392052BBD908A0053B583 /* AUAssets.swift */,
+				584392072BBD931F0053B583 /* AUNativeRequestParameter.swift */,
+			);
+			path = AUNativeApi;
+			sourceTree = "<group>";
+		};
 		585608432BAC4C4E00F9F073 /* AdUnitViews */ = {
 			isa = PBXGroup;
 			children = (
 				5856084A2BAC7A3B00F9F073 /* AUAdView.swift */,
 				585608442BAC4C5900F9F073 /* BannerView */,
 				5856084D2BAC81E100F9F073 /* Interstitial */,
+				5856088E2BB4561E00F9F073 /* NativeBanner */,
 			);
 			path = AdUnitViews;
 			sourceTree = "<group>";
@@ -171,12 +198,22 @@
 			path = Interstitial;
 			sourceTree = "<group>";
 		};
+		5856088E2BB4561E00F9F073 /* NativeBanner */ = {
+			isa = PBXGroup;
+			children = (
+				585608912BB4563C00F9F073 /* AUNativeView.swift */,
+				58249AF32BBEB89400E5C4C6 /* AUNativeBannerView.swift */,
+			);
+			path = NativeBanner;
+			sourceTree = "<group>";
+		};
 		587512A12BA3603C004BB7E9 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
 				587512A22BA36053004BB7E9 /* VisibleView.swift */,
 				5856086D2BADD62A00F9F073 /* AdVideoParameters.swift */,
 				585608732BB18E2F00F9F073 /* AUVideoParameters.swift */,
+				584391FE2BBD63500053B583 /* AUNativeApi */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -394,13 +431,20 @@
 			files = (
 				5856086B2BADB85D00F9F073 /* AUBannerVideoView.swift in Sources */,
 				585608462BAC4C7500F9F073 /* AUBannerView.swift in Sources */,
+				584392062BBD908A0053B583 /* AUAssets.swift in Sources */,
+				584392022BBD84E20053B583 /* AUContextSubType.swift in Sources */,
 				5856087A2BB1BB8500F9F073 /* AUInterstitialVideoView.swift in Sources */,
+				584392082BBD931F0053B583 /* AUNativeRequestParameter.swift in Sources */,
 				587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */,
+				58249AF42BBEB89400E5C4C6 /* AUNativeBannerView.swift in Sources */,
 				585608742BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */,
+				585608922BB4563C00F9F073 /* AUNativeView.swift in Sources */,
 				58E029752BAAE9EF0051E8D6 /* Audienzz.swift in Sources */,
 				5856087D2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */,
 				5856086E2BADD62A00F9F073 /* AdVideoParameters.swift in Sources */,
 				5856084B2BAC7A3B00F9F073 /* AUAdView.swift in Sources */,
+				584392002BBD63640053B583 /* AUContextType.swift in Sources */,
+				584392042BBD88A50053B583 /* AUPlacementType.swift in Sources */,
 				585608772BB190BE00F9F073 /* AUInterstitialView.swift in Sources */,
 				585608712BADE36E00F9F073 /* AUBannerMultiplatformView.swift in Sources */,
 			);
@@ -567,6 +611,7 @@
 		58F877A92BA09CE90093CD63 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -587,6 +632,7 @@
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = ch.audienzzios.AudienzziOSSDK;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -603,6 +649,7 @@
 		58F877AA2BA09CE90093CD63 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

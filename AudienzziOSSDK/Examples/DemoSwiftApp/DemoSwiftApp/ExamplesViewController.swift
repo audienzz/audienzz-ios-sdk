@@ -33,6 +33,8 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
     
     private let adSize = CGSize(width: 320, height: 50)
     private let adVideoSize = CGSize(width: 320, height: 250)
+    private var adLoader: GADAdLoader!
+    private var adLazyLoader: GADAdLoader!
     
     private var bannerView: AUBannerView!
     private var bannerLazyView: AUBannerView!
@@ -44,6 +46,11 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
     private var interstitialVideoView: AUInterstitialVideoView!
     private var interstitialMultiplatformView: AUInterstitialMultiplatformView!
     
+    private var nativeView: AUNativeView!
+    private var nativeBannerView:AUNativeBannerView!
+    private var nativeLzyView: AUNativeView!
+    private var nativeLazyBannerView:AUNativeBannerView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         exampleScrollView.backgroundColor = .black
@@ -53,9 +60,14 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
         createBannerMultiplatformView()
         createBannerLazyView()
         
-        createInterstitialView()
+//        createInterstitialView()
         createInterstitialVideoView()
-        createInterstitialMultiplatformView()
+//        createInterstitialMultiplatformView()
+        
+        createNativeView()
+        createNativeBannerView()
+        createLazyNativeView()
+        createLazyNativeBannerView()
     }
     
     // MARK: - GADBannerViewDelegate
@@ -68,9 +80,6 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
         let message = "GAM did fail to receive ad with error: \(error)"
         print(message)
     }
-}
-
-extension ExamplesViewController: UIScrollViewDelegate {
 }
 
 // MARK: - Banner API
@@ -237,7 +246,7 @@ fileprivate extension ExamplesViewController {
                 print("Faild request unwrap")
                 return
             }
-            GAMInterstitialAd.load(withAdManagerAdUnitID: gamAdUnitVideoInterstitialOriginal, request: request) { ad, error in
+            GAMInterstitialAd.load(withAdManagerAdUnitID: "ca-app-pub-3940256099942544/5135589807", request: request) { ad, error in
                 guard let self = self else { return }
                 if let error = error {
                     print("Failed to load interstitial ad with error: \(error.localizedDescription)")
@@ -284,6 +293,165 @@ fileprivate extension ExamplesViewController {
     }
 }
 
+// MARK: - Native Banner API
+
+fileprivate let storedPrebidImpression = "prebid-demo-banner-native-styles"
+fileprivate let gamRenderingNativeAdUnitId = "/21808260008/apollo_custom_template_native_ad_unit"
+
+fileprivate extension ExamplesViewController {
+    func createNativeView() {
+        nativeView = AUNativeView(configId: storedPrebidImpression, adSize: .zero)
+        nativeView.configuration = nativeConfiguration()
+
+        let gamRequest = GAMRequest()
+        nativeView.createAd(with: gamRequest)
+        
+        nativeView.onLoadRequest = { [weak self] request in
+            guard let self = self else { return }
+            guard let request = request as? GADRequest else {
+                print("Faild request unwrap")
+                return
+            }
+            
+            self.adLoader = GADAdLoader(adUnitID: gamRenderingNativeAdUnitId, rootViewController: self,
+                                        adTypes: [GADAdLoaderAdType.customNative], options: [])
+            self.adLoader.delegate = self
+            self.adLoader.load(request)
+        }
+        
+        let exampleView: ExampleNativeView = ExampleNativeView.fromNib()
+        exampleView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: self.view.frame.width, height: 200)
+        adContainerView.addSubview(exampleView)
+        
+        nativeView.onGetNativeAd = { ad in
+            exampleView.setupFromAd(ad: ad)
+        }
+        
+    }
+    
+    func createNativeBannerView() {
+        let gamRequest = GAMRequest()
+        let gamBannerView = GAMBannerView(adSize: GADAdSizeFluid)
+        gamBannerView.adUnitID = "/21808260008/prebid-demo-original-native-styles"
+        gamBannerView.rootViewController = self
+        gamBannerView.delegate = self
+        
+        nativeBannerView = AUNativeBannerView(configId: storedPrebidImpression, adSize: .zero)
+        nativeBannerView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: self.view.frame.width, height: 200)
+        adContainerView.addSubview(nativeBannerView)
+        
+        nativeBannerView.createAd(with: gamRequest, gamBanner: gamBannerView, configuration: nativeConfiguration())
+        nativeBannerView.onLoadRequest = { gamRequest in
+            guard let request = gamRequest as? GAMRequest else {
+                print("Faild request unwrap")
+                return
+            }
+            gamBannerView.load(request)
+        }
+    }
+    
+    func nativeConfiguration() -> AUNativeRequestParameter {
+        let image = AUNativeAssetImage(minimumWidth: 200, minimumHeight: 50, required: true)
+        image.typeImage = AUImageAsset.Main
+        
+        let icon = AUNativeAssetImage(minimumWidth: 20, minimumHeight: 20, required: true)
+        icon.typeImage = AUImageAsset.Icon
+        
+        let title = AUNativeAssetTitle(length: 90, required: true)
+        let body = AUNativeAssetData(dataType: AUDataAsset.description, required: true)
+        let cta = AUNativeAssetData(dataType: AUDataAsset.ctatext, required: true)
+        let sponsored = AUNativeAssetData(dataType: AUDataAsset.sponsored, required: true)
+        
+        let asstets: [AUNativeAsset] = [title, icon, image, sponsored, body, cta]
+        
+        var parameters = AUNativeRequestParameter()
+        
+        parameters.assets = asstets
+        parameters.context = AUContextType.Social
+        parameters.placementType = AUPlacementType.FeedContent
+        parameters.contextSubType = AUContextSubType.Social
+        parameters.eventtrackers = [AUNativeEventTracker(event: EventType.Impression, methods: [EventTracking.Image, EventTracking.js])]
+        
+        return parameters
+    }
+}
+
+// MARK: - Native API Lazy load
+
+fileprivate extension ExamplesViewController {
+    func createLazyNativeView() {
+        nativeLzyView = AUNativeView(configId: storedPrebidImpression, adSize: .zero, isLazyLoad: true)
+        nativeLzyView.configuration = nativeConfiguration()
+
+        let gamRequest = GAMRequest()
+        nativeLzyView.createAd(with: gamRequest)
+        
+        nativeLzyView.onLoadRequest = { [weak self] request in
+            guard let self = self else { return }
+            guard let request = request as? GADRequest else {
+                print("Faild request unwrap")
+                return
+            }
+            
+            self.adLazyLoader = GADAdLoader(adUnitID: gamRenderingNativeAdUnitId, rootViewController: self,
+                                        adTypes: [GADAdLoaderAdType.customNative], options: [])
+            self.adLazyLoader.delegate = self
+            self.adLazyLoader.load(request)
+        }
+        
+        let exampleView: ExampleNativeView = ExampleNativeView.fromNib()
+        nativeLzyView.frame = CGRect(x: 0, y: getPositionY(lazyAdContainerView), width: self.view.frame.width, height: 200)
+        exampleView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: 200)
+        nativeLzyView.addSubview(exampleView)
+        lazyAdContainerView.addSubview(nativeLzyView)
+        
+        nativeLzyView.onGetNativeAd = { ad in
+            exampleView.setupFromAd(ad: ad)
+        }
+    }
+
+    func createLazyNativeBannerView() {
+        let gamRequest = GAMRequest()
+        let gamBannerView = GAMBannerView(adSize: GADAdSizeFluid)
+        gamBannerView.adUnitID = "/21808260008/prebid-demo-original-native-styles"
+        gamBannerView.rootViewController = self
+        gamBannerView.delegate = self
+        
+        nativeLazyBannerView = AUNativeBannerView(configId: storedPrebidImpression, adSize: .zero, isLazyLoad: true)
+        nativeLazyBannerView.frame = CGRect(x: 0, y: getPositionY(lazyAdContainerView), width: self.view.frame.width, height: 200)
+        lazyAdContainerView.addSubview(nativeLazyBannerView)
+        
+        nativeLazyBannerView.createAd(with: gamRequest, gamBanner: gamBannerView, configuration: nativeConfiguration())
+        nativeLazyBannerView.onLoadRequest = { gamRequest in
+            guard let request = gamRequest as? GAMRequest else {
+                print("Faild request unwrap")
+                return
+            }
+            gamBannerView.load(request)
+        }
+    }
+}
+
+// MARK: GADCustomNativeAdLoaderDelegate
+extension ExamplesViewController: GADAdLoaderDelegate, GADCustomNativeAdLoaderDelegate {
+    func adLoader(_ adLoader: GADAdLoader, didFailToReceiveAdWithError error: Error) {
+        print("GAM did fail to receive ad with error: \(error)")
+    }
+    
+    func customNativeAdFormatIDs(for adLoader: GADAdLoader) -> [String] {
+        ["11934135"]
+    }
+    
+    func adLoader(_ adLoader: GADAdLoader, didReceive customNativeAd: GADCustomNativeAd) {
+        if adLoader == self.adLoader {
+            nativeView.findNative(adObject: customNativeAd)
+        } else if adLoader == adLazyLoader {
+            nativeLzyView.findNative(adObject: customNativeAd)
+        }
+    }
+}
+
+// MARK: - GADFullScreenContentDelegate
 extension ExamplesViewController: GADFullScreenContentDelegate {
     func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         print("Failed to present interstitial ad with error: \(error.localizedDescription)")
@@ -298,5 +466,11 @@ private extension ExamplesViewController {
         }
         
         return lastView.frame.origin.y + lastView.frame.height
+    }
+}
+
+extension UIView {
+    class func fromNib<T: UIView>() -> T {
+        return Bundle(for: T.self).loadNibNamed(String(describing: T.self), owner: nil, options: nil)![0] as! T
     }
 }

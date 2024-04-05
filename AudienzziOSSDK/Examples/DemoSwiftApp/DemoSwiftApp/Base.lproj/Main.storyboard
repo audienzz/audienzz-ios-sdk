@@ -18,17 +18,17 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="csb-zR-ZVX">
-                                <rect key="frame" x="0.0" y="59" width="393" height="758.99999999999977"/>
+                                <rect key="frame" x="0.0" y="59" width="393" height="759.00000000000045"/>
                                 <subviews>
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="B7R-n9-0Lf" userLabel="AdContainerView">
-                                        <rect key="frame" x="0.0" y="0.0" width="391" height="500"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="391" height="900"/>
                                         <color key="backgroundColor" systemColor="systemTealColor"/>
                                         <constraints>
-                                            <constraint firstAttribute="height" constant="500" id="OIk-8B-rzI"/>
+                                            <constraint firstAttribute="height" constant="900" id="OIk-8B-rzI"/>
                                         </constraints>
                                     </view>
                                     <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" scrollEnabled="NO" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" editable="NO" textAlignment="natural" selectable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Qic-Yl-uBa">
-                                        <rect key="frame" x="0.0" y="499.99999999999994" width="391" height="951.66666666666652"/>
+                                        <rect key="frame" x="0.0" y="900" width="391" height="951.66666666666652"/>
                                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                         <constraints>
                                             <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="280" id="7DY-yV-Oqn"/>
@@ -39,10 +39,10 @@
                                         <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                                     </textView>
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="56A-po-MQA" userLabel="LazyAdContainerView" customClass="LazyAdContainerView" customModule="DemoSwiftApp" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="1451.6666666666667" width="391" height="216"/>
+                                        <rect key="frame" x="0.0" y="1851.666666666667" width="391" height="500"/>
                                         <color key="backgroundColor" systemColor="systemPurpleColor"/>
                                         <constraints>
-                                            <constraint firstAttribute="height" constant="216" id="b8Q-UL-V6g"/>
+                                            <constraint firstAttribute="height" constant="500" id="b8Q-UL-V6g"/>
                                         </constraints>
                                     </view>
                                 </subviews>
@@ -91,10 +91,10 @@
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="systemPurpleColor">
-            <color red="0.68627450980392157" green="0.32156862745098042" blue="0.87058823529411766" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.68627450980000004" green="0.32156862749999998" blue="0.87058823529999996" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemTealColor">
-            <color red="0.18823529411764706" green="0.69019607843137254" blue="0.7803921568627451" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.18823529410000001" green="0.69019607839999997" blue="0.78039215689999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>

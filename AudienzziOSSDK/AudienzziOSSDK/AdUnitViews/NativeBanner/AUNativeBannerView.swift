@@ -16,41 +16,31 @@
 import UIKit
 import PrebidMobile
 
-public class AUInterstitialVideoView: AUAdView {
-    private var adUnit: InterstitialAdUnit!
+public class AUNativeBannerView: AUAdView {
     private var gamRequest: AnyObject?
-    
-    /**
-     VideoParameters..
-     If will be nill. Automatically create default video parameters
-     
-     # Example #
-     *   AUVideoParameters(mimes: ["video/mp4"])
-     * protocols = [AdVideoParameters.Protocols.VAST_2_0]
-     * playbackMethod = [AdVideoParameters.PlaybackMethod.AutoPlaySoundOff]
-     * placement = AdVideoParameters.Placement.InBanner
-     */
-    public var parameters: AUVideoParameters?
+    private var nativeUnit: NativeRequest!
     
     internal override func detectVisible() {
         guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
             return
         }
-
+        
+        print("AUBannerView --- I'm visible")
         onLoadRequest?(request)
         isLazyLoaded = true
     }
     
-    public func createAd(with gamRequest: AnyObject) {
-        adUnit = InterstitialAdUnit(configId: configId)
-        adUnit.adFormats = [.video]
+    public func createAd(with gamRequest: AnyObject, gamBanner: UIView, configuration: AUNativeRequestParameter) {
+        let assetes = configuration.assets?.compactMap { $0 as? NativeAsset }
+        nativeUnit = NativeRequest(configId: configId, assets: assetes)
+        nativeUnit.context = configuration.context?.toContentType
+        nativeUnit.placementType = configuration.placementType?.toPlacementType
+        nativeUnit.contextSubType = configuration.contextSubType?.toContextSubType
+        nativeUnit.eventtrackers = configuration.eventtrackers
+        addSubview(gamBanner)
 
-        let parameters = fillVideoParams(parameters)
-        adUnit.videoParameters = parameters
-
-        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
+        nativeUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             print("Audienz demand fetch for GAM \(resultCode.name())")
-            
             guard let self = self else { return }
             self.gamRequest = gamRequest
             if !self.isLazyLoad {
