@@ -37,7 +37,9 @@ public class AUInterstitialMultiplatformView: AUAdView {
             return
         }
         
-        print("AUBannerView --- I'm visible")
+        #if DEBUG
+        print("AUInterstitialMultiplatformView --- I'm visible")
+        #endif
         onLoadRequest?(request)
         isLazyLoaded = true
     }

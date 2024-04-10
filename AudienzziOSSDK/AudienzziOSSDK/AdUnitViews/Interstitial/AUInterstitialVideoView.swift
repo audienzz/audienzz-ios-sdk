@@ -39,6 +39,9 @@ public class AUInterstitialVideoView: AUAdView {
 
         onLoadRequest?(request)
         isLazyLoaded = true
+        #if DEBUG
+        print("AUInterstitialVideoView --- I'm visible")
+        #endif
     }
     
     public func createAd(with gamRequest: AnyObject) {

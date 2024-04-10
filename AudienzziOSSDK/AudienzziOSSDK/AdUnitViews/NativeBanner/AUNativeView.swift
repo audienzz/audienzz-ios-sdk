@@ -29,7 +29,9 @@ public class AUNativeView: AUAdView, NativeAdDelegate {
             return
         }
         
-        print("AUNativeBannerVIew --- I'm visible")
+        #if DEBUG
+        print("AUNativeView --- I'm visible")
+        #endif
         onLoadRequest?(request)
         isLazyLoaded = true
     }

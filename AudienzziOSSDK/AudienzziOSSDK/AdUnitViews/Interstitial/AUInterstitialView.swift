@@ -25,7 +25,9 @@ public class AUInterstitialView: AUAdView {
             return
         }
         
-        print("AUBannerView --- I'm visible")
+        #if DEBUG
+        print("AUInterstitialView --- I'm visible")
+        #endif
         onLoadRequest?(request)
         isLazyLoaded = true
     }

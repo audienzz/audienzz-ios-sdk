@@ -39,6 +39,9 @@ public class AUBannerVideoView: AUAdView {
 
         onLoadRequest?(request)
         isLazyLoaded = true
+        #if DEBUG
+        print("AUBannerVideoView --- I'm visible")
+        #endif
     }
     
     public func createAd(with gamRequest: AnyObject, gamBanner: UIView) {

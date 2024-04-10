@@ -16,6 +16,7 @@
 import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
+import GoogleInteractiveMediaAds
 
 fileprivate let storedImpDisplayBanner = "prebid-demo-banner-320-50"
 fileprivate let gamAdUnitDisplayBannerOriginal = "/21808260008/prebid_demo_app_original_api_banner"
@@ -28,11 +29,12 @@ fileprivate let gamAdUnitMultiformatBannerOriginal = "/21808260008/prebid-demo-o
 
 class ExamplesViewController: UIViewController, GADBannerViewDelegate {
     @IBOutlet private weak var exampleScrollView: UIScrollView!
-    @IBOutlet private weak var adContainerView: UIView!
-    @IBOutlet private weak var lazyAdContainerView: LazyAdContainerView!
+    @IBOutlet weak var adContainerView: UIView!
+    @IBOutlet weak var lazyAdContainerView: LazyAdContainerView!
+    var playButton: UIButton!
     
-    private let adSize = CGSize(width: 320, height: 50)
-    private let adVideoSize = CGSize(width: 320, height: 250)
+    let adSize = CGSize(width: 320, height: 50)
+    let adVideoSize = CGSize(width: 320, height: 250)
     private var adLoader: GADAdLoader!
     private var adLazyLoader: GADAdLoader!
     
@@ -51,6 +53,18 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
     private var nativeLzyView: AUNativeView!
     private var nativeLazyBannerView:AUNativeBannerView!
     
+    // Rewarded
+    private var rewardedView: AURewardedView!
+    
+    // Instream
+    // IMA
+    var adsLoader: IMAAdsLoader!
+    var adsManager: IMAAdsManager?
+    var contentPlayhead: IMAAVPlayerContentPlayhead?
+    var contentPlayer: AVPlayer?
+    var playerLayer: AVPlayerLayer?
+    var instreamView: AUInstreamView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         exampleScrollView.backgroundColor = .black
@@ -60,20 +74,37 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
         createBannerMultiplatformView()
         createBannerLazyView()
         
-//        createInterstitialView()
+        createInterstitialView()
         createInterstitialVideoView()
-//        createInterstitialMultiplatformView()
+        createInterstitialMultiplatformView()
         
         createNativeView()
         createNativeBannerView()
         createLazyNativeView()
         createLazyNativeBannerView()
+        
+        createRewardedView()
+        
+        createInstreamView()
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        playerLayer?.frame = instreamView.layer.bounds
+        adsManager?.destroy()
+        contentPlayer?.pause()
+        contentPlayer = nil
     }
     
     // MARK: - GADBannerViewDelegate
     func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
         guard let bannerView = bannerView as? GAMBannerView else { return }
         bannerView.resize(GADAdSizeFromCGSize(adSize))
+        AUAdViewUtils.findPrebidCreativeSize(bannerView, success: { size in
+            bannerView.resize(GADAdSizeFromCGSize(size))
+        }, failure: { (error) in
+            print("Error occuring during searching for Prebid creative size: \(error)")
+        })
     }
     
     func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
@@ -458,8 +489,44 @@ extension ExamplesViewController: GADFullScreenContentDelegate {
     }
 }
 
+// MARK: - Rewarded
+fileprivate let storedImpVideoRewarded = "prebid-demo-video-rewarded-320-480-original-api"
+fileprivate let gamAdUnitVideoRewardedOriginal = "ca-app-pub-3940256099942544/1712485313"
+
+fileprivate extension ExamplesViewController {
+    func createRewardedView() {
+        let gamRequest = GAMRequest()
+        
+        let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
+        videoParameters.protocols = [AdVideoParameters.Protocols.VAST_2_0]
+        videoParameters.playbackMethod = [AdVideoParameters.PlaybackMethod.AutoPlaySoundOff]
+        
+        rewardedView = AURewardedView(configId: storedImpVideoRewarded, adSize: adSize)
+        rewardedView.parameters = videoParameters
+        rewardedView.createAd(with: gamRequest)
+        rewardedView.onLoadRequest = { [weak self] gamRequest in
+            guard let request = gamRequest as? GAMRequest else {
+                print("Faild request unwrap")
+                return
+            }
+            GADRewardedAd.load(withAdUnitID: gamAdUnitVideoRewardedOriginal, request: request) { [weak self] ad, error in
+                guard let self = self else { return }
+                if let error = error {
+                    print("Failed to load rewarded ad with error: \(error.localizedDescription)")
+                } else if let ad = ad {
+                    // 5. Present the interstitial ad
+                    ad.fullScreenContentDelegate = self
+                    ad.present(fromRootViewController: self, userDidEarnRewardHandler: {
+                        _ = ad.adReward
+                    })
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Helpers
-private extension ExamplesViewController {
+extension ExamplesViewController {
     func getPositionY(_ parent: UIView) -> CGFloat {
         guard let lastView = parent.subviews.last else {
             return 0

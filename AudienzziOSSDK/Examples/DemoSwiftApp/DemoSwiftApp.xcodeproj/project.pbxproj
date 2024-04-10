@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		58249AF02BBEB13100E5C4C6 /* ExampleNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249AEF2BBEB13100E5C4C6 /* ExampleNativeView.swift */; };
 		58249AF22BBEB19400E5C4C6 /* ExampleNativeView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 58249AF12BBEB19400E5C4C6 /* ExampleNativeView.xib */; };
+		58249B102BC3FCFF00E5C4C6 /* ExampleViewController_Instream.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B0F2BC3FCFF00E5C4C6 /* ExampleViewController_Instream.swift */; };
+		58249B122BC3FE7600E5C4C6 /* GoogleInteractiveMediaAds.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58249B112BC3FE7500E5C4C6 /* GoogleInteractiveMediaAds.xcframework */; };
 		585608492BAC700F00F9F073 /* GoogleMobileAds.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 585608482BAC700F00F9F073 /* GoogleMobileAds.xcframework */; };
 		587512972BA1A764004BB7E9 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; };
 		587512982BA1A764004BB7E9 /* AudienzziOSSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -39,6 +41,8 @@
 /* Begin PBXFileReference section */
 		58249AEF2BBEB13100E5C4C6 /* ExampleNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleNativeView.swift; sourceTree = "<group>"; };
 		58249AF12BBEB19400E5C4C6 /* ExampleNativeView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ExampleNativeView.xib; sourceTree = "<group>"; };
+		58249B0F2BC3FCFF00E5C4C6 /* ExampleViewController_Instream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleViewController_Instream.swift; sourceTree = "<group>"; };
+		58249B112BC3FE7500E5C4C6 /* GoogleInteractiveMediaAds.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:EQHXZ8M8AV:Google LLC"; lastKnownFileType = wrapper.xcframework; path = GoogleInteractiveMediaAds.xcframework; sourceTree = "<group>"; };
 		585608482BAC700F00F9F073 /* GoogleMobileAds.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:CSTR6SUWN9:AdMob, Inc."; lastKnownFileType = wrapper.xcframework; path = GoogleMobileAds.xcframework; sourceTree = "<group>"; };
 		587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5875129D2BA2FF9A004BB7E9 /* AdContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdContainerView.swift; sourceTree = "<group>"; };
@@ -62,6 +66,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				58249B122BC3FE7600E5C4C6 /* GoogleInteractiveMediaAds.xcframework in Frameworks */,
 				587512972BA1A764004BB7E9 /* AudienzziOSSDK.framework in Frameworks */,
 				585608492BAC700F00F9F073 /* GoogleMobileAds.xcframework in Frameworks */,
 			);
@@ -79,6 +84,21 @@
 			path = NativeView;
 			sourceTree = "<group>";
 		};
+		58249B0E2BC3FCEC00E5C4C6 /* Instream */ = {
+			isa = PBXGroup;
+			children = (
+				58249B0F2BC3FCFF00E5C4C6 /* ExampleViewController_Instream.swift */,
+			);
+			path = Instream;
+			sourceTree = "<group>";
+		};
+		58249B132BC54D6500E5C4C6 /* Multiplatform */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Multiplatform;
+			sourceTree = "<group>";
+		};
 		5875129C2BA2FE9E004BB7E9 /* AdContainer */ = {
 			isa = PBXGroup;
 			children = (
@@ -92,6 +112,7 @@
 			isa = PBXGroup;
 			children = (
 				585608482BAC700F00F9F073 /* GoogleMobileAds.xcframework */,
+				58249B112BC3FE7500E5C4C6 /* GoogleInteractiveMediaAds.xcframework */,
 				58C73F9C2B9F0C7000AE52EC /* DemoSwiftApp */,
 				58C73F9B2B9F0C7000AE52EC /* Products */,
 				58C73FB32B9F0F8C00AE52EC /* Frameworks */,
@@ -112,6 +133,8 @@
 				58C73F9D2B9F0C7000AE52EC /* AppDelegate.swift */,
 				58C73F9F2B9F0C7000AE52EC /* SceneDelegate.swift */,
 				58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */,
+				58249B132BC54D6500E5C4C6 /* Multiplatform */,
+				58249B0E2BC3FCEC00E5C4C6 /* Instream */,
 				58249AEE2BBEB11B00E5C4C6 /* NativeView */,
 				5875129C2BA2FE9E004BB7E9 /* AdContainer */,
 				58C73FA32B9F0C7000AE52EC /* Main.storyboard */,
@@ -209,6 +232,7 @@
 			files = (
 				58249AF02BBEB13100E5C4C6 /* ExampleNativeView.swift in Sources */,
 				587512A02BA30F18004BB7E9 /* LazyAdContainerView.swift in Sources */,
+				58249B102BC3FCFF00E5C4C6 /* ExampleViewController_Instream.swift in Sources */,
 				58C73FB22B9F0EB500AE52EC /* ExamplesViewController.swift in Sources */,
 				58C73F9E2B9F0C7000AE52EC /* AppDelegate.swift in Sources */,
 				58C73FA02B9F0C7000AE52EC /* SceneDelegate.swift in Sources */,

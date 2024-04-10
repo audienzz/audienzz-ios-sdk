@@ -25,7 +25,9 @@ public class AUBannerView: AUAdView {
             return
         }
         
+        #if DEBUG
         print("AUBannerView --- I'm visible")
+        #endif
         onLoadRequest?(request)
         isLazyLoaded = true
     }
