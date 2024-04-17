@@ -85,11 +85,17 @@ public class AUNativeView: AUAdView, NativeAdDelegate {
     }
     
     public func nativeAdLoaded(ad: NativeAd) {
+        nativeAd = ad
         if isLazyLoad, isLazyLoaded {
             self.onGetNativeAd?(ad)
         } else {
             self.onGetNativeAd?(ad)
         }
+    }
+    
+    @discardableResult
+    public func registerView(clickableViews: [UIView]? ) -> Bool {
+        nativeAd.registerView(view: self, clickableViews: clickableViews)
     }
 
     public func nativeAdNotFound() {

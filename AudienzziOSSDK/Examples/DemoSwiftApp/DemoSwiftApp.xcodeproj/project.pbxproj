@@ -12,6 +12,9 @@
 		58249B102BC3FCFF00E5C4C6 /* ExampleViewController_Instream.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B0F2BC3FCFF00E5C4C6 /* ExampleViewController_Instream.swift */; };
 		58249B122BC3FE7600E5C4C6 /* GoogleInteractiveMediaAds.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58249B112BC3FE7500E5C4C6 /* GoogleInteractiveMediaAds.xcframework */; };
 		585608492BAC700F00F9F073 /* GoogleMobileAds.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 585608482BAC700F00F9F073 /* GoogleMobileAds.xcframework */; };
+		585A796F2BC979CF005D531C /* ExamplesViewController_RenderingBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A796E2BC979CF005D531C /* ExamplesViewController_RenderingBannerView.swift */; };
+		585A79772BC98E8C005D531C /* ExamplesViewController_RenderingInterstitialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A79762BC98E8C005D531C /* ExamplesViewController_RenderingInterstitialView.swift */; };
+		586A87922BC948C100F997BD /* ExamplesViewController_RenderingReward.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586A87912BC948C100F997BD /* ExamplesViewController_RenderingReward.swift */; };
 		587512972BA1A764004BB7E9 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; };
 		587512982BA1A764004BB7E9 /* AudienzziOSSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5875129E2BA2FF9A004BB7E9 /* AdContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5875129D2BA2FF9A004BB7E9 /* AdContainerView.swift */; };
@@ -44,6 +47,9 @@
 		58249B0F2BC3FCFF00E5C4C6 /* ExampleViewController_Instream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleViewController_Instream.swift; sourceTree = "<group>"; };
 		58249B112BC3FE7500E5C4C6 /* GoogleInteractiveMediaAds.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:EQHXZ8M8AV:Google LLC"; lastKnownFileType = wrapper.xcframework; path = GoogleInteractiveMediaAds.xcframework; sourceTree = "<group>"; };
 		585608482BAC700F00F9F073 /* GoogleMobileAds.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:CSTR6SUWN9:AdMob, Inc."; lastKnownFileType = wrapper.xcframework; path = GoogleMobileAds.xcframework; sourceTree = "<group>"; };
+		585A796E2BC979CF005D531C /* ExamplesViewController_RenderingBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_RenderingBannerView.swift; sourceTree = "<group>"; };
+		585A79762BC98E8C005D531C /* ExamplesViewController_RenderingInterstitialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_RenderingInterstitialView.swift; sourceTree = "<group>"; };
+		586A87912BC948C100F997BD /* ExamplesViewController_RenderingReward.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_RenderingReward.swift; sourceTree = "<group>"; };
 		587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5875129D2BA2FF9A004BB7E9 /* AdContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdContainerView.swift; sourceTree = "<group>"; };
 		5875129F2BA30F18004BB7E9 /* LazyAdContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyAdContainerView.swift; sourceTree = "<group>"; };
@@ -99,6 +105,40 @@
 			path = Multiplatform;
 			sourceTree = "<group>";
 		};
+		585A796D2BC979AE005D531C /* Banner */ = {
+			isa = PBXGroup;
+			children = (
+				585A796E2BC979CF005D531C /* ExamplesViewController_RenderingBannerView.swift */,
+			);
+			path = Banner;
+			sourceTree = "<group>";
+		};
+		585A79752BC98E68005D531C /* Interstitial */ = {
+			isa = PBXGroup;
+			children = (
+				585A79762BC98E8C005D531C /* ExamplesViewController_RenderingInterstitialView.swift */,
+			);
+			path = Interstitial;
+			sourceTree = "<group>";
+		};
+		586A878F2BC948A100F997BD /* Rendering */ = {
+			isa = PBXGroup;
+			children = (
+				585A79752BC98E68005D531C /* Interstitial */,
+				585A796D2BC979AE005D531C /* Banner */,
+				586A87902BC948A800F997BD /* Rewarded */,
+			);
+			path = Rendering;
+			sourceTree = "<group>";
+		};
+		586A87902BC948A800F997BD /* Rewarded */ = {
+			isa = PBXGroup;
+			children = (
+				586A87912BC948C100F997BD /* ExamplesViewController_RenderingReward.swift */,
+			);
+			path = Rewarded;
+			sourceTree = "<group>";
+		};
 		5875129C2BA2FE9E004BB7E9 /* AdContainer */ = {
 			isa = PBXGroup;
 			children = (
@@ -133,6 +173,7 @@
 				58C73F9D2B9F0C7000AE52EC /* AppDelegate.swift */,
 				58C73F9F2B9F0C7000AE52EC /* SceneDelegate.swift */,
 				58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */,
+				586A878F2BC948A100F997BD /* Rendering */,
 				58249B132BC54D6500E5C4C6 /* Multiplatform */,
 				58249B0E2BC3FCEC00E5C4C6 /* Instream */,
 				58249AEE2BBEB11B00E5C4C6 /* NativeView */,
@@ -230,13 +271,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				585A796F2BC979CF005D531C /* ExamplesViewController_RenderingBannerView.swift in Sources */,
 				58249AF02BBEB13100E5C4C6 /* ExampleNativeView.swift in Sources */,
 				587512A02BA30F18004BB7E9 /* LazyAdContainerView.swift in Sources */,
 				58249B102BC3FCFF00E5C4C6 /* ExampleViewController_Instream.swift in Sources */,
 				58C73FB22B9F0EB500AE52EC /* ExamplesViewController.swift in Sources */,
+				585A79772BC98E8C005D531C /* ExamplesViewController_RenderingInterstitialView.swift in Sources */,
 				58C73F9E2B9F0C7000AE52EC /* AppDelegate.swift in Sources */,
 				58C73FA02B9F0C7000AE52EC /* SceneDelegate.swift in Sources */,
 				5875129E2BA2FF9A004BB7E9 /* AdContainerView.swift in Sources */,
+				586A87922BC948C100F997BD /* ExamplesViewController_RenderingReward.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

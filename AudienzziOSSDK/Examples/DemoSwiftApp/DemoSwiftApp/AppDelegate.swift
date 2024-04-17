@@ -27,8 +27,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Audienzz.configureSDK(gadMobileAdsVersion: GADGetStringFromVersionNumber(GADMobileAds.sharedInstance().versionNumber))
         
         // Initialize GoogleMobileAds SDK
-        GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers =  [ GADSimulatorID, "fa7ff8af558fb08a04c94453647e54a1"]
         GADMobileAds.sharedInstance().start()
+        AudienzzGAMUtils.shared.initializeGAM()
         return true
     }
 

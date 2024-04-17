@@ -12,7 +12,7 @@ public final class AUAdViewUtils: NSObject {
     private override init() {}
     
     @objc
-    public static func findPrebidCreativeSize(_ adView: UIView, success: @escaping (CGSize) -> Void, failure: @escaping (Error) -> Void) {
+    public static func findCreativeSize(_ adView: UIView, success: @escaping (CGSize) -> Void, failure: @escaping (Error) -> Void) {
         AdViewUtils.findPrebidCreativeSize(adView, success: success, failure: failure)
     }
 }

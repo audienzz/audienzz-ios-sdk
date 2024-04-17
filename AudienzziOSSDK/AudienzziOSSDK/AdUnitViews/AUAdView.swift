@@ -35,6 +35,13 @@ public class AUAdView: VisibleView {
         super.init(frame: .zero)
     }
     
+    public init(configId: String, isLazyLoad: Bool) {
+        self.configId = configId
+        self.adSize = .zero
+        self.isLazyLoad = isLazyLoad
+        super.init(frame: .zero)
+    }
+    
     public init(configId: String, adSize: CGSize) {
         self.configId = configId
         self.adSize = adSize

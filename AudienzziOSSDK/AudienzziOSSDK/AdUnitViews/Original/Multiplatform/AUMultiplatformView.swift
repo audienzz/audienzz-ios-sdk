@@ -8,9 +8,11 @@
 import UIKit
 import PrebidMobile
 
-public class AUMultiplatformView: AUAdView {    
+public class AUMultiplatformView: AUAdView, NativeAdDelegate {    
     private var adUnit: PrebidAdUnit!
     private var gamRequest: AnyObject?
+    
+    public var onGetNativeAd: ((NativeAd) -> Void)?
     
     internal override func detectVisible() {
         guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
@@ -44,5 +46,32 @@ public class AUMultiplatformView: AUAdView {
                 self.onLoadRequest?(gamRequest)
             }
         }
+    }
+    
+    @objc
+    public func findNative(adObject: AnyObject) {
+        if isLazyLoad, isLazyLoaded {
+            Utils.shared.delegate = self
+            Utils.shared.findNative(adObject: adObject)
+        } else {
+            Utils.shared.delegate = self
+            Utils.shared.findNative(adObject: adObject)
+        }
+    }
+    
+    public func nativeAdLoaded(ad: NativeAd) {
+        if isLazyLoad, isLazyLoaded {
+            self.onGetNativeAd?(ad)
+        } else {
+            self.onGetNativeAd?(ad)
+        }
+    }
+    
+    public func nativeAdNotFound() {
+        print("Native ad not found")
+    }
+
+    public func nativeAdNotValid() {
+        print("Native ad not valid")
     }
 }

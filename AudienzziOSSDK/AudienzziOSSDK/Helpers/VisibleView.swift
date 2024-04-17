@@ -54,6 +54,15 @@ open class VisibleView: UIView {
     internal func detectVisible() {
     }
     
+    open override func removeFromSuperview() {
+        removeAsSuperviewObserver()
+        super.removeFromSuperview()
+    }
+    
+    deinit {
+        removeAsSuperviewObserver()
+    }
+    
     private func observeSuperviewsOnOffsetChange() {
         guard let superviews = self.getAllSuperviews() else { return }
         for superview in superviews {

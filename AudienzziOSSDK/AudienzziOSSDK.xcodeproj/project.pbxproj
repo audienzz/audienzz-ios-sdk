@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5822564A2BCD20B100CCCB2A /* AudienzzGAMUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582256492BCD20B100CCCB2A /* AudienzzGAMUtils.swift */; };
 		58249AF42BBEB89400E5C4C6 /* AUNativeBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249AF32BBEB89400E5C4C6 /* AUNativeBannerView.swift */; };
 		58249B082BC036BB00E5C4C6 /* AURewardedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B072BC036BB00E5C4C6 /* AURewardedView.swift */; };
 		58249B0A2BC04FCF00E5C4C6 /* AUAdViewUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B092BC04FCF00E5C4C6 /* AUAdViewUtils.swift */; };
@@ -40,6 +41,14 @@
 		5856087E2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5856087C2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift */; };
 		585608852BB2E11000F9F073 /* PrebidMobile.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		585608922BB4563C00F9F073 /* AUNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608912BB4563C00F9F073 /* AUNativeView.swift */; };
+		585A795F2BC964B5005D531C /* PrebidMobileGAMEventHandlers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 585A79542BC96475005D531C /* PrebidMobileGAMEventHandlers.framework */; };
+		585A79602BC964B5005D531C /* PrebidMobileGAMEventHandlers.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 585A79542BC96475005D531C /* PrebidMobileGAMEventHandlers.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		585A796A2BC96C92005D531C /* AUBannerRenderingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A79692BC96C92005D531C /* AUBannerRenderingView.swift */; };
+		585A796C2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A796B2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift */; };
+		585A79722BC97FDF005D531C /* AUInterstitialRenderingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A79712BC97FDF005D531C /* AUInterstitialRenderingView.swift */; };
+		585A79742BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A79732BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift */; };
+		586A878C2BC936D200F997BD /* AURewardedRenderingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586A878B2BC936D200F997BD /* AURewardedRenderingView.swift */; };
+		586A878E2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */; };
 		587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 587512A22BA36053004BB7E9 /* VisibleView.swift */; };
 		58E024D22BAAE77F0051E8D6 /* PrebidMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; };
 		58E029752BAAE9EF0051E8D6 /* Audienzz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E029742BAAE9EF0051E8D6 /* Audienzz.swift */; };
@@ -55,6 +64,48 @@
 			proxyType = 1;
 			remoteGlobalIDString = FAAA00BC2322733E009DC7D6;
 			remoteInfo = PrebidMobile;
+		};
+		585A79532BC96475005D531C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 585A794A2BC96475005D531C /* EventHandlers.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 34B64D5C24F7E41600FDD9F4;
+			remoteInfo = PrebidMobileGAMEventHandlers;
+		};
+		585A79552BC96475005D531C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 585A794A2BC96475005D531C /* EventHandlers.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 3405F945250A555800268A77;
+			remoteInfo = PrebidMobileGAMEventHandlersTests;
+		};
+		585A79572BC96475005D531C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 585A794A2BC96475005D531C /* EventHandlers.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 92F4389627688E8600FDC950;
+			remoteInfo = PrebidMobileAdMobAdapters;
+		};
+		585A79592BC96475005D531C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 585A794A2BC96475005D531C /* EventHandlers.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 92F4389D27688E8600FDC950;
+			remoteInfo = PrebidMobileAdMobAdaptersTests;
+		};
+		585A795B2BC96475005D531C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 585A794A2BC96475005D531C /* EventHandlers.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 92C1345B27FC6B4900F96387;
+			remoteInfo = PrebidMobileMAXAdapters;
+		};
+		585A795D2BC96475005D531C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 585A794A2BC96475005D531C /* EventHandlers.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 92C1346227FC6B4900F96387;
+			remoteInfo = PrebidMobileMAXAdaptersTests;
 		};
 		58E024C62BAAE6A40051E8D6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -93,6 +144,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				585A79602BC964B5005D531C /* PrebidMobileGAMEventHandlers.framework in Embed Frameworks */,
 				585608852BB2E11000F9F073 /* PrebidMobile.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
@@ -101,6 +153,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		582256492BCD20B100CCCB2A /* AudienzzGAMUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudienzzGAMUtils.swift; sourceTree = "<group>"; };
 		58249AF32BBEB89400E5C4C6 /* AUNativeBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeBannerView.swift; sourceTree = "<group>"; };
 		58249B072BC036BB00E5C4C6 /* AURewardedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedView.swift; sourceTree = "<group>"; };
 		58249B092BC04FCF00E5C4C6 /* AUAdViewUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdViewUtils.swift; sourceTree = "<group>"; };
@@ -124,6 +177,13 @@
 		585608792BB1BB8400F9F073 /* AUInterstitialVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialVideoView.swift; sourceTree = "<group>"; };
 		5856087C2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialMultiplatformView.swift; sourceTree = "<group>"; };
 		585608912BB4563C00F9F073 /* AUNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeView.swift; sourceTree = "<group>"; };
+		585A794A2BC96475005D531C /* EventHandlers.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = EventHandlers.xcodeproj; path = EventHandlers/EventHandlers.xcodeproj; sourceTree = "<group>"; };
+		585A79692BC96C92005D531C /* AUBannerRenderingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerRenderingView.swift; sourceTree = "<group>"; };
+		585A796B2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerRenderingAdDelegate.swift; sourceTree = "<group>"; };
+		585A79712BC97FDF005D531C /* AUInterstitialRenderingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialRenderingView.swift; sourceTree = "<group>"; };
+		585A79732BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialenderingAdDelegate.swift; sourceTree = "<group>"; };
+		586A878B2BC936D200F997BD /* AURewardedRenderingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedRenderingView.swift; sourceTree = "<group>"; };
+		586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedAdUnitDelegate.swift; sourceTree = "<group>"; };
 		587512A22BA36053004BB7E9 /* VisibleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisibleView.swift; sourceTree = "<group>"; };
 		58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = DemoSwiftApp.xcodeproj; path = Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj; sourceTree = "<group>"; };
 		58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = PrebidMobile.xcodeproj; path = PrebidMobile/PrebidMobile.xcodeproj; sourceTree = "<group>"; };
@@ -139,6 +199,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				585A795F2BC964B5005D531C /* PrebidMobileGAMEventHandlers.framework in Frameworks */,
 				58E024D22BAAE77F0051E8D6 /* PrebidMobile.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -228,12 +289,8 @@
 			isa = PBXGroup;
 			children = (
 				5856084A2BAC7A3B00F9F073 /* AUAdView.swift */,
-				585608442BAC4C5900F9F073 /* BannerView */,
-				5856084D2BAC81E100F9F073 /* Interstitial */,
-				5856088E2BB4561E00F9F073 /* NativeBanner */,
-				58249B062BC0366D00E5C4C6 /* RewardedView */,
-				58249B0B2BC3F6E400E5C4C6 /* InstreamView */,
-				58249B142BC54D7B00E5C4C6 /* Multiplatform */,
+				586A87882BC92EE200F997BD /* Original */,
+				586A87892BC92EED00F997BD /* Rendering */,
 			);
 			path = AdUnitViews;
 			sourceTree = "<group>";
@@ -265,6 +322,69 @@
 				58249AF32BBEB89400E5C4C6 /* AUNativeBannerView.swift */,
 			);
 			path = NativeBanner;
+			sourceTree = "<group>";
+		};
+		585A794B2BC96475005D531C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				585A79542BC96475005D531C /* PrebidMobileGAMEventHandlers.framework */,
+				585A79562BC96475005D531C /* PrebidMobileGAMEventHandlersTests.xctest */,
+				585A79582BC96475005D531C /* PrebidMobileAdMobAdapters.framework */,
+				585A795A2BC96475005D531C /* PrebidMobileAdMobAdaptersTests.xctest */,
+				585A795C2BC96475005D531C /* PrebidMobileMAXAdapters.framework */,
+				585A795E2BC96475005D531C /* PrebidMobileMAXAdaptersTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		585A79682BC96A0E005D531C /* Banner */ = {
+			isa = PBXGroup;
+			children = (
+				585A79692BC96C92005D531C /* AUBannerRenderingView.swift */,
+				585A796B2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift */,
+			);
+			path = Banner;
+			sourceTree = "<group>";
+		};
+		585A79702BC97FC6005D531C /* Interstitial */ = {
+			isa = PBXGroup;
+			children = (
+				585A79712BC97FDF005D531C /* AUInterstitialRenderingView.swift */,
+				585A79732BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift */,
+			);
+			path = Interstitial;
+			sourceTree = "<group>";
+		};
+		586A87882BC92EE200F997BD /* Original */ = {
+			isa = PBXGroup;
+			children = (
+				585608442BAC4C5900F9F073 /* BannerView */,
+				5856084D2BAC81E100F9F073 /* Interstitial */,
+				5856088E2BB4561E00F9F073 /* NativeBanner */,
+				58249B062BC0366D00E5C4C6 /* RewardedView */,
+				58249B0B2BC3F6E400E5C4C6 /* InstreamView */,
+				58249B142BC54D7B00E5C4C6 /* Multiplatform */,
+			);
+			path = Original;
+			sourceTree = "<group>";
+		};
+		586A87892BC92EED00F997BD /* Rendering */ = {
+			isa = PBXGroup;
+			children = (
+				585A79702BC97FC6005D531C /* Interstitial */,
+				585A79682BC96A0E005D531C /* Banner */,
+				586A878A2BC92EF700F997BD /* Rewarded */,
+			);
+			path = Rendering;
+			sourceTree = "<group>";
+		};
+		586A878A2BC92EF700F997BD /* Rewarded */ = {
+			isa = PBXGroup;
+			children = (
+				586A878B2BC936D200F997BD /* AURewardedRenderingView.swift */,
+				586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */,
+			);
+			path = Rewarded;
 			sourceTree = "<group>";
 		};
 		587512A12BA3603C004BB7E9 /* Helpers */ = {
@@ -305,6 +425,7 @@
 				83CC1E59E1C5A08EEB684217 /* Frameworks */,
 				58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */,
 				58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */,
+				585A794A2BC96475005D531C /* EventHandlers.xcodeproj */,
 			);
 			sourceTree = "<group>";
 		};
@@ -322,6 +443,7 @@
 			children = (
 				58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */,
 				58E029742BAAE9EF0051E8D6 /* Audienzz.swift */,
+				582256492BCD20B100CCCB2A /* AudienzzGAMUtils.swift */,
 				585608432BAC4C4E00F9F073 /* AdUnitViews */,
 				582745812BAAFDF200FE77D6 /* AdUnits */,
 				587512A12BA3603C004BB7E9 /* Helpers */,
@@ -432,6 +554,10 @@
 					ProjectRef = 58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */;
 				},
 				{
+					ProductGroup = 585A794B2BC96475005D531C /* Products */;
+					ProjectRef = 585A794A2BC96475005D531C /* EventHandlers.xcodeproj */;
+				},
+				{
 					ProductGroup = 58E024C92BAAE7010051E8D6 /* Products */;
 					ProjectRef = 58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */;
 				},
@@ -445,6 +571,48 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		585A79542BC96475005D531C /* PrebidMobileGAMEventHandlers.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = PrebidMobileGAMEventHandlers.framework;
+			remoteRef = 585A79532BC96475005D531C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		585A79562BC96475005D531C /* PrebidMobileGAMEventHandlersTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = PrebidMobileGAMEventHandlersTests.xctest;
+			remoteRef = 585A79552BC96475005D531C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		585A79582BC96475005D531C /* PrebidMobileAdMobAdapters.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = PrebidMobileAdMobAdapters.framework;
+			remoteRef = 585A79572BC96475005D531C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		585A795A2BC96475005D531C /* PrebidMobileAdMobAdaptersTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = PrebidMobileAdMobAdaptersTests.xctest;
+			remoteRef = 585A79592BC96475005D531C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		585A795C2BC96475005D531C /* PrebidMobileMAXAdapters.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = PrebidMobileMAXAdapters.framework;
+			remoteRef = 585A795B2BC96475005D531C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		585A795E2BC96475005D531C /* PrebidMobileMAXAdaptersTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = PrebidMobileMAXAdaptersTests.xctest;
+			remoteRef = 585A795D2BC96475005D531C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		58E024C72BAAE6A40051E8D6 /* DemoSwiftApp.app */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.application;
@@ -491,6 +659,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5856086B2BADB85D00F9F073 /* AUBannerVideoView.swift in Sources */,
+				5822564A2BCD20B100CCCB2A /* AudienzzGAMUtils.swift in Sources */,
 				585608462BAC4C7500F9F073 /* AUBannerView.swift in Sources */,
 				58249B1C2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift in Sources */,
 				58249B082BC036BB00E5C4C6 /* AURewardedView.swift in Sources */,
@@ -500,8 +669,11 @@
 				584392082BBD931F0053B583 /* AUNativeRequestParameter.swift in Sources */,
 				587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */,
 				58249AF42BBEB89400E5C4C6 /* AUNativeBannerView.swift in Sources */,
+				585A796C2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift in Sources */,
 				585608742BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */,
+				585A796A2BC96C92005D531C /* AUBannerRenderingView.swift in Sources */,
 				585608922BB4563C00F9F073 /* AUNativeView.swift in Sources */,
+				585A79742BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift in Sources */,
 				58249B1E2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift in Sources */,
 				58E029752BAAE9EF0051E8D6 /* Audienzz.swift in Sources */,
 				5856087D2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */,
@@ -509,10 +681,13 @@
 				58249B1A2BC5747200E5C4C6 /* AUBannerParameters.swift in Sources */,
 				5856086E2BADD62A00F9F073 /* AdVideoParameters.swift in Sources */,
 				5856084B2BAC7A3B00F9F073 /* AUAdView.swift in Sources */,
+				586A878C2BC936D200F997BD /* AURewardedRenderingView.swift in Sources */,
 				58249B0D2BC3F70600E5C4C6 /* AUInstreamView.swift in Sources */,
 				584392002BBD63640053B583 /* AUContextType.swift in Sources */,
 				584392042BBD88A50053B583 /* AUPlacementType.swift in Sources */,
 				58249B0A2BC04FCF00E5C4C6 /* AUAdViewUtils.swift in Sources */,
+				586A878E2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift in Sources */,
+				585A79722BC97FDF005D531C /* AUInterstitialRenderingView.swift in Sources */,
 				585608772BB190BE00F9F073 /* AUInterstitialView.swift in Sources */,
 				585608712BADE36E00F9F073 /* AUBannerMultiplatformView.swift in Sources */,
 			);
@@ -589,7 +764,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -655,7 +830,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -688,7 +863,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
@@ -727,7 +902,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";

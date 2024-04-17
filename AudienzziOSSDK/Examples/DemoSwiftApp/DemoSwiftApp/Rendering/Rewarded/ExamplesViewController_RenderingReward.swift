@@ -1,0 +1,53 @@
+/*   Copyright 2018-2024 Audienzz.org, Inc.
+ 
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+ http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+import UIKit
+import AudienzziOSSDK
+import GoogleMobileAds
+
+fileprivate let storedImpVideoRewarded = "prebid-demo-video-rewarded-320-480"
+fileprivate let gamAdUnitVideoRewardedRendering = "/21808260008/prebid_oxb_rewarded_video_test"
+
+fileprivate var rewardedRenderingView: AURewardedRenderingView!
+fileprivate var rewardedRenderingLazyView: AURewardedRenderingView!
+
+extension ExamplesViewController {
+    func createRenderingRewardView() {
+        let eventHandler = AUGAMRewardedAdEventHandler(adUnitID: gamAdUnitVideoRewardedRendering)
+        rewardedRenderingView = AURewardedRenderingView(configId: storedImpVideoRewarded, isLazyLoad: false)
+        rewardedRenderingView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: 320, height: 50))
+        rewardedRenderingView.delegate = self
+        rewardedRenderingView.createAd(with: eventHandler)
+        adContainerView.addSubview(rewardedRenderingView)
+    }
+    
+    func createRenderingRewardLazyView() {
+        let eventHandler = AUGAMRewardedAdEventHandler(adUnitID: gamAdUnitVideoRewardedRendering)
+        rewardedRenderingLazyView = AURewardedRenderingView(configId: storedImpVideoRewarded, isLazyLoad: true)
+        rewardedRenderingLazyView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)), size: CGSize(width: 320, height: 50))
+        rewardedRenderingLazyView.delegate = self
+        rewardedRenderingLazyView.createAd(with: eventHandler)
+        lazyAdContainerView.addSubview(rewardedRenderingLazyView)
+    }
+}
+
+extension ExamplesViewController: AURewardedAdUnitDelegate {
+    func rewardedAdDidReceiveAd(_ rewardedAd: RewardedAdUnit) {
+        rewardedAd.show(from: self)
+    }
+    
+    func rewardedAd(_ rewardedAd: RewardedAdUnit, didFailToReceiveAdWithError error: Error?) {
+        print("Rewarded ad unit failed to receive ad with error: \(error?.localizedDescription ?? "")")
+    }
+}

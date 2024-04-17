@@ -69,23 +69,8 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
         super.viewDidLoad()
         exampleScrollView.backgroundColor = .black
         
-        createBannerView()
-        createVideoBannerView()
-        createBannerMultiplatformView()
-        createBannerLazyView()
-        
-        createInterstitialView()
-        createInterstitialVideoView()
-        createInterstitialMultiplatformView()
-        
-        createNativeView()
-        createNativeBannerView()
-        createLazyNativeView()
-        createLazyNativeBannerView()
-        
-        createRewardedView()
-        
-        createInstreamView()
+        setupAdContainer()
+        setupALazydContainer()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -96,11 +81,41 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
         contentPlayer = nil
     }
     
+    private func setupAdContainer() {
+//        createBannerView()
+//        createVideoBannerView()
+//        createBannerMultiplatformView()
+//        
+        createNativeView()
+//        createNativeBannerView()
+//        
+//        createInstreamView()
+        createRenderingBannerView()
+        createRenderingBannerVideoView()
+        createRenderingIntertitiaView()
+        createRenderingRewardView()
+    }
+    
+    private func setupALazydContainer() {
+//        createBannerLazyView()
+//
+//        createInterstitialView()
+//        createInterstitialVideoView()
+//        createInterstitialMultiplatformView()
+//        
+//        createLazyNativeView()
+//        createLazyNativeBannerView()
+//        
+//        createRewardedView()
+//        createRenderingBannerLazyView()
+//        createRenderingRewardLazyView()
+    }
+    
     // MARK: - GADBannerViewDelegate
     func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
         guard let bannerView = bannerView as? GAMBannerView else { return }
         bannerView.resize(GADAdSizeFromCGSize(adSize))
-        AUAdViewUtils.findPrebidCreativeSize(bannerView, success: { size in
+        AUAdViewUtils.findCreativeSize(bannerView, success: { size in
             bannerView.resize(GADAdSizeFromCGSize(size))
         }, failure: { (error) in
             print("Error occuring during searching for Prebid creative size: \(error)")
@@ -110,6 +125,19 @@ class ExamplesViewController: UIViewController, GADBannerViewDelegate {
     func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
         let message = "GAM did fail to receive ad with error: \(error)"
         print(message)
+    }
+    
+    @IBAction private func refreshAdContainerDidTap() {
+        var subviews = adContainerView.subviews
+        subviews.remove(at: 0)
+        
+        guard !subviews.isEmpty else { return }
+        
+        for subview in subviews {
+            subview.removeFromSuperview()
+        }
+        
+        setupAdContainer()
     }
 }
 
@@ -354,8 +382,9 @@ fileprivate extension ExamplesViewController {
         exampleView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: self.view.frame.width, height: 200)
         adContainerView.addSubview(exampleView)
         
-        nativeView.onGetNativeAd = { ad in
+        nativeView.onGetNativeAd = { [weak self] ad in
             exampleView.setupFromAd(ad: ad)
+            self?.nativeView.registerView(clickableViews: [exampleView.callToActionButton])
         }
         
     }

@@ -13,7 +13,7 @@ class ExampleNativeView: UIView {
     @IBOutlet private weak var iconView: UIImageView!
     @IBOutlet private weak var mainImageView: UIImageView!
     @IBOutlet private weak var bodyLabel: UILabel!
-    @IBOutlet private weak var callToActionButton: UIButton!
+    @IBOutlet weak var callToActionButton: UIButton!
     @IBOutlet private weak var sponsoredLabel: UILabel!
     
     public override func awakeFromNib() {
