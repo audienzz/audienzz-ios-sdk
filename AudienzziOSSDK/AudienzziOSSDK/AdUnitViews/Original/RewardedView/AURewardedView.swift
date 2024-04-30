@@ -16,6 +16,7 @@
 import UIKit
 import PrebidMobile
 
+@objcMembers
 public class AURewardedView: AUAdView {
     private var adUnit: RewardedVideoAdUnit!
     private var gamRequest: AnyObject?

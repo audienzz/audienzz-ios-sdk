@@ -27,6 +27,7 @@ public class AUGAMRewardedAdEventHandler: NSObject {
     }
 }
 
+@objcMembers
 public class AURewardedRenderingView: AUAdView {
     private var rewardedAdUnit: RewardedAdUnit!
     public weak var delegate: AURewardedAdUnitDelegate?

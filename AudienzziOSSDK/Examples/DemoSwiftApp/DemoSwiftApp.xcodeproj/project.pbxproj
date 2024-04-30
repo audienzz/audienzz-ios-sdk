@@ -19,6 +19,11 @@
 		587512982BA1A764004BB7E9 /* AudienzziOSSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5875129E2BA2FF9A004BB7E9 /* AdContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5875129D2BA2FF9A004BB7E9 /* AdContainerView.swift */; };
 		587512A02BA30F18004BB7E9 /* LazyAdContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5875129F2BA30F18004BB7E9 /* LazyAdContainerView.swift */; };
+		5890CFFC2BD27E9F0034E2FD /* ExamplesViewController_BannerApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890CFFB2BD27E9F0034E2FD /* ExamplesViewController_BannerApi.swift */; };
+		5890CFFF2BD27FDC0034E2FD /* ExamplesViewController_InterstitialApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890CFFE2BD27FDC0034E2FD /* ExamplesViewController_InterstitialApi.swift */; };
+		5890D0022BD2806D0034E2FD /* ExamplesViewController_NativeApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890D0012BD2806D0034E2FD /* ExamplesViewController_NativeApi.swift */; };
+		5890D0052BD281590034E2FD /* ExamplesViewController_RewardedApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890D0042BD281590034E2FD /* ExamplesViewController_RewardedApi.swift */; };
+		5890D0072BD281E60034E2FD /* ExamplesViewController_Multiformat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890D0062BD281E60034E2FD /* ExamplesViewController_Multiformat.swift */; };
 		58C73F9E2B9F0C7000AE52EC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C73F9D2B9F0C7000AE52EC /* AppDelegate.swift */; };
 		58C73FA02B9F0C7000AE52EC /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C73F9F2B9F0C7000AE52EC /* SceneDelegate.swift */; };
 		58C73FA52B9F0C7000AE52EC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 58C73FA32B9F0C7000AE52EC /* Main.storyboard */; };
@@ -53,6 +58,11 @@
 		587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5875129D2BA2FF9A004BB7E9 /* AdContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdContainerView.swift; sourceTree = "<group>"; };
 		5875129F2BA30F18004BB7E9 /* LazyAdContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyAdContainerView.swift; sourceTree = "<group>"; };
+		5890CFFB2BD27E9F0034E2FD /* ExamplesViewController_BannerApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_BannerApi.swift; sourceTree = "<group>"; };
+		5890CFFE2BD27FDC0034E2FD /* ExamplesViewController_InterstitialApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_InterstitialApi.swift; sourceTree = "<group>"; };
+		5890D0012BD2806D0034E2FD /* ExamplesViewController_NativeApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_NativeApi.swift; sourceTree = "<group>"; };
+		5890D0042BD281590034E2FD /* ExamplesViewController_RewardedApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_RewardedApi.swift; sourceTree = "<group>"; };
+		5890D0062BD281E60034E2FD /* ExamplesViewController_Multiformat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_Multiformat.swift; sourceTree = "<group>"; };
 		58C73F9A2B9F0C7000AE52EC /* DemoSwiftApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DemoSwiftApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		58C73F9D2B9F0C7000AE52EC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		58C73F9F2B9F0C7000AE52EC /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -101,6 +111,7 @@
 		58249B132BC54D6500E5C4C6 /* Multiplatform */ = {
 			isa = PBXGroup;
 			children = (
+				5890D0062BD281E60034E2FD /* ExamplesViewController_Multiformat.swift */,
 			);
 			path = Multiplatform;
 			sourceTree = "<group>";
@@ -148,6 +159,61 @@
 			path = AdContainer;
 			sourceTree = "<group>";
 		};
+		5890CFF82BD278E20034E2FD /* Origin */ = {
+			isa = PBXGroup;
+			children = (
+				5890CFFA2BD27E7E0034E2FD /* BannerAPI */,
+				5890CFFD2BD27FBE0034E2FD /* InterstitialAPI */,
+				5890D0002BD280520034E2FD /* NativeApi */,
+				5890D0032BD281420034E2FD /* RewardedApi */,
+				58249B0E2BC3FCEC00E5C4C6 /* Instream */,
+				58249B132BC54D6500E5C4C6 /* Multiplatform */,
+			);
+			path = Origin;
+			sourceTree = "<group>";
+		};
+		5890CFF92BD278F10034E2FD /* AdTypes */ = {
+			isa = PBXGroup;
+			children = (
+				5890CFF82BD278E20034E2FD /* Origin */,
+				586A878F2BC948A100F997BD /* Rendering */,
+			);
+			path = AdTypes;
+			sourceTree = "<group>";
+		};
+		5890CFFA2BD27E7E0034E2FD /* BannerAPI */ = {
+			isa = PBXGroup;
+			children = (
+				5890CFFB2BD27E9F0034E2FD /* ExamplesViewController_BannerApi.swift */,
+			);
+			path = BannerAPI;
+			sourceTree = "<group>";
+		};
+		5890CFFD2BD27FBE0034E2FD /* InterstitialAPI */ = {
+			isa = PBXGroup;
+			children = (
+				5890CFFE2BD27FDC0034E2FD /* ExamplesViewController_InterstitialApi.swift */,
+			);
+			path = InterstitialAPI;
+			sourceTree = "<group>";
+		};
+		5890D0002BD280520034E2FD /* NativeApi */ = {
+			isa = PBXGroup;
+			children = (
+				58249AEE2BBEB11B00E5C4C6 /* NativeView */,
+				5890D0012BD2806D0034E2FD /* ExamplesViewController_NativeApi.swift */,
+			);
+			path = NativeApi;
+			sourceTree = "<group>";
+		};
+		5890D0032BD281420034E2FD /* RewardedApi */ = {
+			isa = PBXGroup;
+			children = (
+				5890D0042BD281590034E2FD /* ExamplesViewController_RewardedApi.swift */,
+			);
+			path = RewardedApi;
+			sourceTree = "<group>";
+		};
 		58C73F912B9F0C7000AE52EC = {
 			isa = PBXGroup;
 			children = (
@@ -173,10 +239,7 @@
 				58C73F9D2B9F0C7000AE52EC /* AppDelegate.swift */,
 				58C73F9F2B9F0C7000AE52EC /* SceneDelegate.swift */,
 				58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */,
-				586A878F2BC948A100F997BD /* Rendering */,
-				58249B132BC54D6500E5C4C6 /* Multiplatform */,
-				58249B0E2BC3FCEC00E5C4C6 /* Instream */,
-				58249AEE2BBEB11B00E5C4C6 /* NativeView */,
+				5890CFF92BD278F10034E2FD /* AdTypes */,
 				5875129C2BA2FE9E004BB7E9 /* AdContainer */,
 				58C73FA32B9F0C7000AE52EC /* Main.storyboard */,
 				58C73FA62B9F0C7200AE52EC /* Assets.xcassets */,
@@ -272,14 +335,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				585A796F2BC979CF005D531C /* ExamplesViewController_RenderingBannerView.swift in Sources */,
+				5890D0022BD2806D0034E2FD /* ExamplesViewController_NativeApi.swift in Sources */,
+				5890D0052BD281590034E2FD /* ExamplesViewController_RewardedApi.swift in Sources */,
 				58249AF02BBEB13100E5C4C6 /* ExampleNativeView.swift in Sources */,
 				587512A02BA30F18004BB7E9 /* LazyAdContainerView.swift in Sources */,
 				58249B102BC3FCFF00E5C4C6 /* ExampleViewController_Instream.swift in Sources */,
+				5890CFFC2BD27E9F0034E2FD /* ExamplesViewController_BannerApi.swift in Sources */,
 				58C73FB22B9F0EB500AE52EC /* ExamplesViewController.swift in Sources */,
 				585A79772BC98E8C005D531C /* ExamplesViewController_RenderingInterstitialView.swift in Sources */,
 				58C73F9E2B9F0C7000AE52EC /* AppDelegate.swift in Sources */,
 				58C73FA02B9F0C7000AE52EC /* SceneDelegate.swift in Sources */,
 				5875129E2BA2FF9A004BB7E9 /* AdContainerView.swift in Sources */,
+				5890D0072BD281E60034E2FD /* ExamplesViewController_Multiformat.swift in Sources */,
+				5890CFFF2BD27FDC0034E2FD /* ExamplesViewController_InterstitialApi.swift in Sources */,
 				586A87922BC948C100F997BD /* ExamplesViewController_RenderingReward.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

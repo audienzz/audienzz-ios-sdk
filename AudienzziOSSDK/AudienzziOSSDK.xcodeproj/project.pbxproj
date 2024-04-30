@@ -16,13 +16,17 @@
 		58249B1A2BC5747200E5C4C6 /* AUBannerParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B192BC5747200E5C4C6 /* AUBannerParameters.swift */; };
 		58249B1C2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B1B2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift */; };
 		58249B1E2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B1D2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift */; };
+		583B554B2BD66D2E00226302 /* AUMORTBAppContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B554A2BD66D2E00226302 /* AUMORTBAppContent.swift */; };
+		583B55552BD66F5B00226302 /* AUMORTBAppContent_Internal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */; };
+		583B55592BD671A900226302 /* AUMORTBContentData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B55582BD671A900226302 /* AUMORTBContentData.swift */; };
+		583B555B2BD6727F00226302 /* AUMORTBContentData_Internal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B555A2BD6727F00226302 /* AUMORTBContentData_Internal.swift */; };
 		584392002BBD63640053B583 /* AUContextType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584391FF2BBD63640053B583 /* AUContextType.swift */; };
 		584392022BBD84E20053B583 /* AUContextSubType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584392012BBD84E20053B583 /* AUContextSubType.swift */; };
 		584392042BBD88A50053B583 /* AUPlacementType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584392032BBD88A50053B583 /* AUPlacementType.swift */; };
 		584392062BBD908A0053B583 /* AUAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584392052BBD908A0053B583 /* AUAssets.swift */; };
 		584392082BBD931F0053B583 /* AUNativeRequestParameter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584392072BBD931F0053B583 /* AUNativeRequestParameter.swift */; };
-		585608462BAC4C7500F9F073 /* AUBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608452BAC4C7500F9F073 /* AUBannerView.swift */; };
-		585608472BAC4C7500F9F073 /* AUBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608452BAC4C7500F9F073 /* AUBannerView.swift */; };
+		585608462BAC4C7500F9F073 /* AUBannerHTMLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608452BAC4C7500F9F073 /* AUBannerHTMLView.swift */; };
+		585608472BAC4C7500F9F073 /* AUBannerHTMLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608452BAC4C7500F9F073 /* AUBannerHTMLView.swift */; };
 		5856084B2BAC7A3B00F9F073 /* AUAdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5856084A2BAC7A3B00F9F073 /* AUAdView.swift */; };
 		5856084C2BAC7A3B00F9F073 /* AUAdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5856084A2BAC7A3B00F9F073 /* AUAdView.swift */; };
 		5856086B2BADB85D00F9F073 /* AUBannerVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5856086A2BADB85D00F9F073 /* AUBannerVideoView.swift */; };
@@ -49,7 +53,14 @@
 		585A79742BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A79732BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift */; };
 		586A878C2BC936D200F997BD /* AURewardedRenderingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586A878B2BC936D200F997BD /* AURewardedRenderingView.swift */; };
 		586A878E2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */; };
+		586C6C002BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */; };
 		587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 587512A22BA36053004BB7E9 /* VisibleView.swift */; };
+		5890CFEF2BD150F20034E2FD /* AUAdParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890CFEE2BD150F20034E2FD /* AUAdParameters.swift */; };
+		5890D0092BD29F9E0034E2FD /* AUAdUnitConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */; };
+		58927A1A2BE0E412001A0F45 /* AUAdFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58927A192BE0E412001A0F45 /* AUAdFormat.swift */; };
+		58927A242BE0E5DA001A0F45 /* AUBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58927A232BE0E5DA001A0F45 /* AUBannerView.swift */; };
+		58DCF5472BDFCCAC00683A3E /* AUNativeAsset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58DCF5462BDFCCAC00683A3E /* AUNativeAsset.swift */; };
+		58DCF5492BDFDC4E00683A3E /* AUNativeEventTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58DCF5482BDFDC4E00683A3E /* AUNativeEventTracker.swift */; };
 		58E024D22BAAE77F0051E8D6 /* PrebidMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; };
 		58E029752BAAE9EF0051E8D6 /* Audienzz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E029742BAAE9EF0051E8D6 /* Audienzz.swift */; };
 		58F8779F2BA09CE90093CD63 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58F877962BA09CE90093CD63 /* AudienzziOSSDK.framework */; };
@@ -162,12 +173,16 @@
 		58249B192BC5747200E5C4C6 /* AUBannerParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerParameters.swift; sourceTree = "<group>"; };
 		58249B1B2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerParameters_Private.swift; sourceTree = "<group>"; };
 		58249B1D2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeRequestParameter_Private.swift; sourceTree = "<group>"; };
+		583B554A2BD66D2E00226302 /* AUMORTBAppContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBAppContent.swift; sourceTree = "<group>"; };
+		583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBAppContent_Internal.swift; sourceTree = "<group>"; };
+		583B55582BD671A900226302 /* AUMORTBContentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBContentData.swift; sourceTree = "<group>"; };
+		583B555A2BD6727F00226302 /* AUMORTBContentData_Internal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBContentData_Internal.swift; sourceTree = "<group>"; };
 		584391FF2BBD63640053B583 /* AUContextType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUContextType.swift; sourceTree = "<group>"; };
 		584392012BBD84E20053B583 /* AUContextSubType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUContextSubType.swift; sourceTree = "<group>"; };
 		584392032BBD88A50053B583 /* AUPlacementType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUPlacementType.swift; sourceTree = "<group>"; };
 		584392052BBD908A0053B583 /* AUAssets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAssets.swift; sourceTree = "<group>"; };
 		584392072BBD931F0053B583 /* AUNativeRequestParameter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeRequestParameter.swift; sourceTree = "<group>"; };
-		585608452BAC4C7500F9F073 /* AUBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerView.swift; sourceTree = "<group>"; };
+		585608452BAC4C7500F9F073 /* AUBannerHTMLView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerHTMLView.swift; sourceTree = "<group>"; };
 		5856084A2BAC7A3B00F9F073 /* AUAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdView.swift; sourceTree = "<group>"; };
 		5856086A2BADB85D00F9F073 /* AUBannerVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerVideoView.swift; sourceTree = "<group>"; };
 		5856086D2BADD62A00F9F073 /* AdVideoParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdVideoParameters.swift; sourceTree = "<group>"; };
@@ -184,7 +199,14 @@
 		585A79732BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialenderingAdDelegate.swift; sourceTree = "<group>"; };
 		586A878B2BC936D200F997BD /* AURewardedRenderingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedRenderingView.swift; sourceTree = "<group>"; };
 		586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedAdUnitDelegate.swift; sourceTree = "<group>"; };
+		586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdUnitConfiguration_Private.swift; sourceTree = "<group>"; };
 		587512A22BA36053004BB7E9 /* VisibleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisibleView.swift; sourceTree = "<group>"; };
+		5890CFEE2BD150F20034E2FD /* AUAdParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdParameters.swift; sourceTree = "<group>"; };
+		5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdUnitConfiguration.swift; sourceTree = "<group>"; };
+		58927A192BE0E412001A0F45 /* AUAdFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdFormat.swift; sourceTree = "<group>"; };
+		58927A232BE0E5DA001A0F45 /* AUBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerView.swift; sourceTree = "<group>"; };
+		58DCF5462BDFCCAC00683A3E /* AUNativeAsset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeAsset.swift; sourceTree = "<group>"; };
+		58DCF5482BDFDC4E00683A3E /* AUNativeEventTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeEventTracker.swift; sourceTree = "<group>"; };
 		58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = DemoSwiftApp.xcodeproj; path = Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj; sourceTree = "<group>"; };
 		58E024C82BAAE7010051E8D6 /* PrebidMobile.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = PrebidMobile.xcodeproj; path = PrebidMobile/PrebidMobile.xcodeproj; sourceTree = "<group>"; };
 		58E029742BAAE9EF0051E8D6 /* Audienzz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Audienzz.swift; sourceTree = "<group>"; };
@@ -257,19 +279,33 @@
 			path = AUBannerAPI;
 			sourceTree = "<group>";
 		};
-		582745812BAAFDF200FE77D6 /* AdUnits */ = {
+		582745812BAAFDF200FE77D6 /* AdUnitConfiguration */ = {
 			isa = PBXGroup;
 			children = (
-				582745852BAAFDFC00FE77D6 /* Banner */,
+				5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */,
+				586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */,
+				583B55562BD6716B00226302 /* AdConfigData */,
+				583B55572BD6717F00226302 /* AdConfigData_Private */,
 			);
-			path = AdUnits;
+			path = AdUnitConfiguration;
 			sourceTree = "<group>";
 		};
-		582745852BAAFDFC00FE77D6 /* Banner */ = {
+		583B55562BD6716B00226302 /* AdConfigData */ = {
 			isa = PBXGroup;
 			children = (
+				583B554A2BD66D2E00226302 /* AUMORTBAppContent.swift */,
+				583B55582BD671A900226302 /* AUMORTBContentData.swift */,
 			);
-			path = Banner;
+			path = AdConfigData;
+			sourceTree = "<group>";
+		};
+		583B55572BD6717F00226302 /* AdConfigData_Private */ = {
+			isa = PBXGroup;
+			children = (
+				583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */,
+				583B555A2BD6727F00226302 /* AUMORTBContentData_Internal.swift */,
+			);
+			path = AdConfigData_Private;
 			sourceTree = "<group>";
 		};
 		584391FE2BBD63500053B583 /* AUNativeApi */ = {
@@ -281,6 +317,8 @@
 				584392052BBD908A0053B583 /* AUAssets.swift */,
 				584392072BBD931F0053B583 /* AUNativeRequestParameter.swift */,
 				58249B1D2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift */,
+				58DCF5462BDFCCAC00683A3E /* AUNativeAsset.swift */,
+				58DCF5482BDFDC4E00683A3E /* AUNativeEventTracker.swift */,
 			);
 			path = AUNativeApi;
 			sourceTree = "<group>";
@@ -298,7 +336,8 @@
 		585608442BAC4C5900F9F073 /* BannerView */ = {
 			isa = PBXGroup;
 			children = (
-				585608452BAC4C7500F9F073 /* AUBannerView.swift */,
+				58927A232BE0E5DA001A0F45 /* AUBannerView.swift */,
+				585608452BAC4C7500F9F073 /* AUBannerHTMLView.swift */,
 				5856086A2BADB85D00F9F073 /* AUBannerVideoView.swift */,
 				585608702BADE36E00F9F073 /* AUBannerMultiplatformView.swift */,
 			);
@@ -392,6 +431,8 @@
 			children = (
 				58249B092BC04FCF00E5C4C6 /* AUAdViewUtils.swift */,
 				587512A22BA36053004BB7E9 /* VisibleView.swift */,
+				5890CFEE2BD150F20034E2FD /* AUAdParameters.swift */,
+				58927A192BE0E412001A0F45 /* AUAdFormat.swift */,
 				58249B182BC5744700E5C4C6 /* AUBannerAPI */,
 				58249B172BC5743100E5C4C6 /* AUVideoAPI */,
 				584391FE2BBD63500053B583 /* AUNativeApi */,
@@ -445,7 +486,7 @@
 				58E029742BAAE9EF0051E8D6 /* Audienzz.swift */,
 				582256492BCD20B100CCCB2A /* AudienzzGAMUtils.swift */,
 				585608432BAC4C4E00F9F073 /* AdUnitViews */,
-				582745812BAAFDF200FE77D6 /* AdUnits */,
+				582745812BAAFDF200FE77D6 /* AdUnitConfiguration */,
 				587512A12BA3603C004BB7E9 /* Helpers */,
 			);
 			path = AudienzziOSSDK;
@@ -660,9 +701,10 @@
 			files = (
 				5856086B2BADB85D00F9F073 /* AUBannerVideoView.swift in Sources */,
 				5822564A2BCD20B100CCCB2A /* AudienzzGAMUtils.swift in Sources */,
-				585608462BAC4C7500F9F073 /* AUBannerView.swift in Sources */,
+				585608462BAC4C7500F9F073 /* AUBannerHTMLView.swift in Sources */,
 				58249B1C2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift in Sources */,
 				58249B082BC036BB00E5C4C6 /* AURewardedView.swift in Sources */,
+				58927A1A2BE0E412001A0F45 /* AUAdFormat.swift in Sources */,
 				584392062BBD908A0053B583 /* AUAssets.swift in Sources */,
 				584392022BBD84E20053B583 /* AUContextSubType.swift in Sources */,
 				5856087A2BB1BB8500F9F073 /* AUInterstitialVideoView.swift in Sources */,
@@ -671,14 +713,20 @@
 				58249AF42BBEB89400E5C4C6 /* AUNativeBannerView.swift in Sources */,
 				585A796C2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift in Sources */,
 				585608742BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */,
+				586C6C002BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift in Sources */,
+				583B55592BD671A900226302 /* AUMORTBContentData.swift in Sources */,
 				585A796A2BC96C92005D531C /* AUBannerRenderingView.swift in Sources */,
 				585608922BB4563C00F9F073 /* AUNativeView.swift in Sources */,
 				585A79742BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift in Sources */,
+				5890CFEF2BD150F20034E2FD /* AUAdParameters.swift in Sources */,
 				58249B1E2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift in Sources */,
 				58E029752BAAE9EF0051E8D6 /* Audienzz.swift in Sources */,
 				5856087D2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */,
 				58249B162BC56CA200E5C4C6 /* AUMultiplatformView.swift in Sources */,
+				5890D0092BD29F9E0034E2FD /* AUAdUnitConfiguration.swift in Sources */,
 				58249B1A2BC5747200E5C4C6 /* AUBannerParameters.swift in Sources */,
+				583B554B2BD66D2E00226302 /* AUMORTBAppContent.swift in Sources */,
+				58DCF5492BDFDC4E00683A3E /* AUNativeEventTracker.swift in Sources */,
 				5856086E2BADD62A00F9F073 /* AdVideoParameters.swift in Sources */,
 				5856084B2BAC7A3B00F9F073 /* AUAdView.swift in Sources */,
 				586A878C2BC936D200F997BD /* AURewardedRenderingView.swift in Sources */,
@@ -687,8 +735,12 @@
 				584392042BBD88A50053B583 /* AUPlacementType.swift in Sources */,
 				58249B0A2BC04FCF00E5C4C6 /* AUAdViewUtils.swift in Sources */,
 				586A878E2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift in Sources */,
+				58927A242BE0E5DA001A0F45 /* AUBannerView.swift in Sources */,
+				583B555B2BD6727F00226302 /* AUMORTBContentData_Internal.swift in Sources */,
+				58DCF5472BDFCCAC00683A3E /* AUNativeAsset.swift in Sources */,
 				585A79722BC97FDF005D531C /* AUInterstitialRenderingView.swift in Sources */,
 				585608772BB190BE00F9F073 /* AUInterstitialView.swift in Sources */,
+				583B55552BD66F5B00226302 /* AUMORTBAppContent_Internal.swift in Sources */,
 				585608712BADE36E00F9F073 /* AUBannerMultiplatformView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -704,7 +756,7 @@
 				585608722BADE36E00F9F073 /* AUBannerMultiplatformView.swift in Sources */,
 				5856087B2BB1BB8500F9F073 /* AUInterstitialVideoView.swift in Sources */,
 				5856086C2BADB85D00F9F073 /* AUBannerVideoView.swift in Sources */,
-				585608472BAC4C7500F9F073 /* AUBannerView.swift in Sources */,
+				585608472BAC4C7500F9F073 /* AUBannerHTMLView.swift in Sources */,
 				5856084C2BAC7A3B00F9F073 /* AUAdView.swift in Sources */,
 				58F877A42BA09CE90093CD63 /* AudienzziOSSDKTests.swift in Sources */,
 			);

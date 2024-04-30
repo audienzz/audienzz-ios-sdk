@@ -16,6 +16,7 @@
 import UIKit
 import PrebidMobile
 
+@objcMembers
 public class AUNativeBannerView: AUAdView {
     private var gamRequest: AnyObject?
     private var nativeUnit: NativeRequest!
@@ -33,12 +34,12 @@ public class AUNativeBannerView: AUAdView {
     }
     
     public func createAd(with gamRequest: AnyObject, gamBanner: UIView, configuration: AUNativeRequestParameter) {
-        let assetes = configuration.assets?.compactMap { $0 as? NativeAsset }
+        let assetes = configuration.assets?.compactMap { $0.unwrap() }
         nativeUnit = NativeRequest(configId: configId, assets: assetes)
         nativeUnit.context = configuration.context?.toContentType
         nativeUnit.placementType = configuration.placementType?.toPlacementType
         nativeUnit.contextSubType = configuration.contextSubType?.toContextSubType
-        nativeUnit.eventtrackers = configuration.eventtrackers
+        nativeUnit.eventtrackers = configuration.eventtrackers?.compactMap { $0.unwrap() }
         addSubview(gamBanner)
 
         nativeUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in

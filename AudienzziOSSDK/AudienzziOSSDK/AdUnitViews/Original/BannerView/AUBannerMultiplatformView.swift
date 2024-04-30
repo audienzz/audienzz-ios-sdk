@@ -16,7 +16,8 @@
 import UIKit
 import PrebidMobile
 
-public class AUBannerMultiplatformView: AUAdView {
+@objcMembers
+class AUBannerMultiplatformView: AUAdView {
     private var adUnit: BannerAdUnit!
     private var gamRequest: AnyObject?
     
@@ -31,28 +32,34 @@ public class AUBannerMultiplatformView: AUAdView {
      * placement = AdVideoParameters.Placement.InBanner
      */
     public var parameters: AUVideoParameters?
+    public var bannerParameters: AUBannerParameters?
     
-    internal override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
-            return
-        }
-        
-        #if DEBUG
-        print("AUBannerMultiplatformView --- I'm visible")
-        #endif
-        onLoadRequest?(request)
-        isLazyLoaded = true
+    override public init(configId: String, adSize: CGSize) {
+        super.init(configId: configId, adSize: adSize)
+        self.adUnit = BannerAdUnit(configId: configId, size: adSize)
+        self.adUnit.adFormats = [.banner, .video]
+        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
+    }
+    
+    override public init(configId: String, adSize: CGSize, isLazyLoad: Bool) {
+        super.init(configId: configId, adSize: adSize, isLazyLoad: isLazyLoad)
+        self.adUnit = BannerAdUnit(configId: configId, size: adSize)
+        self.adUnit.adFormats = [.banner, .video]
+        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
     public func createAd(with gamRequest: AnyObject, gamBanner: UIView) {
-        adUnit = BannerAdUnit(configId: configId, size: adSize)
-        adUnit.setAutoRefreshMillis(time: 30000)
-        
-        adUnit.adFormats = [.banner, .video]
-        
-        let parameters = BannerParameters()
-        parameters.api = [Signals.Api.MRAID_2]
-        adUnit.bannerParameters = parameters
+        if let parameters = bannerParameters {
+            adUnit.bannerParameters = parameters.makeBannerParameters()
+        } else {
+            let parameters = BannerParameters()
+            parameters.api = [Signals.Api.MRAID_2]
+            adUnit.bannerParameters = parameters
+        }
         addSubview(gamBanner)
         
         let videoParameters = fillVideoParams(self.parameters)
@@ -67,4 +74,17 @@ public class AUBannerMultiplatformView: AUAdView {
             }
         }
     }
+    
+    internal override func detectVisible() {
+        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
+            return
+        }
+        
+        #if DEBUG
+        print("AUBannerMultiplatformView --- I'm visible")
+        #endif
+        onLoadRequest?(request)
+        isLazyLoaded = true
+    }
 }
+

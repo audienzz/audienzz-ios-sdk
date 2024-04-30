@@ -8,7 +8,8 @@
 import UIKit
 import PrebidMobile
 
-public class AUMultiplatformView: AUAdView, NativeAdDelegate {    
+@objcMembers
+public class AUMultiplatformView: AUAdView, NativeAdDelegate {
     private var adUnit: PrebidAdUnit!
     private var gamRequest: AnyObject?
     

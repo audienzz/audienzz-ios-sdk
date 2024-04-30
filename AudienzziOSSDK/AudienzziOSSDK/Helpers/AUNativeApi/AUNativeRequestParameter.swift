@@ -16,32 +16,6 @@
 import Foundation
 import PrebidMobile
 
-@objc public class AUNativeEventTracker: NativeEventTracker {}
-
-public protocol AUNativeAsset {}
-extension AUNativeAsset where Self: NativeAsset {}
-
-public class AUNativeAssetTitle: NativeAssetTitle, AUNativeAsset {}
-public class AUNativeAssetData: NativeAssetData, AUNativeAsset {
-    public required init(dataType: AUDataAsset, required: Bool) {
-        super.init(type: dataType.toDataAsset, required: required)
-    }
-    
-    required init(type: DataAsset, required: Bool) {
-        fatalError("init(type:required:) has not been implemented")
-    }
-}
-public class AUNativeAssetImage: NativeAssetImage, AUNativeAsset {
-    public var typeImage: AUImageAsset? {
-        get {
-            AUImageAsset(rawValue: super.type?.value ?? 1)
-        }
-        set {
-            super.type = ImageAsset(integerLiteral: newValue?.rawValue ?? 1)
-        }
-    }
-}
-
 public struct AUNativeRequestParameter {
     public var context: AUContextType?
     public var contextSubType: AUContextSubType?

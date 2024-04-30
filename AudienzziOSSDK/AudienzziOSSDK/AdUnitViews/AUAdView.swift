@@ -16,12 +16,14 @@
 import UIKit
 import PrebidMobile
 
+@objcMembers
 public class AUAdView: VisibleView {
     var isLazyLoaded: Bool = false
     private(set) var isLazyLoad: Bool
     private(set) var configId: String
     private(set) var adSize: CGSize
     
+    public var adUnitConfiguration: AUAdUnitConfiguration!
     public var onLoadRequest: ((AnyObject) -> Void)?
     
     public override func awakeFromNib() {
@@ -56,7 +58,7 @@ public class AUAdView: VisibleView {
         super.init(coder: coder)
     }
     
-    public func setConfigId(_ configId: String) {
+    public func setupConfigId(_ configId: String) {
         self.configId = configId
     }
     

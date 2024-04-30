@@ -16,6 +16,7 @@
 import UIKit
 import PrebidMobile
 
+@objcMembers
 public class AUInterstitialMultiplatformView: AUAdView {
     private var adUnit: InterstitialAdUnit!
     private var gamRequest: AnyObject?

@@ -11,7 +11,7 @@ extension AUBannerParameters {
     
     internal func makeBannerParameters() -> BannerParameters {
         let bannerParameters = BannerParameters()
-        bannerParameters.api = api?.compactMap { $0.toAPI }
+        bannerParameters.api = api?.compactMap { $0.apiType.toAPI }
         
         bannerParameters.interstitialMinWidthPerc = interstitialMinWidthPerc
         bannerParameters.interstitialMinHeightPerc = interstitialMinHeightPerc

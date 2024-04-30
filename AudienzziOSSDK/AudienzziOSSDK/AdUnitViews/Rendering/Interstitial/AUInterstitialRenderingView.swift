@@ -27,35 +27,50 @@ public class AUGAMInterstitialEventHandler: NSObject {
     }
 }
 
-public enum RenderingInsterstitialAdFormat: Int {
+public enum AURenderingInsterstitialAdFormat: Int {
     case banner
     case video
 }
 
+@objcMembers
 public class AUInterstitialRenderingView: AUAdView {
-    private var renderingInterstitial: InterstitialRenderingAdUnit!
+    private var adUnit: InterstitialRenderingAdUnit!
     
     public weak var delegate: AUInterstitialenderingAdDelegate?
     
-    public func createAd(with eventHandler: AUGAMInterstitialEventHandler, adFormat: RenderingInsterstitialAdFormat) {
+    internal override func detectVisible() {
+        guard isLazyLoad, !isLazyLoaded  else {
+            return
+        }
+
+        adUnit.loadAd()
+        isLazyLoaded = true
+        #if DEBUG
+        print("AUInterstitialRenderingView --- I'm visible")
+        #endif
+    }
+    
+    public func createAd(with eventHandler: AUGAMInterstitialEventHandler, adFormat: AURenderingInsterstitialAdFormat) {
         let interstitialEventHandler = GAMInterstitialEventHandler(adUnitID: eventHandler.adUnitID)
         
-        renderingInterstitial = InterstitialRenderingAdUnit(configID: configId, eventHandler: interstitialEventHandler)
+        adUnit = InterstitialRenderingAdUnit(configID: configId, eventHandler: interstitialEventHandler)
         
         switch adFormat {
         case .banner:
-            renderingInterstitial.adFormats = [.banner]
+            adUnit.adFormats = [.banner]
         case .video:
-            renderingInterstitial.adFormats = [.video]
+            adUnit.adFormats = [.video]
         }
         
-        renderingInterstitial.delegate = self
+        adUnit.delegate = self
         
-        renderingInterstitial.loadAd()
+        if !isLazyLoad {
+            adUnit.loadAd()
+        }
     }
     
     public func showAd(_ controller: UIViewController) {
-        renderingInterstitial.show(from: controller)
+        adUnit.show(from: controller)
     }
 }
 

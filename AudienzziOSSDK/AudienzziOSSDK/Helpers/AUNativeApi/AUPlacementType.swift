@@ -16,7 +16,7 @@
 import Foundation
 import PrebidMobile
 
-public enum AUPlacementType: Int {
+@objc public enum AUPlacementType: Int {
     case FeedContent = 1
 
     case AtomicContent = 2

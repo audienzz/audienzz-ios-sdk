@@ -10,11 +10,11 @@ import PrebidMobile
 extension AUNativeRequestParameter {
     func makeNativeParameters() -> NativeParameters {
         let nativeParam = NativeParameters()
-        nativeParam.assets = assets?.compactMap { $0 as? NativeAsset }
+        nativeParam.assets = assets?.compactMap { $0.unwrap() }
         nativeParam.context = context?.toContentType
         nativeParam.placementType = placementType?.toPlacementType
         nativeParam.contextSubType = contextSubType?.toContextSubType
-        nativeParam.eventtrackers = eventtrackers
+        nativeParam.eventtrackers = eventtrackers?.compactMap { $0.unwrap() }
         
         if let placementCount = placementCount {
             nativeParam.placementCount = placementCount

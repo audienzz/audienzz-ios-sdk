@@ -62,8 +62,9 @@ public class AUBannerRenderingView: AUAdView {
         }
     }
     
-    public func createVideoAd(with eventHandler: AnyObject) {
-        guard let bannerEventHandler = eventHandler as? BannerEventHandler else { return }
+    public func createVideoAd(with eventHandler: AUGAMBannerEventHandler) {
+        let bannerEventHandler = GAMBannerEventHandler(adUnitID: eventHandler.adUnitID,
+                                                       validGADAdSizes: eventHandler.validGADAdSizes)
 
         prebidBannerView = BannerView(frame: CGRect(origin: .zero, size: adSize),
                                       configID: configId,

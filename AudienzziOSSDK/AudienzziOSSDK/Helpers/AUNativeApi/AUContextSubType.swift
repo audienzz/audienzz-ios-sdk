@@ -16,7 +16,7 @@
 import Foundation
 import PrebidMobile
 
-public enum AUContextSubType: Int {
+@objc public enum AUContextSubType: Int {
         
     case General = 10
 

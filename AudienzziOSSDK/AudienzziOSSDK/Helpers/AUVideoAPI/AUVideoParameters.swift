@@ -16,10 +16,11 @@
 import Foundation
 import PrebidMobile
 
+@objcMembers
 public class AUVideoParameters: NSObject {
     
     /// List of supported API frameworks for this impression. If an API is not explicitly listed, it is assumed not to be supported.
-    public var api: [AdVideoParameters.Api]?
+    public var api: [AUApi]?
     
     /// Maximum bit rate in Kbps.
     public var maxBitrate: Int?
@@ -44,16 +45,16 @@ public class AUVideoParameters: NSObject {
     public var mimes: [String]
     
     /// Allowed playback methods. If none specified, assume all are allowed.
-    public var playbackMethod: [AdVideoParameters.PlaybackMethod]?
+    public var playbackMethod: [AUVideoPlaybackMethod]?
     
     /// Array of supported video bid response protocols.
-    public var protocols: [AdVideoParameters.Protocols]?
+    public var protocols: [AUVideoProtocols]?
     
     /// Indicates the start delay in seconds for pre-roll, mid-roll, or post-roll ad placements.
-    public var startDelay: AdVideoParameters.StartDelay?
+    public var startDelay: AUVideoStartDelay?
     
     /// Placement type for the impression.
-    public var placement: AdVideoParameters.Placement?
+    public var placement: AUPlacement?
     
     /// Indicates if the impression must be linear, nonlinear, etc. If none specified, assume all are allowed.
     public var linearity: Int?
@@ -101,7 +102,7 @@ public class AUVideoParameters: NSObject {
             return nil
         }
         
-        let array = values.compactMap({ $0.toAPI })
+        let array = values.compactMap({ $0.apiType.toAPI })
         return array
     }
 }

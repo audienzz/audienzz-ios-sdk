@@ -19,6 +19,7 @@ import PrebidMobile
 fileprivate let customPrebidServerURL = "https://prebid-server-test-j.prebid.org/openrtb2/auction"
 fileprivate let prebidServerAccountId = "0689a263-318d-448b-a3d4-b02e8a709d9d"
 
+@objcMembers
 public class Audienzz: NSObject {
     
     // MARK: - Public Properties (SDK)

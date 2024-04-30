@@ -25,14 +25,13 @@ extension ExamplesViewController {
     func createRenderingIntertitiaView() {
         let eventHandler = AUGAMInterstitialEventHandler(adUnitID: gamAdUnitVideoInterstitialRendering)
         
-        interstitialRenderingView = AUInterstitialRenderingView(configId: storedImpVideoInterstitial, isLazyLoad: false)
+        interstitialRenderingView = AUInterstitialRenderingView(configId: storedImpVideoInterstitial, isLazyLoad: true)
         interstitialRenderingView.delegate = self
         interstitialRenderingView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: 320, height: 50)
         
         interstitialRenderingView.createAd(with: eventHandler, adFormat: .video)
         
         adContainerView.addSubview(interstitialRenderingView)
-        
     }
 }
 

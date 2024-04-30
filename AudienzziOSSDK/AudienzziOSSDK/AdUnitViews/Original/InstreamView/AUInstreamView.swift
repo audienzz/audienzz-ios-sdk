@@ -10,6 +10,7 @@ import PrebidMobile
 
 public typealias Keywords = [String: String]
 
+@objcMembers
 public class AUInstreamView: AUAdView {
     // Prebid
     private var adUnit: InstreamVideoAdUnit!

@@ -15,7 +15,7 @@ limitations under the License.
 
 import UIKit
 
-open class NativeAsset: NSObject {
+public class NativeAsset: NSObject {
     
     var id: NSInteger!
     public var required: Bool = false
@@ -46,7 +46,7 @@ open class NativeAsset: NSObject {
     
 }
 
-@objcMembers open class NativeAssetTitle: NativeAsset {
+@objcMembers public class NativeAssetTitle: NativeAsset {
     
     var length: NSInteger! = 25
     
@@ -68,7 +68,7 @@ open class NativeAsset: NSObject {
     
 }
 
-@objcMembers open class NativeAssetImage: NativeAsset {
+@objcMembers public class NativeAssetImage: NativeAsset {
     
     public var type: ImageAsset?
     public var width: Int?
@@ -105,7 +105,7 @@ open class NativeAsset: NSObject {
     
 }
 
-@objcMembers open class NativeAssetData: NativeAsset {
+@objcMembers public class NativeAssetData: NativeAsset {
     var type: DataAsset?
     public var length: Int?
     public var ext: AnyObject?

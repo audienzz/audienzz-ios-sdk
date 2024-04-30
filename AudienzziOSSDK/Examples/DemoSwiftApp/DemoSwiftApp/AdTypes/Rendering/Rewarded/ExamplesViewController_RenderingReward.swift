@@ -23,14 +23,6 @@ fileprivate var rewardedRenderingView: AURewardedRenderingView!
 fileprivate var rewardedRenderingLazyView: AURewardedRenderingView!
 
 extension ExamplesViewController {
-    func createRenderingRewardView() {
-        let eventHandler = AUGAMRewardedAdEventHandler(adUnitID: gamAdUnitVideoRewardedRendering)
-        rewardedRenderingView = AURewardedRenderingView(configId: storedImpVideoRewarded, isLazyLoad: false)
-        rewardedRenderingView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: 320, height: 50))
-        rewardedRenderingView.delegate = self
-        rewardedRenderingView.createAd(with: eventHandler)
-        adContainerView.addSubview(rewardedRenderingView)
-    }
     
     func createRenderingRewardLazyView() {
         let eventHandler = AUGAMRewardedAdEventHandler(adUnitID: gamAdUnitVideoRewardedRendering)

@@ -17,33 +17,33 @@ import UIKit
 import PrebidMobile
 
 @objcMembers
-class AUBannerVideoView: AUAdView {
+class AUBannerHTMLView: AUAdView {
     private var adUnit: BannerAdUnit!
     private var gamRequest: AnyObject?
     
-    /**
-     VideoParameters..
-     If will be nill. Automatically create default video parameters
-     
-     # Example #
-     *   AUVideoParameters(mimes: ["video/mp4"])
-     * protocols = [AdVideoParameters.Protocols.VAST_2_0]
-     * playbackMethod = [AdVideoParameters.PlaybackMethod.AutoPlaySoundOff]
-     * placement = AdVideoParameters.Placement.InBanner
-     */
-    public var parameters: AUVideoParameters?
+    public var bannerParameters: AUBannerParameters?
+    
+    internal override func detectVisible() {
+        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
+            return
+        }
+        
+        #if DEBUG
+        print("AUBannerView --- I'm visible")
+        #endif
+        onLoadRequest?(request)
+        isLazyLoaded = true
+    }
     
     override public init(configId: String, adSize: CGSize) {
         super.init(configId: configId, adSize: adSize)
         self.adUnit = BannerAdUnit(configId: configId, size: adSize)
-        self.adUnit.adFormats = [.video]
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
     }
     
     override public init(configId: String, adSize: CGSize, isLazyLoad: Bool) {
         super.init(configId: configId, adSize: adSize, isLazyLoad: isLazyLoad)
         self.adUnit = BannerAdUnit(configId: configId, size: adSize)
-        self.adUnit.adFormats = [.video]
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
     }
     
@@ -52,9 +52,15 @@ class AUBannerVideoView: AUAdView {
     }
     
     public func createAd(with gamRequest: AnyObject, gamBanner: UIView) {
-        let parameters = fillVideoParams(parameters)
-        adUnit.videoParameters = parameters
-
+        
+        if let parameters = bannerParameters {
+            adUnit.bannerParameters = parameters.makeBannerParameters()
+        } else {
+            let parameters = BannerParameters()
+            parameters.api = [Signals.Api.MRAID_2]
+            adUnit.bannerParameters = parameters
+        }
+        
         addSubview(gamBanner)
 
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
@@ -65,17 +71,5 @@ class AUBannerVideoView: AUAdView {
                 self.onLoadRequest?(gamRequest)
             }
         }
-    }
-    
-    internal override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
-            return
-        }
-
-        onLoadRequest?(request)
-        isLazyLoaded = true
-        #if DEBUG
-        print("AUBannerVideoView --- I'm visible")
-        #endif
     }
 }

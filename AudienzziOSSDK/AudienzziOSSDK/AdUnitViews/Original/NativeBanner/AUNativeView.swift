@@ -16,6 +16,7 @@
 import UIKit
 import PrebidMobile
 
+@objcMembers
 public class AUNativeView: AUAdView, NativeAdDelegate {
     private var nativeUnit: NativeRequest!
     private var nativeAd: NativeAd!
@@ -40,10 +41,10 @@ public class AUNativeView: AUAdView, NativeAdDelegate {
         nativeUnit = NativeRequest(configId: configId)
         
         nativeUnit.context = configuration.context?.toContentType
-        nativeUnit.assets = configuration.assets?.compactMap { $0 as? NativeAsset }
+        nativeUnit.assets = configuration.assets?.compactMap { $0.unwrap() }
         nativeUnit.placementType = configuration.placementType?.toPlacementType
         nativeUnit.contextSubType = configuration.contextSubType?.toContextSubType
-        nativeUnit.eventtrackers = configuration.eventtrackers
+        nativeUnit.eventtrackers = configuration.eventtrackers?.compactMap { $0.unwrap() }
 
         if let placementCount = configuration.placementCount {
             nativeUnit.placementCount = placementCount

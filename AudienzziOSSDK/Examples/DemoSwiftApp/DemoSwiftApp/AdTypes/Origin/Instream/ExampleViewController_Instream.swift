@@ -24,8 +24,8 @@ fileprivate let gamAdUnitVideo = "/21808260008/prebid_demo_app_instream"
 extension ExamplesViewController {
     func createInstreamView() {
         let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
-        videoParameters.protocols = [AdVideoParameters.Protocols.VAST_2_0]
-        videoParameters.playbackMethod = [AdVideoParameters.PlaybackMethod.AutoPlaySoundOff]
+        videoParameters.protocols = [AUVideoProtocols.VAST_2_0]
+        videoParameters.playbackMethod = [AUVideoPlaybackMethod.AutoPlaySoundOff]
         
         instreamView = AUInstreamView(configId: storedImpVideo, adSize: adSize)
         instreamView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: 640, height: 480))
