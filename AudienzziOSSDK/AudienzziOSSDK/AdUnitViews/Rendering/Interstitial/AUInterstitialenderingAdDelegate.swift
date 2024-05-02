@@ -17,6 +17,9 @@ import UIKit
 import PrebidMobile
 
 @objc public protocol AUInterstitialenderingAdDelegate: NSObjectProtocol {
+    ///Called when ad is shoed on display and before load (used for lazy load)
+    @objc optional func interstitialAdDidDisplayOnScreen()
+
     /// Called when an ad is loaded and ready for display
     @objc optional func interstitialDidReceiveAd(with configId: String)
 

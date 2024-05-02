@@ -43,6 +43,7 @@ public class AUInterstitialRenderingView: AUAdView {
             return
         }
 
+        delegate?.interstitialAdDidDisplayOnScreen?()
         adUnit.loadAd()
         isLazyLoaded = true
         #if DEBUG
@@ -65,6 +66,7 @@ public class AUInterstitialRenderingView: AUAdView {
         adUnit.delegate = self
         
         if !isLazyLoad {
+            delegate?.interstitialAdDidDisplayOnScreen?()
             adUnit.loadAd()
         }
     }

@@ -37,6 +37,7 @@ public class AURewardedRenderingView: AUAdView {
             return
         }
 
+        self.delegate?.rewardedAdDidDisplayOnScreen?()
         rewardedAdUnit.loadAd()
         isLazyLoaded = true
         #if DEBUG
@@ -50,6 +51,7 @@ public class AURewardedRenderingView: AUAdView {
         rewardedAdUnit.delegate = self
         
         if !isLazyLoad {
+            self.delegate?.rewardedAdDidDisplayOnScreen?()
             rewardedAdUnit.loadAd()
         }
     }

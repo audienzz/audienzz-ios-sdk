@@ -38,6 +38,7 @@ public class AUBannerRenderingView: AUAdView {
             return
         }
 
+        delegate?.bannerAdDidDisplayOnScreen?()
         prebidBannerView.loadAd()
         isLazyLoaded = true
         #if DEBUG
@@ -58,6 +59,7 @@ public class AUBannerRenderingView: AUAdView {
         self.addSubview(prebidBannerView)
         
         if !isLazyLoad {
+            delegate?.bannerAdDidDisplayOnScreen?()
             prebidBannerView.loadAd()
         }
     }

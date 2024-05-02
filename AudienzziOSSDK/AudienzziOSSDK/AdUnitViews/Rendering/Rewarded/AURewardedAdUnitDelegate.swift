@@ -8,6 +8,8 @@
 import PrebidMobile
 
 @objc public protocol AURewardedAdUnitDelegate: NSObjectProtocol {
+    ///Called when ad is shoed on display and before load (used for lazy load)
+    @objc optional func rewardedAdDidDisplayOnScreen()
 
     /// Called when an ad is loaded and ready for display
     @objc optional func rewardedAdDidReceiveAd(_ rewardedAd: RewardedAdUnit)

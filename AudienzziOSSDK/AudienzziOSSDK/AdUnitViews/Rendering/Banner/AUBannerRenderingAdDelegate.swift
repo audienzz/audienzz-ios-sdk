@@ -17,6 +17,8 @@ import UIKit
 import PrebidMobile
 
 @objc public protocol AUBannerRenderingAdDelegate: NSObjectProtocol {
+    ///Called when ad is shoed on display and before load (used for lazy load)
+    @objc optional func bannerAdDidDisplayOnScreen()
 
     /** @name Methods */
     /*!
