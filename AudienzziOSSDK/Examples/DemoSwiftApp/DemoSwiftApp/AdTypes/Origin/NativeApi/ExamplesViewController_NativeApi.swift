@@ -20,6 +20,7 @@ import GoogleMobileAds
 
 fileprivate let storedPrebidImpression = "prebid-demo-banner-native-styles"
 fileprivate let gamRenderingNativeAdUnitId = "/21808260008/apollo_custom_template_native_ad_unit"
+internal let gamNativeBannerAdUnitId = "/21808260008/prebid-demo-original-native-styles"
 
 fileprivate var nativeView: AUNativeView!
 fileprivate var nativeBannerView:AUNativeBannerView!
@@ -29,7 +30,7 @@ fileprivate var nativeLazyBannerView:AUNativeBannerView!
 // MARK: - Native Banner API
 extension ExamplesViewController {
     func createNativeView() {
-        nativeView = AUNativeView(configId: storedPrebidImpression, adSize: .zero)
+        nativeView = AUNativeView(configId: storedPrebidImpression, isLazyLoad: false)
         nativeView.configuration = nativeConfiguration()
 
         let gamRequest = GAMRequest()
@@ -60,15 +61,17 @@ extension ExamplesViewController {
     func createNativeBannerView() {
         let gamRequest = GAMRequest()
         let gamBannerView = GAMBannerView(adSize: GADAdSizeFluid)
-        gamBannerView.adUnitID = "/21808260008/prebid-demo-original-native-styles"
+        gamBannerView.adUnitID = gamNativeBannerAdUnitId
         gamBannerView.rootViewController = self
         gamBannerView.delegate = self
         
-        nativeBannerView = AUNativeBannerView(configId: storedPrebidImpression, adSize: .zero)
-        nativeBannerView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: self.view.frame.width, height: 200)
+        let configuration = nativeConfiguration()
+        
+        nativeBannerView = AUNativeBannerView(configId: storedPrebidImpression, configuration: configuration, isLazyLoad: false)
+        nativeBannerView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: self.view.frame.width, height: 250)
         adContainerView.addSubview(nativeBannerView)
         
-        nativeBannerView.createAd(with: gamRequest, gamBanner: gamBannerView, configuration: nativeConfiguration())
+        nativeBannerView.createAd(with: gamRequest, gamBanner: gamBannerView, configuration: configuration)
         nativeBannerView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GAMRequest else {
                 print("Faild request unwrap")
@@ -108,7 +111,7 @@ extension ExamplesViewController {
 // MARK: - Native API Lazy load
 extension ExamplesViewController {
     func createLazyNativeView() {
-        nativeLzyView = AUNativeView(configId: storedPrebidImpression, adSize: .zero, isLazyLoad: true)
+        nativeLzyView = AUNativeView(configId: storedPrebidImpression)
         nativeLzyView.configuration = nativeConfiguration()
 
         let gamRequest = GAMRequest()
@@ -145,11 +148,13 @@ extension ExamplesViewController {
         gamBannerView.rootViewController = self
         gamBannerView.delegate = self
         
-        nativeLazyBannerView = AUNativeBannerView(configId: storedPrebidImpression, adSize: .zero, isLazyLoad: true)
+        let configuration = nativeConfiguration()
+        
+        nativeLazyBannerView = AUNativeBannerView(configId: storedPrebidImpression, configuration: configuration)
         nativeLazyBannerView.frame = CGRect(x: 0, y: getPositionY(lazyAdContainerView), width: self.view.frame.width, height: 200)
         lazyAdContainerView.addSubview(nativeLazyBannerView)
         
-        nativeLazyBannerView.createAd(with: gamRequest, gamBanner: gamBannerView, configuration: nativeConfiguration())
+        nativeLazyBannerView.createAd(with: gamRequest, gamBanner: gamBannerView, configuration: configuration)
         nativeLazyBannerView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GAMRequest else {
                 print("Faild request unwrap")

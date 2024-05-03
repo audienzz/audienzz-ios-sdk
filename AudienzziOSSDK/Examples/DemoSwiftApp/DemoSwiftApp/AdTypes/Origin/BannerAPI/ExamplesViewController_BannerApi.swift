@@ -35,7 +35,7 @@ extension ExamplesViewController {
         gamBanner.delegate = self
         let gamRequest = GAMRequest()
         
-        bannerView = AUBannerView(configId: storedImpDisplayBanner, adSize: adSize, adFormats: [.banner])
+        bannerView = AUBannerView(configId: storedImpDisplayBanner, adSize: adSize, adFormats: [.banner], isLazyLoad: false)
         bannerView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: adSize)
         bannerView.backgroundColor = .clear
         adContainerView.addSubview(bannerView)
@@ -62,7 +62,7 @@ extension ExamplesViewController {
 
         let gamRequest = GAMRequest()
         
-        bannerMultiplatformView = AUBannerView(configId: storedImpsBanner.first!, adSize: adSize, adFormats: [.banner, .video])
+        bannerMultiplatformView = AUBannerView(configId: storedImpsBanner.first!, adSize: adSize, adFormats: [.banner, .video], isLazyLoad: false)
         bannerMultiplatformView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: adVideoSize)
         bannerMultiplatformView.backgroundColor = .clear
         adContainerView.addSubview(bannerMultiplatformView)
@@ -89,7 +89,7 @@ extension ExamplesViewController {
         videoParameters.playbackMethod = [AUVideoPlaybackMethod.AutoPlaySoundOff]
         videoParameters.placement = AUPlacement.InBanner
         
-        bannerVideoView = AUBannerView(configId: storedImpVideoBanner, adSize: adVideoSize, adFormats: [.video])
+        bannerVideoView = AUBannerView(configId: storedImpVideoBanner, adSize: adVideoSize, adFormats: [.video], isLazyLoad: false)
         bannerVideoView.parameters = videoParameters
         bannerVideoView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)),size: adVideoSize)
         bannerVideoView.backgroundColor = .yellow
@@ -117,7 +117,7 @@ extension ExamplesViewController {
 
         let gamRequest = GAMRequest()
         
-        bannerLazyView = AUBannerView(configId: storedImpDisplayBanner, adSize: adSize, adFormats: [.banner], isLazyLoad: true)
+        bannerLazyView = AUBannerView(configId: storedImpDisplayBanner, adSize: adSize, adFormats: [.banner])
         bannerLazyView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)), size: adSize)
         bannerLazyView.backgroundColor = .green
         lazyAdContainerView.addSubview(bannerLazyView)
@@ -142,13 +142,26 @@ extension ExamplesViewController: GADBannerViewDelegate {
         bannerView.resize(GADAdSizeFromCGSize(adSize))
         AUAdViewUtils.findCreativeSize(bannerView, success: { size in
             bannerView.resize(GADAdSizeFromCGSize(size))
-        }, failure: { (error) in
+        }, failure: { [weak self] (error) in
             print("Error occuring during searching for Prebid creative size: \(error)")
+            self?.helperForSize(bannerView: bannerView)
         })
     }
     
     func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
         let message = "GAM did fail to receive ad with error: \(error)"
         print(message)
+    }
+    
+    private func helperForSize(bannerView: GAMBannerView) {
+        if bannerView.adUnitID == gamAdUnitDisplayBannerOriginal {
+            bannerView.resize(GADAdSizeFromCGSize(adSize))
+        } else if bannerView.adUnitID == gamAdUnitVideoBannerOriginal {
+            bannerView.resize(GADAdSizeFromCGSize(adVideoSize))
+        } else if bannerView.adUnitID == gamNativeBannerAdUnitId {
+            bannerView.resize(GADAdSizeFromCGSize(adVideoSize))
+        } else if bannerView.adUnitID == gamAdUnitMultiformatBannerOriginal {
+            bannerView.resize(GADAdSizeFromCGSize(adSizeMult))
+        }
     }
 }

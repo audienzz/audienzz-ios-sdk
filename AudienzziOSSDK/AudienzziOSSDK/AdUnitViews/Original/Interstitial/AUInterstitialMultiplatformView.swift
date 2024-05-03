@@ -17,7 +17,7 @@ import UIKit
 import PrebidMobile
 
 @objcMembers
-public class AUInterstitialMultiplatformView: AUAdView {
+class AUInterstitialMultiplatformView: AUAdView {
     private var adUnit: InterstitialAdUnit!
     private var gamRequest: AnyObject?
     
@@ -31,7 +31,7 @@ public class AUInterstitialMultiplatformView: AUAdView {
      * playbackMethod = [AdVideoParameters.PlaybackMethod.AutoPlaySoundOff]
      * placement = AdVideoParameters.Placement.InBanner
      */
-    public var parameters: AUVideoParameters?
+    var parameters: AUVideoParameters?
     
     internal override func detectVisible() {
         guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
@@ -45,7 +45,7 @@ public class AUInterstitialMultiplatformView: AUAdView {
         isLazyLoaded = true
     }
     
-    public func createAd(with gamRequest: AnyObject) {
+    func createAd(with gamRequest: AnyObject) {
         adUnit = InterstitialAdUnit(configId: configId, minWidthPerc: 60, minHeightPerc: 70)
         
         adUnit.adFormats = [.banner, .video]

@@ -35,7 +35,7 @@ public class AUBannerView: AUAdView {
     public var bannerParameters: AUBannerParameters?
     
     public init(configId: String, adSize: CGSize, adFormats: [AUAdFormat]) {
-        super.init(configId: configId, adSize: adSize)
+        super.init(configId: configId, adSize: adSize, isLazyLoad: true)
         self.adUnit = BannerAdUnit(configId: configId, size: adSize)
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
         
@@ -67,13 +67,10 @@ public class AUBannerView: AUAdView {
         let videoParameters = fillVideoParams(self.parameters)
         adUnit.videoParameters = videoParameters
 
-        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
-            print("Audienz demand fetch for GAM \(resultCode.name())")
-            guard let self = self else { return }
-            self.gamRequest = gamRequest
-            if !self.isLazyLoad {
-                self.onLoadRequest?(gamRequest)
-            }
+        self.gamRequest = gamRequest
+
+        if !self.isLazyLoad {
+            fetchRequest(gamRequest)
         }
     }
     
@@ -85,11 +82,15 @@ public class AUBannerView: AUAdView {
         #if DEBUG
         print("AUBannerMultiplatformView --- I'm visible")
         #endif
-        onLoadRequest?(request)
+        fetchRequest(request)
         isLazyLoaded = true
     }
     
-    internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [AdFormat] {
-        formats.compactMap { AdFormat(rawValue: $0.rawValue) }
+    internal override func fetchRequest(_ gamRequest: AnyObject) {
+        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
+            print("Audienz demand fetch for GAM \(resultCode.name())")
+            guard let self = self else { return }
+            self.onLoadRequest?(gamRequest)
+        }
     }
 }

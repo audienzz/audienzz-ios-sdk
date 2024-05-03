@@ -25,14 +25,14 @@ fileprivate let storedImpVideoInterstitial = "prebid-demo-video-interstitial-320
 fileprivate let gamAdUnitVideoInterstitialOriginal = "/21808260008/prebid-demo-app-original-api-video-interstitial"
 
 fileprivate var interstitialView: AUInterstitialView!
-fileprivate var interstitialVideoView: AUInterstitialVideoView!
-fileprivate var interstitialMultiplatformView: AUInterstitialMultiplatformView!
+fileprivate var interstitialVideoView: AUInterstitialView!
+fileprivate var interstitialMultiplatformView: AUInterstitialView!
 
 extension ExamplesViewController {
     func createInterstitialView() {
         let gamRequest = GAMRequest()
         
-        interstitialView = AUInterstitialView(configId: storedImpDisplayInterstitial, adSize: CGSize(width: 320, height: 480), isLazyLoad: true)
+        interstitialView = AUInterstitialView(configId: storedImpDisplayInterstitial, adFormats: [.banner])
         interstitialView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
                                         size: CGSize(width: 320, height: 50))
         interstitialView.backgroundColor = .systemPink
@@ -67,7 +67,7 @@ extension ExamplesViewController {
         videoParameters.playbackMethod = [AUVideoPlaybackMethod.AutoPlaySoundOff]
         videoParameters.placement = AUPlacement.InBanner
         
-        let interstitialVideoView = AUInterstitialVideoView(configId: storedImpVideoInterstitial, adSize: CGSize(width: 320, height: 480), isLazyLoad: true)
+        let interstitialVideoView = AUInterstitialView(configId: storedImpVideoInterstitial, adFormats: [.video])
         interstitialVideoView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
                                         size: CGSize(width: 320, height: 50))
         interstitialVideoView.backgroundColor = .yellow
@@ -101,7 +101,11 @@ extension ExamplesViewController {
         videoParameters.playbackMethod = [AUVideoPlaybackMethod.AutoPlaySoundOff]
         videoParameters.placement = AUPlacement.InBanner
         
-        let interstitialVideoView = AUInterstitialVideoView(configId: storedImpVideoInterstitial, adSize: CGSize(width: 320, height: 480), isLazyLoad: true)
+        let interstitialVideoView = AUInterstitialView(configId: storedImpVideoInterstitial,
+                                                       adFormats: [.banner, .video],
+                                                       isLazyLoad: true,
+                                                       minWidthPerc: 60,
+                                                       minHeightPerc: 70)
         interstitialVideoView.frame = CGRect(origin:CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
                                         size: CGSize(width: 320, height: 50))
         interstitialVideoView.backgroundColor = .yellow

@@ -88,4 +88,18 @@ public class AUAdView: VisibleView {
         
         return parameters
     }
+    
+    internal func fetchRequest(_ gamRequest: AnyObject) {}
+    
+    internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [AdFormat] {
+        formats.compactMap { AdFormat(rawValue: $0.rawValue) }
+    }
+    
+    public func collapseBehaviour(forView: UIView) {
+        for subview in self.subviews {
+            subview.removeFromSuperview()
+        }
+        let origin = self.frame.origin
+        self.frame = CGRect(x: origin.x, y: origin.y, width: 0, height: 0)
+    }
 }
