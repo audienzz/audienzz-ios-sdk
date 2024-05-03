@@ -37,7 +37,7 @@ extension ExamplesViewController {
         
         let nativeParameters = nativeParameters()
         
-        multiformatView = AUMultiplatformView(configId: configId, adSize: adSize)
+        multiformatView = AUMultiplatformView(configId: configId, isLazyLoad: false)
         multiformatView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: 320, height: 250)
         multiformatView.backgroundColor = .clear
         
@@ -72,7 +72,7 @@ extension ExamplesViewController {
         
         let nativeParameters = nativeParameters()
         
-        multiformatLazyView = AUMultiplatformView(configId: configId, adSize: adSize, isLazyLoad: true)
+        multiformatLazyView = AUMultiplatformView(configId: configId, isLazyLoad: true)
         multiformatLazyView.frame = CGRect(x: 0, y: getPositionY(lazyAdContainerView), width: 320, height: 250)
         multiformatLazyView.backgroundColor = .clear
         

@@ -33,32 +33,48 @@ public class AURewardedView: AUAdView {
      */
     public var parameters: AUVideoParameters?
     
+    public init(configId: String) {
+        super.init(configId: configId, isLazyLoad: true)
+        adUnit = RewardedVideoAdUnit(configId: configId)
+        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
+    }
+    
+    public override init(configId: String, isLazyLoad: Bool) {
+        super.init(configId: configId, isLazyLoad: isLazyLoad)
+        adUnit = RewardedVideoAdUnit(configId: configId)
+        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    public func createAd(with gamRequest: AnyObject) {
+        let parameters = fillVideoParams(parameters)
+        adUnit.videoParameters = parameters
+        self.gamRequest = gamRequest
+        if !self.isLazyLoad {
+            fetchRequest(gamRequest)
+        }
+    }
+    
     internal override func detectVisible() {
         guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
             return
         }
 
-        onLoadRequest?(request)
+        fetchRequest(request)
         isLazyLoaded = true
         #if DEBUG
         print("AURewardedView --- I'm visible")
         #endif
     }
     
-    public func createAd(with gamRequest: AnyObject) {
-        adUnit = RewardedVideoAdUnit(configId: configId)
-
-        let parameters = fillVideoParams(parameters)
-        adUnit.videoParameters = parameters
-
-
+    override func fetchRequest(_ gamRequest: AnyObject) {
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             print("Audienz demand fetch for GAM \(resultCode.name())")
             guard let self = self else { return }
-            self.gamRequest = gamRequest
-            if !self.isLazyLoad {
-                self.onLoadRequest?(gamRequest)
-            }
+            self.onLoadRequest?(gamRequest)
         }
     }
 }

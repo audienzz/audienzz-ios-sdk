@@ -27,7 +27,7 @@ extension ExamplesViewController {
         videoParameters.protocols = [AUVideoProtocols.VAST_2_0]
         videoParameters.playbackMethod = [AUVideoPlaybackMethod.AutoPlaySoundOff]
         
-        instreamView = AUInstreamView(configId: storedImpVideo, adSize: adSize)
+        instreamView = AUInstreamView(configId: storedImpVideo, adSize: adSize, isLazyLoad: false)
         instreamView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: 640, height: 480))
         instreamView.backgroundColor = .clear
         instreamView.parameters = videoParameters

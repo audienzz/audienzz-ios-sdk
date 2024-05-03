@@ -12,40 +12,40 @@ import PrebidMobile
 public class AUMultiplatformView: AUAdView, NativeAdDelegate {
     private var adUnit: PrebidAdUnit!
     private var gamRequest: AnyObject?
+    private var prebidRequest: PrebidRequest!
     
     public var onGetNativeAd: ((NativeAd) -> Void)?
     
-    internal override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
-            return
-        }
-        
-        #if DEBUG
-        print("AUMultiplatformView --- I'm visible")
-        #endif
-        onLoadRequest?(request)
-        isLazyLoaded = true
+    public init(configId: String) {
+        super.init(configId: configId, isLazyLoad: true)
+        adUnit = PrebidAdUnit(configId: configId)
+//        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
+    }
+    
+    public override init(configId: String, isLazyLoad: Bool) {
+        super.init(configId: configId, isLazyLoad: isLazyLoad)
+        adUnit = PrebidAdUnit(configId: configId)
+//        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
     public func create(with gamRequest: AnyObject,
                        bannerParameters: AUBannerParameters,
                        videoParameters: AUVideoParameters,
                        nativeParameters: AUNativeRequestParameter) {
-        adUnit = PrebidAdUnit(configId: configId)
-        adUnit.setAutoRefreshMillis(time: 30_000)
         
         let bannerParam = bannerParameters.makeBannerParameters()
         let videoParam = fillVideoParams(videoParameters)
         let nativeParam = nativeParameters.makeNativeParameters()
         
-        let prebidRequest = PrebidRequest(bannerParameters: bannerParam, videoParameters: videoParam, nativeParameters: nativeParam)
+        self.gamRequest = gamRequest
+        self.prebidRequest = PrebidRequest(bannerParameters: bannerParam, videoParameters: videoParam, nativeParameters: nativeParam)
         
-        adUnit.fetchDemand(adObject: gamRequest, request: prebidRequest) { [weak self] _ in
-            guard let self = self else { return }
-            self.gamRequest = gamRequest
-            if !self.isLazyLoad {
-                self.onLoadRequest?(gamRequest)
-            }
+        if !self.isLazyLoad {
+            fetchRequest(gamRequest, prebidRequest: prebidRequest)
         }
     }
     
@@ -74,5 +74,24 @@ public class AUMultiplatformView: AUAdView, NativeAdDelegate {
 
     public func nativeAdNotValid() {
         print("Native ad not valid")
+    }
+    
+    internal override func detectVisible() {
+        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
+            return
+        }
+        
+        #if DEBUG
+        print("AUMultiplatformView --- I'm visible")
+        #endif
+        fetchRequest(request, prebidRequest: prebidRequest)
+        isLazyLoaded = true
+    }
+    
+    func fetchRequest(_ gamRequest: AnyObject, prebidRequest: PrebidRequest) {
+        adUnit.fetchDemand(adObject: gamRequest, request: prebidRequest) { [weak self] _ in
+            guard let self = self else { return }
+            self.onLoadRequest?(gamRequest)
+        }
     }
 }

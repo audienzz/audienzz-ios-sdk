@@ -59,6 +59,7 @@
 		5890D0092BD29F9E0034E2FD /* AUAdUnitConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */; };
 		58927A1A2BE0E412001A0F45 /* AUAdFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58927A192BE0E412001A0F45 /* AUAdFormat.swift */; };
 		58927A242BE0E5DA001A0F45 /* AUBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58927A232BE0E5DA001A0F45 /* AUBannerView.swift */; };
+		58BEA82E2BE522E5004D86F6 /* AUResultCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58BEA82D2BE522E5004D86F6 /* AUResultCode.swift */; };
 		58DCF5472BDFCCAC00683A3E /* AUNativeAsset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58DCF5462BDFCCAC00683A3E /* AUNativeAsset.swift */; };
 		58DCF5492BDFDC4E00683A3E /* AUNativeEventTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58DCF5482BDFDC4E00683A3E /* AUNativeEventTracker.swift */; };
 		58E024D22BAAE77F0051E8D6 /* PrebidMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; };
@@ -205,6 +206,7 @@
 		5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdUnitConfiguration.swift; sourceTree = "<group>"; };
 		58927A192BE0E412001A0F45 /* AUAdFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdFormat.swift; sourceTree = "<group>"; };
 		58927A232BE0E5DA001A0F45 /* AUBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerView.swift; sourceTree = "<group>"; };
+		58BEA82D2BE522E5004D86F6 /* AUResultCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUResultCode.swift; sourceTree = "<group>"; };
 		58DCF5462BDFCCAC00683A3E /* AUNativeAsset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeAsset.swift; sourceTree = "<group>"; };
 		58DCF5482BDFDC4E00683A3E /* AUNativeEventTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeEventTracker.swift; sourceTree = "<group>"; };
 		58E024C22BAAE6A40051E8D6 /* DemoSwiftApp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = DemoSwiftApp.xcodeproj; path = Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj; sourceTree = "<group>"; };
@@ -433,6 +435,7 @@
 				587512A22BA36053004BB7E9 /* VisibleView.swift */,
 				5890CFEE2BD150F20034E2FD /* AUAdParameters.swift */,
 				58927A192BE0E412001A0F45 /* AUAdFormat.swift */,
+				58BEA82D2BE522E5004D86F6 /* AUResultCode.swift */,
 				58249B182BC5744700E5C4C6 /* AUBannerAPI */,
 				58249B172BC5743100E5C4C6 /* AUVideoAPI */,
 				584391FE2BBD63500053B583 /* AUNativeApi */,
@@ -724,6 +727,7 @@
 				5856087D2BB1CB1100F9F073 /* AUInterstitialMultiplatformView.swift in Sources */,
 				58249B162BC56CA200E5C4C6 /* AUMultiplatformView.swift in Sources */,
 				5890D0092BD29F9E0034E2FD /* AUAdUnitConfiguration.swift in Sources */,
+				58BEA82E2BE522E5004D86F6 /* AUResultCode.swift in Sources */,
 				58249B1A2BC5747200E5C4C6 /* AUBannerParameters.swift in Sources */,
 				583B554B2BD66D2E00226302 /* AUMORTBAppContent.swift in Sources */,
 				58DCF5492BDFDC4E00683A3E /* AUNativeEventTracker.swift in Sources */,

@@ -32,8 +32,13 @@ extension ExamplesViewController {
         videoParameters.protocols = [AUVideoProtocols.VAST_2_0]
         videoParameters.playbackMethod = [AUVideoPlaybackMethod.AutoPlaySoundOff]
         
-        rewardedView = AURewardedView(configId: storedImpVideoRewarded, adSize: adSize, isLazyLoad: true)
+        rewardedView = AURewardedView(configId: storedImpVideoRewarded)
+        rewardedView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
+                                    size: CGSize(width: view.frame.size.width, height: 300))
+        rewardedView.backgroundColor = .magenta
         rewardedView.parameters = videoParameters
+        lazyAdContainerView.addSubview(rewardedView)
+        
         rewardedView.createAd(with: gamRequest)
         rewardedView.onLoadRequest = { [weak self] gamRequest in
             guard let request = gamRequest as? GAMRequest else {

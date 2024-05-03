@@ -28,31 +28,49 @@ public class AUInstreamView: AUAdView {
     public var parameters: AUVideoParameters?
     public var onLoadInstreamRequest: (([String: String]?) -> Void)?
     
+    public override init(configId: String, adSize: CGSize) {
+        super.init(configId: configId, adSize: adSize, isLazyLoad: true)
+        adUnit = InstreamVideoAdUnit(configId: configId, size: adSize)
+        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
+    }
+    
+    public override init(configId: String, adSize: CGSize, isLazyLoad: Bool) {
+        super.init(configId: configId, adSize: adSize, isLazyLoad: isLazyLoad)
+        adUnit = InstreamVideoAdUnit(configId: configId, size: adSize)
+        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    public func createAd(size: CGSize) {
+        let parameters = fillVideoParams(parameters)
+        adUnit.videoParameters = parameters
+        
+        if !self.isLazyLoad {
+            fetchRequest()
+        }
+    }
+    
     override func detectVisible() {
         guard isLazyLoad, !isLazyLoaded  else {
             return
         }
 
-        onLoadInstreamRequest?(customKeywords)
+        fetchRequest()
         isLazyLoaded = true
         #if DEBUG
         print("AUInstreamView --- I'm visible")
         #endif
     }
     
-    public func createAd(size: CGSize) {
-        adUnit = InstreamVideoAdUnit(configId: configId, size: size)
-        
-        let parameters = fillVideoParams(parameters)
-        adUnit.videoParameters = parameters
-        
+    func fetchRequest() {
         adUnit.fetchDemand { [weak self] bidInfo in
-            guard let self = self else { return }
-            if bidInfo.resultCode == .prebidDemandFetchSuccess {
-                if !self.isLazyLoad {
-                    self.customKeywords = bidInfo.targetingKeywords
-                    self.onLoadInstreamRequest?(bidInfo.targetingKeywords)
-                }
+            guard let self = self, let resultCode = AUResultCode(rawValue: bidInfo.resultCode.rawValue) else { return }
+            if resultCode == .audienzzDemandFetchSuccess {
+                self.customKeywords = bidInfo.targetingKeywords
+                self.onLoadInstreamRequest?(bidInfo.targetingKeywords)
             }
         }
     }
