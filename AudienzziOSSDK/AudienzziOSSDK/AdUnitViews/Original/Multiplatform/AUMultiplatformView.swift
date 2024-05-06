@@ -16,33 +16,41 @@ public class AUMultiplatformView: AUAdView, NativeAdDelegate {
     
     public var onGetNativeAd: ((NativeAd) -> Void)?
     
-    public init(configId: String) {
+    public init(configId: String,
+                bannerParameters: AUBannerParameters,
+                videoParameters: AUVideoParameters,
+                nativeParameters: AUNativeRequestParameter) {
         super.init(configId: configId, isLazyLoad: true)
         adUnit = PrebidAdUnit(configId: configId)
-//        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
+        let bannerParam = bannerParameters.makeBannerParameters()
+        let videoParam = fillVideoParams(videoParameters)
+        let nativeParam = nativeParameters.makeNativeParameters()
+        
+        self.prebidRequest = PrebidRequest(bannerParameters: bannerParam, videoParameters: videoParam, nativeParameters: nativeParam)
+        self.adUnitConfiguration = AUAdUnitConfiguration(multiplatformAdUnit: adUnit, request: prebidRequest)
     }
     
-    public override init(configId: String, isLazyLoad: Bool) {
+    public init(configId: String,
+                         isLazyLoad: Bool,
+                         bannerParameters: AUBannerParameters,
+                         videoParameters: AUVideoParameters,
+                         nativeParameters: AUNativeRequestParameter) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
         adUnit = PrebidAdUnit(configId: configId)
-//        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
+        let bannerParam = bannerParameters.makeBannerParameters()
+        let videoParam = fillVideoParams(videoParameters)
+        let nativeParam = nativeParameters.makeNativeParameters()
+        
+        self.prebidRequest = PrebidRequest(bannerParameters: bannerParam, videoParameters: videoParam, nativeParameters: nativeParam)
+        self.adUnitConfiguration = AUAdUnitConfiguration(multiplatformAdUnit: adUnit, request: prebidRequest)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    public func create(with gamRequest: AnyObject,
-                       bannerParameters: AUBannerParameters,
-                       videoParameters: AUVideoParameters,
-                       nativeParameters: AUNativeRequestParameter) {
-        
-        let bannerParam = bannerParameters.makeBannerParameters()
-        let videoParam = fillVideoParams(videoParameters)
-        let nativeParam = nativeParameters.makeNativeParameters()
-        
+    public func create(with gamRequest: AnyObject) {
         self.gamRequest = gamRequest
-        self.prebidRequest = PrebidRequest(bannerParameters: bannerParam, videoParameters: videoParam, nativeParameters: nativeParam)
         
         if !self.isLazyLoad {
             fetchRequest(gamRequest, prebidRequest: prebidRequest)

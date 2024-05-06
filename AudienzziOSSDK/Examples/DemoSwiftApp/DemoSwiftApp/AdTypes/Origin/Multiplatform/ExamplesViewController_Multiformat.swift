@@ -37,14 +37,15 @@ extension ExamplesViewController {
         
         let nativeParameters = nativeParameters()
         
-        multiformatView = AUMultiplatformView(configId: configId, isLazyLoad: false)
+        multiformatView = AUMultiplatformView(configId: configId, isLazyLoad: false,
+                                              bannerParameters: bannerParameters, videoParameters: videoParameters, nativeParameters: nativeParameters)
         multiformatView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: 320, height: 250)
         multiformatView.backgroundColor = .clear
         
         adContainerView.addSubview(multiformatView)
         
         let gamRequest = GAMRequest()
-        multiformatView.create(with: gamRequest, bannerParameters: bannerParameters, videoParameters: videoParameters, nativeParameters: nativeParameters)
+        multiformatView.create(with: gamRequest)
         
         multiformatView.onLoadRequest = { [weak self] request in
             guard let self = self, let updateRequest = request as? GADRequest else { return }
@@ -72,14 +73,16 @@ extension ExamplesViewController {
         
         let nativeParameters = nativeParameters()
         
-        multiformatLazyView = AUMultiplatformView(configId: configId, isLazyLoad: true)
+        multiformatLazyView = AUMultiplatformView(configId: configId,
+                                                  bannerParameters: bannerParameters,
+                                                  videoParameters: videoParameters, nativeParameters: nativeParameters)
         multiformatLazyView.frame = CGRect(x: 0, y: getPositionY(lazyAdContainerView), width: 320, height: 250)
         multiformatLazyView.backgroundColor = .clear
         
         lazyAdContainerView.addSubview(multiformatLazyView)
         
         let gamRequest = GAMRequest()
-        multiformatLazyView.create(with: gamRequest, bannerParameters: bannerParameters, videoParameters: videoParameters, nativeParameters: nativeParameters)
+        multiformatLazyView.create(with: gamRequest)
         
         multiformatLazyView.onLoadRequest = { [weak self] request in
             guard let self = self, let updateRequest = request as? GADRequest else { return }
