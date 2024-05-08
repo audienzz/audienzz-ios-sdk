@@ -17,6 +17,11 @@ import UIKit
 import PrebidMobile
 import PrebidMobileGAMEventHandlers
 
+/**
+ * AUGAMBannerEventHandler.
+ * To create the GAMBannerEventHandler you should provide:
+ * a GAM Ad Unit Id the list of available sizes for this ad unit.
+*/
 @objcMembers
 public class AUGAMBannerEventHandler: NSObject {
     var validGADAdSizes: [NSValue]
@@ -28,10 +33,99 @@ public class AUGAMBannerEventHandler: NSObject {
     }
 }
 
+/**
+ * AUBannerRenderingView.
+ * Ad a view that will display the particular ad. It should be added to the UI.
+ * Lazy load is true by default.
+*/
+@objcMembers
 public class AUBannerRenderingView: AUAdView {
-    private var prebidBannerView: BannerView!
+    private var bannerView: BannerView!
     
     @objc public weak var delegate: AUBannerRenderingAdDelegate?
+    
+    // MARK: - Public Properties
+    
+    @objc public var configID: String {
+        bannerView.configID
+    }
+    
+    @objc public var refreshInterval: TimeInterval {
+        get { bannerView.refreshInterval }
+        set { bannerView.refreshInterval = newValue }
+    }
+    
+    @objc public var additionalSizes: [CGSize]? {
+        get { bannerView.additionalSizes }
+        set { bannerView.additionalSizes = newValue }
+    }
+    
+    @objc public var adFormat: AUAdFormat {
+        get { AUAdFormat(rawValue: bannerView.adFormat.rawValue) }
+        set { bannerView.adFormat = AdFormat(rawValue: newValue.rawValue) }
+    }
+    
+    @objc public var adPosition: AUAdPosition {
+        get { AUAdPosition(rawValue: bannerView.adPosition.rawValue) ?? .undefined }
+        set { bannerView.adPosition = newValue.toAdPosition }
+    }
+    
+    @objc public var ortbConfig: String? {
+        get { bannerView.ortbConfig }
+        set { bannerView.ortbConfig = newValue }
+    }
+
+    /**
+     * Initialize banner rendering view.
+     * Lazy load is true by default. 
+     */
+    public init(configId: String, adSize: CGSize, isLazyLoad: Bool = true, eventHandler: AUGAMBannerEventHandler) {
+        super.init(configId: configId, isLazyLoad: isLazyLoad)
+        
+        let bannerEventHandler = GAMBannerEventHandler(adUnitID: eventHandler.adUnitID,
+                                                       validGADAdSizes: eventHandler.validGADAdSizes)
+        
+        self.bannerView = BannerView(frame: CGRect(origin: .zero, size: adSize),
+                                     configID: configId,
+                                     adSize: adSize,
+                                     eventHandler: bannerEventHandler)
+        
+        self.adUnitConfiguration = AUBannerRenderingConfiguration(bannerView: bannerView)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    /**
+     Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
+     */
+    public func createAd() {
+        bannerView.delegate = self
+        
+        self.addSubview(bannerView)
+        
+        if !isLazyLoad {
+            delegate?.bannerAdDidDisplayOnScreen?()
+            bannerView.loadAd()
+        }
+    }
+    
+    /**
+     Function for prepare and make request for video ad type. If Lazy load enabled request will be send only when view will appear on screen.
+     */
+    public func createVideoAd(with videoParameters: AUVideoParameters) {
+        bannerView.adFormat = .video
+        bannerView.videoParameters.placement = videoParameters.placement?.toPlacement ?? .InBanner
+        bannerView.delegate = self
+        
+        self.backgroundColor = .clear
+        self.addSubview(bannerView)
+        
+        if !isLazyLoad {
+            bannerView.loadAd()
+        }
+    }
     
     internal override func detectVisible() {
         guard isLazyLoad, !isLazyLoaded  else {
@@ -39,50 +133,11 @@ public class AUBannerRenderingView: AUAdView {
         }
 
         delegate?.bannerAdDidDisplayOnScreen?()
-        prebidBannerView.loadAd()
+        bannerView.loadAd()
         isLazyLoaded = true
         #if DEBUG
         print("AUBannerRenderingView --- I'm visible")
         #endif
-    }
-    
-    public func createAd(with eventHandler: AUGAMBannerEventHandler) {
-        let bannerEventHandler = GAMBannerEventHandler(adUnitID: eventHandler.adUnitID,
-                                                       validGADAdSizes: eventHandler.validGADAdSizes)
-        
-        prebidBannerView = BannerView(frame: CGRect(origin: .zero, size: adSize),
-                                      configID: configId,
-                                      adSize: adSize,
-                                      eventHandler: bannerEventHandler)
-        prebidBannerView.delegate = self
-        
-        self.addSubview(prebidBannerView)
-        
-        if !isLazyLoad {
-            delegate?.bannerAdDidDisplayOnScreen?()
-            prebidBannerView.loadAd()
-        }
-    }
-    
-    public func createVideoAd(with eventHandler: AUGAMBannerEventHandler) {
-        let bannerEventHandler = GAMBannerEventHandler(adUnitID: eventHandler.adUnitID,
-                                                       validGADAdSizes: eventHandler.validGADAdSizes)
-
-        prebidBannerView = BannerView(frame: CGRect(origin: .zero, size: adSize),
-                                      configID: configId,
-                                      adSize: adSize,
-                                      eventHandler: bannerEventHandler)
-
-        prebidBannerView.adFormat = .video
-        prebidBannerView.videoParameters.placement = .InBanner
-        prebidBannerView.delegate = self
-        
-        self.backgroundColor = .clear
-        self.addSubview(prebidBannerView)
-        
-        if !isLazyLoad {
-            prebidBannerView.loadAd()
-        }
     }
 }
 

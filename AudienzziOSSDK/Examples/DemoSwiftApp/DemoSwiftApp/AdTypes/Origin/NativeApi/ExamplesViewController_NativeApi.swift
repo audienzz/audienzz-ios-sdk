@@ -31,7 +31,7 @@ fileprivate var nativeLazyBannerView:AUNativeBannerView!
 extension ExamplesViewController {
     func createNativeView() {
         nativeView = AUNativeView(configId: storedPrebidImpression, isLazyLoad: false)
-        nativeView.configuration = nativeConfiguration()
+        nativeView.nativeParameter = nativeConfiguration()
 
         let gamRequest = GAMRequest()
         nativeView.createAd(with: gamRequest)
@@ -112,7 +112,7 @@ extension ExamplesViewController {
 extension ExamplesViewController {
     func createLazyNativeView() {
         nativeLzyView = AUNativeView(configId: storedPrebidImpression)
-        nativeLzyView.configuration = nativeConfiguration()
+        nativeLzyView.nativeParameter = nativeConfiguration()
 
         let gamRequest = GAMRequest()
         nativeLzyView.createAd(with: gamRequest)

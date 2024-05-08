@@ -17,7 +17,7 @@ import UIKit
 import AudienzziOSSDK
 
 // just test if view will display in view port
-class LazyAdContainerView: VisibleView {
+class LazyAdContainerView: UIView {
     
     override func awakeFromNib() {
         super.awakeFromNib()

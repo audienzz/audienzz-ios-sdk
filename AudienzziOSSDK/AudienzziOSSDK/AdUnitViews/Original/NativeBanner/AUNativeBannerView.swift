@@ -16,11 +16,20 @@
 import UIKit
 import PrebidMobile
 
+/**
+ * AUNativeBannerView.
+ * Ad view for demand native banner.
+ * Lazy load is true by default.
+*/
 @objcMembers
 public class AUNativeBannerView: AUAdView {
-    private var gamRequest: AnyObject?
-    private var nativeUnit: NativeRequest!
+    internal var gamRequest: AnyObject?
+    internal var nativeUnit: NativeRequest!
     
+    /**
+     Initialize native banner view.
+     Lazy load is true by default.
+     */
     public init(configId: String, configuration: AUNativeRequestParameter) {
         super.init(configId: configId, isLazyLoad: true)
         let assetes = configuration.assets?.compactMap { $0.unwrap() }
@@ -28,6 +37,10 @@ public class AUNativeBannerView: AUAdView {
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: nativeUnit)
     }
     
+    /**
+     Initialize native banner view.
+     Lazy load is true by default.
+     */
     public init(configId: String, configuration: AUNativeRequestParameter, isLazyLoad: Bool) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
         let assetes = configuration.assets?.compactMap { $0.unwrap() }
@@ -39,6 +52,9 @@ public class AUNativeBannerView: AUAdView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    /**
+     Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
+     */
     public func createAd(with gamRequest: AnyObject, gamBanner: UIView, configuration: AUNativeRequestParameter) {
         nativeUnit.context = configuration.context?.toContentType
         nativeUnit.placementType = configuration.placementType?.toPlacementType
@@ -69,26 +85,6 @@ public class AUNativeBannerView: AUAdView {
         
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
-        }
-    }
-    
-    internal override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
-            return
-        }
-        
-        #if DEBUG
-        print("AUNativeBannerView --- I'm visible")
-        #endif
-        fetchRequest(request)
-        isLazyLoaded = true
-    }
-    
-    internal override func fetchRequest(_ gamRequest: AnyObject) {
-        nativeUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
-            print("Audienz demand fetch for GAM \(resultCode.name())")
-            guard let self = self else { return }
-            self.onLoadRequest?(gamRequest)
         }
     }
 }

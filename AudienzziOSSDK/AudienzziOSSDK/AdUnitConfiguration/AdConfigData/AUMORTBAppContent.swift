@@ -16,6 +16,8 @@
 import Foundation
 import PrebidMobile
 
+/// Describes an [OpenRTB](https://www.iab.com/wp-content/uploads/2016/03/OpenRTB-API-Specification-Version-2-5-FINAL.pdf) app: content object
+
 @objcMembers
 public class AUMORTBAppContent: NSObject {
     /// ID uniquely identifying the content.

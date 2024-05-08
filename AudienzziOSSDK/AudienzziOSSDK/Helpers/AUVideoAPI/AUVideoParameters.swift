@@ -16,6 +16,16 @@
 import Foundation
 import PrebidMobile
 
+/**
+ VideoParameters..
+ If will be nill. Automatically create default video parameters
+ 
+ # Example #
+ *   AUVideoParameters(mimes: ["video/mp4"])
+ * protocols = [AdVideoParameters.Protocols.VAST_2_0]
+ * playbackMethod = [AdVideoParameters.PlaybackMethod.AutoPlaySoundOff]
+ * placement = AdVideoParameters.Placement.InBanner
+ */
 @objcMembers
 public class AUVideoParameters: NSObject {
     

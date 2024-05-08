@@ -27,30 +27,40 @@ public class AUGAMInterstitialEventHandler: NSObject {
     }
 }
 
-public enum AURenderingInsterstitialAdFormat: Int {
+@objc public enum AURenderingInsterstitialAdFormat: Int {
     case banner
     case video
 }
 
+/**
+ * AUInterstitialRenderingView.
+ * Ad a view that will display the particular ad. It should be added to the UI.
+ * Lazy load is true by default.
+*/
 @objcMembers
 public class AUInterstitialRenderingView: AUAdView {
     private var adUnit: InterstitialRenderingAdUnit!
     
     public weak var delegate: AUInterstitialenderingAdDelegate?
     
-    internal override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded  else {
-            return
-        }
-
-        delegate?.interstitialAdDidDisplayOnScreen?()
-        adUnit.loadAd()
-        isLazyLoaded = true
-        #if DEBUG
-        print("AUInterstitialRenderingView --- I'm visible")
-        #endif
+    @objc public var skipButtonArea: Double {
+        get { adUnit.skipButtonArea }
+        set { adUnit.skipButtonArea = newValue }
     }
     
+    @objc public var skipButtonPosition: Position {
+        get { adUnit.skipButtonPosition }
+        set { adUnit.skipButtonPosition = newValue }
+    }
+    
+    @objc public var skipDelay: Double {
+        get { adUnit.skipDelay }
+        set { adUnit.skipDelay = newValue }
+    }
+    
+    /**
+     Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
+     */
     public func createAd(with eventHandler: AUGAMInterstitialEventHandler, adFormat: AURenderingInsterstitialAdFormat) {
         let interstitialEventHandler = GAMInterstitialEventHandler(adUnitID: eventHandler.adUnitID)
         
@@ -71,8 +81,22 @@ public class AUInterstitialRenderingView: AUAdView {
         }
     }
     
+    /// It is expected from the user to call this method on main thread
     public func showAd(_ controller: UIViewController) {
         adUnit.show(from: controller)
+    }
+    
+    internal override func detectVisible() {
+        guard isLazyLoad, !isLazyLoaded  else {
+            return
+        }
+
+        delegate?.interstitialAdDidDisplayOnScreen?()
+        adUnit.loadAd()
+        isLazyLoaded = true
+        #if DEBUG
+        print("AUInterstitialRenderingView --- I'm visible")
+        #endif
     }
 }
 

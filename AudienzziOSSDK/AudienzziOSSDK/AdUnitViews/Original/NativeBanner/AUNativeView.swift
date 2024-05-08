@@ -16,21 +16,48 @@
 import UIKit
 import PrebidMobile
 
+@objc public protocol AUNativeAdDelegate : AnyObject{
+    /**
+     * Native was not found in the server returned response,
+     * Please display the ad as regular ways
+     */
+    func nativeAdNotFound()
+    /**
+     * Native ad was returned, however, the bid is not valid for displaying
+     * Should be treated as on ad load failed
+     */
+    func nativeAdNotValid()
+}
+
+/**
+ * AUNativeView.
+ * Ad view for demand  Native ad type.
+ * Lazy load is true by default.
+*/
 @objcMembers
-public class AUNativeView: AUAdView, NativeAdDelegate {
-    private var nativeUnit: NativeRequest!
-    private var nativeAd: NativeAd!
-    private var gamRequest: AnyObject?
+public class AUNativeView: AUAdView {
+    internal var nativeUnit: NativeRequest!
+    internal var nativeAd: NativeAd!
+    internal var gamRequest: AnyObject?
     
     public var onGetNativeAd: ((NativeAd) -> Void)?
-    public var configuration: AUNativeRequestParameter!
+    public var nativeParameter: AUNativeRequestParameter!
+    public weak var delegate: AUNativeAdDelegate?
     
+    /**
+     Initialize native style view.
+     Lazy load is true by default.
+     */
     public init(configId: String) {
         super.init(configId: configId, isLazyLoad: true)
         nativeUnit = NativeRequest(configId: configId)
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: nativeUnit)
     }
     
+    /**
+     Initialize native style view.
+     Lazy load is true by default.
+     */
     public override init(configId: String, isLazyLoad: Bool) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
         nativeUnit = NativeRequest(configId: configId)
@@ -41,30 +68,33 @@ public class AUNativeView: AUAdView, NativeAdDelegate {
         fatalError("init(coder:) has not been implemented")
     }
     
+    /**
+     Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
+     */
     public func createAd(with gamRequest: AnyObject) {
-        nativeUnit.context = configuration.context?.toContentType
-        nativeUnit.assets = configuration.assets?.compactMap { $0.unwrap() }
-        nativeUnit.placementType = configuration.placementType?.toPlacementType
-        nativeUnit.contextSubType = configuration.contextSubType?.toContextSubType
-        nativeUnit.eventtrackers = configuration.eventtrackers?.compactMap { $0.unwrap() }
+        nativeUnit.context = nativeParameter.context?.toContentType
+        nativeUnit.assets = nativeParameter.assets?.compactMap { $0.unwrap() }
+        nativeUnit.placementType = nativeParameter.placementType?.toPlacementType
+        nativeUnit.contextSubType = nativeParameter.contextSubType?.toContextSubType
+        nativeUnit.eventtrackers = nativeParameter.eventtrackers?.compactMap { $0.unwrap() }
 
-        if let placementCount = configuration.placementCount {
+        if let placementCount = nativeParameter.placementCount {
             nativeUnit.placementCount = placementCount
         }
-        if let sequence = configuration.sequence {
+        if let sequence = nativeParameter.sequence {
             nativeUnit.sequence = sequence
         }
-        if let asseturlsupport = configuration.asseturlsupport {
+        if let asseturlsupport = nativeParameter.asseturlsupport {
             nativeUnit.asseturlsupport = asseturlsupport
         }
-        if let durlsupport = configuration.durlsupport {
+        if let durlsupport = nativeParameter.durlsupport {
             nativeUnit.durlsupport = durlsupport
         }
-        if let privacy = configuration.privacy {
+        if let privacy = nativeParameter.privacy {
             nativeUnit.privacy = privacy
         }
         
-        nativeUnit.ext = configuration.ext
+        nativeUnit.ext = nativeParameter.ext
         self.gamRequest = gamRequest
         
         if !self.isLazyLoad {
@@ -74,15 +104,17 @@ public class AUNativeView: AUAdView, NativeAdDelegate {
     
     @objc
     public func findNative(adObject: AnyObject) {
-        if isLazyLoad, isLazyLoaded {
-            Utils.shared.delegate = self
-            Utils.shared.findNative(adObject: adObject)
-        } else {
-            Utils.shared.delegate = self
-            Utils.shared.findNative(adObject: adObject)
-        }
+        findingNative(adObject)
     }
     
+    @discardableResult
+    public func registerView(clickableViews: [UIView]? ) -> Bool {
+        nativeAd.registerView(view: self, clickableViews: clickableViews)
+    }
+}
+
+@objc
+extension AUNativeView: NativeAdDelegate {
     public func nativeAdLoaded(ad: NativeAd) {
         nativeAd = ad
         if isLazyLoad, isLazyLoaded {
@@ -91,38 +123,14 @@ public class AUNativeView: AUAdView, NativeAdDelegate {
             self.onGetNativeAd?(ad)
         }
     }
-    
-    @discardableResult
-    public func registerView(clickableViews: [UIView]? ) -> Bool {
-        nativeAd.registerView(view: self, clickableViews: clickableViews)
-    }
 
     public func nativeAdNotFound() {
         print("Native ad not found")
+        delegate?.nativeAdNotFound()
     }
 
     public func nativeAdNotValid() {
         print("Native ad not valid")
-    }
-    
-    internal override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
-            return
-        }
-        
-        #if DEBUG
-        print("AUNativeView --- I'm visible")
-        #endif
-        fetchRequest(request)
-        isLazyLoaded = true
-    }
-    
-    internal override func fetchRequest(_ gamRequest: AnyObject) {
-        nativeUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
-            print("Audienz demand fetch for GAM \(resultCode.name())")
-            guard let self = self else { return }
-            self.onLoadRequest?(gamRequest)
-        }
+        delegate?.nativeAdNotValid()
     }
 }
-

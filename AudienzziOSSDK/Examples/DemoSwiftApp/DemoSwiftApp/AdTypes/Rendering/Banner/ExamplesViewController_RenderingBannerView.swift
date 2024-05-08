@@ -31,30 +31,36 @@ extension ExamplesViewController {
     func createRenderingBannerView() {
         let eventHandler = AUGAMBannerEventHandler(adUnitID: gamAdUnitDisplayBannerRendering,
                                                    validGADAdSizes: [GADAdSizeBanner].map(NSValueFromGADAdSize))
-        bannerRenderingView = AUBannerRenderingView(configId: storedImpDisplayBanner, adSize: adSize, isLazyLoad: false)
+        bannerRenderingView = AUBannerRenderingView(configId: storedImpDisplayBanner, 
+                                                    adSize: adSize,
+                                                    isLazyLoad: false, 
+                                                    eventHandler: eventHandler)
         bannerRenderingView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: 320, height: 50))
         bannerRenderingView.delegate = self
-        bannerRenderingView.createAd(with: eventHandler)
+        bannerRenderingView.createAd()
         adContainerView.addSubview(bannerRenderingView)
     }
     
     func createRenderingBannerVideoView() {
         let eventHandler = AUGAMBannerEventHandler(adUnitID: gamAdUnitVideoBannerRendering,
                                                    validGADAdSizes: [GADAdSizeMediumRectangle].map(NSValueFromGADAdSize))
-        bannerRenderingVideoView = AUBannerRenderingView(configId: storedImpVideoBanner, adSize: adSize, isLazyLoad: false)
+        bannerRenderingVideoView = AUBannerRenderingView(configId: storedImpVideoBanner,
+                                                         adSize: adSize,
+                                                         isLazyLoad: false,
+                                                         eventHandler: eventHandler)
         bannerRenderingVideoView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: 320, height: 50))
         bannerRenderingVideoView.delegate = self
-        bannerRenderingVideoView.createAd(with: eventHandler)
+        bannerRenderingVideoView.createAd()
         adContainerView.addSubview(bannerRenderingVideoView)
     }
     
     func createRenderingBannerLazyView() {
         let eventHandler = AUGAMBannerEventHandler(adUnitID: gamAdUnitDisplayBannerRendering,
                                                    validGADAdSizes: [GADAdSizeBanner].map(NSValueFromGADAdSize))
-        bannerRenderingLazyView = AUBannerRenderingView(configId: storedImpDisplayBanner, adSize: adSize, isLazyLoad: true)
+        bannerRenderingLazyView = AUBannerRenderingView(configId: storedImpDisplayBanner, adSize: adSize, eventHandler: eventHandler)
         bannerRenderingLazyView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)), size: CGSize(width: 320, height: 50))
         bannerRenderingLazyView.delegate = self
-        bannerRenderingLazyView.createAd(with: eventHandler)
+        bannerRenderingLazyView.createAd()
         lazyAdContainerView.addSubview(bannerRenderingLazyView)
     }
 }

@@ -23,7 +23,7 @@ public class AUAdView: VisibleView {
     private(set) var configId: String
     private(set) var adSize: CGSize
     
-    public var adUnitConfiguration: AUAdUnitConfiguration!
+    public var adUnitConfiguration: AUAdUnitConfigurationType!
     public var onLoadRequest: ((AnyObject) -> Void)?
     
     public override func awakeFromNib() {
@@ -89,7 +89,7 @@ public class AUAdView: VisibleView {
         return parameters
     }
     
-    internal func fetchRequest(_ gamRequest: AnyObject) {}
+    internal dynamic func fetchRequest(_ gamRequest: AnyObject) {}
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [AdFormat] {
         formats.compactMap { AdFormat(rawValue: $0.rawValue) }

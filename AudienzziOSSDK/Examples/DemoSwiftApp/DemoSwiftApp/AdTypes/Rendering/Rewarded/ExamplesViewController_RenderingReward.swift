@@ -26,7 +26,7 @@ extension ExamplesViewController {
     
     func createRenderingRewardLazyView() {
         let eventHandler = AUGAMRewardedAdEventHandler(adUnitID: gamAdUnitVideoRewardedRendering)
-        rewardedRenderingLazyView = AURewardedRenderingView(configId: storedImpVideoRewarded, isLazyLoad: true)
+        rewardedRenderingLazyView = AURewardedRenderingView(configId: storedImpVideoRewarded)
         rewardedRenderingLazyView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)), size: CGSize(width: 320, height: 50))
         rewardedRenderingLazyView.delegate = self
         rewardedRenderingLazyView.createAd(with: eventHandler)

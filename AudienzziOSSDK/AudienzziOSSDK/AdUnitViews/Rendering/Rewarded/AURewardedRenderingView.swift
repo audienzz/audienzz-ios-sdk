@@ -27,10 +27,41 @@ public class AUGAMRewardedAdEventHandler: NSObject {
     }
 }
 
+/**
+ * AUInstreamView.
+ * Ad view for demand instream ad type.
+ * Lazy load is true by default.
+*/
 @objcMembers
 public class AURewardedRenderingView: AUAdView {
     private var rewardedAdUnit: RewardedAdUnit!
     public weak var delegate: AURewardedAdUnitDelegate?
+    
+    /**
+     Initialize rewarded view.
+     Lazy load is true by default.
+     */
+    public override init(configId: String, isLazyLoad: Bool = true) {
+        super.init(configId: configId, isLazyLoad: isLazyLoad)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    /**
+     Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
+     */
+    public func createAd(with eventHandler: AUGAMRewardedAdEventHandler, minSizePerc: NSValue? = nil) {
+        let rewardedEventHandler = GAMRewardedAdEventHandler(adUnitID: eventHandler.adUnitID)
+        rewardedAdUnit = RewardedAdUnit(configID: configId, eventHandler: rewardedEventHandler)
+        rewardedAdUnit.delegate = self
+        
+        if !isLazyLoad {
+            self.delegate?.rewardedAdDidDisplayOnScreen?()
+            rewardedAdUnit.loadAd()
+        }
+    }
     
     internal override func detectVisible() {
         guard isLazyLoad, !isLazyLoaded  else {
@@ -43,17 +74,6 @@ public class AURewardedRenderingView: AUAdView {
         #if DEBUG
         print("AURewardedRenderingView --- I'm visible")
         #endif
-    }
-    
-    public func createAd(with eventHandler: AUGAMRewardedAdEventHandler) {
-        let rewardedEventHandler = GAMRewardedAdEventHandler(adUnitID: eventHandler.adUnitID)
-        rewardedAdUnit = RewardedAdUnit(configID: configId, eventHandler: rewardedEventHandler)
-        rewardedAdUnit.delegate = self
-        
-        if !isLazyLoad {
-            self.delegate?.rewardedAdDidDisplayOnScreen?()
-            rewardedAdUnit.loadAd()
-        }
     }
 }
 

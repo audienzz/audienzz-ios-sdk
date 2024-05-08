@@ -35,7 +35,8 @@ extension UIView {
     }
 }
 
-open class VisibleView: UIView {
+@objcMembers
+public class VisibleView: UIView {
     
     open override class func awakeFromNib() {
         super.awakeFromNib()
@@ -51,7 +52,7 @@ open class VisibleView: UIView {
         }
     }
     
-    internal func detectVisible() {
+    internal dynamic func detectVisible() {
     }
     
     open override func removeFromSuperview() {

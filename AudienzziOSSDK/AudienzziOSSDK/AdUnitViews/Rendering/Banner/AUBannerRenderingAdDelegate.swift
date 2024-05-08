@@ -20,11 +20,10 @@ import PrebidMobile
     ///Called when ad is shoed on display and before load (used for lazy load)
     @objc optional func bannerAdDidDisplayOnScreen()
 
-    /** @name Methods */
-    /*!
-     @abstract Asks the delegate for a view controller instance to use for presenting modal views
-     as a result of user interaction on an ad. Usual implementation may simply return self,
-     if it is view controller class.
+    /**
+     * Asks the delegate for a view controller instance to use for presenting modal views
+     * as a result of user interaction on an ad. Usual implementation may simply return self,
+     * if it is view controller class.
      */
     func bannerViewPresentationController() -> UIViewController?
 

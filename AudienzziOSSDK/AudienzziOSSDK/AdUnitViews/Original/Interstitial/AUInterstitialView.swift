@@ -16,23 +16,22 @@
 import UIKit
 import PrebidMobile
 
+/**
+ AUInterstitialView.
+ Ad view for demand Interstitial and/or video.
+ Lazy load is true by default.
+*/
 @objcMembers
 public class AUInterstitialView: AUAdView {
-    private var adUnit: InterstitialAdUnit!
-    private var gamRequest: AnyObject?
+    internal var adUnit: InterstitialAdUnit!
+    internal var gamRequest: AnyObject?
     
-    /**
-     VideoParameters..
-     If will be nill. Automatically create default video parameters
-     
-     # Example #
-     *   AUVideoParameters(mimes: ["video/mp4"])
-     * protocols = [AdVideoParameters.Protocols.VAST_2_0]
-     * playbackMethod = [AdVideoParameters.PlaybackMethod.AutoPlaySoundOff]
-     * placement = AdVideoParameters.Placement.InBanner
-     */
     public var parameters: AUVideoParameters?
     
+    /**
+     Initialize Interstitial view
+     Lazy load is true by default.
+     */
     public init(configId: String, adFormats: [AUAdFormat]) {
         super.init(configId: configId, isLazyLoad: true)
         adUnit = InterstitialAdUnit(configId: configId)
@@ -41,6 +40,10 @@ public class AUInterstitialView: AUAdView {
         self.adUnit.adFormats = Set(unwrapAdFormat(adFormats))
     }
     
+    /**
+     Initialize Interstitial view
+     Lazy load is true by default.
+     */
     public init(configId: String, adFormats: [AUAdFormat], isLazyLoad: Bool) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
         self.adUnit = InterstitialAdUnit(configId: configId)
@@ -49,6 +52,10 @@ public class AUInterstitialView: AUAdView {
         self.adUnit.adFormats = Set(unwrapAdFormat(adFormats))
     }
     
+    /**
+     Initialize Interstitial view. Convenience variant
+     Lazy load is true by default.
+     */
     public convenience init(configId: String, adFormats: [AUAdFormat], isLazyLoad: Bool, minWidthPerc: Int, minHeightPerc: Int) {
         self.init(configId: configId, adFormats: adFormats, isLazyLoad: isLazyLoad)
         self.adUnit = InterstitialAdUnit(configId: configId, minWidthPerc: minWidthPerc, minHeightPerc: minHeightPerc)
@@ -60,32 +67,13 @@ public class AUInterstitialView: AUAdView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    /**
+     Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
+     */
     public func createAd(with gamRequest: AnyObject) {
-        
-
         self.gamRequest = gamRequest
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
-        }
-    }
-    
-    internal override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
-            return
-        }
-        
-        #if DEBUG
-        print("AUInterstitialView --- I'm visible")
-        #endif
-        fetchRequest(request)
-        isLazyLoaded = true
-    }
-    
-    internal override func fetchRequest(_ gamRequest: AnyObject) {
-        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
-            print("Audienzz demand fetch for GAM \(resultCode.name())")
-            guard let self = self else { return }
-            self.onLoadRequest?(gamRequest)
         }
     }
 }

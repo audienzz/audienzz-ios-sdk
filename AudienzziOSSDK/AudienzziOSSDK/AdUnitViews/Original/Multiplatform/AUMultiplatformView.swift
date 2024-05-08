@@ -1,47 +1,54 @@
-//
-//  AUMultiplatformView.swift
-//  AudienzziOSSDK
-//
-//  Created by Konstantin Vasyliev on 09.04.2024.
-//
-
+/*   Copyright 2018-2024 Audienzz.org, Inc.
+ 
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+ http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
 import UIKit
 import PrebidMobile
 
+/**
+ * AUMultiplatformView.
+ * Ad view for demand combinations of ad type. It allows to run bid requests with any combination of banner, video, and native formats.
+ * Lazy load is true by default.
+*/
 @objcMembers
-public class AUMultiplatformView: AUAdView, NativeAdDelegate {
-    private var adUnit: PrebidAdUnit!
-    private var gamRequest: AnyObject?
-    private var prebidRequest: PrebidRequest!
+public class AUMultiplatformView: AUAdView {
+    internal var adUnit: PrebidAdUnit!
+    internal var gamRequest: AnyObject?
+    internal var prebidRequest: PrebidRequest!
     
+    public weak var delegate: AUNativeAdDelegate?
     public var onGetNativeAd: ((NativeAd) -> Void)?
     
+    /**
+     * Initialize multiformat view.
+     * Lazy load is true by default. Banner parametrs is nil by default. Video parameters is nill by default. Native parameters is nill by default.
+     * isInterstitial is false by default. isRewarded is false by default.
+     */
     public init(configId: String,
-                bannerParameters: AUBannerParameters,
-                videoParameters: AUVideoParameters,
-                nativeParameters: AUNativeRequestParameter) {
-        super.init(configId: configId, isLazyLoad: true)
-        adUnit = PrebidAdUnit(configId: configId)
-        let bannerParam = bannerParameters.makeBannerParameters()
-        let videoParam = fillVideoParams(videoParameters)
-        let nativeParam = nativeParameters.makeNativeParameters()
-        
-        self.prebidRequest = PrebidRequest(bannerParameters: bannerParam, videoParameters: videoParam, nativeParameters: nativeParam)
-        self.adUnitConfiguration = AUAdUnitConfiguration(multiplatformAdUnit: adUnit, request: prebidRequest)
-    }
-    
-    public init(configId: String,
-                         isLazyLoad: Bool,
-                         bannerParameters: AUBannerParameters,
-                         videoParameters: AUVideoParameters,
-                         nativeParameters: AUNativeRequestParameter) {
+                isLazyLoad: Bool = true,
+                bannerParameters: AUBannerParameters? = nil,
+                videoParameters: AUVideoParameters? = nil,
+                nativeParameters: AUNativeRequestParameter? = nil,
+                isInterstitial: Bool = false,
+                isRewarded: Bool = false) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
         adUnit = PrebidAdUnit(configId: configId)
-        let bannerParam = bannerParameters.makeBannerParameters()
-        let videoParam = fillVideoParams(videoParameters)
-        let nativeParam = nativeParameters.makeNativeParameters()
+        let bannerParam: BannerParameters? = bannerParameters != nil ? bannerParameters!.makeBannerParameters() : nil
+        let videoParam: VideoParameters? = videoParameters != nil ? fillVideoParams(videoParameters) : nil
+        let nativeParam: NativeParameters? = nativeParameters != nil ? nativeParameters!.makeNativeParameters() : nil
         
-        self.prebidRequest = PrebidRequest(bannerParameters: bannerParam, videoParameters: videoParam, nativeParameters: nativeParam)
+        self.prebidRequest = PrebidRequest(bannerParameters: bannerParam, videoParameters: videoParam,
+                                           nativeParameters: nativeParam, isInterstitial: isInterstitial, isRewarded: isRewarded)
         self.adUnitConfiguration = AUAdUnitConfiguration(multiplatformAdUnit: adUnit, request: prebidRequest)
     }
     
@@ -49,6 +56,9 @@ public class AUMultiplatformView: AUAdView, NativeAdDelegate {
         fatalError("init(coder:) has not been implemented")
     }
     
+    /**
+     Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
+     */
     public func create(with gamRequest: AnyObject) {
         self.gamRequest = gamRequest
         
@@ -59,15 +69,12 @@ public class AUMultiplatformView: AUAdView, NativeAdDelegate {
     
     @objc
     public func findNative(adObject: AnyObject) {
-        if isLazyLoad, isLazyLoaded {
-            Utils.shared.delegate = self
-            Utils.shared.findNative(adObject: adObject)
-        } else {
-            Utils.shared.delegate = self
-            Utils.shared.findNative(adObject: adObject)
-        }
+        findingNative(adObject: adObject)
     }
-    
+}
+
+@objc
+extension AUMultiplatformView: NativeAdDelegate {
     public func nativeAdLoaded(ad: NativeAd) {
         if isLazyLoad, isLazyLoaded {
             self.onGetNativeAd?(ad)
@@ -78,28 +85,11 @@ public class AUMultiplatformView: AUAdView, NativeAdDelegate {
     
     public func nativeAdNotFound() {
         print("Native ad not found")
+        delegate?.nativeAdNotFound()
     }
 
     public func nativeAdNotValid() {
         print("Native ad not valid")
-    }
-    
-    internal override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
-            return
-        }
-        
-        #if DEBUG
-        print("AUMultiplatformView --- I'm visible")
-        #endif
-        fetchRequest(request, prebidRequest: prebidRequest)
-        isLazyLoaded = true
-    }
-    
-    func fetchRequest(_ gamRequest: AnyObject, prebidRequest: PrebidRequest) {
-        adUnit.fetchDemand(adObject: gamRequest, request: prebidRequest) { [weak self] _ in
-            guard let self = self else { return }
-            self.onLoadRequest?(gamRequest)
-        }
+        delegate?.nativeAdNotValid()
     }
 }

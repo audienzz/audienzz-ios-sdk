@@ -16,8 +16,17 @@
 import Foundation
 import PrebidMobile
 
+@objc public protocol AUAdUnitConfigurationType: AUAdUnitConfigurationSlotProtocol,
+                                                 AUAdUnitConfigurationAutorefreshProtocol,
+                                                 AUAdUnitConfigurationAppContentProtocol,
+                                                 AUAdUnitConfigurationUserDataProtocol,
+                                                 AUAdUnitConfigurationGRIPProtocol,
+                                                 AUAdUnitConfigurationContextKeywordProtocol,
+                                                 AUADunitConfigurationDataObjectProtocol {}
+
+/// Ad Slot is an identifier tied to the placement the ad will be delivered in
 @objc public protocol AUAdUnitConfigurationSlotProtocol {
-    var pbAdSlot: String? { get set }
+    var adSlot: String? { get set }
 }
 
 @objc public protocol AUAdUnitConfigurationAutorefreshProtocol {
@@ -39,6 +48,8 @@ import PrebidMobile
     func resumeAutoRefresh()
 }
 
+/// The ContentObject allows you to provide more details about content within the app. All properties provided to the ContentObject will be sent in the app.content field of the bid request
+/// Using the following methods you can add app.content.data objects to the bid requests.
 @objc public protocol AUAdUnitConfigurationAppContentProtocol {
     
     func setAppContent(_ appContentObject: AUMORTBAppContent)
@@ -54,6 +65,7 @@ import PrebidMobile
     func clearAppContentData()
 }
 
+/// Using the following methods you can add user.data objects to the bid requests.
 @objc public protocol AUAdUnitConfigurationUserDataProtocol {
     func getUserData() -> [AUMORTBContentData]?
 
@@ -64,12 +76,14 @@ import PrebidMobile
     func clearUserData()
 }
 
+/// Using the following method, you can set the impression-level GPID value to the bid request:
 @objc public protocol AUAdUnitConfigurationGRIPProtocol {
     func setGPID(_ gpid: String?)
 
     func getGPID() -> String?
 }
 
+/// Ad Unit context keywords object is a free form list of comma separated keywords about the app as defined in app.keyword in OpenRTB 2.5. The addContextKeyword function adds a single keyword to the ad unit.
 @objc public protocol AUAdUnitConfigurationContextKeywordProtocol {
     /**
      * This method obtains the keyword for adunit targeting
@@ -93,6 +107,17 @@ import PrebidMobile
     func clearExtKeywords()
 }
 
+/**
+ The Data object is free form data (also known as First Party Data) supplied by the publisher to provide additional targeting of the user or inventory context, used primarily for striking PMP (Private MarketPlace) deals with Advertisers. Data supplied in the data parameters are typically not sent to DSPs whereas information sent in non-data objects (i.e. setYearOfBirth, setGender, etc.) will be. Access to FPD can be limited to a supplied set of Prebid bidders via an access control list.
+
+ Data is broken up into two different data types:
+
+ User
+ Global in scope only
+ Inventory (context)
+ Global scope
+ Ad Unit grain
+ */
 @objc public protocol AUADunitConfigurationDataObjectProtocol {
     /**
      * This method obtains the ext data keyword & value for adunit targeting
@@ -118,7 +143,7 @@ import PrebidMobile
 }
 
 @objcMembers
-public class AUAdUnitConfiguration: NSObject {
+public class AUAdUnitConfiguration: AUAdUnitConfigurationType {
     private var adUnit: AdUnit!
     private var prebidAdUnit: PrebidAdUnit?
     private var prebidRequest: PrebidRequest?
@@ -136,19 +161,19 @@ public class AUAdUnitConfiguration: NSObject {
 //MARK: - AUAdUnitConfigurationSlotProtocol
 extension AUAdUnitConfiguration: AUAdUnitConfigurationSlotProtocol {
     
-    public var pbAdSlot: String? {
-        get { get_pbAdSlot() }
-        set { set_pbAdSlot(newValue: newValue) }
+    public var adSlot: String? {
+        get { get_AdSlot() }
+        set { set_AdSlot(newValue: newValue) }
     }
     
-    public func get_pbAdSlot() -> String? {
+    public func get_AdSlot() -> String? {
         guard let multiplatformAdUnit = prebidAdUnit else {
             return adUnit.pbAdSlot
         }
         
         return multiplatformAdUnit.pbAdSlot
     }
-    public func set_pbAdSlot(newValue: String?) {
+    public func set_AdSlot(newValue: String?) {
         guard let multiplatformAdUnit = prebidAdUnit else {
             adUnit.pbAdSlot = newValue
             return
@@ -236,7 +261,7 @@ extension AUAdUnitConfiguration: AUAdUnitConfigurationAppContentProtocol {
     }
     
     private func get_AppContent() -> AUMORTBAppContent? {
-        guard let request = prebidRequest else {
+        guard prebidRequest != nil else {
             return AUMORTBAppContent(adUnit.getAppContent())
         }
 
@@ -354,7 +379,7 @@ extension AUAdUnitConfiguration: AUAdUnitConfigurationUserDataProtocol {
     }
     
     private func get_UserData() -> [AUMORTBContentData]? {
-        guard let request = prebidRequest else {
+        guard prebidRequest != nil else {
             return adUnit.getUserData()?.compactMap { AUMORTBContentData($0) }
         }
         
@@ -409,7 +434,7 @@ extension AUAdUnitConfiguration: AUAdUnitConfigurationGRIPProtocol {
     }
 
     private func get_GPID() -> String? {
-        guard let request = prebidRequest else {
+        guard prebidRequest != nil else {
             return adUnit.getGPID()
         }
         
