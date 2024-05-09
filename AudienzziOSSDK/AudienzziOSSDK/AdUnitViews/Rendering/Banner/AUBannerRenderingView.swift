@@ -50,6 +50,14 @@ public class AUBannerRenderingView: AUAdView {
         bannerView.configID
     }
     
+    @objc public var bannerParameters: AUBannerParameters {
+        get { AUBannerParameters(with: bannerView.bannerParameters) }
+    }
+    
+    @objc public var videoParameters: AUVideoParameters {
+        get { AUVideoParameters(bannerView.videoParameters) }
+    }
+    
     @objc public var refreshInterval: TimeInterval {
         get { bannerView.refreshInterval }
         set { bannerView.refreshInterval = newValue }
@@ -116,7 +124,21 @@ public class AUBannerRenderingView: AUAdView {
      */
     public func createVideoAd(with videoParameters: AUVideoParameters) {
         bannerView.adFormat = .video
-        bannerView.videoParameters.placement = videoParameters.placement?.toPlacement ?? .InBanner
+        
+        bannerView.videoParameters.protocols = videoParameters.toProtocols()
+        bannerView.videoParameters.playbackMethod = videoParameters.toPlaybackMethods()
+        bannerView.videoParameters.placement = videoParameters.placement?.toPlacement
+        
+        bannerView.videoParameters.api = videoParameters.toApi()
+        bannerView.videoParameters.startDelay = videoParameters.startDelay?.toStartDelay
+        bannerView.videoParameters.adSize = videoParameters.adSize
+        
+        bannerView.videoParameters.maxBitrate = videoParameters.toSingleContainerInt(videoParameters.maxBitrate)
+        bannerView.videoParameters.minBitrate = videoParameters.toSingleContainerInt(videoParameters.minBitrate)
+        bannerView.videoParameters.maxDuration = videoParameters.toSingleContainerInt(videoParameters.maxDuration)
+        bannerView.videoParameters.minDuration = videoParameters.toSingleContainerInt(videoParameters.minDuration)
+        bannerView.videoParameters.linearity = videoParameters.toSingleContainerInt(videoParameters.linearity)
+        
         bannerView.delegate = self
         
         self.backgroundColor = .clear

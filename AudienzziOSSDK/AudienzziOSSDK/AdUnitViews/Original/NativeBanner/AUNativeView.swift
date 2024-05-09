@@ -37,10 +37,10 @@ import PrebidMobile
 @objcMembers
 public class AUNativeView: AUAdView {
     internal var nativeUnit: NativeRequest!
-    internal var nativeAd: NativeAd!
+    internal var nativeAd: AUNativeAd!
     internal var gamRequest: AnyObject?
     
-    public var onGetNativeAd: ((NativeAd) -> Void)?
+    public var onGetNativeAd: ((AUNativeAd) -> Void)?
     public var nativeParameter: AUNativeRequestParameter!
     public weak var delegate: AUNativeAdDelegate?
     
@@ -116,11 +116,11 @@ public class AUNativeView: AUAdView {
 @objc
 extension AUNativeView: NativeAdDelegate {
     public func nativeAdLoaded(ad: NativeAd) {
-        nativeAd = ad
+        nativeAd = AUNativeAd(ad)
         if isLazyLoad, isLazyLoaded {
-            self.onGetNativeAd?(ad)
+            self.onGetNativeAd?(nativeAd)
         } else {
-            self.onGetNativeAd?(ad)
+            self.onGetNativeAd?(nativeAd)
         }
     }
 

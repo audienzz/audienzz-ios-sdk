@@ -26,4 +26,12 @@ extension AUBannerParameters {
         
         return bannerParameters
     }
+    
+    internal convenience init(with pbParams: BannerParameters) {
+        self.init()
+        self.api = pbParams.api?.compactMap { AUApi(apiType: AUApiType(rawValue: $0.value) ?? .MRAID_2) }
+        self.interstitialMinWidthPerc = pbParams.interstitialMinWidthPerc
+        self.interstitialMinHeightPerc = pbParams.interstitialMinHeightPerc
+        self.adSizes = pbParams.adSizes
+    }
 }

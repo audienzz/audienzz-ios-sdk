@@ -44,7 +44,7 @@ public class AUMultiplatformView: AUAdView {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
         adUnit = PrebidAdUnit(configId: configId)
         let bannerParam: BannerParameters? = bannerParameters != nil ? bannerParameters!.makeBannerParameters() : nil
-        let videoParam: VideoParameters? = videoParameters != nil ? fillVideoParams(videoParameters) : nil
+        let videoParam: VideoParameters? = videoParameters?.unwrap()
         let nativeParam: NativeParameters? = nativeParameters != nil ? nativeParameters!.makeNativeParameters() : nil
         
         self.prebidRequest = PrebidRequest(bannerParameters: bannerParam, videoParameters: videoParam,

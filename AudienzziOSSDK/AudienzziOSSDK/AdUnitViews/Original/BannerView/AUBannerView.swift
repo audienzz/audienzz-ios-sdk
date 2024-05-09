@@ -70,8 +70,7 @@ public class AUBannerView: AUAdView {
         }
         addSubview(gamBanner)
         
-        let videoParameters = fillVideoParams(self.parameters)
-        adUnit.videoParameters = videoParameters
+        adUnit.videoParameters = self.parameters?.unwrap() ?? defaultVideoParameters()
 
         self.gamRequest = gamRequest
 

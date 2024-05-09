@@ -38,11 +38,11 @@ extension UIView {
 @objcMembers
 public class VisibleView: UIView {
     
-    open override class func awakeFromNib() {
+    public override class func awakeFromNib() {
         super.awakeFromNib()
     }
     
-    open override func didMoveToWindow() {
+    public override func didMoveToWindow() {
         super.didMoveToWindow()
 
         if self.window != nil {
@@ -55,7 +55,7 @@ public class VisibleView: UIView {
     internal dynamic func detectVisible() {
     }
     
-    open override func removeFromSuperview() {
+    public override func removeFromSuperview() {
         removeAsSuperviewObserver()
         super.removeFromSuperview()
     }
@@ -81,7 +81,7 @@ public class VisibleView: UIView {
         }
     }
     
-    open override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+    public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if keyPath == "contentOffset" {
             checkIfFrameIsVisible()
         }

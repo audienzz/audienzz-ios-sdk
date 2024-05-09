@@ -32,7 +32,7 @@ class ExampleNativeView: UIView {
         super.init(coder: coder)
     }
     
-    func setupFromAd(ad: NativeAd) {
+    func setupFromAd(ad: AUNativeAd) {
         if let iconString = ad.iconUrl {
             download(iconString) { result in
                 if case let icon = result {

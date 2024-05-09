@@ -80,39 +80,4 @@ public class AUVideoParameters: NSObject {
     public func setSize(_ size: NSValue) {
         adSize = size.cgSizeValue
     }
-    
-    internal func toSingleContainerInt(_ value: Int?) -> SingleContainerInt? {
-        guard let param = value else {
-            return nil
-        }
-        
-        return SingleContainerInt(integerLiteral: param)
-    }
-    
-    internal func toProtocols() -> [Signals.Protocols]? {
-        guard let values = protocols else {
-            return nil
-        }
-        
-        let array = values.compactMap({ $0.toProtocol })
-        return array
-    }
-    
-    internal func toPlaybackMethods() -> [Signals.PlaybackMethod]? {
-        guard let values = playbackMethod else {
-            return nil
-        }
-        
-        let array = values.compactMap({ $0.toPlaybackMethod })
-        return array
-    }
-    
-    internal func toApi() -> [Signals.Api]? {
-        guard let values = api else {
-            return nil
-        }
-        
-        let array = values.compactMap({ $0.apiType.toAPI })
-        return array
-    }
 }

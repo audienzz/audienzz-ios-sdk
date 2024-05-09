@@ -62,33 +62,6 @@ public class AUAdView: VisibleView {
         self.configId = configId
     }
     
-    internal func fillVideoParams(_ parameters: AUVideoParameters?) -> VideoParameters {
-        guard let videoParams = parameters else {
-            let videoParameters = VideoParameters(mimes: ["video/mp4"])
-            videoParameters.protocols = [Signals.Protocols.VAST_2_0]
-            videoParameters.playbackMethod = [Signals.PlaybackMethod.AutoPlaySoundOff]
-            videoParameters.placement = Signals.Placement.InBanner
-            return videoParameters
-        }
-        
-        let parameters = VideoParameters(mimes: videoParams.mimes)
-        parameters.protocols = videoParams.toProtocols()
-        parameters.playbackMethod = videoParams.toPlaybackMethods()
-        parameters.placement = videoParams.placement?.toPlacement
-        
-        parameters.api = videoParams.toApi()
-        parameters.startDelay = videoParams.startDelay?.toStartDelay
-        parameters.adSize = videoParams.adSize
-        
-        parameters.maxBitrate = videoParams.toSingleContainerInt(videoParams.maxBitrate)
-        parameters.minBitrate = videoParams.toSingleContainerInt(videoParams.minBitrate)
-        parameters.maxDuration = videoParams.toSingleContainerInt(videoParams.maxDuration)
-        parameters.minDuration = videoParams.toSingleContainerInt(videoParams.minDuration)
-        parameters.linearity = videoParams.toSingleContainerInt(videoParams.linearity)
-        
-        return parameters
-    }
-    
     internal dynamic func fetchRequest(_ gamRequest: AnyObject) {}
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [AdFormat] {
@@ -101,5 +74,13 @@ public class AUAdView: VisibleView {
         }
         let origin = self.frame.origin
         self.frame = CGRect(x: origin.x, y: origin.y, width: 0, height: 0)
+    }
+    
+    internal func defaultVideoParameters() -> VideoParameters {
+        let videoParameters = VideoParameters(mimes: ["video/mp4"])
+        videoParameters.protocols = [Signals.Protocols.VAST_2_0]
+        videoParameters.playbackMethod = [Signals.PlaybackMethod.AutoPlaySoundOff]
+        videoParameters.placement = Signals.Placement.InBanner
+        return videoParameters
     }
 }
