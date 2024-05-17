@@ -85,14 +85,14 @@ extension ExamplesViewController {
         let gamRequest = GAMRequest()
         
         let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
-        videoParameters.protocols = [AUVideoProtocols.VAST_2_0]
-        videoParameters.playbackMethod = [AUVideoPlaybackMethod.AutoPlaySoundOff]
+        videoParameters.protocols = [AUVideoProtocols(type: .VAST_2_0)]
+        videoParameters.playbackMethod = [AUVideoPlaybackMethod(type: .AutoPlaySoundOff)]
         videoParameters.placement = AUPlacement.InBanner
         
         bannerVideoView = AUBannerView(configId: storedImpVideoBanner, adSize: adVideoSize, adFormats: [.video], isLazyLoad: false)
         bannerVideoView.parameters = videoParameters
         bannerVideoView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)),size: adVideoSize)
-        bannerVideoView.backgroundColor = .yellow
+        bannerVideoView.backgroundColor = .clear
         adContainerView.addSubview(bannerVideoView)
         
         bannerVideoView.createAd(with: gamRequest, gamBanner: gamBanner)
@@ -142,6 +142,7 @@ extension ExamplesViewController: GADBannerViewDelegate {
         bannerView.resize(GADAdSizeFromCGSize(adSize))
         AUAdViewUtils.findCreativeSize(bannerView, success: { size in
             bannerView.resize(GADAdSizeFromCGSize(size))
+            print("gamNativeBannerAdUnitId --- bannerViewDidReceiveAd")
         }, failure: { [weak self] (error) in
             print("Error occuring during searching for Prebid creative size: \(error)")
             self?.helperForSize(bannerView: bannerView)
@@ -155,7 +156,7 @@ extension ExamplesViewController: GADBannerViewDelegate {
     
     private func helperForSize(bannerView: GAMBannerView) {
         if bannerView.adUnitID == gamAdUnitDisplayBannerOriginal {
-            bannerView.resize(GADAdSizeFromCGSize(adSize))
+            bannerView.resize(GADAdSizeFromCGSize(adVideoSize))
         } else if bannerView.adUnitID == gamAdUnitVideoBannerOriginal {
             bannerView.resize(GADAdSizeFromCGSize(adVideoSize))
         } else if bannerView.adUnitID == gamNativeBannerAdUnitId {

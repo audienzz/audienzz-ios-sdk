@@ -35,7 +35,7 @@ public class AUVideoParameters: NSObject {
     /// Maximum bit rate in Kbps.
     public var maxBitrate: Int?
     
-    /// Maximum bit rate in Kbps.
+    /// Minimum bit rate in Kbps.
     public var minBitrate: Int?
     
     /// Maximum video ad duration in seconds.
@@ -79,5 +79,40 @@ public class AUVideoParameters: NSObject {
     // Objective-C API
     public func setSize(_ size: NSValue) {
         adSize = size.cgSizeValue
+    }
+    
+    /// Indicates if the impression must be linear, nonlinear, etc. If none specified, assume all are allowed.
+    public func setLinearity(_ linearity: NSNumber) {
+        self.linearity = linearity.intValue
+    }
+    
+    /// Maximum bit rate in Kbps.
+    public func setMaxBitrate(_ value: NSNumber) {
+        self.maxBitrate = value.intValue
+    }
+    
+    /// Minimum bit rate in Kbps.
+    public func setMinBitrate(_ value: NSNumber) {
+        self.minBitrate = value.intValue
+    }
+    
+    /// Maximum video ad duration in seconds.
+    public func setMaxDuration(_ value: NSNumber) {
+        self.maxDuration = value.intValue
+    }
+    
+    /// Minimum video ad duration in seconds.
+    public func setMinDuration(_ value: NSNumber) {
+        self.minDuration = value.intValue
+    }
+    
+    /// Indicates the start delay in seconds for pre-roll, mid-roll, or post-roll ad placements.
+    public func setStartDelay(_ value: AUVideoStartDelay) {
+        self.startDelay = value
+    }
+    
+    /// Placement type for the impression.
+    public func setPlacement(_ value: AUPlacement) {
+        self.placement = value
     }
 }

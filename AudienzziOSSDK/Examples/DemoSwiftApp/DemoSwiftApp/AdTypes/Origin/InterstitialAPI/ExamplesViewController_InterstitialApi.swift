@@ -63,8 +63,8 @@ extension ExamplesViewController {
         let gamRequest = GAMRequest()
         
         let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
-        videoParameters.protocols = [AUVideoProtocols.VAST_2_0]
-        videoParameters.playbackMethod = [AUVideoPlaybackMethod.AutoPlaySoundOff]
+        videoParameters.protocols = [AUVideoProtocols(type: .VAST_2_0)]
+        videoParameters.playbackMethod = [AUVideoPlaybackMethod(type: .AutoPlaySoundOff)]
         videoParameters.placement = AUPlacement.InBanner
         
         let interstitialVideoView = AUInterstitialView(configId: storedImpVideoInterstitial, adFormats: [.video])
@@ -97,8 +97,8 @@ extension ExamplesViewController {
         let gamRequest = GAMRequest()
         
         let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
-        videoParameters.protocols = [AUVideoProtocols.VAST_2_0]
-        videoParameters.playbackMethod = [AUVideoPlaybackMethod.AutoPlaySoundOff]
+        videoParameters.protocols = [AUVideoProtocols(type: .VAST_2_0)]
+        videoParameters.playbackMethod = [AUVideoPlaybackMethod(type: .AutoPlaySoundOff)]
         videoParameters.placement = AUPlacement.InBanner
         
         let interstitialVideoView = AUInterstitialView(configId: storedImpVideoInterstitial,

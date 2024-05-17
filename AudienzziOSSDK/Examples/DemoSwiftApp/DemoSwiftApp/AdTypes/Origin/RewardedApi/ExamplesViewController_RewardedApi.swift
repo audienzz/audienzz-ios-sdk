@@ -29,8 +29,8 @@ extension ExamplesViewController {
         let gamRequest = GAMRequest()
         
         let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
-        videoParameters.protocols = [AUVideoProtocols.VAST_2_0]
-        videoParameters.playbackMethod = [AUVideoPlaybackMethod.AutoPlaySoundOff]
+        videoParameters.protocols = [AUVideoProtocols(type: .VAST_2_0)]
+        videoParameters.playbackMethod = [AUVideoPlaybackMethod(type: .AutoPlaySoundOff)]
         
         rewardedView = AURewardedView(configId: storedImpVideoRewarded)
         rewardedView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),

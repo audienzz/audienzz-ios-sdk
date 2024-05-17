@@ -69,7 +69,10 @@ extension ExamplesViewController {
         
         nativeBannerView = AUNativeBannerView(configId: storedPrebidImpression, configuration: configuration, isLazyLoad: false)
         nativeBannerView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: self.view.frame.width, height: 250)
+        nativeBannerView.backgroundColor = .lightGray
         adContainerView.addSubview(nativeBannerView)
+        
+        addConstrains(subView: nativeBannerView, container: adContainerView, height: 250)
         
         nativeBannerView.createAd(with: gamRequest, gamBanner: gamBannerView, configuration: configuration)
         nativeBannerView.onLoadRequest = { gamRequest in

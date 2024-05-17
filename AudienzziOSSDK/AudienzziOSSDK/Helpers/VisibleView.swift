@@ -81,8 +81,9 @@ public class VisibleView: UIView {
         }
     }
     
-    public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if keyPath == "contentOffset" {
+    public override func observeValue(forKeyPath keyPath: String?, of object: Any?,
+                                      change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if let scroll = object as? UIScrollView, keyPath == "contentOffset", scroll.contentOffset != .zero {
             checkIfFrameIsVisible()
         }
     }

@@ -30,7 +30,7 @@ internal extension AUVideoParameters {
             return nil
         }
         
-        let array = values.compactMap({ $0.toProtocol })
+        let array = values.compactMap({ $0.type.toProtocol })
         return array
     }
     
@@ -39,7 +39,7 @@ internal extension AUVideoParameters {
             return nil
         }
         
-        let array = values.compactMap({ $0.toPlaybackMethod })
+        let array = values.compactMap({ $0.type.toPlaybackMethod })
         return array
     }
     
@@ -74,8 +74,14 @@ internal extension AUVideoParameters {
     convenience init(_ pbVideoParams: VideoParameters) {
         self.init(mimes: pbVideoParams.mimes)
         
-        self.protocols = pbVideoParams.protocols?.compactMap { AUVideoProtocols(rawValue: $0.value) }
-        self.playbackMethod = pbVideoParams.playbackMethod?.compactMap { AUVideoPlaybackMethod(rawValue: $0.value) }
+        self.protocols = pbVideoParams.protocols?.compactMap { value in
+            let type = AUVideoProtocolsType(rawValue: value.value) ?? .VAST_2_0
+            return AUVideoProtocols(type: type)
+        }
+        self.playbackMethod = pbVideoParams.playbackMethod?.compactMap { value in
+            let type = AUVideoPlaybackMethodType(rawValue: value.value) ?? .AutoPlaySoundOff
+            return AUVideoPlaybackMethod(type: type)
+        }
         
         if let value = pbVideoParams.placement?.value {
             self.placement = AUPlacement(rawValue: value)

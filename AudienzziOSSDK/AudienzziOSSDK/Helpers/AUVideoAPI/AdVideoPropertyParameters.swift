@@ -33,7 +33,8 @@ import PrebidMobile
 | 10    | DAAST 1.0 Wrapper |
 ```
 */
-@objc public enum AUVideoProtocols: Int {
+
+@objc public enum AUVideoProtocolsType: Int {
     case VAST_1_0          = 1
     case VAST_2_0          = 2
     case VAST_3_0          = 3
@@ -50,6 +51,15 @@ import PrebidMobile
     }
 }
 
+@objcMembers
+public class AUVideoProtocols: NSObject {
+    var type: AUVideoProtocolsType
+    
+    public init(type: AUVideoProtocolsType) {
+        self.type = type
+    }
+}
+
 /**
 # OpenRTB - Playback Methods #
 ```
@@ -63,7 +73,7 @@ import PrebidMobile
 | 6     | Initiates on Entering Viewport with Sound Off by Default |
 ```
 */
-@objc public enum AUVideoPlaybackMethod: Int {
+@objc public enum AUVideoPlaybackMethodType: Int {
     case AutoPlaySoundOn  = 1
     case AutoPlaySoundOff = 2
     case ClickToPlay      = 3
@@ -73,6 +83,15 @@ import PrebidMobile
     
     internal var toPlaybackMethod: Signals.PlaybackMethod? {
         Signals.PlaybackMethod(integerLiteral: self.rawValue)
+    }
+}
+
+@objcMembers
+public class AUVideoPlaybackMethod: NSObject {
+    var type: AUVideoPlaybackMethodType
+    
+    public init(type: AUVideoPlaybackMethodType) {
+        self.type = type
     }
 }
 
@@ -87,7 +106,8 @@ import PrebidMobile
 | -2    | Generic Post-Roll                                |
 ```
 */
-@objc public enum AUVideoStartDelay: Int {
+@objc(AUVideoStartDelay)
+public enum AUVideoStartDelay: Int {
     case PreRoll         = 0
     case GenericMidRoll  = -1
     case GenericPostRoll = -2
@@ -109,8 +129,8 @@ import PrebidMobile
 | 5     | Interstitial/Slider/Floating |
 ```
 */
-
-@objc public enum AUPlacement: Int {
+@objc(AUPlacement)
+public enum AUPlacement: Int {
     case InStream
     case InBanner
     case InArticle

@@ -72,7 +72,7 @@ public class Audienzz: NSObject {
         }
     }
     
-    public static func configureSDK(gadMobileAdsVersion: String? = nil) {
+    public func configureSDK(gadMobileAdsVersion: String?) {
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
         

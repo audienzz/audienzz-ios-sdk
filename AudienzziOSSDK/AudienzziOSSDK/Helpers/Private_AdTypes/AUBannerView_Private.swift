@@ -19,12 +19,12 @@ import PrebidMobile
 @objc
 extension AUBannerView {
     override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded, let request = gamRequest  else {
+        guard isLazyLoad, !isLazyLoaded, let request = gamRequest else {
             return
         }
         
         #if DEBUG
-        print("AUBannerMultiplatformView --- I'm visible")
+        print("AUBannerView --- I'm visible")
         #endif
         fetchRequest(request)
         isLazyLoaded = true
@@ -36,5 +36,17 @@ extension AUBannerView {
             guard let self = self else { return }
             self.onLoadRequest?(gamRequest)
         }
+    }
+    
+    private func isVisible(view: UIView) -> Bool {
+        func isVisible(view: UIView, inView: UIView?) -> Bool {
+            guard let inView = inView else { return true }
+            let viewFrame = inView.convert(view.bounds, from: view)
+            if viewFrame.intersects(inView.bounds) {
+                return isVisible(view: view, inView: inView.superview)
+            }
+            return false
+        }
+        return isVisible(view: view, inView: view.superview)
     }
 }
