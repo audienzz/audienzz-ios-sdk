@@ -48,7 +48,7 @@ public class Audienzz: NSObject {
     
     public static let shared = Audienzz()
     
-    public func configure() {
+    public func configureSDK() {
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
         
@@ -72,7 +72,7 @@ public class Audienzz: NSObject {
         }
     }
     
-    public func configureSDK(gadMobileAdsVersion: String?) {
+    public func configureSDK(gadMobileAdsVersion: String? = nil) {
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
         
@@ -99,9 +99,72 @@ public class Audienzz: NSObject {
         }
     }
     
+    /// Use this function only to make RN bridging initialize
+    public func configureSDK_RN(_ completion: (() -> Void)? = nil) {
+        Task {
+            Prebid.shared.prebidServerAccountId = prebidServerAccountId
+            try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
+            
+            // Initialize Prebid SDK
+            Prebid.initializeSDK { status, error in
+                // ....
+                switch status {
+                case .succeeded:
+                    print("Audienzz Status: succeeded")
+                case .failed:
+                    print("Audienzz Status: failed")
+                case .serverStatusWarning:
+                    print("Audienzz Status: serverStatusWarning")
+                @unknown default:
+                    print("Audienzz Status: Unexpected Error")
+                }
+                
+                if let error = error {
+                    print("Error: \(error)")
+                }
+                
+                completion?()
+            }
+        }
+    }
+    
+    /// Use this function only to make RN bridging initialize
+    public func configureSDK_RN(gadMobileAdsVersion: String?, _ completion: (() -> Void)? = nil) {
+        Task {
+            Prebid.shared.prebidServerAccountId = prebidServerAccountId
+            try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
+            
+            Prebid.initializeSDK(gadMobileAdsVersion: gadMobileAdsVersion) { status, error in
+                if let error = error {
+                    print("Initialization Error: \(error.localizedDescription)")
+                    return
+                }
+                
+                switch status {
+                case .succeeded:
+                    print("Audienzz Status: succeeded")
+                case .failed:
+                    print("Audienzz Status: failed")
+                case .serverStatusWarning:
+                    print("Audienzz Status: serverStatusWarning")
+                @unknown default:
+                    print("Audienzz Status: Unexpected Error")
+                }
+                
+                if let error = error {
+                    print("Error: \(error)")
+                }
+                
+                completion?()
+            }
+        }
+    }
+    
+    // MARK: - Public Init For RN Bridg (Audienzz)
+    
     // MARK: - Public Properties (Audienzz)
     
-    public var prebidServerHost: PrebidHost = .Custom {
+    private var prebidServerHost: PrebidHost = .Custom {
         didSet {
             timeoutMillisDynamic = NSNumber(value: timeoutMillis)
             timeoutUpdated = false

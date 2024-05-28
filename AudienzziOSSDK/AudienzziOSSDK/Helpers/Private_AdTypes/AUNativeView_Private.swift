@@ -31,19 +31,30 @@ internal extension AUNativeView {
     }
     
     override func fetchRequest(_ gamRequest: AnyObject) {
-        nativeUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
-            print("Audienz demand fetch for GAM \(resultCode.name())")
-            guard let self = self else { return }
-            self.onLoadRequest?(gamRequest)
+        switch adType {
+        case .origin:
+            nativeUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
+                print("Audienz demand fetch for GAM \(resultCode.name())")
+                guard let self = self else { return }
+                self.onLoadRequest?(gamRequest)
+            }
+        case .rendering:
+            nativeUnit.fetchDemand { [weak self] bidInfo in
+                print("Audienz demand fetch for GAM \(bidInfo.resultCode.name())")
+                guard let self = self else { return }
+                self.onNativeLoadRequest?(gamRequest, bidInfo.targetingKeywords ?? [:])
+            }
+        case .none:
+            break
         }
     }
     
     func findingNative(_ adObject: AnyObject) {
         if isLazyLoad, isLazyLoaded {
-            Utils.shared.delegate = self
+            Utils.shared.delegate = subdelegate
             Utils.shared.findNative(adObject: adObject)
         } else {
-            Utils.shared.delegate = self
+            Utils.shared.delegate = subdelegate
             Utils.shared.findNative(adObject: adObject)
         }
     }

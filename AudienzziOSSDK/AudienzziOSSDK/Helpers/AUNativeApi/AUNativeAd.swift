@@ -29,6 +29,7 @@ public class AUNativeAd: NSObject {
     
     // MARK: - Internal properties
     private var nativeAd: NativeAd!
+    internal var subdelegate: AUNativeAdDelegateType?
     
     // MARK: - Array getters
     
@@ -87,7 +88,7 @@ public class AUNativeAd: NSObject {
     internal init(_ nativeAd: NativeAd) {
         super.init()
         self.nativeAd = nativeAd
-        self.nativeAd.delegate = self
+        self.subdelegate = AUNativeAdDelegateType(parent: self)
     }
     
     //MARK: registerView function
@@ -97,16 +98,26 @@ public class AUNativeAd: NSObject {
     }
 }
 
-extension AUNativeAd: NativeAdEventDelegate {
+internal class AUNativeAdDelegateType: NSObject, NativeAdEventDelegate {
+    private weak var parent: AUNativeAd?
+
+    init(parent: AUNativeAd) {
+        super.init()
+        self.parent = parent
+    }
+    
     @objc public func adDidExpire(ad:NativeAd) {
-        delegate?.adDidExpire?(ad: self)
+        guard let parent = parent else { return }
+        parent.delegate?.adDidExpire?(ad: parent)
     }
 
     @objc public func adWasClicked(ad:NativeAd) {
-        delegate?.adWasClicked?(ad: self)
+        guard let parent = parent else { return }
+        parent.delegate?.adWasClicked?(ad: parent)
     }
 
     @objc public func adDidLogImpression(ad:NativeAd) {
-        delegate?.adDidLogImpression?(ad: self)
+        guard let parent = parent else { return }
+        parent.delegate?.adDidLogImpression?(ad: parent)
     }
 }

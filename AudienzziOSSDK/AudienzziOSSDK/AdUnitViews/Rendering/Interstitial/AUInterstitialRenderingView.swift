@@ -43,19 +43,30 @@ public class AUInterstitialRenderingView: AUAdView {
     
     public weak var delegate: AUInterstitialenderingAdDelegate?
     
+    internal var subdelegate: AUInterstitialRenderingDelegateType?
+    
     @objc public var skipButtonArea: Double {
         get { adUnit.skipButtonArea }
         set { adUnit.skipButtonArea = newValue }
     }
     
-    @objc public var skipButtonPosition: Position {
-        get { adUnit.skipButtonPosition }
-        set { adUnit.skipButtonPosition = newValue }
+    @objc public var skipButtonPosition: AUAdInterstitialPosition {
+        get { AUAdInterstitialPosition(rawValue: adUnit.skipButtonPosition.rawValue) ?? .undefined }
+        set { adUnit.skipButtonPosition = newValue.toAdPosition }
     }
     
     @objc public var skipDelay: Double {
         get { adUnit.skipDelay }
         set { adUnit.skipDelay = newValue }
+    }
+    
+    override public init(configId: String, isLazyLoad: Bool) {
+        super.init(configId: configId, isLazyLoad: isLazyLoad)
+        self.subdelegate = AUInterstitialRenderingDelegateType(parent: self)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
     /**
@@ -73,7 +84,7 @@ public class AUInterstitialRenderingView: AUAdView {
             adUnit.adFormats = [.video]
         }
         
-        adUnit.delegate = self
+        adUnit.delegate = subdelegate
         
         if !isLazyLoad {
             delegate?.interstitialAdDidDisplayOnScreen?()
@@ -100,28 +111,35 @@ public class AUInterstitialRenderingView: AUAdView {
     }
 }
 
-extension AUInterstitialRenderingView: InterstitialAdUnitDelegate {
+internal class AUInterstitialRenderingDelegateType: NSObject, InterstitialAdUnitDelegate {
+    private weak var parent: AUInterstitialRenderingView?
+    
+    init(parent: AUInterstitialRenderingView) {
+        super.init()
+        self.parent = parent
+    }
+    
     public func interstitialDidReceiveAd(_ interstitial: InterstitialRenderingAdUnit) {
-        delegate?.interstitialDidReceiveAd?(with: interstitial.configID)
+        parent?.delegate?.interstitialDidReceiveAd?(with: interstitial.configID)
     }
 
     public func interstitial(_ interstitial: InterstitialRenderingAdUnit, didFailToReceiveAdWithError error:Error? ) {
-        delegate?.interstitialdidFailToReceiveAdWithError?(error: error)
+        parent?.delegate?.interstitialdidFailToReceiveAdWithError?(error: error)
     }
 
     public func interstitialWillPresentAd(_ interstitial: InterstitialRenderingAdUnit) {
-        delegate?.interstitialWillPresentAd?()
+        parent?.delegate?.interstitialWillPresentAd?()
     }
 
     public func interstitialDidDismissAd(_ interstitial: InterstitialRenderingAdUnit) {
-        delegate?.interstitialDidDismissAd?()
+        parent?.delegate?.interstitialDidDismissAd?()
     }
 
     public func interstitialWillLeaveApplication(_ interstitial: InterstitialRenderingAdUnit) {
-        delegate?.interstitialWillLeaveApplication?()
+        parent?.delegate?.interstitialWillLeaveApplication?()
     }
 
     public func interstitialDidClickAd(_ interstitial: InterstitialRenderingAdUnit) {
-        delegate?.interstitialDidClickAd?()
+        parent?.delegate?.interstitialDidClickAd?()
     }
 }

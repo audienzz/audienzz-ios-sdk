@@ -20,6 +20,7 @@
 		583B55552BD66F5B00226302 /* AUMORTBAppContent_Internal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */; };
 		583B55592BD671A900226302 /* AUMORTBContentData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B55582BD671A900226302 /* AUMORTBContentData.swift */; };
 		583B555B2BD6727F00226302 /* AUMORTBContentData_Internal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B555A2BD6727F00226302 /* AUMORTBContentData_Internal.swift */; };
+		58436A8A2C060F9200E83155 /* UIViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436A892C060F9200E83155 /* UIViewExtension.swift */; };
 		584392002BBD63640053B583 /* AUContextType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584391FF2BBD63640053B583 /* AUContextType.swift */; };
 		584392022BBD84E20053B583 /* AUContextSubType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584392012BBD84E20053B583 /* AUContextSubType.swift */; };
 		584392042BBD88A50053B583 /* AUPlacementType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 584392032BBD88A50053B583 /* AUPlacementType.swift */; };
@@ -189,6 +190,7 @@
 		583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBAppContent_Internal.swift; sourceTree = "<group>"; };
 		583B55582BD671A900226302 /* AUMORTBContentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBContentData.swift; sourceTree = "<group>"; };
 		583B555A2BD6727F00226302 /* AUMORTBContentData_Internal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBContentData_Internal.swift; sourceTree = "<group>"; };
+		58436A892C060F9200E83155 /* UIViewExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIViewExtension.swift; sourceTree = "<group>"; };
 		584391FF2BBD63640053B583 /* AUContextType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUContextType.swift; sourceTree = "<group>"; };
 		584392012BBD84E20053B583 /* AUContextSubType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUContextSubType.swift; sourceTree = "<group>"; };
 		584392032BBD88A50053B583 /* AUPlacementType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUPlacementType.swift; sourceTree = "<group>"; };
@@ -339,6 +341,14 @@
 			path = AdConfigData_Private;
 			sourceTree = "<group>";
 		};
+		58436A802C060F5C00E83155 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				58436A892C060F9200E83155 /* UIViewExtension.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
 		584391FE2BBD63500053B583 /* AUNativeApi */ = {
 			isa = PBXGroup;
 			children = (
@@ -458,6 +468,7 @@
 		587512A12BA3603C004BB7E9 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				58436A802C060F5C00E83155 /* Extensions */,
 				58249B092BC04FCF00E5C4C6 /* AUAdViewUtils.swift */,
 				587512A22BA36053004BB7E9 /* VisibleView.swift */,
 				5890CFEE2BD150F20034E2FD /* AUAdParameters.swift */,
@@ -793,6 +804,7 @@
 				5890D0092BD29F9E0034E2FD /* AUAdUnitConfiguration.swift in Sources */,
 				58BEA82E2BE522E5004D86F6 /* AUResultCode.swift in Sources */,
 				58D9BC492BE9291C000C4149 /* AUMultiplatformView_Private.swift in Sources */,
+				58436A8A2C060F9200E83155 /* UIViewExtension.swift in Sources */,
 				58D9BC342BE9053A000C4149 /* AUBannerView_Private.swift in Sources */,
 				58249B1A2BC5747200E5C4C6 /* AUBannerParameters.swift in Sources */,
 				583B554B2BD66D2E00226302 /* AUMORTBAppContent.swift in Sources */,

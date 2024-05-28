@@ -45,3 +45,31 @@ public enum AUAdPosition: Int {
         AdPosition(rawValue: self.rawValue) ?? .undefined
     }
 }
+
+@objc(AUAdInterstitialPosition)
+public enum AUAdInterstitialPosition: Int {
+    case undefined = -1
+    case topLeft
+    case topCenter
+    case topRight
+    case center
+    case bottomLeft
+    case bottomCenter
+    case bottomRight
+    case custom
+    
+    public static func getPositionByStringLiteral(_ stringValue: String) -> Position? {
+        switch stringValue {
+        case "topleft":
+            return .topLeft
+        case "topright":
+            return .topRight
+        default:
+            return nil
+        }
+    }
+    
+    internal var toAdPosition: Position {
+        Position(rawValue: self.rawValue) ?? .undefined
+    }
+}

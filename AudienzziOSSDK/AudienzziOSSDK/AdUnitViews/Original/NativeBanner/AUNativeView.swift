@@ -16,6 +16,12 @@
 import UIKit
 import PrebidMobile
 
+@objc
+public enum AUNativeType: Int {
+    case origin
+    case rendering
+}
+
 @objc public protocol AUNativeAdDelegate : AnyObject{
     /**
      * Native was not found in the server returned response,
@@ -40,28 +46,36 @@ public class AUNativeView: AUAdView {
     internal var nativeAd: AUNativeAd!
     internal var gamRequest: AnyObject?
     
+    public var onNativeLoadRequest: ((AnyObject, [String:String]) -> Void)?
     public var onGetNativeAd: ((AUNativeAd) -> Void)?
     public var nativeParameter: AUNativeRequestParameter!
     public weak var delegate: AUNativeAdDelegate?
+    
+    internal var subdelegate: NativeAdDelegateType?
+    public var adType: AUNativeType!
     
     /**
      Initialize native style view.
      Lazy load is true by default.
      */
-    public init(configId: String) {
+    public init(configId: String, adType: AUNativeType = .origin) {
         super.init(configId: configId, isLazyLoad: true)
         nativeUnit = NativeRequest(configId: configId)
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: nativeUnit)
+        self.subdelegate = NativeAdDelegateType(parent: self)
+        self.adType = adType
     }
     
     /**
      Initialize native style view.
      Lazy load is true by default.
      */
-    public override init(configId: String, isLazyLoad: Bool) {
+    public init(configId: String, isLazyLoad: Bool, adType: AUNativeType = .origin) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
         nativeUnit = NativeRequest(configId: configId)
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: nativeUnit)
+        self.subdelegate = NativeAdDelegateType(parent: self)
+        self.adType = adType
     }
     
     required init?(coder: NSCoder) {
@@ -111,26 +125,42 @@ public class AUNativeView: AUAdView {
     public func registerView(clickableViews: [UIView]? ) -> Bool {
         nativeAd.registerView(view: self, clickableViews: clickableViews)
     }
+    
+    @objc public func findRenderingAd(_ ad: AUNativeAd?) {
+        guard let customAd = ad else {
+            return
+        }
+        
+        self.nativeAd = customAd
+        onGetNativeAd?(nativeAd)
+    }
 }
 
-@objc
-extension AUNativeView: NativeAdDelegate {
+internal class NativeAdDelegateType: NSObject, NativeAdDelegate {
+    private weak var parent: AUNativeView?
+
+    init(parent: AUNativeView) {
+        super.init()
+        self.parent = parent
+    }
+    
     public func nativeAdLoaded(ad: NativeAd) {
-        nativeAd = AUNativeAd(ad)
-        if isLazyLoad, isLazyLoaded {
-            self.onGetNativeAd?(nativeAd)
+        guard let parent = parent else { return }
+        parent.nativeAd = AUNativeAd(ad)
+        if parent.isLazyLoad, parent.isLazyLoaded {
+            parent.onGetNativeAd?(parent.nativeAd)
         } else {
-            self.onGetNativeAd?(nativeAd)
+            parent.onGetNativeAd?(parent.nativeAd)
         }
     }
 
     public func nativeAdNotFound() {
         print("Native ad not found")
-        delegate?.nativeAdNotFound()
+        parent?.delegate?.nativeAdNotFound()
     }
 
     public func nativeAdNotValid() {
         print("Native ad not valid")
-        delegate?.nativeAdNotValid()
+        parent?.delegate?.nativeAdNotValid()
     }
 }

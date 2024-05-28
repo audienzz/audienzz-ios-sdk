@@ -40,9 +40,11 @@ public class AUGAMBannerEventHandler: NSObject {
 */
 @objcMembers
 public class AUBannerRenderingView: AUAdView {
-    private var bannerView: BannerView!
+    internal var bannerView: BannerView!
     
     @objc public weak var delegate: AUBannerRenderingAdDelegate?
+    
+    internal var subdelegate: AUBannerRenderingDelegateType?
     
     // MARK: - Public Properties
     
@@ -99,6 +101,7 @@ public class AUBannerRenderingView: AUAdView {
                                      eventHandler: bannerEventHandler)
         
         self.adUnitConfiguration = AUBannerRenderingConfiguration(bannerView: bannerView)
+        self.subdelegate = AUBannerRenderingDelegateType(parent: self)
     }
     
     required init?(coder: NSCoder) {
@@ -109,7 +112,7 @@ public class AUBannerRenderingView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd() {
-        bannerView.delegate = self
+        bannerView.delegate = subdelegate
         
         self.addSubview(bannerView)
         
@@ -139,7 +142,7 @@ public class AUBannerRenderingView: AUAdView {
         bannerView.videoParameters.minDuration = videoParameters.toSingleContainerInt(videoParameters.minDuration)
         bannerView.videoParameters.linearity = videoParameters.toSingleContainerInt(videoParameters.linearity)
         
-        bannerView.delegate = self
+        bannerView.delegate = subdelegate
         
         self.backgroundColor = .clear
         self.addSubview(bannerView)
@@ -163,28 +166,40 @@ public class AUBannerRenderingView: AUAdView {
     }
 }
 
-extension AUBannerRenderingView: BannerViewDelegate {
+internal class AUBannerRenderingDelegateType: NSObject, BannerViewDelegate {
+    private weak var parent: AUBannerRenderingView?
+    
+    init(parent: AUBannerRenderingView) {
+        super.init()
+        self.parent = parent
+    }
+    
     public func bannerViewPresentationController() -> UIViewController? {
-        delegate?.bannerViewPresentationController()
+        parent?.delegate?.bannerViewPresentationController()
     }
     
     public func bannerView(_ bannerView: BannerView, didReceiveAdWithAdSize adSize: CGSize) {
-        delegate?.bannerView?(self, didReceiveAdWithAdSize: adSize)
+        guard let parent = parent else { return }
+        parent.delegate?.bannerView?(parent, didReceiveAdWithAdSize: adSize)
     }
 
     public func bannerView(_ bannerView: BannerView, didFailToReceiveAdWith error: Error) {
-        delegate?.bannerView?(self, didFailToReceiveAdWith: error)
+        guard let parent = parent else { return }
+        parent.delegate?.bannerView?(parent, didFailToReceiveAdWith: error)
     }
 
     public func bannerViewWillLeaveApplication(_ bannerView: BannerView) {
-        delegate?.bannerViewWillLeaveApplication?(self)
+        guard let parent = parent else { return }
+        parent.delegate?.bannerViewWillLeaveApplication?(parent)
     }
 
     public func bannerViewWillPresentModal(_ bannerView: BannerView) {
-        delegate?.bannerViewWillPresentModal?(self)
+        guard let parent = parent else { return }
+        parent.delegate?.bannerViewWillPresentModal?(parent)
     }
 
     public func bannerViewDidDismissModal(_ bannerView: BannerView) {
-        delegate?.bannerViewDidDismissModal?(self)
+        guard let parent = parent else { return }
+        parent.delegate?.bannerViewDidDismissModal?(parent)
     }
 }

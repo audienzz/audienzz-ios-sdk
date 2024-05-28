@@ -29,6 +29,8 @@ public class AUMultiplatformView: AUAdView {
     public weak var delegate: AUNativeAdDelegate?
     public var onGetNativeAd: ((NativeAd) -> Void)?
     
+    internal var subdelegate: AUMultiplatformDelegateType?
+    
     /**
      * Initialize multiformat view.
      * Lazy load is true by default. Banner parametrs is nil by default. Video parameters is nill by default. Native parameters is nill by default.
@@ -50,6 +52,7 @@ public class AUMultiplatformView: AUAdView {
         self.prebidRequest = PrebidRequest(bannerParameters: bannerParam, videoParameters: videoParam,
                                            nativeParameters: nativeParam, isInterstitial: isInterstitial, isRewarded: isRewarded)
         self.adUnitConfiguration = AUAdUnitConfiguration(multiplatformAdUnit: adUnit, request: prebidRequest)
+        self.subdelegate = AUMultiplatformDelegateType(parent: self)
     }
     
     required init?(coder: NSCoder) {
@@ -73,23 +76,30 @@ public class AUMultiplatformView: AUAdView {
     }
 }
 
-@objc
-extension AUMultiplatformView: NativeAdDelegate {
+internal class AUMultiplatformDelegateType: NSObject, NativeAdDelegate {
+    private weak var parent: AUMultiplatformView?
+    
+    init(parent: AUMultiplatformView) {
+        super.init()
+        self.parent = parent
+    }
+    
     public func nativeAdLoaded(ad: NativeAd) {
-        if isLazyLoad, isLazyLoaded {
-            self.onGetNativeAd?(ad)
+        guard let parent = parent else { return }
+        if parent.isLazyLoad, parent.isLazyLoaded {
+            parent.onGetNativeAd?(ad)
         } else {
-            self.onGetNativeAd?(ad)
+            parent.onGetNativeAd?(ad)
         }
     }
     
     public func nativeAdNotFound() {
         print("Native ad not found")
-        delegate?.nativeAdNotFound()
+        parent?.delegate?.nativeAdNotFound()
     }
 
     public func nativeAdNotValid() {
         print("Native ad not valid")
-        delegate?.nativeAdNotValid()
+        parent?.delegate?.nativeAdNotValid()
     }
 }

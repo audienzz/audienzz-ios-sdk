@@ -40,10 +40,10 @@ internal extension AUMultiplatformView {
     
     func findingNative(adObject: AnyObject) {
         if isLazyLoad, isLazyLoaded {
-            Utils.shared.delegate = self
+            Utils.shared.delegate = subdelegate
             Utils.shared.findNative(adObject: adObject)
         } else {
-            Utils.shared.delegate = self
+            Utils.shared.delegate = subdelegate
             Utils.shared.findNative(adObject: adObject)
         }
     }

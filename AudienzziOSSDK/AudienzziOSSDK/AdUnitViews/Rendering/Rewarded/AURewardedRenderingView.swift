@@ -36,6 +36,7 @@ public class AUGAMRewardedAdEventHandler: NSObject {
 public class AURewardedRenderingView: AUAdView {
     private var rewardedAdUnit: RewardedAdUnit!
     public weak var delegate: AURewardedAdUnitDelegate?
+    internal var subdelegate: AURewardedRenderingDelegateType?
     
     /**
      Initialize rewarded view.
@@ -43,6 +44,7 @@ public class AURewardedRenderingView: AUAdView {
      */
     public override init(configId: String, isLazyLoad: Bool = true) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
+        self.subdelegate = AURewardedRenderingDelegateType(parent: self)
     }
     
     required init?(coder: NSCoder) {
@@ -77,32 +79,39 @@ public class AURewardedRenderingView: AUAdView {
     }
 }
 
-extension AURewardedRenderingView: RewardedAdUnitDelegate {
+internal class AURewardedRenderingDelegateType: NSObject, RewardedAdUnitDelegate {
+    private weak var parent: AURewardedRenderingView?
+    
+    init(parent: AURewardedRenderingView) {
+        super.init()
+        self.parent = parent
+    }
+    
     public func rewardedAdDidReceiveAd(_ rewardedAd: RewardedAdUnit) {
-        delegate?.rewardedAdDidReceiveAd?(rewardedAd)
+        parent?.delegate?.rewardedAdDidReceiveAd?(rewardedAd)
     }
     
     public func rewardedAd(_ rewardedAd: RewardedAdUnit, didFailToReceiveAdWithError error: Error?) {
-        delegate?.rewardedAd?(rewardedAd, didFailToReceiveAdWithError: error)
+        parent?.delegate?.rewardedAd?(rewardedAd, didFailToReceiveAdWithError: error)
     }
     
     public func rewardedAdWillPresentAd(_ rewardedAd: RewardedAdUnit) {
-        delegate?.rewardedAdWillPresentAd?(rewardedAd)
+        parent?.delegate?.rewardedAdWillPresentAd?(rewardedAd)
     }
 
     /// Called when the interstial is dismissed by the user
     public func rewardedAdDidDismissAd(_ rewardedAd: RewardedAdUnit) {
-        delegate?.rewardedAdDidDismissAd?(rewardedAd)
+        parent?.delegate?.rewardedAdDidDismissAd?(rewardedAd)
     }
 
     /// Called when an ad causes the sdk to leave the app
     public func rewardedAdWillLeaveApplication(_ rewardedAd: RewardedAdUnit) {
-        delegate?.rewardedAdWillLeaveApplication?(rewardedAd)
+        parent?.delegate?.rewardedAdWillLeaveApplication?(rewardedAd)
     }
 
     /// Called when user clicked the ad
     public func rewardedAdDidClickAd(_ rewardedAd: RewardedAdUnit) {
-        delegate?.rewardedAdDidClickAd?(rewardedAd)
+        parent?.delegate?.rewardedAdDidClickAd?(rewardedAd)
     }
 }
 

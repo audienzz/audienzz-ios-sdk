@@ -19,13 +19,17 @@ import AudienzziOSSDK
 import GoogleMobileAds
 
 fileprivate let storedPrebidImpression = "prebid-demo-banner-native-styles"
-fileprivate let gamRenderingNativeAdUnitId = "/21808260008/apollo_custom_template_native_ad_unit"
+fileprivate let gamNativeAdUnitId = "/21808260008/apollo_custom_template_native_ad_unit"
 internal let gamNativeBannerAdUnitId = "/21808260008/prebid-demo-original-native-styles"
+
+fileprivate let nativeRenderingStoredImpression = "prebid-demo-banner-native-styles"
+fileprivate let gamRenderingNativeAdUnitId = "/21808260008/apollo_custom_template_native_ad_unit"
 
 fileprivate var nativeView: AUNativeView!
 fileprivate var nativeBannerView:AUNativeBannerView!
 fileprivate var nativeLzyView: AUNativeView!
 fileprivate var nativeLazyBannerView:AUNativeBannerView!
+fileprivate var nativeRenderingView: AUNativeView!
 
 // MARK: - Native Banner API
 extension ExamplesViewController {
@@ -43,7 +47,7 @@ extension ExamplesViewController {
                 return
             }
             
-            self.adLoader = GADAdLoader(adUnitID: gamRenderingNativeAdUnitId, rootViewController: self,
+            self.adLoader = GADAdLoader(adUnitID: gamNativeAdUnitId, rootViewController: self,
                                         adTypes: [GADAdLoaderAdType.customNative], options: [])
             self.adLoader.delegate = self
             self.adLoader.load(request)
@@ -54,6 +58,39 @@ extension ExamplesViewController {
         adContainerView.addSubview(exampleView)
         
         nativeView.onGetNativeAd = { ad in
+            exampleView.setupFromAd(ad: ad)
+        }
+    }
+    
+    func createRenderingNativeView() {
+        nativeRenderingView = AUNativeView(configId: storedPrebidImpression, adType: .rendering)
+        nativeRenderingView.nativeParameter = nativeConfiguration()
+
+        let gamRequest = GAMRequest()
+        nativeRenderingView.createAd(with: gamRequest)
+        
+        nativeRenderingView.onNativeLoadRequest = { [weak self] request, keywords in
+            guard let self = self else { return }
+            guard let request = request as? GAMRequest else {
+                print("Faild request unwrap")
+                return
+            }
+            
+            AudienzzGAMUtils.shared.prepareRequest(request, bidTargeting: keywords)
+            
+            self.adRenderingLoader = GADAdLoader(adUnitID: gamRenderingNativeAdUnitId, rootViewController: self,
+                                        adTypes: [GADAdLoaderAdType.customNative], options: [])
+            self.adRenderingLoader.delegate = self
+            self.adRenderingLoader.load(request)
+        }
+        
+        let exampleView: ExampleNativeView = ExampleNativeView.fromNib()
+        nativeRenderingView.frame = CGRect(x: 0, y: getPositionY(lazyAdContainerView), width: self.view.frame.width, height: 200)
+        exampleView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: 200)
+        nativeRenderingView.addSubview(exampleView)
+        lazyAdContainerView.addSubview(nativeRenderingView)
+        
+        nativeRenderingView.onGetNativeAd = { ad in
             exampleView.setupFromAd(ad: ad)
         }
     }
@@ -183,6 +220,10 @@ extension ExamplesViewController: GADAdLoaderDelegate, GADCustomNativeAdLoaderDe
             nativeView.findNative(adObject: customNativeAd)
         } else if adLoader == adLazyLoader {
             nativeLzyView.findNative(adObject: customNativeAd)
+        }  else if adLoader == self.adRenderingLoader {
+            AudienzzGAMUtils.shared.findCustomNativeAd(for: customNativeAd, completion: { ad, error in
+                nativeRenderingView.findRenderingAd(ad)
+            })
         }
     }
 }
