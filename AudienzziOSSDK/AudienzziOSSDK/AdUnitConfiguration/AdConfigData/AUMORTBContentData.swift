@@ -47,9 +47,9 @@ public class AUMORTBContentProducer: NSObject {
     /// Content producer or originator name
     public var name: String?
     /// Array of IAB content categories that describe the content producer.
-    var cat: [String]?
+    public var cat: [String]?
     /// Highest level domain of the content producer.
-    var domain: String?
+    public var domain: String?
     /// Placeholder for exchange-specific extensions to OpenRTB.
     public var ext: [String: NSObject]?
 }

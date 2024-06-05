@@ -22,8 +22,7 @@ fileprivate let prebidServerAccountId = "0689a263-318d-448b-a3d4-b02e8a709d9d"
 @objcMembers
 public class Audienzz: NSObject {
     
-    // MARK: - Public Properties (SDK)
-    
+    // MARK: - Properties (SDK)
     public var timeoutUpdated: Bool {
         get { Prebid.shared.timeoutUpdated }
         set { Prebid.shared.timeoutUpdated = newValue }
@@ -49,6 +48,7 @@ public class Audienzz: NSObject {
     public static let shared = Audienzz()
     
     public func configureSDK() {
+        AUEventsManager.shared.configure()
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
         
@@ -73,6 +73,7 @@ public class Audienzz: NSObject {
     }
     
     public func configureSDK(gadMobileAdsVersion: String? = nil) {
+        AUEventsManager.shared.configure()
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
         
@@ -99,9 +100,11 @@ public class Audienzz: NSObject {
         }
     }
     
+    // MARK: - Public Init For RN Bridg (Audienzz)
     /// Use this function only to make RN bridging initialize
     public func configureSDK_RN(_ completion: (() -> Void)? = nil) {
         Task {
+            AUEventsManager.shared.configure()
             Prebid.shared.prebidServerAccountId = prebidServerAccountId
             try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
             
@@ -131,6 +134,7 @@ public class Audienzz: NSObject {
     /// Use this function only to make RN bridging initialize
     public func configureSDK_RN(gadMobileAdsVersion: String?, _ completion: (() -> Void)? = nil) {
         Task {
+            AUEventsManager.shared.configure()
             Prebid.shared.prebidServerAccountId = prebidServerAccountId
             try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
             
@@ -160,10 +164,7 @@ public class Audienzz: NSObject {
         }
     }
     
-    // MARK: - Public Init For RN Bridg (Audienzz)
-    
     // MARK: - Public Properties (Audienzz)
-    
     private var prebidServerHost: PrebidHost = .Custom {
         didSet {
             timeoutMillisDynamic = NSNumber(value: timeoutMillis)
@@ -212,5 +213,17 @@ public class Audienzz: NSObject {
     
     public func clearCustomHeaders() {
         customHeaders.removeAll()
+    }
+    
+    func addEvent(with payload: PayloadModel) {
+        if let jsonString = payload.makePayload() {
+            let event1 = AUEventDB(id: UUID().uuidString, payload: jsonString)
+            AUEventsManager.shared.addEvent(event: event1)
+        }
+    }
+    
+    func addEvent(JSONString: String) {
+        let event = AUEventDB(id: UUID().uuidString, payload: JSONString)
+        AUEventsManager.shared.addEvent(event: event)
     }
 }

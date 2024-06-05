@@ -16,6 +16,7 @@
 import Foundation
 import PrebidMobile
 import PrebidMobileGAMEventHandlers
+import GoogleMobileAds
 
 @objcMembers
 public class AudienzzGAMUtils: NSObject {
@@ -35,5 +36,44 @@ public class AudienzzGAMUtils: NSObject {
     
     public func initializeGAM() {
         GAMUtils.shared.initializeGAM()
+    }
+    
+    public func prepareRequest(_ request: GAMRequest,
+                               bidTargeting: [String: String])  {
+        GAMUtils.shared.prepareRequest(request, bidTargeting: bidTargeting)
+    }
+    
+}
+
+
+extension AudienzzGAMUtils {
+    
+    public func findNativeAd(for nativeAd: GADNativeAd) -> Result<NativeAd, GAMEventHandlerError> {
+        GAMUtils.shared.findNativeAd(for: nativeAd)
+    }
+    
+    public func findNativeAdObjc(for nativeAd: GADNativeAd,
+                                 completion: @escaping (NativeAd?, NSError?) -> Void) {
+        GAMUtils.shared.findNativeAdObjc(for: nativeAd, completion: completion)
+    }
+    
+    
+    public func findCustomNativeAd(for nativeAd: GADCustomNativeAd, completion: @escaping (AUNativeAd?, NSError?) -> Void) {
+        let result = GAMUtils.shared.findCustomNativeAd(for: nativeAd)
+        
+        switch result {
+        case .success(let ad):
+            completion(AUNativeAd(ad), nil)
+        case .failure(let error):
+            let nsError = NSError(domain: "org.audienzz.mobile.GAMEventHandlers",
+                                  code: error.rawValue,
+                                  userInfo: [NSLocalizedDescriptionKey: NSLocalizedString(error.localizedDescription, comment: "")])
+            completion(nil, nsError)
+        }
+    }
+    
+    public func findCustomNativeAdObjc(for nativeAd: GADCustomNativeAd,
+                                       completion: @escaping (NativeAd?, NSError?) -> Void) {
+        GAMUtils.shared.findCustomNativeAdObjc(for: nativeAd, completion: completion)
     }
 }

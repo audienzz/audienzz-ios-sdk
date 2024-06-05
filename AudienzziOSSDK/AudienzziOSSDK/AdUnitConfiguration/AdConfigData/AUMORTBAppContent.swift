@@ -21,53 +21,53 @@ import PrebidMobile
 @objcMembers
 public class AUMORTBAppContent: NSObject {
     /// ID uniquely identifying the content.
-    var id: String?
+    public var id: String?
     /// Episode number.
-    var episode: NSNumber?
+    public var episode: NSNumber?
     /// Content title.
-    var title: String?
+    public var title: String?
     /// Content series.
-    var series: String?
+    public var series: String?
     /// Content season.
-    var season: String?
+    public var season: String?
     /// Artist credited with the content.
-    var artist: String?
+    public var artist: String?
     /// Genre that best describes the content.
-    var genre: String?
+    public var genre: String?
     /// Album to which the content belongs; typically for audio.
-    var album: String?
+    public var album: String?
     /// International Standard Recording Code conforming to ISO- 3901.
-    var isrc: String?
+    public var isrc: String?
     /// This object defines the producer of the content in which the ad will be shown.
-    var producer: AUMORTBContentProducer?
+    public var producer: AUMORTBContentProducer?
     /// URL of the content, for buy-side contextualization or review.
-    var url: String?
+    public var url: String?
     /// Array of IAB content categories that describe the content producer.
-    var cat: [String]?
+    public var cat: [String]?
     /// Production quality.
-    var prodq: NSNumber?
+    public var prodq: NSNumber?
     /// Type of content (game, video, text, etc.).
-    var context: NSNumber?
+    public var context: NSNumber?
     /// Content rating.
-    var contentrating: String?
+    public var contentrating: String?
     /// User rating of the content.
-    var userrating: String?
+    public var userrating: String?
     /// Media rating per IQG guidelines.
-    var qagmediarating: NSNumber?
+    public var qagmediarating: NSNumber?
     /// Comma separated list of keywords describing the content.
-    var keywords: String?
+    public var keywords: String?
     /// 0 = not live, 1 = content is live.
-    var livestream: NSNumber?
+    public var livestream: NSNumber?
     /// 0 = indirect, 1 = direct.
-    var sourcerelationship: NSNumber?
+    public var sourcerelationship: NSNumber?
     /// Length of content in seconds; appropriate for video or audio.
-    var len: NSNumber?
+    public var len: NSNumber?
     /// Content language using ISO-639-1-alpha-2.
-    var language: String?
+    public var language: String?
     /// Indicator of whether or not the content is embeddable (e.g., an embeddable video player), where 0 = no, 1 = yes.
-    var embeddable: NSNumber?
+    public var embeddable: NSNumber?
     /// The data and segment objects together allow additional data about the related object (e.g., user, content) to be specified.
-    var data: [AUMORTBContentData]?
+    public var data: [AUMORTBContentData]?
     /// Placeholder for exchange-specific extensions to OpenRTB.
-    var ext: [String: NSObject]?
+    public var ext: [String: NSObject]?
 }

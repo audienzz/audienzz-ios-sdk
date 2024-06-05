@@ -1,0 +1,22 @@
+# Uncomment the next line to define a global platform for your project
+# platform :ios, '9.0'
+
+workspace 'AudienzziOSSDK'
+
+project 'AudienzziOSSDK.xcodeproj'
+project 'Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj'
+
+target 'AudienzziOSSDK' do
+  project 'AudienzziOSSDK.xcodeproj'
+  use_frameworks!
+  pod 'SQLite.swift', '~> 0.14.0'
+#  target 'AudienzziOSSDKTests' do
+#    # Pods for testing
+#  end
+end
+
+target 'DemoSwiftApp' do
+  project 'Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj'
+  use_frameworks!
+  pod 'SQLite.swift', '~> 0.14.0'
+end
