@@ -44,4 +44,15 @@ extension ExamplesViewController: AUInterstitialenderingAdDelegate {
     func interstitialdidFailToReceiveAdWithError( error:Error? ) {
         print("Banner view did fail to receive ad with error: \(error)")
     }
+    
+    func interstitialWillPresentAd() {}
+
+    /// Called when the interstitial is dismissed by the user
+    func interstitialDidDismissAd() {}
+
+    /// Called when an ad causes the sdk to leave the app
+    func interstitialWillLeaveApplication() {}
+
+    /// Called when user clicked the ad
+    func interstitialDidClickAd() {}
 }

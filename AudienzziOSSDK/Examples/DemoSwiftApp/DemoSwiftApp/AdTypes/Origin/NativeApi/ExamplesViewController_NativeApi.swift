@@ -25,7 +25,6 @@ internal let gamNativeBannerAdUnitId = "/21808260008/prebid-demo-original-native
 fileprivate let nativeRenderingStoredImpression = "prebid-demo-banner-native-styles"
 fileprivate let gamRenderingNativeAdUnitId = "/21808260008/apollo_custom_template_native_ad_unit"
 
-fileprivate var nativeView: AUNativeView!
 fileprivate var nativeBannerView:AUNativeBannerView!
 fileprivate var nativeLzyView: AUNativeView!
 fileprivate var nativeLazyBannerView:AUNativeBannerView!

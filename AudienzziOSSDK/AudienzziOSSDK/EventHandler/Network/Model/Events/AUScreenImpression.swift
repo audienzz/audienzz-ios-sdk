@@ -14,16 +14,21 @@
  */
 
 import Foundation
-import SQLite
 
-struct AUEventDB {
-    let id: String
-    let payload: String
-}
-
-extension AUEventDB {
-    init(_ payload: String) {
-        self.id = UUID().uuidString
-        self.payload = payload
+struct AUScreenImpression: Codable, AUEventHandlerType {
+    let adViewId: String
+    let adUnitID: String
+    let type: AUAdEventType
+    
+    init(adViewId: String, adUnitID: String) {
+        self.adViewId = adViewId
+        self.adUnitID = adUnitID
+        self.type = .SCREEN_IMPRESSION
+    }
+    
+    init?(_ payload: PayloadModel) {
+        self.adViewId = payload.adViewId
+        self.adUnitID = payload.adUnitID
+        self.type = payload.type
     }
 }

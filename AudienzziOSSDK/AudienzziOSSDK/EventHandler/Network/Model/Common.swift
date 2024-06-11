@@ -19,6 +19,10 @@ protocol AUEventHandlerType {
     init?(_ payload: PayloadModel)
 }
 
+protocol NetDBPayloadType {
+    func makePayload() -> String?
+}
+
 public enum AUAdEventType: String, Codable {
     case BID_WINNER = "BID_WINNER"
     case AD_CLICK = "AD_CLICK"
@@ -27,10 +31,7 @@ public enum AUAdEventType: String, Codable {
     case AD_CREATION = "AD_CREATION"
     case CLOSE_AD = "CLOSE_AD"
     case AD_FAILED_TO_LOAD = "AD_FAILED_TO_LOAD"
-}
-
-protocol NetDBPayloadType {
-    func makePayload() -> String?
+    case SCREEN_IMPRESSION = "SCREEN_IMPRESSION"
 }
 
 public struct PayloadModel: Codable, NetDBPayloadType {

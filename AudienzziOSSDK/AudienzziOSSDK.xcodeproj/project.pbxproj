@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		3301C99924411D817F951553 /* Pods_AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CA96F58A8F713503B5F2208 /* Pods_AudienzziOSSDK.framework */; };
 		5822564A2BCD20B100CCCB2A /* AudienzzGAMUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582256492BCD20B100CCCB2A /* AudienzzGAMUtils.swift */; };
+		582428742C10A1F3004539DD /* AURewardedHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582428732C10A1F3004539DD /* AURewardedHandler.swift */; };
 		58249AF42BBEB89400E5C4C6 /* AUNativeBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249AF32BBEB89400E5C4C6 /* AUNativeBannerView.swift */; };
 		58249B082BC036BB00E5C4C6 /* AURewardedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B072BC036BB00E5C4C6 /* AURewardedView.swift */; };
 		58249B0A2BC04FCF00E5C4C6 /* AUAdViewUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B092BC04FCF00E5C4C6 /* AUAdViewUtils.swift */; };
@@ -98,6 +99,9 @@
 		58F8779F2BA09CE90093CD63 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58F877962BA09CE90093CD63 /* AudienzziOSSDK.framework */; };
 		58F877A42BA09CE90093CD63 /* AudienzziOSSDKTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F877A32BA09CE90093CD63 /* AudienzziOSSDKTests.swift */; };
 		58F877A52BA09CE90093CD63 /* AudienzziOSSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58F8BD062C1700BA00E08F1E /* AUScreenImpression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F8BD052C1700BA00E08F1E /* AUScreenImpression.swift */; };
+		58F8BD102C1701A900E08F1E /* AUScreenImpressionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F8BD0F2C1701A900E08F1E /* AUScreenImpressionManager.swift */; };
+		58F8BD122C1731F000E08F1E /* BoolExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F8BD112C1731F000E08F1E /* BoolExtension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -198,6 +202,7 @@
 /* Begin PBXFileReference section */
 		3485492388E3634B65EA9DBD /* Pods-AudienzziOSSDK.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDK.debug.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK.debug.xcconfig"; sourceTree = "<group>"; };
 		582256492BCD20B100CCCB2A /* AudienzzGAMUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudienzzGAMUtils.swift; sourceTree = "<group>"; };
+		582428732C10A1F3004539DD /* AURewardedHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedHandler.swift; sourceTree = "<group>"; };
 		58249AF32BBEB89400E5C4C6 /* AUNativeBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeBannerView.swift; sourceTree = "<group>"; };
 		58249B072BC036BB00E5C4C6 /* AURewardedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedView.swift; sourceTree = "<group>"; };
 		58249B092BC04FCF00E5C4C6 /* AUAdViewUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdViewUtils.swift; sourceTree = "<group>"; };
@@ -283,6 +288,9 @@
 		58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AudienzziOSSDK.h; sourceTree = "<group>"; };
 		58F8779E2BA09CE90093CD63 /* AudienzziOSSDKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AudienzziOSSDKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		58F877A32BA09CE90093CD63 /* AudienzziOSSDKTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudienzziOSSDKTests.swift; sourceTree = "<group>"; };
+		58F8BD052C1700BA00E08F1E /* AUScreenImpression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUScreenImpression.swift; sourceTree = "<group>"; };
+		58F8BD0F2C1701A900E08F1E /* AUScreenImpressionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUScreenImpressionManager.swift; sourceTree = "<group>"; };
+		58F8BD112C1731F000E08F1E /* BoolExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoolExtension.swift; sourceTree = "<group>"; };
 		9CA96F58A8F713503B5F2208 /* Pods_AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5E5FA6643136DAF31C90F09 /* Pods-AudienzziOSSDK.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDK.release.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -387,6 +395,7 @@
 			children = (
 				58436AD42C09C5BB00E83155 /* AUBannerHandler.swift */,
 				584359532C0A204000AB8FDA /* AUInterstitialHandler.swift */,
+				582428732C10A1F3004539DD /* AURewardedHandler.swift */,
 			);
 			path = AUGAMWrappers;
 			sourceTree = "<group>";
@@ -405,6 +414,7 @@
 			isa = PBXGroup;
 			children = (
 				58436A892C060F9200E83155 /* UIViewExtension.swift */,
+				58F8BD112C1731F000E08F1E /* BoolExtension.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -413,6 +423,7 @@
 			isa = PBXGroup;
 			children = (
 				58436AAB2C0709D800E83155 /* AUEventsManager.swift */,
+				58F8BD0F2C1701A900E08F1E /* AUScreenImpressionManager.swift */,
 				584359512C0A16B300AB8FDA /* AUGAMWrappers */,
 			);
 			path = Events;
@@ -475,6 +486,7 @@
 				58436AC82C09BDD100E83155 /* AUViewabilityEvent.swift */,
 				58436AC42C09BD7800E83155 /* AUBidWinnerEven.swift */,
 				58436AC62C09BD9B00E83155 /* AUAdClickEvent.swift */,
+				58F8BD052C1700BA00E08F1E /* AUScreenImpression.swift */,
 			);
 			path = Events;
 			sourceTree = "<group>";
@@ -518,7 +530,6 @@
 		585608442BAC4C5900F9F073 /* BannerView */ = {
 			isa = PBXGroup;
 			children = (
-				58927A232BE0E5DA001A0F45 /* AUBannerView.swift */,
 			);
 			path = BannerView;
 			sourceTree = "<group>";
@@ -575,6 +586,7 @@
 			isa = PBXGroup;
 			children = (
 				585608442BAC4C5900F9F073 /* BannerView */,
+				58927A232BE0E5DA001A0F45 /* AUBannerView.swift */,
 				5856084D2BAC81E100F9F073 /* Interstitial */,
 				5856088E2BB4561E00F9F073 /* NativeBanner */,
 				58249B062BC0366D00E5C4C6 /* RewardedView */,
@@ -950,6 +962,7 @@
 			files = (
 				58D9BC602BEBAEBB000C4149 /* AUNativeTitle.swift in Sources */,
 				58436AA22C06233A00E83155 /* AUSQLiteConfigurator.swift in Sources */,
+				58F8BD102C1701A900E08F1E /* AUScreenImpressionManager.swift in Sources */,
 				58436ACB2C09BDEF00E83155 /* AUBidRequestEvent.swift in Sources */,
 				58436AC72C09BD9B00E83155 /* AUAdClickEvent.swift in Sources */,
 				5822564A2BCD20B100CCCB2A /* AudienzzGAMUtils.swift in Sources */,
@@ -1016,16 +1029,19 @@
 				58436AC92C09BDD100E83155 /* AUViewabilityEvent.swift in Sources */,
 				58436ABC2C076C1F00E83155 /* AUHTTPType.swift in Sources */,
 				58D9BC402BE9150A000C4149 /* AUNativeView_Private.swift in Sources */,
+				582428742C10A1F3004539DD /* AURewardedHandler.swift in Sources */,
 				58436AC52C09BD7800E83155 /* AUBidWinnerEven.swift in Sources */,
 				58436AD52C09C5BC00E83155 /* AUBannerHandler.swift in Sources */,
 				58436ABE2C08707800E83155 /* Common.swift in Sources */,
 				58DCF5472BDFCCAC00683A3E /* AUNativeAsset.swift in Sources */,
 				585A79722BC97FDF005D531C /* AUInterstitialRenderingView.swift in Sources */,
 				585608772BB190BE00F9F073 /* AUInterstitialView.swift in Sources */,
+				58F8BD122C1731F000E08F1E /* BoolExtension.swift in Sources */,
 				58D9BC592BEA1A41000C4149 /* AUAdPosition.swift in Sources */,
 				583B55552BD66F5B00226302 /* AUMORTBAppContent_Internal.swift in Sources */,
 				58436ACD2C09BE1200E83155 /* AUAdCreationEvent.swift in Sources */,
 				58D9BC3E2BE913F2000C4149 /* AUInterstitialView_Private.swift in Sources */,
+				58F8BD062C1700BA00E08F1E /* AUScreenImpression.swift in Sources */,
 				58D9BC702BEBBC6E000C4149 /* AUNativeImageAssetType.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

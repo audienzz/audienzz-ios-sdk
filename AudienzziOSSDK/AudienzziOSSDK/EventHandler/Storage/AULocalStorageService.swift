@@ -118,6 +118,7 @@ fileprivate extension AULocalStorageService {
     }
     
     func modifyEvents() {
+        // Simple data will be replace on actual when time has come
         let dictToModyfy: [String: String] = ["Kia": "KIA", "Ram": "RAM", "FIAT": "Fiat", "MINI": "Mini"]
         
         let eventsTable = Table(SQLiteConstants.DataBaseTables.events)

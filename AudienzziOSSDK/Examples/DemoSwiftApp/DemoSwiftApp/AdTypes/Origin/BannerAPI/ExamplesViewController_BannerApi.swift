@@ -43,7 +43,9 @@ extension ExamplesViewController {
         //configuration
         bannerView.adUnitConfiguration.setAutoRefreshMillis(time: 30000)
         
-        bannerView.createAd(with: gamRequest, gamBanner: gamBanner)
+        bannerView.createAd(with: gamRequest,
+                            gamBanner: gamBanner,
+                            eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal, gamView: gamBanner))
         
         bannerView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {

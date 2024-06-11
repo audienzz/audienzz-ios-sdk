@@ -24,7 +24,7 @@ fileprivate let gamAdUnitDisplayInterstitialOriginal = "/21808260008/prebid-demo
 fileprivate let storedImpVideoInterstitial = "prebid-demo-video-interstitial-320-480-original-api"
 fileprivate let gamAdUnitVideoInterstitialOriginal = "/21808260008/prebid-demo-app-original-api-video-interstitial"
 
-fileprivate var interstitialView: AUInterstitialView!
+//fileprivate var interstitialView: AUInterstitialView!
 fileprivate var interstitialVideoView: AUInterstitialView!
 fileprivate var interstitialMultiplatformView: AUInterstitialView!
 
@@ -45,14 +45,14 @@ extension ExamplesViewController {
                 print("Faild request unwrap")
                 return
             }
-            GAMInterstitialAd.load(withAdManagerAdUnitID: gamAdUnitDisplayInterstitialOriginal, request: request) { ad, error in
+            GAMInterstitialAd.load(withAdManagerAdUnitID: gamAdUnitDisplayInterstitialOriginal, request: request) { [weak self] ad, error in
                 guard let self = self else { return }
                 if let error = error {
                     print("Failed to load interstitial ad with error: \(error.localizedDescription)")
                 } else if let ad = ad {
                     ad.fullScreenContentDelegate = self
+                    self.interstitialView.connectHandler(AUInterstitialEventHandler(adUnit: ad))
                     
-                    // 4. Present the interstitial ad
                     ad.present(fromRootViewController: self)
                 }
             }
@@ -136,5 +136,25 @@ extension ExamplesViewController {
 extension ExamplesViewController: GADFullScreenContentDelegate {
     func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         print("Failed to present interstitial ad with error: \(error.localizedDescription)")
+    }
+    
+    func adDidRecordImpression(_ ad: any GADFullScreenPresentingAd) {
+        print("ExamplesViewController -- adDidRecordImpression")
+    }
+    
+    func adDidRecordClick(_ ad: any GADFullScreenPresentingAd) {
+        print("ExamplesViewController -- adDidRecordClick")
+    }
+    
+    func adWillPresentFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
+        print("ExamplesViewController -- adWillPresentFullScreenContent")
+    }
+    
+    func adWillDismissFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
+        print("ExamplesViewController -- adWillDismissFullScreenContent")
+    }
+    
+    func adDidDismissFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
+        print("ExamplesViewController -- adDidDismissFullScreenContent")
     }
 }

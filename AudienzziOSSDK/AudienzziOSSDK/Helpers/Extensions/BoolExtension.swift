@@ -14,16 +14,10 @@
  */
 
 import Foundation
-import SQLite
 
-struct AUEventDB {
-    let id: String
-    let payload: String
-}
-
-extension AUEventDB {
-    init(_ payload: String) {
-        self.id = UUID().uuidString
-        self.payload = payload
+extension Bool {
+    
+    func not() -> Self {
+       !self
     }
 }

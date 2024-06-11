@@ -21,8 +21,6 @@ import GoogleMobileAds
 fileprivate let storedImpVideoRewarded = "prebid-demo-video-rewarded-320-480-original-api"
 fileprivate let gamAdUnitVideoRewardedOriginal = "ca-app-pub-3940256099942544/1712485313"
 
-fileprivate var rewardedView: AURewardedView!
-
 // MARK: - Rewarded
 extension ExamplesViewController {
     func createRewardedView() {
@@ -52,6 +50,7 @@ extension ExamplesViewController {
                 } else if let ad = ad {
                     // 5. Present the interstitial ad
                     ad.fullScreenContentDelegate = self
+                    self.rewardedView.connectHandler(AURewardedEventHandler(adUnit: ad))
                     ad.present(fromRootViewController: self, userDidEarnRewardHandler: {
                         _ = ad.adReward
                     })
