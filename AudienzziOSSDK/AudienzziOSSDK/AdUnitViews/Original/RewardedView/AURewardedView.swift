@@ -25,7 +25,7 @@ import PrebidMobile
 public class AURewardedView: AUAdView {
     internal var adUnit: RewardedVideoAdUnit!
     internal var gamRequest: AnyObject?
-    private var eventHandler: AURewardedHandler!
+    internal var eventHandler: AURewardedHandler?
     public var parameters: AUVideoParameters?
     
     /**
@@ -66,5 +66,6 @@ public class AURewardedView: AUAdView {
     
     public func connectHandler(_ eventHandler: AURewardedEventHandler) {
         self.eventHandler = AURewardedHandler(handler: eventHandler, adView: self)
+        makeCreationEvent()
     }
 }

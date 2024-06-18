@@ -16,6 +16,9 @@
 import UIKit
 import PrebidMobile
 
+fileprivate let adTypeString = "REWARDED"
+fileprivate let apiTypeString = "ORIGINAL"
+
 @objc
 internal extension AURewardedView {
     override func detectVisible() {
@@ -36,5 +39,58 @@ internal extension AURewardedView {
             guard let self = self else { return }
             self.onLoadRequest?(gamRequest)
         }
+    }
+    
+    private func makeRequestEvent() {
+        guard let autorefreshM = adUnitConfiguration as? AUAdUnitConfigurationEventProtocol,
+                let adUnitID = eventHandler?.adUnitID else { return }
+
+        let event = AUBidRequestEvent(adViewId: configId,
+                                      adUnitID: adUnitID,
+                                      size: "\(adSize.width)x\(adSize.height)",
+                                      isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
+                                      autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
+                                      initialRefresh: isInitialAutorefresh,
+                                      adType: adTypeString,
+                                      adSubType: "VIDEO",
+                                      apiType: apiTypeString)
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    }
+    
+    private func makeWinnerEvent(_ resultCode: String) {
+        guard let autorefreshM = adUnitConfiguration as? AUAdUnitConfigurationEventProtocol,
+              let adUnitID = eventHandler?.adUnitID else { return }
+        
+        let event = AUBidWinnerEven(resultCode: resultCode,
+                                    adUnitID: adUnitID,
+                                    targetKeywords: [:],
+                                    isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
+                                    autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
+                                    initialRefresh: isInitialAutorefresh,
+                                    adViewId: configId,
+                                    size: "\(adSize.width)x\(adSize.height)",
+                                    adType: adTypeString,
+                                    adSubType: "VIDEO",
+                                    apiType: apiTypeString)
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    }
+    
+    func makeCreationEvent() {
+        let event = AUAdCreationEvent(adViewId: configId,
+                                      adUnitID: eventHandler?.adUnitID ?? "",
+                                      size: "\(adSize.width)x\(adSize.height)",
+                                      adType: adTypeString,
+                                      adSubType: "VIDEO",
+                                      apiType: apiTypeString)
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
     }
 }

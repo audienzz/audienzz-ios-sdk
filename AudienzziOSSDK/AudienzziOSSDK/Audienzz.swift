@@ -214,16 +214,4 @@ public class Audienzz: NSObject {
     public func clearCustomHeaders() {
         customHeaders.removeAll()
     }
-    
-    func addEvent(with payload: PayloadModel) {
-        if let jsonString = payload.makePayload() {
-            let event1 = AUEventDB(id: UUID().uuidString, payload: jsonString)
-            AUEventsManager.shared.addEvent(event: event1)
-        }
-    }
-    
-    func addEvent(JSONString: String) {
-        let event = AUEventDB(id: UUID().uuidString, payload: JSONString)
-        AUEventsManager.shared.addEvent(event: event)
-    }
 }

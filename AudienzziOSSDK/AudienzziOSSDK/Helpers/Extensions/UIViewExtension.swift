@@ -48,14 +48,6 @@ extension UIView {
     func get<T: UIView>(all type: T.Type) -> [T] { return UIView.getAllSubviews(from: self) as [T] }
     func get(all types: [UIView.Type]) -> [UIView] { return UIView.getAllSubviews(from: self, types: types) }
 }
-
-//func detectClass() {
-//    guard let vc = self.parentViewController else {
-//        return
-//    }
-//    let name = String(describing: type(of: vc))
-//    print(name)
-//}
 //
 //public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
 //    for subview in self.subviews {

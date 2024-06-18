@@ -25,6 +25,7 @@ import PrebidMobile
 public class AUBannerView: AUAdView {
     internal var adUnit: BannerAdUnit!
     internal var gamRequest: AnyObject?
+    internal var eventHandler: AUBannerHandler?
 
     public var parameters: AUVideoParameters?
     public var bannerParameters: AUBannerParameters?
@@ -57,10 +58,15 @@ public class AUBannerView: AUAdView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    deinit {
+        print("AUBannerView")
+    }
+    
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
-    public func createAd(with gamRequest: AnyObject, gamBanner: UIView) {
+    public func createAd(with gamRequest: AnyObject, gamBanner: UIView, eventHandler: AUBannerEventHandler? = nil) {
+        AUEventsManager.shared.checkImpression(self)
         if let parameters = bannerParameters {
             adUnit.bannerParameters = parameters.makeBannerParameters()
         } else {
@@ -73,6 +79,12 @@ public class AUBannerView: AUAdView {
         adUnit.videoParameters = self.parameters?.unwrap() ?? defaultVideoParameters()
 
         self.gamRequest = gamRequest
+        
+        if let bannerEventHandler = eventHandler {
+            self.eventHandler = AUBannerHandler(auBannerView: self, gamView: bannerEventHandler.gamView)
+        }
+        
+        makeCreationEvent()
 
         if !self.isLazyLoad {
             fetchRequest(gamRequest)

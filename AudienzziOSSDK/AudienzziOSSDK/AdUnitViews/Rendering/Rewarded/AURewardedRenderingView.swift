@@ -17,6 +17,9 @@ import UIKit
 import PrebidMobile
 import PrebidMobileGAMEventHandlers
 
+fileprivate let adTypeString = "REWARDED"
+fileprivate let apiTypeString = "RENDERING"
+
 @objcMembers
 public class AUGAMRewardedAdEventHandler: NSObject {
     
@@ -37,14 +40,27 @@ public class AURewardedRenderingView: AUAdView {
     private var rewardedAdUnit: RewardedAdUnit!
     public weak var delegate: AURewardedAdUnitDelegate?
     internal var subdelegate: AURewardedRenderingDelegateType?
+    internal var eventHandler: AUGAMRewardedAdEventHandler?
+    internal var minSizePerc: NSValue?
     
     /**
      Initialize rewarded view.
      Lazy load is true by default.
      */
-    public override init(configId: String, isLazyLoad: Bool = true) {
+    @objc required public init(configId: String,
+                               isLazyLoad: Bool = true,
+                               minSizePercentage: NSValue? = nil,
+                               eventHandler: AUGAMRewardedAdEventHandler) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
         self.subdelegate = AURewardedRenderingDelegateType(parent: self)
+        self.eventHandler = eventHandler
+        self.minSizePerc = minSizePercentage
+        
+        let rewardedEventHandler = GAMRewardedAdEventHandler(adUnitID: eventHandler.adUnitID)
+        self.rewardedAdUnit = RewardedAdUnit(configID: configId, minSizePercentage: minSizePerc?.cgSizeValue ?? .zero, eventHandler: rewardedEventHandler)
+        self.adUnitConfiguration = AURewardedRenderingConfiguration(adUnit: rewardedAdUnit)
+        
+        makeCreationEvent(eventHandler: eventHandler)
     }
     
     required init?(coder: NSCoder) {
@@ -54,15 +70,18 @@ public class AURewardedRenderingView: AUAdView {
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
-    public func createAd(with eventHandler: AUGAMRewardedAdEventHandler, minSizePerc: NSValue? = nil) {
-        let rewardedEventHandler = GAMRewardedAdEventHandler(adUnitID: eventHandler.adUnitID)
-        rewardedAdUnit = RewardedAdUnit(configID: configId, eventHandler: rewardedEventHandler)
-        rewardedAdUnit.delegate = self
+    public func createAd() {
+        rewardedAdUnit.delegate = subdelegate
         
         if !isLazyLoad {
             self.delegate?.rewardedAdDidDisplayOnScreen?()
             rewardedAdUnit.loadAd()
         }
+    }
+    
+    /// It is expected from the user to call this method on main thread
+    public func showAd(_ controller: UIViewController) {
+        rewardedAdUnit.show(from: controller)
     }
     
     internal override func detectVisible() {
@@ -79,39 +98,17 @@ public class AURewardedRenderingView: AUAdView {
     }
 }
 
-internal class AURewardedRenderingDelegateType: NSObject, RewardedAdUnitDelegate {
-    private weak var parent: AURewardedRenderingView?
-    
-    init(parent: AURewardedRenderingView) {
-        super.init()
-        self.parent = parent
-    }
-    
-    public func rewardedAdDidReceiveAd(_ rewardedAd: RewardedAdUnit) {
-        parent?.delegate?.rewardedAdDidReceiveAd?(rewardedAd)
-    }
-    
-    public func rewardedAd(_ rewardedAd: RewardedAdUnit, didFailToReceiveAdWithError error: Error?) {
-        parent?.delegate?.rewardedAd?(rewardedAd, didFailToReceiveAdWithError: error)
-    }
-    
-    public func rewardedAdWillPresentAd(_ rewardedAd: RewardedAdUnit) {
-        parent?.delegate?.rewardedAdWillPresentAd?(rewardedAd)
-    }
-
-    /// Called when the interstial is dismissed by the user
-    public func rewardedAdDidDismissAd(_ rewardedAd: RewardedAdUnit) {
-        parent?.delegate?.rewardedAdDidDismissAd?(rewardedAd)
-    }
-
-    /// Called when an ad causes the sdk to leave the app
-    public func rewardedAdWillLeaveApplication(_ rewardedAd: RewardedAdUnit) {
-        parent?.delegate?.rewardedAdWillLeaveApplication?(rewardedAd)
-    }
-
-    /// Called when user clicked the ad
-    public func rewardedAdDidClickAd(_ rewardedAd: RewardedAdUnit) {
-        parent?.delegate?.rewardedAdDidClickAd?(rewardedAd)
+fileprivate extension AURewardedRenderingView {
+    func makeCreationEvent(eventHandler: AUGAMRewardedAdEventHandler) {
+        let event = AUAdCreationEvent(adViewId: configId,
+                                      adUnitID: eventHandler.adUnitID,
+                                      size: "\(adSize.width)x\(adSize.height)",
+                                      adType: adTypeString,
+                                      adSubType: "VIDEO",
+                                      apiType: apiTypeString)
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
     }
 }
-

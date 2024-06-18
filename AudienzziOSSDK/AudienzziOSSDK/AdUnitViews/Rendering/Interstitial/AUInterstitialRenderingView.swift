@@ -17,6 +17,9 @@ import UIKit
 import PrebidMobile
 import PrebidMobileGAMEventHandlers
 
+fileprivate let adTypeString = "INTERSTITIAL"
+fileprivate let apiTypeString = "RENDERING"
+
 @objcMembers
 public class AUGAMInterstitialEventHandler: NSObject {
     let adUnitID: String
@@ -44,6 +47,9 @@ public class AUInterstitialRenderingView: AUAdView {
     public weak var delegate: AUInterstitialenderingAdDelegate?
     
     internal var subdelegate: AUInterstitialRenderingDelegateType?
+    internal var eventHandler: AUGAMInterstitialEventHandler?
+    internal var adFormat: AURenderingInsterstitialAdFormat!
+    internal var minSizePerc: CGSize?
     
     @objc public var skipButtonArea: Double {
         get { adUnit.skipButtonArea }
@@ -60,9 +66,24 @@ public class AUInterstitialRenderingView: AUAdView {
         set { adUnit.skipDelay = newValue }
     }
     
-    override public init(configId: String, isLazyLoad: Bool) {
+    @objc required public init(configId: String,
+                               isLazyLoad: Bool = true,
+                               adFormat: AURenderingInsterstitialAdFormat,
+                               minSizePercentage: NSValue? = nil,
+                               eventHandler: AUGAMInterstitialEventHandler) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
         self.subdelegate = AUInterstitialRenderingDelegateType(parent: self)
+        self.eventHandler = eventHandler
+        self.adFormat = adFormat
+        self.minSizePerc = minSizePercentage?.cgSizeValue
+        
+        let interstitialEventHandler = GAMInterstitialEventHandler(adUnitID: eventHandler.adUnitID)
+        
+        self.adUnit = InterstitialRenderingAdUnit(configID: configId,
+                                                  minSizePercentage: minSizePerc ?? .zero,
+                                                  eventHandler: interstitialEventHandler)
+        
+        makeCreationEvent(adFormat, eventHandler: eventHandler)
     }
     
     required init?(coder: NSCoder) {
@@ -72,16 +93,15 @@ public class AUInterstitialRenderingView: AUAdView {
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
-    public func createAd(with eventHandler: AUGAMInterstitialEventHandler, adFormat: AURenderingInsterstitialAdFormat) {
-        let interstitialEventHandler = GAMInterstitialEventHandler(adUnitID: eventHandler.adUnitID)
-        
-        adUnit = InterstitialRenderingAdUnit(configID: configId, eventHandler: interstitialEventHandler)
+    public func createAd() {
         
         switch adFormat {
         case .banner:
             adUnit.adFormats = [.banner]
         case .video:
             adUnit.adFormats = [.video]
+        case .none:
+            break
         }
         
         adUnit.delegate = subdelegate
@@ -111,35 +131,17 @@ public class AUInterstitialRenderingView: AUAdView {
     }
 }
 
-internal class AUInterstitialRenderingDelegateType: NSObject, InterstitialAdUnitDelegate {
-    private weak var parent: AUInterstitialRenderingView?
-    
-    init(parent: AUInterstitialRenderingView) {
-        super.init()
-        self.parent = parent
-    }
-    
-    public func interstitialDidReceiveAd(_ interstitial: InterstitialRenderingAdUnit) {
-        parent?.delegate?.interstitialDidReceiveAd?(with: interstitial.configID)
-    }
-
-    public func interstitial(_ interstitial: InterstitialRenderingAdUnit, didFailToReceiveAdWithError error:Error? ) {
-        parent?.delegate?.interstitialdidFailToReceiveAdWithError?(error: error)
-    }
-
-    public func interstitialWillPresentAd(_ interstitial: InterstitialRenderingAdUnit) {
-        parent?.delegate?.interstitialWillPresentAd?()
-    }
-
-    public func interstitialDidDismissAd(_ interstitial: InterstitialRenderingAdUnit) {
-        parent?.delegate?.interstitialDidDismissAd?()
-    }
-
-    public func interstitialWillLeaveApplication(_ interstitial: InterstitialRenderingAdUnit) {
-        parent?.delegate?.interstitialWillLeaveApplication?()
-    }
-
-    public func interstitialDidClickAd(_ interstitial: InterstitialRenderingAdUnit) {
-        parent?.delegate?.interstitialDidClickAd?()
+fileprivate extension AUInterstitialRenderingView {
+    func makeCreationEvent(_ format: AURenderingInsterstitialAdFormat, eventHandler: AUGAMInterstitialEventHandler) {
+        let event = AUAdCreationEvent(adViewId: configId,
+                                      adUnitID: eventHandler.adUnitID,
+                                      size: "\(adSize.width)x\(adSize.height)",
+                                      adType: adTypeString,
+                                      adSubType: format == .banner ? "HTML" : "VIDEO",
+                                      apiType: apiTypeString)
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
     }
 }

@@ -27,8 +27,9 @@ public class AURewardedEventHandler: NSObject {
 }
 
 class AURewardedHandler: NSObject,
-                             GADFullScreenContentDelegate,
-                             GADAppEventDelegate {
+                         GADFullScreenContentDelegate,
+                         GADAppEventDelegate,
+                         AULogEventType {
 
     let handler: AURewardedEventHandler
     let adView: AURewardedView
@@ -42,8 +43,11 @@ class AURewardedHandler: NSObject,
         addListener()
     }
     
+    var adUnitID: String {
+        self.handler.adUnit.adUnitID
+    }
     
-    func addListener() {
+    private func addListener() {
         handler.adUnit.fullScreenContentDelegate = self
     }
     
@@ -53,32 +57,62 @@ class AURewardedHandler: NSObject,
     
     
     func adDidRecordImpression(_ ad: any GADFullScreenPresentingAd) {
-        print("AURewardedHandler -- adDidRecordImpression")
+        LogEvent("adDidRecordImpression")
         fullScreentDelegate?.adDidRecordImpression?(ad)
     }
     
     func adDidRecordClick(_ ad: any GADFullScreenPresentingAd) {
-        print("AURewardedHandler -- adDidRecordClick")
+        LogEvent("adDidRecordClick")
+        
+        let event = AUAdClickEvent(adViewId: adView.configId, adUnitID: adUnitID)
+        
+        guard let payload = event.convertToJSONString() else {
+            fullScreentDelegate?.adDidRecordClick?(ad)
+            return
+        }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        
         fullScreentDelegate?.adDidRecordClick?(ad)
     }
     
     func ad(_ ad: any GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: any Error) {
-        print("AURewardedHandler -- didFailToPresentFullScreenContentWithError")
+        LogEvent("didFailToPresentFullScreenContentWithError")
+        
+        let event = AUFailedLoadEvent(adViewId: adView.configId,
+                                      adUnitID: adUnitID,
+                                      errorMessage: error.localizedDescription,
+                                      errorCode: error.errorCode ?? -1)
+        
+        guard let payload = event.convertToJSONString() else {
+            fullScreentDelegate?.ad?(ad, didFailToPresentFullScreenContentWithError: error)
+            return
+        }
+        
         fullScreentDelegate?.ad?(ad, didFailToPresentFullScreenContentWithError: error)
     }
     
     func adWillPresentFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
-        print("AURewardedHandler -- adWillPresentFullScreenContent")
+        LogEvent("adWillPresentFullScreenContent")
         fullScreentDelegate?.adWillPresentFullScreenContent?(ad)
     }
     
     func adWillDismissFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
-        print("AURewardedHandler -- adWillDismissFullScreenContent")
+        LogEvent("adWillDismissFullScreenContent")
         fullScreentDelegate?.adWillDismissFullScreenContent?(ad)
     }
     
     func adDidDismissFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
-        print("AURewardedHandler -- adDidDismissFullScreenContent")
+        LogEvent("adDidDismissFullScreenContent")
+        
+        let event = AUCloseAdEvent(adViewId: adView.configId, adUnitID: adUnitID)
+        guard let payload = event.convertToJSONString() else {
+            fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
+            return
+        }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        
         fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
     }
 }

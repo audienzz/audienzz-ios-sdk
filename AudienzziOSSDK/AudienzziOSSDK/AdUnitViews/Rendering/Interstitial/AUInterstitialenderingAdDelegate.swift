@@ -24,7 +24,7 @@ import PrebidMobile
     @objc optional func interstitialDidReceiveAd(with configId: String)
 
     /// Called when the load process fails to produce a viable ad
-    @objc optional func interstitialdidFailToReceiveAdWithError( error:Error? )
+    @objc optional func interstitialDidFailToReceiveAdWithError(error: Error?)
 
     /// Called when the interstitial view will be launched,  as a result of show() method.
     @objc optional func interstitialWillPresentAd()

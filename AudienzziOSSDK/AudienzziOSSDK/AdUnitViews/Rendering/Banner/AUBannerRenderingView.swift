@@ -17,6 +17,9 @@ import UIKit
 import PrebidMobile
 import PrebidMobileGAMEventHandlers
 
+fileprivate let adTypeString = "BANNER"
+fileprivate let apiTypeString = "RENDERING"
+
 /**
  * AUGAMBannerEventHandler.
  * To create the GAMBannerEventHandler you should provide:
@@ -45,6 +48,7 @@ public class AUBannerRenderingView: AUAdView {
     @objc public weak var delegate: AUBannerRenderingAdDelegate?
     
     internal var subdelegate: AUBannerRenderingDelegateType?
+    internal var eventHandler: AUGAMBannerEventHandler?
     
     // MARK: - Public Properties
     
@@ -84,14 +88,22 @@ public class AUBannerRenderingView: AUAdView {
         get { bannerView.ortbConfig }
         set { bannerView.ortbConfig = newValue }
     }
+    
+    @objc public func setVideoParameters(_ videoParameters: AUVideoParameters) {
+        setupVideoParameters(videoParameters)
+    }
 
     /**
      * Initialize banner rendering view.
-     * Lazy load is true by default. 
+     * Lazy load is true by default. Format is HTML-banner as default
      */
-    public init(configId: String, adSize: CGSize, isLazyLoad: Bool = true, eventHandler: AUGAMBannerEventHandler) {
+    public init(configId: String,
+                adSize: CGSize,
+                format: AUAdFormat = .banner,
+                isLazyLoad: Bool = true,
+                eventHandler: AUGAMBannerEventHandler) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
-        
+        self.eventHandler = eventHandler
         let bannerEventHandler = GAMBannerEventHandler(adUnitID: eventHandler.adUnitID,
                                                        validGADAdSizes: eventHandler.validGADAdSizes)
         
@@ -102,6 +114,10 @@ public class AUBannerRenderingView: AUAdView {
         
         self.adUnitConfiguration = AUBannerRenderingConfiguration(bannerView: bannerView)
         self.subdelegate = AUBannerRenderingDelegateType(parent: self)
+        
+        bannerView.adFormat = format == .video ? .video : .banner
+        
+        self.makeCreationEvent(format, eventHandler: eventHandler)
     }
     
     required init?(coder: NSCoder) {
@@ -109,7 +125,8 @@ public class AUBannerRenderingView: AUAdView {
     }
     
     /**
-     Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
+     Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen. 
+     If you use VIDEO please use 'setVideoParameters' method befrore.
      */
     public func createAd() {
         bannerView.delegate = subdelegate
@@ -118,36 +135,6 @@ public class AUBannerRenderingView: AUAdView {
         
         if !isLazyLoad {
             delegate?.bannerAdDidDisplayOnScreen?()
-            bannerView.loadAd()
-        }
-    }
-    
-    /**
-     Function for prepare and make request for video ad type. If Lazy load enabled request will be send only when view will appear on screen.
-     */
-    public func createVideoAd(with videoParameters: AUVideoParameters) {
-        bannerView.adFormat = .video
-        
-        bannerView.videoParameters.protocols = videoParameters.toProtocols()
-        bannerView.videoParameters.playbackMethod = videoParameters.toPlaybackMethods()
-        bannerView.videoParameters.placement = videoParameters.placement?.toPlacement
-        
-        bannerView.videoParameters.api = videoParameters.toApi()
-        bannerView.videoParameters.startDelay = videoParameters.startDelay?.toStartDelay
-        bannerView.videoParameters.adSize = videoParameters.adSize
-        
-        bannerView.videoParameters.maxBitrate = videoParameters.toSingleContainerInt(videoParameters.maxBitrate)
-        bannerView.videoParameters.minBitrate = videoParameters.toSingleContainerInt(videoParameters.minBitrate)
-        bannerView.videoParameters.maxDuration = videoParameters.toSingleContainerInt(videoParameters.maxDuration)
-        bannerView.videoParameters.minDuration = videoParameters.toSingleContainerInt(videoParameters.minDuration)
-        bannerView.videoParameters.linearity = videoParameters.toSingleContainerInt(videoParameters.linearity)
-        
-        bannerView.delegate = subdelegate
-        
-        self.backgroundColor = .clear
-        self.addSubview(bannerView)
-        
-        if !isLazyLoad {
             bannerView.loadAd()
         }
     }
@@ -179,27 +166,89 @@ internal class AUBannerRenderingDelegateType: NSObject, BannerViewDelegate {
     }
     
     public func bannerView(_ bannerView: BannerView, didReceiveAdWithAdSize adSize: CGSize) {
-        guard let parent = parent else { return }
+        guard let parent = parent else { return } // LOAD
         parent.delegate?.bannerView?(parent, didReceiveAdWithAdSize: adSize)
     }
 
     public func bannerView(_ bannerView: BannerView, didFailToReceiveAdWith error: Error) {
         guard let parent = parent else { return }
+        makeErrorEvent(parent: parent, error)
         parent.delegate?.bannerView?(parent, didFailToReceiveAdWith: error)
     }
 
     public func bannerViewWillLeaveApplication(_ bannerView: BannerView) {
         guard let parent = parent else { return }
+        //open safery - leave app
         parent.delegate?.bannerViewWillLeaveApplication?(parent)
     }
 
     public func bannerViewWillPresentModal(_ bannerView: BannerView) {
         guard let parent = parent else { return }
+        makeClickEvent(parent)
         parent.delegate?.bannerViewWillPresentModal?(parent)
     }
 
     public func bannerViewDidDismissModal(_ bannerView: BannerView) {
         guard let parent = parent else { return }
+        makeCloseEvent(parent)
         parent.delegate?.bannerViewDidDismissModal?(parent)
+    }
+    
+    private func makeCloseEvent(_ parent: AUBannerRenderingView) {
+        let event = AUCloseAdEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    }
+    
+    private func makeClickEvent(_ parent: AUBannerRenderingView) {
+        let event = AUAdClickEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    }
+    
+    private func makeErrorEvent(parent: AUBannerRenderingView, _ error: Error) {
+        let event = AUFailedLoadEvent(adViewId: parent.configId,
+                                      adUnitID: parent.eventHandler?.adUnitID ?? "",
+                                      errorMessage: error.localizedDescription,
+                                      errorCode: error.errorCode ?? -1)
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    }
+}
+
+fileprivate extension AUBannerRenderingView {
+    func makeCreationEvent(_ format: AUAdFormat, eventHandler: AUGAMBannerEventHandler) {
+        let event = AUAdCreationEvent(adViewId: configId,
+                                      adUnitID: eventHandler.adUnitID,
+                                      size: "\(adSize.width)x\(adSize.height)",
+                                      adType: adTypeString,
+                                      adSubType: format == .banner ? "HTML" : "VIDEO",
+                                      apiType: apiTypeString)
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    }
+    
+    func setupVideoParameters(_ videoParameters: AUVideoParameters) {
+        bannerView.videoParameters.protocols = videoParameters.toProtocols()
+        bannerView.videoParameters.playbackMethod = videoParameters.toPlaybackMethods()
+        bannerView.videoParameters.placement = videoParameters.placement?.toPlacement
+        
+        bannerView.videoParameters.api = videoParameters.toApi()
+        bannerView.videoParameters.startDelay = videoParameters.startDelay?.toStartDelay
+        bannerView.videoParameters.adSize = videoParameters.adSize
+        
+        bannerView.videoParameters.maxBitrate = videoParameters.toSingleContainerInt(videoParameters.maxBitrate)
+        bannerView.videoParameters.minBitrate = videoParameters.toSingleContainerInt(videoParameters.minBitrate)
+        bannerView.videoParameters.maxDuration = videoParameters.toSingleContainerInt(videoParameters.maxDuration)
+        bannerView.videoParameters.minDuration = videoParameters.toSingleContainerInt(videoParameters.minDuration)
+        bannerView.videoParameters.linearity = videoParameters.toSingleContainerInt(videoParameters.linearity)
     }
 }

@@ -25,11 +25,14 @@ extension ExamplesViewController {
     func createRenderingIntertitiaView() {
         let eventHandler = AUGAMInterstitialEventHandler(adUnitID: gamAdUnitVideoInterstitialRendering)
         
-        interstitialRenderingView = AUInterstitialRenderingView(configId: storedImpVideoInterstitial, isLazyLoad: true)
+        interstitialRenderingView = AUInterstitialRenderingView(configId: storedImpVideoInterstitial,
+                                                                isLazyLoad: true,
+                                                                adFormat: .video,
+                                                                minSizePerc: nil,
+                                                                eventHandler: eventHandler)
         interstitialRenderingView.delegate = self
         interstitialRenderingView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: 320, height: 50)
-        
-        interstitialRenderingView.createAd(with: eventHandler, adFormat: .video)
+        interstitialRenderingView.createAd()
         
         adContainerView.addSubview(interstitialRenderingView)
     }
@@ -41,7 +44,8 @@ extension ExamplesViewController: AUInterstitialenderingAdDelegate {
         interstitialRenderingView.showAd(self)
     }
     
-    func interstitialdidFailToReceiveAdWithError( error:Error? ) {
+    func interstitialDidFailToReceiveAdWithError(error: Error?) {
+        guard let error = error else { return }
         print("Banner view did fail to receive ad with error: \(error)")
     }
     

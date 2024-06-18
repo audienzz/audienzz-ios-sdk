@@ -21,7 +21,7 @@ struct AUBidWinnerEven: Codable, AUEventHandlerType {
     let targetKeywords: [String: String]
     let isAutorefresh: Bool
     let autorefreshTime: Int
-    let initialRefresh: Int?
+    let initialRefresh: Bool?
     let adViewId: String
     let size: String
     let adType: String
@@ -29,7 +29,7 @@ struct AUBidWinnerEven: Codable, AUEventHandlerType {
     let apiType: String
     let type: AUAdEventType
     
-    init(resultCode: String, adUnitID: String, targetKeywords: [String : String], isAutorefresh: Bool, autorefreshTime: Int, initialRefresh: Int?, adViewId: String, size: String, adType: String, adSubType: String, apiType: String) {
+    init(resultCode: String, adUnitID: String, targetKeywords: [String : String], isAutorefresh: Bool, autorefreshTime: Int, initialRefresh: Bool?, adViewId: String, size: String, adType: String, adSubType: String, apiType: String) {
         self.resultCode = resultCode
         self.adUnitID = adUnitID
         self.targetKeywords = targetKeywords
@@ -68,5 +68,23 @@ struct AUBidWinnerEven: Codable, AUEventHandlerType {
         self.apiType = apiType
         self.resultCode = resultCode
         self.targetKeywords = targetKeywords
+    }
+    
+    func convertToJSONString() -> String? {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted // Optional: for pretty-printed JSON
+            let jsonData = try encoder.encode(self)
+            
+            // Convert JSON data to a JSON string
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                print("JSON String:\n\(jsonString)")
+                return jsonString
+            }
+        } catch {
+            print("Error encoding user: \(error)")
+        }
+        
+        return nil
     }
 }

@@ -63,6 +63,7 @@ public class AUAdView: VisibleView {
     }
     
     internal dynamic func fetchRequest(_ gamRequest: AnyObject) {}
+    internal var isInitialAutorefresh: Bool = true
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [AdFormat] {
         formats.compactMap { AdFormat(rawValue: $0.rawValue) }

@@ -31,4 +31,22 @@ struct AUViewabilityEvent: Codable, AUEventHandlerType {
         self.adUnitID = payload.adUnitID
         self.type = payload.type
     }
+    
+    func convertToJSONString() -> String? {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted // Optional: for pretty-printed JSON
+            let jsonData = try encoder.encode(self)
+            
+            // Convert JSON data to a JSON string
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                print("JSON String:\n\(jsonString)")
+                return jsonString
+            }
+        } catch {
+            print("Error encoding user: \(error)")
+        }
+        
+        return nil
+    }
 }

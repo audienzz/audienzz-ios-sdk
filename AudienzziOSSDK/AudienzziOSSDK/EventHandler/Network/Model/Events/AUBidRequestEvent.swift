@@ -22,12 +22,20 @@ struct AUBidRequestEvent: Codable, AUEventHandlerType {
     let size: String?
     let isAutorefresh: Bool
     let autorefreshTime: Int
-    let initialRefresh: Int?
+    let initialRefresh: Bool?
     let adType: String
     let adSubType: String
     let apiType: String
     
-    init(adViewId: String, adUnitID: String, type: AUAdEventType, size: String?, isAutorefresh: Bool, autorefreshTime: Int, initialRefresh: Int?, adType: String, adSubType: String, apiType: String) {
+    init(adViewId: String,
+         adUnitID: String,
+         size: String?,
+         isAutorefresh: Bool,
+         autorefreshTime: Int,
+         initialRefresh: Bool?,
+         adType: String,
+         adSubType: String,
+         apiType: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
         self.type = .BID_REQUEST
@@ -59,5 +67,23 @@ struct AUBidRequestEvent: Codable, AUEventHandlerType {
         self.adType = adType
         self.adSubType = adSubType
         self.apiType = apiType
+    }
+    
+    func convertToJSONString() -> String? {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted // Optional: for pretty-printed JSON
+            let jsonData = try encoder.encode(self)
+            
+            // Convert JSON data to a JSON string
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                print("JSON String:\n\(jsonString)")
+                return jsonString
+            }
+        } catch {
+            print("Error encoding user: \(error)")
+        }
+        
+        return nil
     }
 }

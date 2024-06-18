@@ -23,7 +23,7 @@ protocol NetDBPayloadType {
     func makePayload() -> String?
 }
 
-public enum AUAdEventType: String, Codable {
+enum AUAdEventType: String, Codable {
     case BID_WINNER = "BID_WINNER"
     case AD_CLICK = "AD_CLICK"
     case VIEWABILITY = "VIEWABILITY"
@@ -34,7 +34,7 @@ public enum AUAdEventType: String, Codable {
     case SCREEN_IMPRESSION = "SCREEN_IMPRESSION"
 }
 
-public struct PayloadModel: Codable, NetDBPayloadType {
+struct PayloadModel: Codable, NetDBPayloadType {
     let adViewId: String
     let adUnitID: String
     let type: AUAdEventType
@@ -43,7 +43,7 @@ public struct PayloadModel: Codable, NetDBPayloadType {
     let targetKeywords: [String: String]?
     let isAutorefresh: Bool?
     let autorefreshTime: Int?
-    let initialRefresh: Int?
+    let initialRefresh: Bool?
     let size: String?
     let adType: String?
     let adSubType: String?
@@ -52,39 +52,39 @@ public struct PayloadModel: Codable, NetDBPayloadType {
     let errorMessage: String?
     let errorCode: Int?
     
-    public init(adViewId: String,
-         adUnitID: String,
-         type: AUAdEventType,
-         resultCode: String?,
-         targetKeywords: [String: String]?,
-         isAutorefresh: Bool?,
-         autorefreshTime: Int?,
-         initialRefresh: Int?,
-         size: String?,
-         adType: String?,
-         adSubType: String?,
-         apiType: String?,
-         errorMessage: String?,
-         errorCode: Int?) {
-        self.adViewId = adViewId
-        self.adUnitID = adUnitID
-        self.type = type
-        
-        self.resultCode = resultCode
-        self.targetKeywords = targetKeywords
-        self.isAutorefresh = isAutorefresh
-        self.autorefreshTime = autorefreshTime
-        self.initialRefresh = initialRefresh
-        self.size = size
-        self.adType = adType
-        self.adSubType = adSubType
-        self.apiType = apiType
-        
-        self.errorMessage = errorMessage
-        self.errorCode = errorCode
-    }
+//    init(adViewId: String,
+//         adUnitID: String,
+//         type: AUAdEventType,
+//         resultCode: String?,
+//         targetKeywords: [String: String]?,
+//         isAutorefresh: Bool?,
+//         autorefreshTime: Int?,
+//         initialRefresh: Bool?,
+//         size: String?,
+//         adType: String?,
+//         adSubType: String?,
+//         apiType: String?,
+//         errorMessage: String?,
+//         errorCode: Int?) {
+//        self.adViewId = adViewId
+//        self.adUnitID = adUnitID
+//        self.type = type
+//        
+//        self.resultCode = resultCode
+//        self.targetKeywords = targetKeywords
+//        self.isAutorefresh = isAutorefresh
+//        self.autorefreshTime = autorefreshTime
+//        self.initialRefresh = initialRefresh
+//        self.size = size
+//        self.adType = adType
+//        self.adSubType = adSubType
+//        self.apiType = apiType
+//        
+//        self.errorMessage = errorMessage
+//        self.errorCode = errorCode
+//    }
     
-    public init(adViewId: String, adUnitID: String ,type: AUAdEventType) {
+    init(adViewId: String, adUnitID: String ,type: AUAdEventType) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
         self.type = type
@@ -101,6 +101,38 @@ public struct PayloadModel: Codable, NetDBPayloadType {
         
         self.errorMessage = nil
         self.errorCode = nil
+    }
+    
+    init(adViewId: String,
+         adUnitID: String,
+         type: AUAdEventType,
+         resultCode: String? = nil,
+         targetKeywords: [String: String]? = nil,
+         isAutorefresh: Bool? = nil,
+         autorefreshTime: Int? = nil,
+         initialRefresh: Bool? = nil,
+         size: String? = nil,
+         adType: String? = nil,
+         adSubType: String? = nil,
+         apiType: String? = nil,
+         errorMessage: String? = nil,
+         errorCode: Int? = nil) {
+        self.adViewId = adViewId
+        self.adUnitID = adUnitID
+        self.type = type
+        
+        self.resultCode = resultCode
+        self.targetKeywords = targetKeywords
+        self.isAutorefresh = isAutorefresh
+        self.autorefreshTime = autorefreshTime
+        self.initialRefresh = initialRefresh
+        self.size = size
+        self.adType = adType
+        self.adSubType = adSubType
+        self.apiType = apiType
+        
+        self.errorMessage = errorMessage
+        self.errorCode = errorCode
     }
     
     

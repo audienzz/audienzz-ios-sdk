@@ -15,15 +15,24 @@
 
 import Foundation
 
-fileprivate let batchSize = 2
+fileprivate let batchSize = 25
 fileprivate let totalObjects = 10
 
-class AUEventsManager {
+fileprivate let timerInterval = 60.0
+
+class AUEventsManager: AULogEventType {
     static let shared = AUEventsManager()
+    private var impressionManager = AUScreenImpressionManager()
+    
+    //  batches time implementation
+    fileprivate var timer: Timer?
     
     func configure() {
         storage = makeLocalStorage()
         networkManager = AUEventsNetworkManager()
+        
+        //  batches time implementation
+//        startTimer()
     }
     
     // MARK: - Network
@@ -42,12 +51,30 @@ class AUEventsManager {
         }
     }
     
+    func checkImpression(_ view: AUAdView) {
+        let shoudAdd = impressionManager.shouldAddEvent(of: view)
+        print("isModelExist shoudAdd: \(shoudAdd)")
+        
+        if shoudAdd {
+            guard let payload = PayloadModel(adViewId: view.configId,
+                                             adUnitID: view.configId,
+                                             type: .SCREEN_IMPRESSION).makePayload()
+            else { return }
+            
+            addEvent(event: AUEventDB(payload))
+        }
+    }
+    
     func addEvent(event: AUEventDB) {
         var events: [AUEventDB] = storage?.events ?? []
         events.append(event)
         
         storage?.events = events
         checkEventsForBatches()
+    }
+    
+    deinit {
+        stopTimer()
     }
 }
 
@@ -73,7 +100,7 @@ fileprivate extension AUEventsManager {
     func sentEventsToServer(_ events: [AUEventDB]) {
         // TODO: implement
         let netModels = convertToNetworkModels(events)
-        print(netModels)
+        print("\(type(of: self)) If I got API I will send events")
     }
     
     func convertToNetworkModels(_ events: [AUEventDB]) -> [AUEventHandlerType] {
@@ -112,6 +139,8 @@ fileprivate extension AUEventsManager {
             return AUCloseAdEvent(payload)
         case .AD_FAILED_TO_LOAD:
             return AUFailedLoadEvent(payload)
+        case .SCREEN_IMPRESSION:
+            return AUScreenImpression(payload)
         }
     }
 }
@@ -124,4 +153,21 @@ extension Array {
             Array(self[$0..<Swift.min($0 + size, self.count)])
         }
     }
+}
+
+fileprivate extension AUEventsManager {
+    func startTimer() {
+         timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { [weak self] timer in
+             self?.timerFired()
+         }
+     }
+     
+     func timerFired() {
+         checkEventsForBatches()
+     }
+     
+     func stopTimer() {
+         timer?.invalidate()
+         timer = nil
+     }
 }

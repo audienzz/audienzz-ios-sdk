@@ -25,7 +25,7 @@ import PrebidMobile
 public class AUInterstitialView: AUAdView {
     internal var adUnit: InterstitialAdUnit!
     internal var gamRequest: AnyObject?
-    private var eventHandler: AUInterstitialHandler!
+    internal var eventHandler: AUInterstitialHandler?
     
     public var parameters: AUVideoParameters?
     
@@ -80,6 +80,7 @@ public class AUInterstitialView: AUAdView {
     
     public func connectHandler(_ eventHandler: AUInterstitialEventHandler) {
         self.eventHandler = AUInterstitialHandler(handler: eventHandler, adView: self)
+        makeCreationEvent()
     }
     
  }

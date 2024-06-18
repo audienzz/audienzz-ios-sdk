@@ -19,24 +19,23 @@ import PrebidMobile
     @objc optional func rewardedAdDidDisplayOnScreen()
 
     /// Called when an ad is loaded and ready for display
-    @objc optional func rewardedAdDidReceiveAd(_ rewardedAd: RewardedAdUnit)
+    @objc optional func rewardedAdDidReceiveAd()
 
     /// Called when user is able to receive a reward from the app
-    @objc optional func rewardedAdUserDidEarnReward(_ rewardedAd: RewardedAdUnit)
+    @objc optional func rewardedAdUserDidEarnReward(_ reward: NSObject?)
     
     /// Called when the load process fails to produce a viable ad
-    @objc optional func rewardedAd(_ rewardedAd: RewardedAdUnit,
-                                   didFailToReceiveAdWithError error: Error?)
+    @objc optional func rewardedAdDidFailToReceiveAdWithError(_ error: Error?)
 
     /// Called when the interstitial view will be launched,  as a result of show() method.
-    @objc optional func rewardedAdWillPresentAd(_ rewardedAd: RewardedAdUnit)
+    @objc optional func rewardedAdWillPresentAd()
 
     /// Called when the interstial is dismissed by the user
-    @objc optional func rewardedAdDidDismissAd(_ rewardedAd: RewardedAdUnit)
+    @objc optional func rewardedAdDidDismissAd()
 
     /// Called when an ad causes the sdk to leave the app
-    @objc optional func rewardedAdWillLeaveApplication(_ rewardedAd: RewardedAdUnit)
+    @objc optional func rewardedAdWillLeaveApplication()
 
     /// Called when user clicked the ad
-    @objc optional func rewardedAdDidClickAd(_ rewardedAd: RewardedAdUnit)
+    @objc optional func rewardedAdDidClickAd()
 }
