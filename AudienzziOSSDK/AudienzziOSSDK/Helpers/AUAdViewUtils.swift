@@ -163,7 +163,7 @@ public final class AUAdViewUtils: NSObject {
                 }
             }
         } catch {
-            print("Invalid regex: \(error.localizedDescription)")
+            AULogEvent.logDebug("Invalid regex: \(error.localizedDescription)")
             return nil
         }
 
@@ -299,7 +299,7 @@ final class AUFindSizeErrorFactory {
     }
     
     private static func getError(code: Int, description: String) -> AUFindSizeError {
-        return AUFindSizeError(domain: "com.prebidmobile.ios", code: code, userInfo: [NSLocalizedDescriptionKey: description])
+        return AUFindSizeError(domain: "com.audienzMobile.ios", code: code, userInfo: [NSLocalizedDescriptionKey: description])
     }
 }
 

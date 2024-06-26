@@ -28,7 +28,7 @@ extension ExamplesViewController {
         interstitialRenderingView = AUInterstitialRenderingView(configId: storedImpVideoInterstitial,
                                                                 isLazyLoad: true,
                                                                 adFormat: .video,
-                                                                minSizePerc: nil,
+                                                                minSizePercentage: nil,
                                                                 eventHandler: eventHandler)
         interstitialRenderingView.delegate = self
         interstitialRenderingView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: 320, height: 50)

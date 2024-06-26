@@ -26,7 +26,7 @@ internal extension AUInstreamView {
         fetchRequest()
         isLazyLoaded = true
         #if DEBUG
-        print("AUInstreamView --- I'm visible")
+        AULogEvent.logDebug("AUInstreamView --- I'm visible")
         #endif
     }
     

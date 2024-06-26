@@ -25,6 +25,7 @@ protocol AULocalStorageServiceType {
 final class AULocalStorageService: AULocalStorageServiceType {
     
     fileprivate let dataBase: Connection
+    internal var dataBaseTest: Connection?
     
     var events: [AUEventDB]? {
         get { return getEvents() }
@@ -61,13 +62,13 @@ fileprivate extension AULocalStorageService {
                     return AUEventDB(id: try $0.get(id),
                                      payload: try $0.get(payload))
                 } catch let error {
-                    print(error.localizedDescription)
+                    AULogEvent.logDebug(error.localizedDescription)
                     return nil
                 }
                 
             }
         } catch let error {
-            print(error.localizedDescription)
+            AULogEvent.logDebug(error.localizedDescription)
             return []
         }
     }
@@ -86,7 +87,7 @@ fileprivate extension AULocalStorageService {
                                                         payload <- event.payload))
             }
         } catch let error {
-            print(error.localizedDescription)
+            AULogEvent.logDebug(error.localizedDescription)
         }
     }
     
@@ -95,7 +96,7 @@ fileprivate extension AULocalStorageService {
             let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
             try dataBase.run(eventsTable.delete())
         } catch let error {
-            print(error.localizedDescription)
+            AULogEvent.logDebug(error.localizedDescription)
         }
     }
     
@@ -113,7 +114,7 @@ fileprivate extension AULocalStorageService {
                                                         payload <- event.payload))
             }
         } catch let error {
-            print(error.localizedDescription)
+            AULogEvent.logDebug(error.localizedDescription)
         }
     }
     
@@ -130,7 +131,7 @@ fileprivate extension AULocalStorageService {
                 try dataBase.run(selectedRows.update(payload <- newV))
             }
         } catch let error {
-            print(error.localizedDescription)
+            AULogEvent.logDebug(error.localizedDescription)
         }
     }
 }

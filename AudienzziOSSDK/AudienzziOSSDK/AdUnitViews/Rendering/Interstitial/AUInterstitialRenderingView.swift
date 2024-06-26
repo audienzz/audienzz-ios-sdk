@@ -126,7 +126,7 @@ public class AUInterstitialRenderingView: AUAdView {
         adUnit.loadAd()
         isLazyLoaded = true
         #if DEBUG
-        print("AUInterstitialRenderingView --- I'm visible")
+        AULogEvent.logDebug("AUInterstitialRenderingView --- I'm visible")
         #endif
     }
 }

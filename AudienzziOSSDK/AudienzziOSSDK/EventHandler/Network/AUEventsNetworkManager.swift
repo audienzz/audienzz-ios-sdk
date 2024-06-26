@@ -16,9 +16,9 @@
 import Foundation
 import Network
 
-fileprivate let baseUrl: String = "https://api.adnz.co/api/ws-events-sink/"
+fileprivate let baseUrl: String = "https://dev-api.adnz.co/api/ws-event-ingester"
 
-class AUEventsNetworkManager {
+class AUEventsNetworkManager<T: APIResult> {
     private var monitor = NWPathMonitor()
     private let queue = DispatchQueue.global(qos: .background)
     private let urlSession: URLSession!
@@ -35,10 +35,19 @@ class AUEventsNetworkManager {
     }
     
     private(set) var isConnection: Bool = false
-}
-
-extension AUEventsNetworkManager {
     
+    func request(_ route: APIRoute<T>, handler: @escaping (Result<T, AUAPIError>) -> Void) {
+        let method = APIGateway<T>().build(route: route)
+        run(request: method.request) { [weak self] result in
+            guard let strongSelf = self else { handler(.failure(.couldNotParseResponse)); return }
+            switch result {
+            case .success(let responce):
+                self?.handleResult(responce: responce, method: method, handler: handler)
+            case .failure(let error):
+                handler(.failure(strongSelf.makeApiError(for: error)))
+            }
+        }
+    }
 }
 
 // MARK: - Network Request
@@ -51,6 +60,34 @@ fileprivate extension AUEventsNetworkManager {
         let task = URLSessionTask.fromHTTPRequest(request: request, urlSession: urlSession, completion: taskCompletion)
         task.resume()
     }
+    
+    func handleResult(responce: HTTPResponse, method: APIMethod<T>, handler: @escaping (Result<T, AUAPIError>) -> Void) {
+        
+        guard let data = responce.body, let json = try? decodeJSON(data), let jsonObject = json as? JSONObject else {
+            return
+        }
+        
+        handler(extractAPIResponce(jsonObject: jsonObject, parser: method.resultParser))
+    }
+    
+    func extractAPIResponce(jsonObject: JSONObject, parser: (JSONObject) -> T?) -> Result<T, AUAPIError> {
+      if let result = parser(jsonObject) {
+        return .success(result)
+      }
+
+      return .failure(.couldNotParseResponse)
+    }
+    
+    func makeApiError(for clentError: HTTPClientError) -> AUAPIError {
+        switch clentError {
+        case .connectionError(let error):
+            return AUAPIError.connectionError(error)
+        case .emptyData:
+            return AUAPIError.couldNotParseResponse
+        case .unexpectedURLResponse:
+            return AUAPIError.couldNotParseResponse
+        }
+    }
 }
 
 // MARK: - Rechabillity
@@ -58,14 +95,14 @@ fileprivate extension AUEventsNetworkManager {
     func startMonitoring() {
         monitor.pathUpdateHandler = { [weak self] path in
             if path.status == .satisfied {
-                print("We're connected!")
+                AULogEvent.logDebug("We're connected!")
                 self?.isConnection = true
             } else {
-                print("No connection.")
+                AULogEvent.logDebug("No connection.")
                 self?.isConnection = false
             }
             
-            print("Is expensive: \(path.isExpensive)")
+            AULogEvent.logDebug("Is expensive: \(path.isExpensive)")
         }
         
         monitor.start(queue: queue)
@@ -75,7 +112,6 @@ fileprivate extension AUEventsNetworkManager {
         monitor.cancel()
     }
 }
-
 
 extension URLSessionTask {
     static func fromHTTPRequest(request: HTTPRequest,

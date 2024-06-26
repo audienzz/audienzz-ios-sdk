@@ -16,7 +16,8 @@
 import Foundation
 
 protocol AULocalStorageConfigurator {
-  func configureStorage() throws
+    func configureStorage() throws
+    func configureStorageTest() throws
 }
 
 final class AUSQLiteConfigurator: AULocalStorageConfigurator {
@@ -29,6 +30,17 @@ final class AUSQLiteConfigurator: AULocalStorageConfigurator {
             return
         } else {
             AUSQLiteDataBaseCreator().createLocalStorage()
+        }
+    }
+    
+    func configureStorageTest() throws {
+        let destination = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let newDBPath = destination.appendingPathComponent(SQLiteConstants.dbPathComponentTest)
+        
+        if FileManager.default.fileExists(atPath: newDBPath.path) {
+            return
+        } else {
+            AUSQLiteDataBaseCreator().createLocalStorageTest()
         }
     }
 }

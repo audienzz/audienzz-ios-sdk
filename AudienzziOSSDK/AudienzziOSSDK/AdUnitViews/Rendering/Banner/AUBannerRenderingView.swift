@@ -148,7 +148,7 @@ public class AUBannerRenderingView: AUAdView {
         bannerView.loadAd()
         isLazyLoaded = true
         #if DEBUG
-        print("AUBannerRenderingView --- I'm visible")
+        AULogEvent.logDebug("AUBannerRenderingView --- I'm visible")
         #endif
     }
 }

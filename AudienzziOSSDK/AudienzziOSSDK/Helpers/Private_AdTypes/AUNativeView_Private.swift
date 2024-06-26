@@ -24,7 +24,7 @@ internal extension AUNativeView {
         }
         
         #if DEBUG
-        print("AUNativeView --- I'm visible")
+        AULogEvent.logDebug("AUNativeView --- I'm visible")
         #endif
         fetchRequest(request)
         isLazyLoaded = true
@@ -34,13 +34,13 @@ internal extension AUNativeView {
         switch adType {
         case .origin:
             nativeUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
-                print("Audienz demand fetch for GAM \(resultCode.name())")
+                AULogEvent.logDebug("Audienz demand fetch for GAM \(resultCode.name())")
                 guard let self = self else { return }
                 self.onLoadRequest?(gamRequest)
             }
         case .rendering:
             nativeUnit.fetchDemand { [weak self] bidInfo in
-                print("Audienz demand fetch for GAM \(bidInfo.resultCode.name())")
+                AULogEvent.logDebug("Audienz demand fetch for GAM \(bidInfo.resultCode.name())")
                 guard let self = self else { return }
                 self.onNativeLoadRequest?(gamRequest, bidInfo.targetingKeywords ?? [:])
             }

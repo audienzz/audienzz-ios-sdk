@@ -93,7 +93,7 @@ public class AURewardedRenderingView: AUAdView {
         rewardedAdUnit.loadAd()
         isLazyLoaded = true
         #if DEBUG
-        print("AURewardedRenderingView --- I'm visible")
+        AULogEvent.logDebug("AURewardedRenderingView --- I'm visible")
         #endif
     }
 }

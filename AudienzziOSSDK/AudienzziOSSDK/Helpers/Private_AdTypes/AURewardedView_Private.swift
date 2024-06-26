@@ -29,13 +29,13 @@ internal extension AURewardedView {
         fetchRequest(request)
         isLazyLoaded = true
         #if DEBUG
-        print("AURewardedView --- I'm visible")
+        AULogEvent.logDebug("AURewardedView --- I'm visible")
         #endif
     }
     
     override func fetchRequest(_ gamRequest: AnyObject) {
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
-            print("Audienz demand fetch for GAM \(resultCode.name())")
+            AULogEvent.logDebug("Audienz demand fetch for GAM \(resultCode.name())")
             guard let self = self else { return }
             self.onLoadRequest?(gamRequest)
         }

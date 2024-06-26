@@ -155,12 +155,12 @@ internal class NativeAdDelegateType: NSObject, NativeAdDelegate {
     }
 
     public func nativeAdNotFound() {
-        print("Native ad not found")
+        AULogEvent.logDebug("Native ad not found")
         parent?.delegate?.nativeAdNotFound()
     }
 
     public func nativeAdNotValid() {
-        print("Native ad not valid")
+        AULogEvent.logDebug("Native ad not valid")
         parent?.delegate?.nativeAdNotValid()
     }
 }

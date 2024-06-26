@@ -32,6 +32,17 @@ final class AUSQLiteDataBaseCreator: AULocalStorageCreator {
             fatalError(error.localizedDescription)
         }
     }
+    
+    func createLocalStorageTest() {
+        do {
+            let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+            let db = try Connection("\(path)/\(SQLiteConstants.dbPathComponentTest)")
+            
+            try createEventsTable(on: db)
+        } catch let error {
+            fatalError(error.localizedDescription)
+        }
+    }
 }
 
 fileprivate extension AUSQLiteDataBaseCreator {

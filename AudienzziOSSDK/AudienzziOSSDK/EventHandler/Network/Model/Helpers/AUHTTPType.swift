@@ -15,6 +15,16 @@
 
 import Foundation
 
+typealias Query = String
+typealias JSON = Any
+typealias JSONObject = [Query: JSON]
+typealias JSONArray = [JSON]
+typealias JSONArrayOfJSONObject = [JSONObject]
+
+protocol BodyObjectEncodable {
+  func encode() -> JSONObject
+}
+
 enum HTTPSchemaType: String {
   case http
   case https
@@ -79,22 +89,20 @@ extension HTTPResult {
   }
 }
 
+protocol APIResult: JSONObjectDecodable {}
+
+enum AUAPIResult<T: APIResult> {
+    case success(T)
+    case failure(Error)
+}
+
 enum HTTPClientError: Error {
   case connectionError(Error)
   case emptyData
   case unexpectedURLResponse
 }
 
-//protocol HTTPClientType {
-//  func run(request: HTTPRequest, completion: @escaping (HTTPResult) -> Void) -> HTTPTask
-//}
-//
-//protocol HTTPTask {
-//  func cancel()
-//}
-//
 // MARK: Foundation extensions
-
 extension NSMutableURLRequest {
   func setHTTPHeaders(_ headers: [String: String]) {
     for (header, value) in headers {
@@ -114,4 +122,20 @@ extension HTTPURLResponse {
     }
     return result
   }
+}
+
+protocol JSONObjectDecodable {
+  init?(jsonObject: JSONObject)
+}
+
+protocol JSONEncodable {
+  func encode() -> JSONObject
+}
+
+func decodeJSON(_ data: Data) throws -> JSON {
+  return try JSONSerialization.jsonObject(with: data, options: [])
+}
+
+func encodeJSON(json: JSON) throws -> Data {
+  return try JSONSerialization.data(withJSONObject: json, options: [])
 }

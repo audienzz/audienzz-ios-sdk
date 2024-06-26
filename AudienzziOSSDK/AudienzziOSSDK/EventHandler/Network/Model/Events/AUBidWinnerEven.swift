@@ -78,13 +78,35 @@ struct AUBidWinnerEven: Codable, AUEventHandlerType {
             
             // Convert JSON data to a JSON string
             if let jsonString = String(data: jsonData, encoding: .utf8) {
-                print("JSON String:\n\(jsonString)")
+                AULogEvent.logDebug("JSON String:\n\(jsonString)")
                 return jsonString
             }
         } catch {
-            print("Error encoding user: \(error)")
+            AULogEvent.logDebug("Error encoding user: \(error)")
         }
         
         return nil
+    }
+}
+
+extension AUBidWinnerEven: BodyObjectEncodable {
+    func encode() -> JSONObject {
+        var result = JSONObject()
+        
+        result["adViewId"] = adViewId
+        result["adUnitID"] = adUnitID
+        result["type"] = type.rawValue
+        result["size"] = size
+        result["adType"] = adType
+        result["adSubType"] = adSubType
+        result["apiType"] = apiType
+        result["isAutorefresh"] = isAutorefresh
+        result["autorefreshTime"] = autorefreshTime
+        result["initialRefresh"] = initialRefresh
+        result["resultCode"] = resultCode
+        
+        result["targetKeywords"] = targetKeywords
+        
+        return result
     }
 }

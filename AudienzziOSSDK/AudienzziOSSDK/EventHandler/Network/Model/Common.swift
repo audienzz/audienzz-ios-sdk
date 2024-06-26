@@ -15,15 +15,16 @@
 
 import Foundation
 
-protocol AUEventHandlerType {
+protocol AUEventHandlerType: BodyObjectEncodable {
     init?(_ payload: PayloadModel)
+    var type: AUAdEventType { get }
 }
 
 protocol NetDBPayloadType {
     func makePayload() -> String?
 }
 
-enum AUAdEventType: String, Codable {
+enum AUAdEventType: String, Codable, CaseIterable, Equatable {
     case BID_WINNER = "BID_WINNER"
     case AD_CLICK = "AD_CLICK"
     case VIEWABILITY = "VIEWABILITY"
@@ -34,7 +35,7 @@ enum AUAdEventType: String, Codable {
     case SCREEN_IMPRESSION = "SCREEN_IMPRESSION"
 }
 
-struct PayloadModel: Codable, NetDBPayloadType {
+struct PayloadModel: Codable, NetDBPayloadType, Equatable {
     let adViewId: String
     let adUnitID: String
     let type: AUAdEventType
@@ -51,38 +52,6 @@ struct PayloadModel: Codable, NetDBPayloadType {
     
     let errorMessage: String?
     let errorCode: Int?
-    
-//    init(adViewId: String,
-//         adUnitID: String,
-//         type: AUAdEventType,
-//         resultCode: String?,
-//         targetKeywords: [String: String]?,
-//         isAutorefresh: Bool?,
-//         autorefreshTime: Int?,
-//         initialRefresh: Bool?,
-//         size: String?,
-//         adType: String?,
-//         adSubType: String?,
-//         apiType: String?,
-//         errorMessage: String?,
-//         errorCode: Int?) {
-//        self.adViewId = adViewId
-//        self.adUnitID = adUnitID
-//        self.type = type
-//        
-//        self.resultCode = resultCode
-//        self.targetKeywords = targetKeywords
-//        self.isAutorefresh = isAutorefresh
-//        self.autorefreshTime = autorefreshTime
-//        self.initialRefresh = initialRefresh
-//        self.size = size
-//        self.adType = adType
-//        self.adSubType = adSubType
-//        self.apiType = apiType
-//        
-//        self.errorMessage = errorMessage
-//        self.errorCode = errorCode
-//    }
     
     init(adViewId: String, adUnitID: String ,type: AUAdEventType) {
         self.adViewId = adViewId
@@ -144,11 +113,11 @@ struct PayloadModel: Codable, NetDBPayloadType {
             
             // Convert JSON data to a JSON string
             if let jsonString = String(data: jsonData, encoding: .utf8) {
-                print("JSON String:\n\(jsonString)")
+                AULogEvent.logDebug("JSON String:\n\(jsonString)")
                 return jsonString
             }
         } catch {
-            print("Error encoding user: \(error)")
+            AULogEvent.logDebug("Error encoding user: \(error)")
         }
         
         return nil

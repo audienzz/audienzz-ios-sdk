@@ -14,11 +14,10 @@
  */
 
 import Foundation
+import AppTrackingTransparency
+import AdSupport
 
-fileprivate let batchSize = 25
-fileprivate let totalObjects = 10
-
-fileprivate let timerInterval = 60.0
+fileprivate let timerInterval = 3.0
 
 class AUEventsManager: AULogEventType {
     static let shared = AUEventsManager()
@@ -29,31 +28,29 @@ class AUEventsManager: AULogEventType {
     
     func configure() {
         storage = makeLocalStorage()
-        networkManager = AUEventsNetworkManager()
-        
-        //  batches time implementation
-//        startTimer()
+        networkManager = AUEventsNetworkManager<AUBatchResultModel>()
+        requestIDFApermission()
     }
     
     // MARK: - Network
-    private var networkManager: AUEventsNetworkManager!
+    private var networkManager: AUEventsNetworkManager<AUBatchResultModel>!
     
     // MARK: - Local Storage
     private var storage: AULocalStorageServiceType?
     
     private func makeLocalStorage() -> AULocalStorageServiceType? {
         do {
-            print("I crate local storage")
+            AULogEvent.logDebug("I crate local storage")
             return try AULocalStorageService()
         } catch {
-            print("Can't crate local storage")
+            AULogEvent.logDebug("Can't crate local storage")
             return nil
         }
     }
     
     func checkImpression(_ view: AUAdView) {
         let shoudAdd = impressionManager.shouldAddEvent(of: view)
-        print("isModelExist shoudAdd: \(shoudAdd)")
+        AULogEvent.logDebug("isModelExist shoudAdd: \(shoudAdd)")
         
         if shoudAdd {
             guard let payload = PayloadModel(adViewId: view.configId,
@@ -70,37 +67,60 @@ class AUEventsManager: AULogEventType {
         events.append(event)
         
         storage?.events = events
-        checkEventsForBatches()
+        updateTimer()
     }
     
     deinit {
         stopTimer()
     }
+    
+    private func requestIDFApermission() {
+        ATTrackingManager.requestTrackingAuthorization { status in
+            switch status {
+            case .authorized:
+                AULogEvent.logDebug("enable tracking")
+            case .denied:
+                AULogEvent.logDebug("disable tracking")
+            default:
+                AULogEvent.logDebug("disable tracking")
+            }
+            
+            AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString)
+        }
+    }
 }
 
 fileprivate extension AUEventsManager {
+    func updateTimer() {
+        stopTimer()
+        startTimer()
+    }
+    
     func checkEventsForBatches() {
         guard let events = storage?.events else { return }
         
-        print("current Network Status: \(networkManager.isConnection)")
+        AULogEvent.logDebug("current Network Status: \(networkManager.isConnection)")
         
-        if events.count > batchSize && networkManager.isConnection {
-            relifeEventsAndSend(events)
+        if events.isEmpty.not() && networkManager.isConnection {
+            sentEventsToServer(events)
         }
-    }
-    
-    func relifeEventsAndSend(_ event: [AUEventDB]) {
-        let batchedEvents = event.batched(into: batchSize)
-        guard let first = batchedEvents.first, let last = batchedEvents.last  else { return }
-        sentEventsToServer(first)
-        
-        storage?.events = last
     }
     
     func sentEventsToServer(_ events: [AUEventDB]) {
         // TODO: implement
         let netModels = convertToNetworkModels(events)
-        print("\(type(of: self)) If I got API I will send events")
+        AULogEvent.logDebug("\(type(of: self)) If I got API I will send events")
+        return
+        let model = BatchRequestModel(batch: BatchModel(visitorId: 24343), netModels: netModels)
+        
+        networkManager.request(.batchEvents(model)) { [weak self] result in
+            switch result {
+            case .success(let success):
+                AULogEvent.logDebug("networkManager success")
+            case .failure(let error):
+                AULogEvent.logDebug(error.localizedDescription)
+            }
+        }
     }
     
     func convertToNetworkModels(_ events: [AUEventDB]) -> [AUEventHandlerType] {
@@ -116,7 +136,7 @@ fileprivate extension AUEventsManager {
                 }
                 netModels.append(netModel)
             } catch {
-                print("Error decoding JSON: \(error)")
+                AULogEvent.logDebug("Error decoding JSON: \(error)")
             }
         }
         
@@ -157,7 +177,7 @@ extension Array {
 
 fileprivate extension AUEventsManager {
     func startTimer() {
-         timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { [weak self] timer in
+         timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: false) { [weak self] timer in
              self?.timerFired()
          }
      }

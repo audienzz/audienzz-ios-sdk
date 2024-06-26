@@ -46,8 +46,8 @@ extension ExamplesViewController {
                 return
             }
             
-            self.adLoader = GADAdLoader(adUnitID: gamNativeAdUnitId, rootViewController: self,
-                                        adTypes: [GADAdLoaderAdType.customNative], options: [])
+            self.adLoader = GADAdLoader(adUnitID: "ca-app-pub-6632294249825318/1327733692", rootViewController: self,
+                                        adTypes: [GADAdLoaderAdType.native], options: [])
             self.adLoader.delegate = self
             self.adLoader.load(request)
         }
@@ -205,7 +205,18 @@ extension ExamplesViewController {
 }
 
 // MARK: GADCustomNativeAdLoaderDelegate
-extension ExamplesViewController: GADAdLoaderDelegate, GADCustomNativeAdLoaderDelegate {
+extension ExamplesViewController: GADAdLoaderDelegate, GADCustomNativeAdLoaderDelegate, GADNativeAdLoaderDelegate {
+    func adLoader(_ adLoader: GADAdLoader, didReceive nativeAd: GADNativeAd) {
+        print("GAM did fail to receive ad with error: \(nativeAd)")
+        if adLoader == self.adLoader {
+            nativeView.findNative(adObject: nativeAd)
+        } else if adLoader == adLazyLoader {
+            nativeLzyView.findNative(adObject: nativeAd)
+        }  else if adLoader == self.adRenderingLoader {
+            
+        }
+    }
+    
     func adLoader(_ adLoader: GADAdLoader, didFailToReceiveAdWithError error: Error) {
         print("GAM did fail to receive ad with error: \(error)")
     }

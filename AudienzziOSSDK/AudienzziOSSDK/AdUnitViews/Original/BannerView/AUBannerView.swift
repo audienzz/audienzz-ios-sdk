@@ -59,7 +59,7 @@ public class AUBannerView: AUAdView {
     }
     
     deinit {
-        print("AUBannerView")
+        AULogEvent.logDebug("AUBannerView")
     }
     
     /**

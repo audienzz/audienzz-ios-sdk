@@ -33,12 +33,12 @@ class AUScreenImpressionManager: NSObject {
         let name = String(describing: type(of: vc))
         let nibName = vc.nibName
         let hash = vc.hash
-        print(name)
+        AULogEvent.logDebug(name)
         
         let model = ScreenImpressionModel(name: name, hash: hash, nibName: nibName)
         
         let isModelExist = checkModel(model)
-        print("isModelExist: \(isModelExist)")
+        AULogEvent.logDebug("isModelExist: \(isModelExist)")
         
         if isModelExist.not() {
             appendModel(model)

@@ -25,15 +25,21 @@ class ExamplesViewController: UIViewController {
     var playButton: UIButton!
     
     let adSize = CGSize(width: 320, height: 50)
-    let adVideoSize = CGSize(width: 320, height: 250)
+    let adVideoSize = CGSize(width: 300, height: 250)
+    let adSizeMult = CGSize(width: 300, height: 250)
     var adLoader: GADAdLoader!
     var adLazyLoader: GADAdLoader!
+    var adRenderingLoader: GADAdLoader!
     
     internal var bannerView: AUBannerView!
     internal var bannerLazyView: AUBannerView!
 
     internal var bannerVideoView: AUBannerView!
     internal var bannerMultiplatformView: AUBannerView!
+    internal var interstitialView: AUInterstitialView!
+    internal var rewardedView: AURewardedView!
+    
+    internal var nativeView: AUNativeView!
     
     
     // Instream
@@ -59,7 +65,7 @@ class ExamplesViewController: UIViewController {
         exampleScrollView.backgroundColor = .black
         
         setupAdContainer()
-//        setupALazydContainer()
+        setupALazydContainer()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -71,35 +77,40 @@ class ExamplesViewController: UIViewController {
     }
     
     private func setupAdContainer() {
-        createBannerView()
-        createVideoBannerView()
-        createBannerMultiplatformView()
+//        createBannerView()
+//        createVideoBannerView()
+//        createBannerMultiplatformView()
 //        
-//        createNativeView()
+        createNativeView()
 //        createNativeBannerView()
 //        
+//        createRenderingNativeView()
+//        
 //        createInstreamView()
+//        
+//        createMultiplatformView()
 //        
 //        createRenderingBannerView()
 //        createRenderingBannerVideoView()
     }
     
     private func setupALazydContainer() {
-        createBannerLazyView()
-
-        createInterstitialView()
-        createInterstitialVideoView()
-        createInterstitialMultiplatformView()
-        
-        createLazyNativeView()
-        createLazyNativeBannerView()
-        
-        createRewardedView()
-        createRenderingBannerLazyView()
-        createRenderingRewardLazyView()
+//        createBannerLazyView()
+//        createRenderingNativeView()
+//
+//        createInterstitialView()
+//        createInterstitialVideoView()
+//        createInterstitialMultiplatformView()
+//        
+//        createLazyNativeView()
+//        createLazyNativeBannerView()
+//        
+//        createRewardedView()
+//        createRenderingBannerLazyView()
+//        createRenderingRewardLazyView()
         
         createRenderingIntertitiaView()
-        createRenderingRewardLazyView()
+//        createRenderingRewardLazyView()
     }
     
     @IBAction private func refreshAdContainerDidTap() {
@@ -124,6 +135,21 @@ extension ExamplesViewController {
         }
         
         return lastView.frame.origin.y + lastView.frame.height
+    }
+    
+    func addConstrains(subView: UIView, container: UIView, height: CGFloat) {
+        subView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let previousView = container.subviews[container.subviews.count - 2]
+        
+        NSLayoutConstraint.activate([
+            subView.topAnchor.constraint(equalTo: previousView.bottomAnchor),
+            subView.heightAnchor.constraint(equalToConstant: height),
+            subView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            subView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+
+        ])
+        
     }
 }
 

@@ -24,7 +24,7 @@ internal extension AUNativeBannerView {
         }
         
         #if DEBUG
-        print("AUNativeBannerView --- I'm visible")
+        AULogEvent.logDebug("AUNativeBannerView --- I'm visible")
         #endif
         fetchRequest(request)
         isLazyLoaded = true
@@ -32,7 +32,7 @@ internal extension AUNativeBannerView {
     
     override func fetchRequest(_ gamRequest: AnyObject) {
         nativeUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
-            print("Audienz demand fetch for GAM \(resultCode.name())")
+            AULogEvent.logDebug("Audienz demand fetch for GAM \(resultCode.name())")
             guard let self = self else { return }
             self.onLoadRequest?(gamRequest)
         }

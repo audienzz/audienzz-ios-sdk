@@ -28,7 +28,13 @@ final class AULogEvent {
         let selfName = String(describing: self)
         let unwrapClassName = String(describing: className)
         
-        print("\(selfName) - \(unwrapClassName) - \(message)")
+        AULogEvent.logDebug("\(selfName) - \(unwrapClassName) - \(message)")
+    }
+    
+    static func logDebug(_ message: String) {
+        #if DEBUG
+        print(message)
+        #endif
     }
 }
 

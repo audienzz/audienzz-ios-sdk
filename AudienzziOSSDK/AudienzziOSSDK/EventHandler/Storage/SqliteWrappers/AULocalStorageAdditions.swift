@@ -32,4 +32,13 @@ struct SQLiteConstants {
     struct DataBaseTables {
         static let events: String = "events" // events
     }
+    
+    // test Part
+    
+    static var dbPathComponentTest: String {
+        return SQLiteConstants.dbNameTest + "." + SQLiteConstants.dbExtensionTest
+    }
+    
+    static let dbNameTest: String = "eventsStorageTest"
+    static let dbExtensionTest: String = "sqlite3"
 }

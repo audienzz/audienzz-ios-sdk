@@ -40,13 +40,25 @@ struct AUCloseAdEvent: Codable, AUEventHandlerType {
             
             // Convert JSON data to a JSON string
             if let jsonString = String(data: jsonData, encoding: .utf8) {
-                print("JSON String:\n\(jsonString)")
+                AULogEvent.logDebug("JSON String:\n\(jsonString)")
                 return jsonString
             }
         } catch {
-            print("Error encoding user: \(error)")
+            AULogEvent.logDebug("Error encoding user: \(error)")
         }
         
         return nil
+    }
+}
+
+extension AUCloseAdEvent: BodyObjectEncodable {
+    func encode() -> JSONObject {
+        var result = JSONObject()
+        
+        result["adViewId"] = adViewId
+        result["adUnitID"] = adUnitID
+        result["type"] = type.rawValue
+        
+        return result
     }
 }

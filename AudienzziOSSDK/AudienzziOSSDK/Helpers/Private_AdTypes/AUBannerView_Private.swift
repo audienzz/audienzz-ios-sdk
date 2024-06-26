@@ -27,7 +27,7 @@ extension AUBannerView {
         }
         
         #if DEBUG
-        print("AUBannerView --- I'm visible")
+        AULogEvent.logDebug("AUBannerView --- I'm visible")
         #endif
         fetchRequest(request)
         isLazyLoaded = true
@@ -37,7 +37,7 @@ extension AUBannerView {
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
-            print("Audienz demand fetch for GAM \(resultCode.name())")
+            AULogEvent.logDebug("Audienz demand fetch for GAM \(resultCode.name())")
             self.makeWinnerEvent(resultCode.name())
             self.isInitialAutorefresh = false
             self.onLoadRequest?(gamRequest)

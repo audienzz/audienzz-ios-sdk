@@ -57,17 +57,17 @@ public class Audienzz: NSObject {
             // ....
             switch status {
             case .succeeded:
-                print("Audienzz Status: succeeded")
+                AULogEvent.logDebug("Audienzz Status: succeeded")
             case .failed:
-                print("Audienzz Status: failed")
+                AULogEvent.logDebug("Audienzz Status: failed")
             case .serverStatusWarning:
-                print("Audienzz Status: serverStatusWarning")
+                AULogEvent.logDebug("Audienzz Status: serverStatusWarning")
             @unknown default:
-                print("Audienzz Status: Unexpected Error")
+                AULogEvent.logDebug("Audienzz Status: Unexpected Error")
             }
             
             if let error = error {
-                print("Error: \(error)")
+                AULogEvent.logDebug("Error: \(error)")
             }
         }
     }
@@ -79,23 +79,23 @@ public class Audienzz: NSObject {
         
         Prebid.initializeSDK(gadMobileAdsVersion: gadMobileAdsVersion) { status, error in
             if let error = error {
-                print("Initialization Error: \(error.localizedDescription)")
+                AULogEvent.logDebug("Initialization Error: \(error.localizedDescription)")
                 return
             }
             
             switch status {
             case .succeeded:
-                print("Audienzz Status: succeeded")
+                AULogEvent.logDebug("Audienzz Status: succeeded")
             case .failed:
-                print("Audienzz Status: failed")
+                AULogEvent.logDebug("Audienzz Status: failed")
             case .serverStatusWarning:
-                print("Audienzz Status: serverStatusWarning")
+                AULogEvent.logDebug("Audienzz Status: serverStatusWarning")
             @unknown default:
-                print("Audienzz Status: Unexpected Error")
+                AULogEvent.logDebug("Audienzz Status: Unexpected Error")
             }
             
             if let error = error {
-                print("Error: \(error)")
+                AULogEvent.logDebug("Error: \(error)")
             }
         }
     }
@@ -113,17 +113,17 @@ public class Audienzz: NSObject {
                 // ....
                 switch status {
                 case .succeeded:
-                    print("Audienzz Status: succeeded")
+                    AULogEvent.logDebug("Audienzz Status: succeeded")
                 case .failed:
-                    print("Audienzz Status: failed")
+                    AULogEvent.logDebug("Audienzz Status: failed")
                 case .serverStatusWarning:
-                    print("Audienzz Status: serverStatusWarning")
+                    AULogEvent.logDebug("Audienzz Status: serverStatusWarning")
                 @unknown default:
-                    print("Audienzz Status: Unexpected Error")
+                    AULogEvent.logDebug("Audienzz Status: Unexpected Error")
                 }
                 
                 if let error = error {
-                    print("Error: \(error)")
+                    AULogEvent.logDebug("Error: \(error)")
                 }
                 
                 completion?()
@@ -140,23 +140,23 @@ public class Audienzz: NSObject {
             
             Prebid.initializeSDK(gadMobileAdsVersion: gadMobileAdsVersion) { status, error in
                 if let error = error {
-                    print("Initialization Error: \(error.localizedDescription)")
+                    AULogEvent.logDebug("Initialization Error: \(error.localizedDescription)")
                     return
                 }
                 
                 switch status {
                 case .succeeded:
-                    print("Audienzz Status: succeeded")
+                    AULogEvent.logDebug("Audienzz Status: succeeded")
                 case .failed:
-                    print("Audienzz Status: failed")
+                    AULogEvent.logDebug("Audienzz Status: failed")
                 case .serverStatusWarning:
-                    print("Audienzz Status: serverStatusWarning")
+                    AULogEvent.logDebug("Audienzz Status: serverStatusWarning")
                 @unknown default:
-                    print("Audienzz Status: Unexpected Error")
+                    AULogEvent.logDebug("Audienzz Status: Unexpected Error")
                 }
                 
                 if let error = error {
-                    print("Error: \(error)")
+                    AULogEvent.logDebug("Error: \(error)")
                 }
                 
                 completion?()

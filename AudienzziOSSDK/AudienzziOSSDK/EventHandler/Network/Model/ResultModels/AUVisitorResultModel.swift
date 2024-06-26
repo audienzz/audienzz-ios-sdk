@@ -14,3 +14,14 @@
  */
 
 import Foundation
+
+struct AUVisitorResultModel {
+    let visitorId: String
+}
+
+extension AUVisitorResultModel: JSONObjectDecodable {
+    init?(jsonObject: JSONObject) {
+        guard let visitorId = jsonObject["visitorId"] as? String else { return nil }
+        self.visitorId = visitorId
+    }
+}

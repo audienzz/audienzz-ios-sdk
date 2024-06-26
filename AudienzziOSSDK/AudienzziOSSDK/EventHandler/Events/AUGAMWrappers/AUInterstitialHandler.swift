@@ -51,7 +51,7 @@ class AUInterstitialHandler: NSObject,
     }
     
     deinit {
-        print("AUInterstitialHandler")
+        AULogEvent.logDebug("AUInterstitialHandler")
     }
     
     

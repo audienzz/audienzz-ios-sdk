@@ -16,7 +16,7 @@
 import Foundation
 import SQLite
 
-struct AUEventDB {
+struct AUEventDB: Equatable {
     let id: String
     let payload: String
 }

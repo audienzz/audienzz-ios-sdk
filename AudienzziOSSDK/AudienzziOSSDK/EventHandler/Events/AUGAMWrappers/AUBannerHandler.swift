@@ -61,7 +61,7 @@ class AUBannerHandler: NSObject,
     }
     
     deinit {
-        print("AUBannerHandler")
+        AULogEvent.logDebug("AUBannerHandler")
     }
     
     // MARK: - GADBannerViewDelegate

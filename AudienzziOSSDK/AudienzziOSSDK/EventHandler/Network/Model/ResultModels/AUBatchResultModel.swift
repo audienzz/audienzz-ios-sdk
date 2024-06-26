@@ -12,24 +12,16 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import Foundation
-import PrebidMobile
 
-/**
- BannerParameters..
- If will be nill. Automatically create default  parameters
- 
- # Example #
- *   let parameters = BannerParameters()
- * parameters.api = [Signals.Api.MRAID_2]
- */
-@objcMembers
-public class AUBannerParameters: NSObject {
-    /// List of supported API frameworks for this impression. If an API is not explicitly listed, it is assumed not to be supported.
-    public var api: [AUApi]?
-    
-    public var interstitialMinWidthPerc: Int?
-    public var interstitialMinHeightPerc: Int?
-    
-    public var adSizes: [CGSize]?
+import Foundation
+
+struct AUBatchResultModel {
+    let code: Int
+}
+
+extension AUBatchResultModel: APIResult {
+    init?(jsonObject: JSONObject) {
+        guard let code = jsonObject["code"] as? Int else { return nil }
+        self.code = code
+    }
 }

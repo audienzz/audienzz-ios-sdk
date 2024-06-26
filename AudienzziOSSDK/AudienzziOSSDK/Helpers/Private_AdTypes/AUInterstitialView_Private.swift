@@ -27,7 +27,7 @@ extension AUInterstitialView {
         }
         
         #if DEBUG
-        print("AUInterstitialView --- I'm visible")
+        AULogEvent.logDebug("AUInterstitialView --- I'm visible")
         #endif
         fetchRequest(request)
         isLazyLoaded = true
@@ -36,7 +36,7 @@ extension AUInterstitialView {
     internal override func fetchRequest(_ gamRequest: AnyObject) {
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
-            print("Audienzz demand fetch for GAM \(resultCode.name())")
+            AULogEvent.logDebug("Audienzz demand fetch for GAM \(resultCode.name())")
             guard let self = self else { return }
             self.makeWinnerEvent(resultCode.name())
             self.onLoadRequest?(gamRequest)

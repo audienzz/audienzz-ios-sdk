@@ -24,7 +24,7 @@ internal extension AUMultiplatformView {
         }
         
         #if DEBUG
-        print("AUMultiplatformView --- I'm visible")
+        AULogEvent.logDebug("AUMultiplatformView --- I'm visible")
         #endif
         fetchRequest(request, prebidRequest: prebidRequest)
         isLazyLoaded = true

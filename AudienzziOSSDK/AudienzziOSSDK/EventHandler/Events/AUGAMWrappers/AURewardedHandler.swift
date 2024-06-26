@@ -52,7 +52,7 @@ class AURewardedHandler: NSObject,
     }
     
     deinit {
-        print("AURewardedHandler")
+        AULogEvent.logDebug("AURewardedHandler")
     }
     
     
