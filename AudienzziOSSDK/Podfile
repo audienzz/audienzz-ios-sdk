@@ -10,9 +10,9 @@ target 'AudienzziOSSDK' do
   project 'AudienzziOSSDK.xcodeproj'
   use_frameworks!
   pod 'SQLite.swift', '~> 0.14.0'
-#  target 'AudienzziOSSDKTests' do
-#    # Pods for testing
-#  end
+  target 'AudienzziOSSDKTests' do
+    pod 'SQLite.swift', '~> 0.14.0'
+  end
 end
 
 target 'DemoSwiftApp' do
