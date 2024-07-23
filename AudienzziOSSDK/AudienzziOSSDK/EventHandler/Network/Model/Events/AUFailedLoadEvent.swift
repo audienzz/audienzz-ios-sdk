@@ -22,18 +22,33 @@ struct AUFailedLoadEvent: Codable, AUEventHandlerType {
     let errorCode: Int
     let type: AUAdEventType
     
+    var visitorId: String
+    var companyId: String
+    var sessionId: String
+    var deviceId: String
+    
     init(adViewId: String, adUnitID: String, errorMessage: String, errorCode: Int) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
         self.errorMessage = errorMessage
         self.errorCode = errorCode
         self.type = .AD_FAILED_TO_LOAD
+        
+        self.visitorId = ""
+        self.companyId = ""
+        self.sessionId = ""
+        self.deviceId = ""
     }
     
     init?(_ payload: PayloadModel) {
         self.adViewId = payload.adViewId
         self.adUnitID = payload.adUnitID
         self.type = payload.type
+        
+        self.visitorId = payload.visitorId
+        self.companyId = payload.companyId
+        self.sessionId = payload.sessionId
+        self.deviceId = payload.deviceId
         
         guard let errorCode = payload.errorCode,
               let errorMessage = payload.errorMessage
@@ -66,11 +81,23 @@ extension AUFailedLoadEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
         var result = JSONObject()
         
-        result["adViewId"] = adViewId
-        result["adUnitID"] = adUnitID
-        result["errorMessage"] = errorMessage
-        result["errorCode"] = errorCode
+        result["source"] = "mobile-sdk"
         result["type"] = type.rawValue
+        result["datacontenttype"] = "application/json"
+        result["specversion"] = "1.0"
+        result["id"] = UUID().uuidString
+        
+        var dataObject = JSONObject()
+        dataObject["adViewId"] = adViewId
+        dataObject["adUnitId"] = adUnitID
+        dataObject["visitorId"] = visitorId
+        dataObject["companyId"] = companyId
+        dataObject["sessionId"] = sessionId
+        dataObject["deviceId"] = deviceId
+        dataObject["errorMessage"] = "Error Code \(errorCode): " + errorMessage
+        
+        result["data"] = dataObject
+        result["time"] = Date().currentTimeStmp
         
         return result
     }

@@ -28,6 +28,11 @@ struct AUBidWinnerEven: Codable, AUEventHandlerType {
     let adSubType: String
     let apiType: String
     let type: AUAdEventType
+
+    var visitorId: String
+    var companyId: String
+    var sessionId: String
+    var deviceId: String
     
     init(resultCode: String, adUnitID: String, targetKeywords: [String : String], isAutorefresh: Bool, autorefreshTime: Int, initialRefresh: Bool?, adViewId: String, size: String, adType: String, adSubType: String, apiType: String) {
         self.resultCode = resultCode
@@ -42,6 +47,11 @@ struct AUBidWinnerEven: Codable, AUEventHandlerType {
         self.adSubType = adSubType
         self.apiType = apiType
         self.type = .BID_WINNER
+        
+        self.visitorId = ""
+        self.companyId = ""
+        self.sessionId = ""
+        self.deviceId = ""
     }
     
     init?(_ payload: PayloadModel) {
@@ -68,6 +78,11 @@ struct AUBidWinnerEven: Codable, AUEventHandlerType {
         self.apiType = apiType
         self.resultCode = resultCode
         self.targetKeywords = targetKeywords
+        
+        self.visitorId = payload.visitorId
+        self.companyId = payload.companyId
+        self.sessionId = payload.sessionId
+        self.deviceId = payload.deviceId
     }
     
     func convertToJSONString() -> String? {
@@ -93,20 +108,32 @@ extension AUBidWinnerEven: BodyObjectEncodable {
     func encode() -> JSONObject {
         var result = JSONObject()
         
-        result["adViewId"] = adViewId
-        result["adUnitID"] = adUnitID
+        result["source"] = "mobile-sdk"
         result["type"] = type.rawValue
-        result["size"] = size
-        result["adType"] = adType
-        result["adSubType"] = adSubType
-        result["apiType"] = apiType
-        result["isAutorefresh"] = isAutorefresh
-        result["autorefreshTime"] = autorefreshTime
-        result["initialRefresh"] = initialRefresh
-        result["resultCode"] = resultCode
+        result["datacontenttype"] = "application/json"
+        result["specversion"] = "1.0"
+        result["id"] = UUID().uuidString
         
-        result["targetKeywords"] = targetKeywords
+        var dataObject = JSONObject()
+        dataObject["adViewId"] = adViewId
+        dataObject["adUnitId"] = adUnitID
+        dataObject["visitorId"] = visitorId
+        dataObject["companyId"] = companyId
+        dataObject["sessionId"] = sessionId
+        dataObject["deviceId"] = deviceId
+        dataObject["sizes"] = size
+        dataObject["adType"] = adType
+        dataObject["adSubtype"] = adSubType
+        dataObject["apiType"] = apiType
+        dataObject["autorefresh"] = isAutorefresh
+        dataObject["autorefreshTime"] = autorefreshTime
+        dataObject["refresh"] = initialRefresh
+        dataObject["resultCode"] = resultCode
+        dataObject["targetKeywords"] = targetKeywords.compactMap { $0.value }
         
+        result["data"] = dataObject
+        result["time"] = Date().currentTimeStmp
+
         return result
     }
 }

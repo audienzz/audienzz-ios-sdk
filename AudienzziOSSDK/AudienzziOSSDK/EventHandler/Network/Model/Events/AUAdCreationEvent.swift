@@ -24,6 +24,11 @@ struct AUAdCreationEvent: Codable, AUEventHandlerType {
     let apiType: String
     let type: AUAdEventType// = .AD_CREATION
     
+    var visitorId: String
+    var companyId: String
+    var sessionId: String
+    var deviceId: String
+    
     init(adViewId: String, adUnitID: String, size: String?, adType: String, adSubType: String, apiType: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
@@ -32,6 +37,11 @@ struct AUAdCreationEvent: Codable, AUEventHandlerType {
         self.adSubType = adSubType
         self.apiType = apiType
         self.type = .AD_CREATION
+        
+        self.visitorId = ""
+        self.companyId = ""
+        self.sessionId = ""
+        self.deviceId = ""
     }
     
     init?(_ payload: PayloadModel) {
@@ -48,6 +58,11 @@ struct AUAdCreationEvent: Codable, AUEventHandlerType {
         self.adType = adType
         self.adSubType = adSubType
         self.apiType = apiType
+        
+        self.visitorId = payload.visitorId
+        self.companyId = payload.companyId
+        self.sessionId = payload.sessionId
+        self.deviceId = payload.deviceId
     }
     
     func convertToJSONString() -> String? {
@@ -73,13 +88,26 @@ extension AUAdCreationEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
         var result = JSONObject()
         
-        result["adViewId"] = adViewId
-        result["adUnitID"] = adUnitID
+        result["source"] = "mobile-sdk"
         result["type"] = type.rawValue
-        result["size"] = size
-        result["adType"] = adType
-        result["adSubType"] = adSubType
-        result["apiType"] = apiType
+        result["datacontenttype"] = "application/json"
+        result["specversion"] = "1.0"
+        result["id"] = UUID().uuidString
+        
+        var dataObject = JSONObject()
+        dataObject["adViewId"] = adViewId
+        dataObject["adUnitId"] = adUnitID
+        dataObject["visitorId"] = visitorId
+        dataObject["companyId"] = companyId
+        dataObject["sessionId"] = sessionId
+        dataObject["deviceId"] = deviceId
+        dataObject["sizes"] = size
+        dataObject["adType"] = adType
+        dataObject["adSubtype"] = adSubType
+        dataObject["apiType"] = apiType
+        
+        result["data"] = dataObject
+        result["time"] = Date().currentTimeStmp
         
         return result
     }

@@ -16,8 +16,6 @@
 import Foundation
 import Network
 
-fileprivate let baseUrl: String = "https://dev-api.adnz.co/api/ws-event-ingester"
-
 class AUEventsNetworkManager<T: APIResult> {
     private var monitor = NWPathMonitor()
     private let queue = DispatchQueue.global(qos: .background)
@@ -62,6 +60,12 @@ fileprivate extension AUEventsNetworkManager {
     }
     
     func handleResult(responce: HTTPResponse, method: APIMethod<T>, handler: @escaping (Result<T, AUAPIError>) -> Void) {
+        
+        if responce.statusCode == 200 {
+            var jObject = JSONObject()
+            jObject["code"] = responce.statusCode
+            handler(extractAPIResponce(jsonObject: jObject, parser: method.resultParser))
+        }
         
         guard let data = responce.body, let json = try? decodeJSON(data), let jsonObject = json as? JSONObject else {
             return

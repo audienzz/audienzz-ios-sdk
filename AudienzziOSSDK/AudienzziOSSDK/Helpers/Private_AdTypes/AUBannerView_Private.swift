@@ -99,9 +99,9 @@ extension AUBannerView {
     private func makeAdSubType() -> String {
         if adUnit.adFormats.contains([.banner, .video]) {
             return "MULTIFORMAT"
-        } else if adUnit.adFormats.contains([.banner]) && adUnit.adFormats.count == 1 {
+        } else if adUnit.adFormats.contains(where: { $0.rawValue == 1 }) && adUnit.adFormats.count == 1 {
             return "HTML"
-        } else if adUnit.adFormats.contains([.video]) && adUnit.adFormats.count == 1 {
+        } else if adUnit.adFormats.contains(where: { $0.rawValue == 2 }) && adUnit.adFormats.count == 1 {
             return "VIDEO"
         }
         

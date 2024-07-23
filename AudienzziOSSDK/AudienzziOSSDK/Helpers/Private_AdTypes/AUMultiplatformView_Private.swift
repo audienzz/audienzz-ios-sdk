@@ -47,4 +47,21 @@ internal extension AUMultiplatformView {
             Utils.shared.findNative(adObject: adObject)
         }
     }
+    
+    private func makeAdSubType() -> String {
+        return "MULTIFORMAT"
+    }
+    
+    func makeCreationEvent() {
+        let event = AUAdCreationEvent(adViewId: configId,
+                                      adUnitID: "",
+                                      size: "\(adSize.width)x\(adSize.height)",
+                                      adType: "MULTIFORMAT",
+                                      adSubType: makeAdSubType(),
+                                      apiType: "ORIGINAL")
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    }
 }

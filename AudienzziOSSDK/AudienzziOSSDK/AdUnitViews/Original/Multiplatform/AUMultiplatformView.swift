@@ -64,6 +64,9 @@ public class AUMultiplatformView: AUAdView {
      */
     public func create(with gamRequest: AnyObject) {
         self.gamRequest = gamRequest
+        AUEventsManager.shared.checkImpression(self)
+        
+        makeCreationEvent()
         
         if !self.isLazyLoad {
             fetchRequest(gamRequest, prebidRequest: prebidRequest)

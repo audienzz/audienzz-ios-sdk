@@ -102,7 +102,7 @@ fileprivate extension AULocalStorageService {
     
     
     //MARK: - Migration if needed
-    func insertBrands(_ events: [AUEventDB]) {
+    func insertEvents(_ events: [AUEventDB]) {
         let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
         
         let id = Expression<String>("id")

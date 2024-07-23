@@ -19,17 +19,35 @@ struct AUScreenImpression: Codable, AUEventHandlerType {
     let adViewId: String
     let adUnitID: String
     let type: AUAdEventType
+    let screenName: String
+    
+    var visitorId: String
+    var companyId: String
+    var sessionId: String
+    var deviceId: String
     
     init(adViewId: String, adUnitID: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
         self.type = .SCREEN_IMPRESSION
+        self.screenName = ""
+        
+        self.visitorId = ""
+        self.companyId = ""
+        self.sessionId = ""
+        self.deviceId = ""
     }
     
     init?(_ payload: PayloadModel) {
         self.adViewId = payload.adViewId
         self.adUnitID = payload.adUnitID
         self.type = payload.type
+        
+        self.screenName = payload.screenName ?? "undefined"
+        self.visitorId = payload.visitorId
+        self.companyId = payload.companyId
+        self.sessionId = payload.sessionId
+        self.deviceId = payload.deviceId
     }
     
     func convertToJSONString() -> String? {
@@ -55,9 +73,23 @@ extension AUScreenImpression: BodyObjectEncodable {
     func encode() -> JSONObject {
         var result = JSONObject()
         
-        result["adViewId"] = adViewId
-        result["adUnitID"] = adUnitID
+        result["source"] = "mobile-sdk"
         result["type"] = type.rawValue
+        result["datacontenttype"] = "application/json"
+        result["specversion"] = "1.0"
+        result["id"] = UUID().uuidString
+        
+        var dataObject = JSONObject()
+        dataObject["adViewId"] = adViewId
+        dataObject["adUnitId"] = adUnitID
+        dataObject["visitorId"] = visitorId
+        dataObject["companyId"] = companyId
+        dataObject["sessionId"] = sessionId
+        dataObject["deviceId"] = deviceId
+        dataObject["screenName"] = screenName
+        
+        result["data"] = dataObject
+        result["time"] = Date().currentTimeStmp
         
         return result
     }

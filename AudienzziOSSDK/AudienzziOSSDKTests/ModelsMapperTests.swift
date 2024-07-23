@@ -42,8 +42,6 @@ class ModelsMapperTests: XCTestCase {
             eventModel = AUBidWinnerEven(payloadModel)
         case .AD_CLICK:
             eventModel = AUAdClickEvent(payloadModel)
-        case .VIEWABILITY:
-            eventModel = AUViewabilityEvent(payloadModel)
         case .BID_REQUEST:
             eventModel = AUBidRequestEvent(payloadModel)
         case .AD_CREATION:
@@ -75,8 +73,6 @@ class ModelsMapperTests: XCTestCase {
             eventModel = AUBidWinnerEven(payloadModel)
         case .AD_CLICK:
             eventModel = AUAdClickEvent(payloadModel)
-        case .VIEWABILITY:
-            eventModel = AUViewabilityEvent(payloadModel)
         case .BID_REQUEST:
             eventModel = AUBidRequestEvent(payloadModel)
         case .AD_CREATION:
@@ -297,8 +293,6 @@ class ModelsMapperTests: XCTestCase {
             return AUBidWinnerEven(payload)
         case .AD_CLICK:
             return AUAdClickEvent(payload)
-        case .VIEWABILITY:
-            return AUViewabilityEvent(payload)
         case .BID_REQUEST:
             return AUBidRequestEvent(payload)
         case .AD_CREATION:
@@ -316,6 +310,10 @@ class ModelsMapperTests: XCTestCase {
         PayloadModel(adViewId: .random,
                      adUnitID: .random,
                      type: type ?? .random,
+                     visitorId: .random,
+                     companyId: .random,
+                     sessionId: .random,
+                     deviceId: .random,
                      resultCode: .random,
                      targetKeywords: [.random: .random],
                      isAutorefresh: .random,

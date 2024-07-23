@@ -47,7 +47,6 @@ extension AUAdEventType: TestableValue {
     static var random: AUAdEventType {
         let allTypes = [AUAdEventType.BID_WINNER.rawValue,
                         AUAdEventType.AD_CLICK.rawValue,
-                        AUAdEventType.VIEWABILITY.rawValue,
                         AUAdEventType.BID_REQUEST.rawValue,
                         AUAdEventType.AD_CREATION.rawValue,
                         AUAdEventType.CLOSE_AD.rawValue,
@@ -61,8 +60,6 @@ extension AUAdEventType: TestableValue {
             return .BID_WINNER
         case .AD_CLICK:
             return .AD_CLICK
-        case .VIEWABILITY:
-            return .VIEWABILITY
         case .BID_REQUEST:
             return .BID_REQUEST
         case .AD_CREATION:

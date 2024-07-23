@@ -25,9 +25,9 @@ struct ScreenImpressionModel {
 class AUScreenImpressionManager: NSObject {
     var screenMapper: [ScreenImpressionModel] = []
     
-    func shouldAddEvent(of adView: AUAdView) -> Bool {
+    func shouldAddEvent(of adView: AUAdView) -> (Bool, String?) {
         guard let vc = adView.parentViewController else {
-            return false
+            return (false, nil)
         }
 
         let name = String(describing: type(of: vc))
@@ -44,7 +44,7 @@ class AUScreenImpressionManager: NSObject {
             appendModel(model)
         }
         
-        return isModelExist.not()
+        return (isModelExist.not(), model.name)
     }
     
     private func checkModel(_ model: ScreenImpressionModel) -> Bool {

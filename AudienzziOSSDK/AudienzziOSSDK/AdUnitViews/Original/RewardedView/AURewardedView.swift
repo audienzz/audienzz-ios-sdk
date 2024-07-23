@@ -56,6 +56,7 @@ public class AURewardedView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd(with gamRequest: AnyObject) {
+        AUEventsManager.shared.checkImpression(self)
         let parameters = parameters?.unwrap() ?? defaultVideoParameters()
         adUnit.videoParameters = parameters
         self.gamRequest = gamRequest

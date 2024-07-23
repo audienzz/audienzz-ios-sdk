@@ -18,10 +18,16 @@ import AppTrackingTransparency
 import AdSupport
 
 fileprivate let timerInterval = 3.0
+fileprivate let keyVisitorId = "keyVisitorId"
 
 class AUEventsManager: AULogEventType {
     static let shared = AUEventsManager()
     private var impressionManager = AUScreenImpressionManager()
+    
+    private var visitorId: String = "visitorId"
+    private var companyId: String = "companyId"
+    private var sessionId: String = UUID().uuidString
+    private var deviceId: String = "00000000-0000-0000-0000-000000000000"
     
     //  batches time implementation
     fileprivate var timer: Timer?
@@ -30,6 +36,7 @@ class AUEventsManager: AULogEventType {
         storage = makeLocalStorage()
         networkManager = AUEventsNetworkManager<AUBatchResultModel>()
         requestIDFApermission()
+        visitorId = makeVisitorId()
     }
     
     // MARK: - Network
@@ -49,13 +56,18 @@ class AUEventsManager: AULogEventType {
     }
     
     func checkImpression(_ view: AUAdView) {
-        let shoudAdd = impressionManager.shouldAddEvent(of: view)
+        let (shoudAdd, screenName) = impressionManager.shouldAddEvent(of: view)
         AULogEvent.logDebug("isModelExist shoudAdd: \(shoudAdd)")
         
-        if shoudAdd {
+        if shoudAdd, let name = screenName {
             guard let payload = PayloadModel(adViewId: view.configId,
                                              adUnitID: view.configId,
-                                             type: .SCREEN_IMPRESSION).makePayload()
+                                             type: .SCREEN_IMPRESSION,
+                                             visitorId: visitorId,
+                                             companyId: companyId,
+                                             sessionId: sessionId,
+                                             deviceId: deviceId,
+                                             screenName: name).makePayload()
             else { return }
             
             addEvent(event: AUEventDB(payload))
@@ -75,7 +87,7 @@ class AUEventsManager: AULogEventType {
     }
     
     private func requestIDFApermission() {
-        ATTrackingManager.requestTrackingAuthorization { status in
+        ATTrackingManager.requestTrackingAuthorization { [weak self] status in
             switch status {
             case .authorized:
                 AULogEvent.logDebug("enable tracking")
@@ -85,7 +97,19 @@ class AUEventsManager: AULogEventType {
                 AULogEvent.logDebug("disable tracking")
             }
             
+            self?.deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString
             AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString)
+        }
+    }
+    
+    private func makeVisitorId() -> String {
+        if let visId = UserDefaults.standard.string(forKey: keyVisitorId) {
+            return visId
+        } else {
+            let visId: String = UUID().uuidString
+            UserDefaults.standard.setValue(visId, forKey: keyVisitorId)
+            UserDefaults.standard.synchronize()
+            return visId
         }
     }
 }
@@ -107,16 +131,14 @@ fileprivate extension AUEventsManager {
     }
     
     func sentEventsToServer(_ events: [AUEventDB]) {
-        // TODO: implement
         let netModels = convertToNetworkModels(events)
-        AULogEvent.logDebug("\(type(of: self)) If I got API I will send events")
-        return
-        let model = BatchRequestModel(batch: BatchModel(visitorId: 24343), netModels: netModels)
-        
-        networkManager.request(.batchEvents(model)) { [weak self] result in
+        let models = netModels.compactMap { $0.encode() }
+
+        networkManager.request(.batchEvents(models)) { [weak self] result in
             switch result {
-            case .success(let success):
+            case .success:
                 AULogEvent.logDebug("networkManager success")
+                self?.updateEvents(by: events)
             case .failure(let error):
                 AULogEvent.logDebug(error.localizedDescription)
             }
@@ -146,22 +168,55 @@ fileprivate extension AUEventsManager {
     func convert(fromType: AUAdEventType, of payload: PayloadModel) -> AUEventHandlerType? {
         switch fromType {
         case .BID_WINNER:
-            return AUBidWinnerEven(payload)
+            var model = AUBidWinnerEven(payload)
+            model?.visitorId = visitorId
+            model?.companyId = companyId
+            model?.sessionId = sessionId
+            model?.deviceId = deviceId
+            return model
         case .AD_CLICK:
-            return AUAdClickEvent(payload)
-        case .VIEWABILITY:
-            return AUViewabilityEvent(payload)
+            var model = AUAdClickEvent(payload)
+            model?.visitorId = visitorId
+            model?.companyId = companyId
+            model?.sessionId = sessionId
+            model?.deviceId = deviceId
+            return model
         case .BID_REQUEST:
-            return AUBidRequestEvent(payload)
+            var model = AUBidRequestEvent(payload)
+            model?.visitorId = visitorId
+            model?.companyId = companyId
+            model?.sessionId = sessionId
+            model?.deviceId = deviceId
+            return model
         case .AD_CREATION:
-            return AUAdCreationEvent(payload)
+            var model = AUAdCreationEvent(payload)
+            model?.visitorId = visitorId
+            model?.companyId = companyId
+            model?.sessionId = sessionId
+            model?.deviceId = deviceId
+            return model
         case .CLOSE_AD:
-            return AUCloseAdEvent(payload)
+            var model = AUCloseAdEvent(payload)
+            model?.visitorId = visitorId
+            model?.companyId = companyId
+            model?.sessionId = sessionId
+            model?.deviceId = deviceId
+            return model
         case .AD_FAILED_TO_LOAD:
-            return AUFailedLoadEvent(payload)
+            var model = AUFailedLoadEvent(payload)
+            model?.visitorId = visitorId
+            model?.companyId = companyId
+            model?.sessionId = sessionId
+            model?.deviceId = deviceId
+            return model
         case .SCREEN_IMPRESSION:
             return AUScreenImpression(payload)
         }
+    }
+    
+    func updateEvents(by oldEvents: [AUEventDB]) {
+        storage?.removeEvents()
+        AULogEvent.logDebug("networkManager events.cont= \(storage?.events?.count ?? 0)")
     }
 }
 

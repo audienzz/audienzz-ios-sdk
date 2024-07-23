@@ -51,7 +51,7 @@ extension HTTPRequest {
     result.httpMethod = method.rawValue
     result.setHTTPHeaders(headers)
     result.httpShouldHandleCookies = true
-    result.httpBody = body
+    result.httpBody = nil
     return result as URLRequest
   }
 }

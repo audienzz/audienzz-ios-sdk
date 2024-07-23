@@ -48,13 +48,3 @@ extension UIView {
     func get<T: UIView>(all type: T.Type) -> [T] { return UIView.getAllSubviews(from: self) as [T] }
     func get(all types: [UIView.Type]) -> [UIView] { return UIView.getAllSubviews(from: self, types: types) }
 }
-//
-//public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-//    for subview in self.subviews {
-//        if (subview.hitTest(self.convert(point, to: subview), with: event) != nil) {
-//            print("detect inside the view")
-//            return true
-//        }
-//    }
-//    return false
-//}

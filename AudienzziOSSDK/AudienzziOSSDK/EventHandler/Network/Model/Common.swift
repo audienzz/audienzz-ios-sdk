@@ -25,20 +25,24 @@ protocol NetDBPayloadType {
 }
 
 enum AUAdEventType: String, Codable, CaseIterable, Equatable {
-    case BID_WINNER = "BID_WINNER"
-    case AD_CLICK = "AD_CLICK"
-    case VIEWABILITY = "VIEWABILITY"
-    case BID_REQUEST = "BID_REQUEST"
-    case AD_CREATION = "AD_CREATION"
-    case CLOSE_AD = "CLOSE_AD"
-    case AD_FAILED_TO_LOAD = "AD_FAILED_TO_LOAD"
-    case SCREEN_IMPRESSION = "SCREEN_IMPRESSION"
+    case BID_WINNER = "mobile.bid_winner"
+    case AD_CLICK = "mobile.ad_click"
+    case BID_REQUEST = "mobile.bid_request"
+    case AD_CREATION = "mobile.ad_creation"
+    case CLOSE_AD = "mobile.close_ad"
+    case AD_FAILED_TO_LOAD = "mobile.ad_failed_to_load"
+    case SCREEN_IMPRESSION = "mobile.screen_impression"
 }
 
 struct PayloadModel: Codable, NetDBPayloadType, Equatable {
     let adViewId: String
     let adUnitID: String
     let type: AUAdEventType
+    
+    let visitorId: String
+    let companyId: String
+    let sessionId: String
+    let deviceId: String
 
     let resultCode: String?
     let targetKeywords: [String: String]?
@@ -52,11 +56,23 @@ struct PayloadModel: Codable, NetDBPayloadType, Equatable {
     
     let errorMessage: String?
     let errorCode: Int?
+    let screenName: String? 
     
-    init(adViewId: String, adUnitID: String ,type: AUAdEventType) {
+    init(adViewId: String,
+         adUnitID: String,
+         type: AUAdEventType,
+         visitorId: String,
+         companyId: String,
+         sessionId: String,
+         deviceId: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
         self.type = type
+        
+        self.visitorId = visitorId
+        self.companyId = companyId
+        self.sessionId = sessionId
+        self.deviceId = deviceId
         
         self.resultCode = nil
         self.targetKeywords = nil
@@ -70,11 +86,16 @@ struct PayloadModel: Codable, NetDBPayloadType, Equatable {
         
         self.errorMessage = nil
         self.errorCode = nil
+        self.screenName = nil
     }
     
     init(adViewId: String,
          adUnitID: String,
          type: AUAdEventType,
+         visitorId: String,
+         companyId: String,
+         sessionId: String,
+         deviceId: String,
          resultCode: String? = nil,
          targetKeywords: [String: String]? = nil,
          isAutorefresh: Bool? = nil,
@@ -85,10 +106,16 @@ struct PayloadModel: Codable, NetDBPayloadType, Equatable {
          adSubType: String? = nil,
          apiType: String? = nil,
          errorMessage: String? = nil,
-         errorCode: Int? = nil) {
+         errorCode: Int? = nil,
+         screenName: String? = nil) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
         self.type = type
+        
+        self.visitorId = visitorId
+        self.companyId = companyId
+        self.sessionId = sessionId
+        self.deviceId = deviceId
         
         self.resultCode = resultCode
         self.targetKeywords = targetKeywords
@@ -102,6 +129,7 @@ struct PayloadModel: Codable, NetDBPayloadType, Equatable {
         
         self.errorMessage = errorMessage
         self.errorCode = errorCode
+        self.screenName = screenName
     }
     
     

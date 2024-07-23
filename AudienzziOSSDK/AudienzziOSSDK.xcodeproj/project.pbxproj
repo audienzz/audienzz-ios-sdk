@@ -35,7 +35,6 @@
 		58436AC32C08AAE900E83155 /* AUEventDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436AC22C08AAE800E83155 /* AUEventDB.swift */; };
 		58436AC52C09BD7800E83155 /* AUBidWinnerEven.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436AC42C09BD7800E83155 /* AUBidWinnerEven.swift */; };
 		58436AC72C09BD9B00E83155 /* AUAdClickEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436AC62C09BD9B00E83155 /* AUAdClickEvent.swift */; };
-		58436AC92C09BDD100E83155 /* AUViewabilityEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436AC82C09BDD100E83155 /* AUViewabilityEvent.swift */; };
 		58436ACB2C09BDEF00E83155 /* AUBidRequestEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436ACA2C09BDEE00E83155 /* AUBidRequestEvent.swift */; };
 		58436ACD2C09BE1200E83155 /* AUAdCreationEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436ACC2C09BE1200E83155 /* AUAdCreationEvent.swift */; };
 		58436ACF2C09BE3C00E83155 /* AUCloseAdEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436ACE2C09BE3C00E83155 /* AUCloseAdEvent.swift */; };
@@ -56,12 +55,16 @@
 		585608782BB190BE00F9F073 /* AUInterstitialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608762BB190BE00F9F073 /* AUInterstitialView.swift */; };
 		585608852BB2E11000F9F073 /* PrebidMobile.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 58E024CF2BAAE7010051E8D6 /* PrebidMobile.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		585608922BB4563C00F9F073 /* AUNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585608912BB4563C00F9F073 /* AUNativeView.swift */; };
+		585A43422C3EB62200A883A7 /* AURequestBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58AECFE82C2979800020E98D /* AURequestBuilder.swift */; };
+		585A434B2C3EB63500A883A7 /* AUBatchResultModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58AECFEB2C299C380020E98D /* AUBatchResultModel.swift */; };
+		585A434C2C3EB64A00A883A7 /* AUAPIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58AECFEF2C29B9C70020E98D /* AUAPIError.swift */; };
 		585A795F2BC964B5005D531C /* PrebidMobileGAMEventHandlers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 585A79542BC96475005D531C /* PrebidMobileGAMEventHandlers.framework */; };
 		585A79602BC964B5005D531C /* PrebidMobileGAMEventHandlers.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 585A79542BC96475005D531C /* PrebidMobileGAMEventHandlers.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		585A796A2BC96C92005D531C /* AUBannerRenderingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A79692BC96C92005D531C /* AUBannerRenderingView.swift */; };
 		585A796C2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A796B2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift */; };
 		585A79722BC97FDF005D531C /* AUInterstitialRenderingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A79712BC97FDF005D531C /* AUInterstitialRenderingView.swift */; };
 		585A79742BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585A79732BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift */; };
+		586753FD2C4F9B94005937C2 /* DateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586753FC2C4F9B94005937C2 /* DateExtension.swift */; };
 		586A878C2BC936D200F997BD /* AURewardedRenderingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586A878B2BC936D200F997BD /* AURewardedRenderingView.swift */; };
 		586A878E2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */; };
 		586C6C002BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */; };
@@ -130,7 +133,6 @@
 		58EB06CB2C2194E300CE6E86 /* AUBidRequestEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436ACA2C09BDEE00E83155 /* AUBidRequestEvent.swift */; };
 		58EB06CC2C2194E300CE6E86 /* Common.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436ABD2C08707800E83155 /* Common.swift */; };
 		58EB06CD2C2194E300CE6E86 /* AUCloseAdEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436ACE2C09BE3C00E83155 /* AUCloseAdEvent.swift */; };
-		58EB06CE2C2194E300CE6E86 /* AUViewabilityEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436AC82C09BDD100E83155 /* AUViewabilityEvent.swift */; };
 		58EB06CF2C2194E300CE6E86 /* AUBidWinnerEven.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436AC42C09BD7800E83155 /* AUBidWinnerEven.swift */; };
 		58EB06D02C2194E300CE6E86 /* AUAdClickEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436AC62C09BD9B00E83155 /* AUAdClickEvent.swift */; };
 		58EB06D52C21957100CE6E86 /* AUBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58927A232BE0E5DA001A0F45 /* AUBannerView.swift */; };
@@ -289,7 +291,6 @@
 		58436AC22C08AAE800E83155 /* AUEventDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUEventDB.swift; sourceTree = "<group>"; };
 		58436AC42C09BD7800E83155 /* AUBidWinnerEven.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBidWinnerEven.swift; sourceTree = "<group>"; };
 		58436AC62C09BD9B00E83155 /* AUAdClickEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdClickEvent.swift; sourceTree = "<group>"; };
-		58436AC82C09BDD100E83155 /* AUViewabilityEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUViewabilityEvent.swift; sourceTree = "<group>"; };
 		58436ACA2C09BDEE00E83155 /* AUBidRequestEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBidRequestEvent.swift; sourceTree = "<group>"; };
 		58436ACC2C09BE1200E83155 /* AUAdCreationEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdCreationEvent.swift; sourceTree = "<group>"; };
 		58436ACE2C09BE3C00E83155 /* AUCloseAdEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUCloseAdEvent.swift; sourceTree = "<group>"; };
@@ -310,6 +311,7 @@
 		585A796B2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerRenderingAdDelegate.swift; sourceTree = "<group>"; };
 		585A79712BC97FDF005D531C /* AUInterstitialRenderingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialRenderingView.swift; sourceTree = "<group>"; };
 		585A79732BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInterstitialenderingAdDelegate.swift; sourceTree = "<group>"; };
+		586753FC2C4F9B94005937C2 /* DateExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateExtension.swift; sourceTree = "<group>"; };
 		586A878B2BC936D200F997BD /* AURewardedRenderingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedRenderingView.swift; sourceTree = "<group>"; };
 		586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedAdUnitDelegate.swift; sourceTree = "<group>"; };
 		586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdUnitConfiguration_Private.swift; sourceTree = "<group>"; };
@@ -497,6 +499,7 @@
 			children = (
 				58436A892C060F9200E83155 /* UIViewExtension.swift */,
 				58F8BD112C1731F000E08F1E /* BoolExtension.swift */,
+				586753FC2C4F9B94005937C2 /* DateExtension.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -567,7 +570,6 @@
 				58436ACE2C09BE3C00E83155 /* AUCloseAdEvent.swift */,
 				58436ACC2C09BE1200E83155 /* AUAdCreationEvent.swift */,
 				58436ACA2C09BDEE00E83155 /* AUBidRequestEvent.swift */,
-				58436AC82C09BDD100E83155 /* AUViewabilityEvent.swift */,
 				58436AC42C09BD7800E83155 /* AUBidWinnerEven.swift */,
 				58436AC62C09BD9B00E83155 /* AUAdClickEvent.swift */,
 				58F8BD052C1700BA00E08F1E /* AUScreenImpression.swift */,
@@ -1200,10 +1202,10 @@
 				58D9BC6A2BEBB48D000C4149 /* AUNativeAdMarkupAsset.swift in Sources */,
 				58AECFF02C29B9C70020E98D /* AUAPIError.swift in Sources */,
 				58436ACF2C09BE3C00E83155 /* AUCloseAdEvent.swift in Sources */,
-				58436AC92C09BDD100E83155 /* AUViewabilityEvent.swift in Sources */,
 				58436ABC2C076C1F00E83155 /* AUHTTPType.swift in Sources */,
 				58D9BC402BE9150A000C4149 /* AUNativeView_Private.swift in Sources */,
 				582428742C10A1F3004539DD /* AURewardedHandler.swift in Sources */,
+				586753FD2C4F9B94005937C2 /* DateExtension.swift in Sources */,
 				58436AC52C09BD7800E83155 /* AUBidWinnerEven.swift in Sources */,
 				58436AD52C09C5BC00E83155 /* AUBannerHandler.swift in Sources */,
 				58436ABE2C08707800E83155 /* Common.swift in Sources */,
@@ -1240,6 +1242,7 @@
 				58EB06C82C2194E300CE6E86 /* AUAdCreationEvent.swift in Sources */,
 				58EB06E32C2195C400CE6E86 /* AUMORTBAppContent.swift in Sources */,
 				58EB06C92C2194E300CE6E86 /* AUScreenImpression.swift in Sources */,
+				585A43422C3EB62200A883A7 /* AURequestBuilder.swift in Sources */,
 				58EB06CA2C2194E300CE6E86 /* AUHTTPType.swift in Sources */,
 				58EB06E02C2195A100CE6E86 /* AURewardedView.swift in Sources */,
 				58D078B42C23133900D49175 /* AULocalStorageServiceTests.swift in Sources */,
@@ -1252,7 +1255,6 @@
 				58EB06F02C21965E00CE6E86 /* AUInterstitialView_Private.swift in Sources */,
 				58EB06F12C21965E00CE6E86 /* AURewardedView_Private.swift in Sources */,
 				58EB06F22C21965E00CE6E86 /* AUBannerView_Private.swift in Sources */,
-				58EB06CE2C2194E300CE6E86 /* AUViewabilityEvent.swift in Sources */,
 				58D078AF2C23132A00D49175 /* TestableModel.swift in Sources */,
 				58EB06EB2C21964600CE6E86 /* AUAdUnitConfiguration_Private.swift in Sources */,
 				58EB06CF2C2194E300CE6E86 /* AUBidWinnerEven.swift in Sources */,
@@ -1260,6 +1262,7 @@
 				58EB06D02C2194E300CE6E86 /* AUAdClickEvent.swift in Sources */,
 				585608752BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */,
 				58EB06C22C2194CB00CE6E86 /* AUEventDB.swift in Sources */,
+				585A434C2C3EB64A00A883A7 /* AUAPIError.swift in Sources */,
 				58EB06EA2C21963F00CE6E86 /* AUMORTBContentData_Internal.swift in Sources */,
 				5856086F2BADD62A00F9F073 /* AdVideoPropertyParameters.swift in Sources */,
 				58EB06C32C2194D200CE6E86 /* AULocalStorageAdditions.swift in Sources */,
@@ -1274,6 +1277,7 @@
 				58F877A42BA09CE90093CD63 /* AudienzziOSSDKTests.swift in Sources */,
 				58EB06E42C2195C800CE6E86 /* AUMORTBContentData.swift in Sources */,
 				58EB06BD2C2194B800CE6E86 /* AUInterstitialHandler.swift in Sources */,
+				585A434B2C3EB63500A883A7 /* AUBatchResultModel.swift in Sources */,
 				58EB06C02C2194C100CE6E86 /* AUEventsManager.swift in Sources */,
 				58EB06B32C2194B100CE6E86 /* AULogEvent.swift in Sources */,
 				58EB06BE2C2194BA00CE6E86 /* AUBannerHandler.swift in Sources */,

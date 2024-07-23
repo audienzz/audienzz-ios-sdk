@@ -18,18 +18,34 @@ import Foundation
 struct AUAdClickEvent: Codable, AUEventHandlerType {
     let adViewId: String
     let adUnitID: String
+    
+    var visitorId: String
+    var companyId: String
+    var sessionId: String
+    var deviceId: String
+
     let type: AUAdEventType
     
     init?(_ payload: PayloadModel) {
         self.adViewId = payload.adViewId
         self.adUnitID = payload.adUnitID
         self.type = payload.type
+        
+        self.visitorId = payload.visitorId
+        self.companyId = payload.companyId
+        self.sessionId = payload.sessionId
+        self.deviceId = payload.deviceId
     }
     
     init(adViewId: String, adUnitID: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
         self.type = .AD_CLICK
+        
+        self.visitorId = ""
+        self.companyId = ""
+        self.sessionId = ""
+        self.deviceId = ""
     }
     
     func convertToJSONString() -> String? {
@@ -55,9 +71,22 @@ extension AUAdClickEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
         var result = JSONObject()
         
-        result["adViewId"] = adViewId
-        result["adUnitID"] = adUnitID
+        result["source"] = "mobile-sdk"
         result["type"] = type.rawValue
+        result["datacontenttype"] = "application/json"
+        result["specversion"] = "1.0"
+        result["id"] = UUID().uuidString
+        
+        var dataObject = JSONObject()
+        dataObject["adViewId"] = adViewId
+        dataObject["adUnitId"] = adUnitID
+        dataObject["visitorId"] = visitorId
+        dataObject["companyId"] = companyId
+        dataObject["sessionId"] = sessionId
+        dataObject["deviceId"] = deviceId
+        
+        result["data"] = dataObject
+        result["time"] = Date().currentTimeStmp
         
         return result
     }
