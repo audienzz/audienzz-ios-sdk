@@ -18,10 +18,12 @@ import AudienzziOSSDK
 import GoogleMobileAds
 import GoogleInteractiveMediaAds
 
-class ExamplesViewController: UIViewController {
+class SeparateViewController: UIViewController {
     @IBOutlet private weak var exampleScrollView: UIScrollView!
     @IBOutlet internal weak var adContainerView: UIView!
     @IBOutlet internal weak var lazyAdContainerView: UIView!
+    
+    var selectedType: AdTypeExample!
     
     internal let adSize = CGSize(width: 320, height: 50)
     internal let adSizeMult = CGSize(width: 300, height: 250)
@@ -75,49 +77,71 @@ class ExamplesViewController: UIViewController {
     }
     
     private func setupAdContainer() {
-        createBannerView_320x50()
-        createBannerView_320x250()
-        createMultisizeBanner()
-        createVideoBannerView()
-
-        createBannerMultiplatformView()
-        createMultiplatformView()
-        
-        createInstreamView()
-        createNativeView()
-        createNativeBannerView()
-
-        addRenderingLabel(adContainerView)
-        createRenderingBannerView()
-        createRenderingBannerVideoView()
-        createRenderingNativeView()
+        switch selectedType {
+        case .bannerOrigin:
+            createBannerView_320x50()
+            createBannerView_320x250()
+        case .bannerOriginVideo:
+            createVideoBannerView()
+        case .bannerOriginMulti:
+            createBannerMultiplatformView()
+            createMultiplatformView()
+        case .interstitalOrigin:
+            break
+        case .interstitalOriginVideo:
+            break
+        case .interstitalOriginMulti:
+            break
+        case .rewardedOrigin:
+            break
+        case .bannerRender:
+            createRenderingBannerView()
+        case .bannerRenderVideo:
+            createRenderingBannerVideoView()
+        case .interstitialRender:
+            break
+        case .interstitialRenderVideo:
+            break
+        case .rewardedRender:
+            break
+        case .allExample:
+            break
+        default: break
+        }
     }
     
     private func setupALazydContainer() {
-        createBannerLazyView_320x50()
-        createBannerLazyView_320x250()
-        createMultisizeBannerLazyView()
-        createVideoLazyBannerView()
-        createBannerMultiplatformLazyView()
-        
-        createMultiplatformLazyView()
-
-        createInterstitialView()
-        createInterstitialVideoView()
-        createInterstitialMultiplatformView()
-        
-        createRewardedView()
-
-        createLazyNativeView()
-        createLazyNativeBannerView()
-
-        addRenderingLabel(lazyAdContainerView)
-        createRenderingBannerLazyView()
-        createRenderingBannerVideoLazyView()
-        createRenderingNativeLazyView()
-        createRenderingIntertitiaBannerView()
-        createRenderingIntertitiaVideoView()
-        createRenderingRewardLazyView()
+        switch selectedType {
+        case .bannerOrigin:
+            createBannerLazyView_320x50()
+            createBannerLazyView_320x250()
+        case .bannerOriginVideo:
+            createVideoLazyBannerView()
+        case .bannerOriginMulti:
+            createBannerMultiplatformLazyView()
+            createMultiplatformLazyView()
+        case .interstitalOrigin:
+            createInterstitialView()
+        case .interstitalOriginVideo:
+            createInterstitialVideoView()
+        case .interstitalOriginMulti:
+            createInterstitialMultiplatformView()
+        case .rewardedOrigin:
+            createRewardedView()
+        case .bannerRender:
+            createRenderingBannerLazyView()
+        case .bannerRenderVideo:
+            createRenderingBannerVideoLazyView()
+        case .interstitialRender:
+            createRenderingIntertitiaBannerView()
+        case .interstitialRenderVideo:
+            createRenderingIntertitiaVideoView()
+        case .rewardedRender:
+            createRenderingRewardLazyView()
+        case .allExample:
+            break
+        default: break
+        }
     }
     
     private func addRenderingLabel(_ viewContainer: UIView) {
@@ -162,7 +186,7 @@ class ExamplesViewController: UIViewController {
 }
 
 // MARK: - Helpers
-extension ExamplesViewController {
+extension SeparateViewController {
     func getPositionY(_ parent: UIView) -> CGFloat {
         guard let lastView = parent.subviews.last else {
             return 0
@@ -262,4 +286,3 @@ extension ExamplesViewController {
         
     }
 }
-

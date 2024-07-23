@@ -34,23 +34,24 @@ internal extension AURewardedView {
     }
     
     override func fetchRequest(_ gamRequest: AnyObject) {
+        makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             AULogEvent.logDebug("Audienz demand fetch for GAM \(resultCode.name())")
             guard let self = self else { return }
+            self.makeWinnerEvent(resultCode.name())
             self.onLoadRequest?(gamRequest)
         }
     }
     
     private func makeRequestEvent() {
-        guard let autorefreshM = adUnitConfiguration as? AUAdUnitConfigurationEventProtocol,
-                let adUnitID = eventHandler?.adUnitID else { return }
+        guard let adUnitID = gadUnitID else { return }
 
         let event = AUBidRequestEvent(adViewId: configId,
                                       adUnitID: adUnitID,
                                       size: "\(adSize.width)x\(adSize.height)",
-                                      isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
-                                      autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
-                                      initialRefresh: isInitialAutorefresh,
+                                      isAutorefresh: false,
+                                      autorefreshTime: Int(0),
+                                      initialRefresh: false,
                                       adType: adTypeString,
                                       adSubType: "VIDEO",
                                       apiType: apiTypeString)
@@ -61,15 +62,14 @@ internal extension AURewardedView {
     }
     
     private func makeWinnerEvent(_ resultCode: String) {
-        guard let autorefreshM = adUnitConfiguration as? AUAdUnitConfigurationEventProtocol,
-              let adUnitID = eventHandler?.adUnitID else { return }
+        guard let adUnitID = gadUnitID else { return }
         
         let event = AUBidWinnerEven(resultCode: resultCode,
                                     adUnitID: adUnitID,
                                     targetKeywords: [:],
-                                    isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
-                                    autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
-                                    initialRefresh: isInitialAutorefresh,
+                                    isAutorefresh: false,
+                                    autorefreshTime: Int(0),
+                                    initialRefresh: false,
                                     adViewId: configId,
                                     size: "\(adSize.width)x\(adSize.height)",
                                     adType: adTypeString,
