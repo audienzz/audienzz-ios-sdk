@@ -3,13 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 60;
+	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		34D92797E93582A82145040C /* Pods_DemoSwiftApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B5BE8EC2178524AE8225FF2 /* Pods_DemoSwiftApp.framework */; };
-		58249B122BC3FE7600E5C4C6 /* GoogleInteractiveMediaAds.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58249B112BC3FE7500E5C4C6 /* GoogleInteractiveMediaAds.xcframework */; };
-		585608492BAC700F00F9F073 /* GoogleMobileAds.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 585608482BAC700F00F9F073 /* GoogleMobileAds.xcframework */; };
 		586754092C4FA35B005937C2 /* MainNavigationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754062C4FA35B005937C2 /* MainNavigationViewController.swift */; };
 		5867540A2C4FA35B005937C2 /* SeparateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754072C4FA35B005937C2 /* SeparateViewController.swift */; };
 		5867541F2C4FA3A1005937C2 /* ExamplesViewControllerr_BannerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5867540B2C4FA3A1005937C2 /* ExamplesViewControllerr_BannerAPI.swift */; };
@@ -59,8 +57,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		58249B112BC3FE7500E5C4C6 /* GoogleInteractiveMediaAds.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:EQHXZ8M8AV:Google LLC"; lastKnownFileType = wrapper.xcframework; path = GoogleInteractiveMediaAds.xcframework; sourceTree = "<group>"; };
-		585608482BAC700F00F9F073 /* GoogleMobileAds.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:CSTR6SUWN9:AdMob, Inc."; lastKnownFileType = wrapper.xcframework; path = GoogleMobileAds.xcframework; sourceTree = "<group>"; };
 		586754062C4FA35B005937C2 /* MainNavigationViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainNavigationViewController.swift; sourceTree = "<group>"; };
 		586754072C4FA35B005937C2 /* SeparateViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeparateViewController.swift; sourceTree = "<group>"; };
 		5867540B2C4FA3A1005937C2 /* ExamplesViewControllerr_BannerAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExamplesViewControllerr_BannerAPI.swift; sourceTree = "<group>"; };
@@ -108,9 +104,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				58249B122BC3FE7600E5C4C6 /* GoogleInteractiveMediaAds.xcframework in Frameworks */,
 				587512972BA1A764004BB7E9 /* AudienzziOSSDK.framework in Frameworks */,
-				585608492BAC700F00F9F073 /* GoogleMobileAds.xcframework in Frameworks */,
 				34D92797E93582A82145040C /* Pods_DemoSwiftApp.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -277,8 +271,6 @@
 		58C73F912B9F0C7000AE52EC = {
 			isa = PBXGroup;
 			children = (
-				585608482BAC700F00F9F073 /* GoogleMobileAds.xcframework */,
-				58249B112BC3FE7500E5C4C6 /* GoogleInteractiveMediaAds.xcframework */,
 				58C73F9C2B9F0C7000AE52EC /* DemoSwiftApp */,
 				58C73F9B2B9F0C7000AE52EC /* Products */,
 				58C73FB32B9F0F8C00AE52EC /* Frameworks */,
@@ -348,6 +340,7 @@
 				58C73F982B9F0C7000AE52EC /* Resources */,
 				587512992BA1A765004BB7E9 /* Embed Frameworks */,
 				957B5FEA112E83AAD0BDC4A2 /* [CP] Embed Pods Frameworks */,
+				8B2981D88848B9D5E3AEFC78 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -426,6 +419,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		8B2981D88848B9D5E3AEFC78 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-DemoSwiftApp/Pods-DemoSwiftApp-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-DemoSwiftApp/Pods-DemoSwiftApp-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DemoSwiftApp/Pods-DemoSwiftApp-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		957B5FEA112E83AAD0BDC4A2 /* [CP] Embed Pods Frameworks */ = {

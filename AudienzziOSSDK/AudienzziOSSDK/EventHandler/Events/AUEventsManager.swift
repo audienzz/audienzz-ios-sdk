@@ -32,11 +32,12 @@ class AUEventsManager: AULogEventType {
     //  batches time implementation
     fileprivate var timer: Timer?
     
-    func configure() {
+    func configure(companyId: String) {
         storage = makeLocalStorage()
         networkManager = AUEventsNetworkManager<AUBatchResultModel>()
         requestIDFApermission()
         visitorId = makeVisitorId()
+        self.companyId = companyId
     }
     
     // MARK: - Network

@@ -20,11 +20,10 @@ import GoogleMobileAds
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
-        Audienzz.shared.configureSDK(gadMobileAdsVersion: GADGetStringFromVersionNumber(GADMobileAds.sharedInstance().versionNumber))
+        Audienzz.shared.configureSDK(audienzzKey: "companyID",
+                                     gadMobileAdsVersion: GADGetStringFromVersionNumber(GADMobileAds.sharedInstance().versionNumber))
         
         // Initialize GoogleMobileAds SDK
         GADMobileAds.sharedInstance().start()

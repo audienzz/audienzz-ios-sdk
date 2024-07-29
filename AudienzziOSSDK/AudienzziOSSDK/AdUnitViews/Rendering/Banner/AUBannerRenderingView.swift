@@ -84,11 +84,6 @@ public class AUBannerRenderingView: AUAdView {
         set { bannerView.adPosition = newValue.toAdPosition }
     }
     
-    @objc public var ortbConfig: String? {
-        get { bannerView.ortbConfig }
-        set { bannerView.ortbConfig = newValue }
-    }
-    
     @objc public func setVideoParameters(_ videoParameters: AUVideoParameters) {
         setupVideoParameters(videoParameters)
     }

@@ -47,8 +47,8 @@ public class Audienzz: NSObject {
     
     public static let shared = Audienzz()
     
-    public func configureSDK() {
-        AUEventsManager.shared.configure()
+    public func configureSDK(audienzzKey: String) {
+        AUEventsManager.shared.configure(companyId: audienzzKey)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
         
@@ -72,8 +72,8 @@ public class Audienzz: NSObject {
         }
     }
     
-    public func configureSDK(gadMobileAdsVersion: String? = nil) {
-        AUEventsManager.shared.configure()
+    public func configureSDK(audienzzKey: String, gadMobileAdsVersion: String? = nil) {
+        AUEventsManager.shared.configure(companyId: audienzzKey)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
         
@@ -102,9 +102,9 @@ public class Audienzz: NSObject {
     
     // MARK: - Public Init For RN Bridg (Audienzz)
     /// Use this function only to make RN bridging initialize
-    public func configureSDK_RN(_ completion: (() -> Void)? = nil) {
+    public func configureSDK_RN(audienzzKey: String, _ completion: (() -> Void)? = nil) {
         Task {
-            AUEventsManager.shared.configure()
+            AUEventsManager.shared.configure(companyId: audienzzKey)
             Prebid.shared.prebidServerAccountId = prebidServerAccountId
             try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
             
@@ -132,9 +132,9 @@ public class Audienzz: NSObject {
     }
     
     /// Use this function only to make RN bridging initialize
-    public func configureSDK_RN(gadMobileAdsVersion: String?, _ completion: (() -> Void)? = nil) {
+    public func configureSDK_RN(audienzzKey: String, gadMobileAdsVersion: String?, _ completion: (() -> Void)? = nil) {
         Task {
-            AUEventsManager.shared.configure()
+            AUEventsManager.shared.configure(companyId: audienzzKey)
             Prebid.shared.prebidServerAccountId = prebidServerAccountId
             try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
             
