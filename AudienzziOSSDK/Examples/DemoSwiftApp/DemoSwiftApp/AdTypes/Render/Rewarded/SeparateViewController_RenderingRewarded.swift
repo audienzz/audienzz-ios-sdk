@@ -44,9 +44,8 @@ extension SeparateViewController {
         nameLabel.text = "AURewardedRenderingView"
         rewardedRenderingLazyView.addSubview(nameLabel)
         #endif
-        
-        rewardedRenderingLazyView.createAd()
         lazyAdContainerView.addSubview(rewardedRenderingLazyView)
+        rewardedRenderingLazyView.createAd()
     }
 }
 

@@ -18,7 +18,7 @@ import Foundation
 extension Date {
     var currentTimeStmp: String {
         let formatter = DateFormatter()
-        formatter.timeZone = TimeZone.current
+        formatter.timeZone = TimeZone(identifier: "UTC")
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z"
         let dateString = formatter.string(from: self)

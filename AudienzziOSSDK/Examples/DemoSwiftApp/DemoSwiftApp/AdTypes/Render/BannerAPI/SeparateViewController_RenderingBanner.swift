@@ -46,9 +46,8 @@ extension SeparateViewController {
         nameLabel.text = "AUBannerRenderingView"
         bannerRenderingView.addSubview(nameLabel)
         #endif
-        
-        bannerRenderingView.createAd()
         adContainerView.addSubview(bannerRenderingView)
+        bannerRenderingView.createAd()
     }
     
     func createRenderingBannerVideoView() {
@@ -72,8 +71,8 @@ extension SeparateViewController {
         let videoParams = AUVideoParameters(mimes: ["video/mp4"])
         videoParams.placement = .InBanner
         bannerRenderingVideoView.setVideoParameters(videoParams)
-        bannerRenderingVideoView.createAd()
         adContainerView.addSubview(bannerRenderingVideoView)
+        bannerRenderingVideoView.createAd()
     }
 }
 
@@ -96,9 +95,8 @@ extension SeparateViewController {
         nameLabel.text = "AUBannerRenderingView - Lazy"
         bannerRenderingLazyView.addSubview(nameLabel)
         #endif
-        
-        bannerRenderingLazyView.createAd()
         lazyAdContainerView.addSubview(bannerRenderingLazyView)
+        bannerRenderingLazyView.createAd()
     }
     
     func createRenderingBannerVideoLazyView() {
@@ -122,8 +120,8 @@ extension SeparateViewController {
         let videoParams = AUVideoParameters(mimes: ["video/mp4"])
         videoParams.placement = .InBanner
         bannerRenderingVideoLazyView.setVideoParameters(videoParams)
-        bannerRenderingVideoLazyView.createAd()
         lazyAdContainerView.addSubview(bannerRenderingVideoLazyView)
+        bannerRenderingVideoLazyView.createAd()
     }
 }
 

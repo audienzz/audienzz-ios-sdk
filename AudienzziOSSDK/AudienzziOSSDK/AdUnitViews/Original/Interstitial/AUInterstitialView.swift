@@ -73,7 +73,7 @@ public class AUInterstitialView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd(with gamRequest: AnyObject, adUnitID: String) {
-        AUEventsManager.shared.checkImpression(self)
+        AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
         self.gamRequest = gamRequest
         if !self.isLazyLoad {

@@ -38,7 +38,7 @@ internal extension AURewardedView {
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             AULogEvent.logDebug("Audienz demand fetch for GAM \(resultCode.name())")
             guard let self = self else { return }
-            self.makeWinnerEvent(resultCode.name())
+            self.makeWinnerEvent(AUResulrCodeConverter.convertResultCodeName(resultCode))
             self.onLoadRequest?(gamRequest)
         }
     }
@@ -48,7 +48,7 @@ internal extension AURewardedView {
 
         let event = AUBidRequestEvent(adViewId: configId,
                                       adUnitID: adUnitID,
-                                      size: "\(adSize.width)x\(adSize.height)",
+                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
                                       isAutorefresh: false,
                                       autorefreshTime: Int(0),
                                       initialRefresh: false,
@@ -71,7 +71,7 @@ internal extension AURewardedView {
                                     autorefreshTime: Int(0),
                                     initialRefresh: false,
                                     adViewId: configId,
-                                    size: "\(adSize.width)x\(adSize.height)",
+                                    size: "\(Int(adSize.width))x\(Int(adSize.height))",
                                     adType: adTypeString,
                                     adSubType: "VIDEO",
                                     apiType: apiTypeString)
@@ -84,7 +84,7 @@ internal extension AURewardedView {
     func makeCreationEvent() {
         let event = AUAdCreationEvent(adViewId: configId,
                                       adUnitID: eventHandler?.adUnitID ?? "",
-                                      size: "\(adSize.width)x\(adSize.height)",
+                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
                                       adType: adTypeString,
                                       adSubType: "VIDEO",
                                       apiType: apiTypeString)

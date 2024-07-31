@@ -38,7 +38,7 @@ extension AUBannerView {
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
             AULogEvent.logDebug("Audienz demand fetch for GAM \(resultCode.name())")
-            self.makeWinnerEvent(resultCode.name())
+            self.makeWinnerEvent(AUResulrCodeConverter.convertResultCodeName(resultCode))
             self.isInitialAutorefresh = false
             self.onLoadRequest?(gamRequest)
         }
@@ -62,7 +62,7 @@ extension AUBannerView {
         
         let event = AUBidRequestEvent(adViewId: configId,
                                       adUnitID: adUnitID,
-                                      size: "\(adSize.width)x\(adSize.height)",
+                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
                                       isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
                                       autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
                                       initialRefresh: isInitialAutorefresh,
@@ -86,7 +86,7 @@ extension AUBannerView {
                                     autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
                                     initialRefresh: isInitialAutorefresh,
                                     adViewId: configId,
-                                    size: "\(adSize.width)x\(adSize.height)",
+                                    size: "\(Int(adSize.width))x\(Int(adSize.height))",
                                     adType: adTypeString,
                                     adSubType: makeAdSubType(),
                                     apiType: apiTypeString)
@@ -110,8 +110,8 @@ extension AUBannerView {
     
     internal func makeCreationEvent() {
         let event = AUAdCreationEvent(adViewId: configId,
-                                      adUnitID: eventHandler?.adUnitID ?? "",
-                                      size: "\(adSize.width)x\(adSize.height)",
+                                      adUnitID: eventHandler?.adUnitID ?? "-1",
+                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
                                       adType: adTypeString,
                                       adSubType: makeAdSubType(),
                                       apiType: apiTypeString)

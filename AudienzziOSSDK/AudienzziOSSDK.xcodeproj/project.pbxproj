@@ -18,6 +18,7 @@
 		58249B1A2BC5747200E5C4C6 /* AUBannerParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B192BC5747200E5C4C6 /* AUBannerParameters.swift */; };
 		58249B1C2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B1B2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift */; };
 		58249B1E2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B1D2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift */; };
+		58392B842C5A50B4002AC5A5 /* AUInternalResultCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58392B832C5A50B4002AC5A5 /* AUInternalResultCode.swift */; };
 		583B554B2BD66D2E00226302 /* AUMORTBAppContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B554A2BD66D2E00226302 /* AUMORTBAppContent.swift */; };
 		583B55552BD66F5B00226302 /* AUMORTBAppContent_Internal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */; };
 		583B55592BD671A900226302 /* AUMORTBContentData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B55582BD671A900226302 /* AUMORTBContentData.swift */; };
@@ -198,6 +199,7 @@
 		58249B192BC5747200E5C4C6 /* AUBannerParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerParameters.swift; sourceTree = "<group>"; };
 		58249B1B2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerParameters_Private.swift; sourceTree = "<group>"; };
 		58249B1D2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeRequestParameter_Private.swift; sourceTree = "<group>"; };
+		58392B832C5A50B4002AC5A5 /* AUInternalResultCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInternalResultCode.swift; sourceTree = "<group>"; };
 		583B554A2BD66D2E00226302 /* AUMORTBAppContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBAppContent.swift; sourceTree = "<group>"; };
 		583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBAppContent_Internal.swift; sourceTree = "<group>"; };
 		583B55582BD671A900226302 /* AUMORTBContentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBContentData.swift; sourceTree = "<group>"; };
@@ -621,6 +623,7 @@
 				58927A192BE0E412001A0F45 /* AUAdFormat.swift */,
 				58BEA82D2BE522E5004D86F6 /* AUResultCode.swift */,
 				58D9BC582BEA1A41000C4149 /* AUAdPosition.swift */,
+				58392B832C5A50B4002AC5A5 /* AUInternalResultCode.swift */,
 				58D9BC412BE919B1000C4149 /* Private_AdTypes */,
 				58249B182BC5744700E5C4C6 /* AUBannerAPI */,
 				58249B172BC5743100E5C4C6 /* AUVideoAPI */,
@@ -985,6 +988,7 @@
 				58D9BC432BE919F0000C4149 /* AUNativeBannerView_Private.swift in Sources */,
 				5896C94B2C203D4700BB434E /* AUInterstitialRenderingDelegateType.swift in Sources */,
 				584392062BBD908A0053B583 /* AUAssets.swift in Sources */,
+				58392B842C5A50B4002AC5A5 /* AUInternalResultCode.swift in Sources */,
 				584392022BBD84E20053B583 /* AUContextSubType.swift in Sources */,
 				5896C9412C202DD000BB434E /* AURewardedRenderingDelegateType.swift in Sources */,
 				584392082BBD931F0053B583 /* AUNativeRequestParameter.swift in Sources */,
@@ -1278,6 +1282,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "App would like to access IDFA for tracking purpose";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1322,6 +1327,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "App would like to access IDFA for tracking purpose";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (

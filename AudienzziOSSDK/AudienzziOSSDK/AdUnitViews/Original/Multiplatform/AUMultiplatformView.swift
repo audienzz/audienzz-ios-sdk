@@ -64,7 +64,7 @@ public class AUMultiplatformView: AUAdView {
      */
     public func create(with gamRequest: AnyObject) {
         self.gamRequest = gamRequest
-        AUEventsManager.shared.checkImpression(self)
+        AUEventsManager.shared.checkImpression(self, adUnitID: nil)
         
         makeCreationEvent()
         

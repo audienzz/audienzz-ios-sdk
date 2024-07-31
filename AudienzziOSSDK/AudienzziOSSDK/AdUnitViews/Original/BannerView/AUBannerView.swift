@@ -66,7 +66,6 @@ public class AUBannerView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd(with gamRequest: AnyObject, gamBanner: UIView, eventHandler: AUBannerEventHandler? = nil) {
-        AUEventsManager.shared.checkImpression(self)
         if let parameters = bannerParameters {
             adUnit.bannerParameters = parameters.makeBannerParameters()
         } else {
@@ -83,6 +82,8 @@ public class AUBannerView: AUAdView {
         if let bannerEventHandler = eventHandler {
             self.eventHandler = AUBannerHandler(auBannerView: self, gamView: bannerEventHandler.gamView)
         }
+        
+        AUEventsManager.shared.checkImpression(self, adUnitID: self.eventHandler?.adUnitID)
         
         makeCreationEvent()
 

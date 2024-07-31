@@ -55,7 +55,7 @@ internal extension AUMultiplatformView {
     func makeCreationEvent() {
         let event = AUAdCreationEvent(adViewId: configId,
                                       adUnitID: "",
-                                      size: "\(adSize.width)x\(adSize.height)",
+                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
                                       adType: "MULTIFORMAT",
                                       adSubType: makeAdSubType(),
                                       apiType: "ORIGINAL")

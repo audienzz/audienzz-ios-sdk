@@ -95,7 +95,6 @@ extension AUAdCreationEvent: BodyObjectEncodable {
         result["id"] = UUID().uuidString
         
         var dataObject = JSONObject()
-        dataObject["adViewId"] = adViewId
         dataObject["adUnitId"] = adUnitID
         dataObject["visitorId"] = visitorId
         dataObject["companyId"] = companyId

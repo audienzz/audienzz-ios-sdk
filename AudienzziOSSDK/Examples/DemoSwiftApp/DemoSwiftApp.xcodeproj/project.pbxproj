@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		34D92797E93582A82145040C /* Pods_DemoSwiftApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B5BE8EC2178524AE8225FF2 /* Pods_DemoSwiftApp.framework */; };
+		58392B802C5A4BC7002AC5A5 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; };
+		58392B812C5A4BC7002AC5A5 /* AudienzziOSSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		586754092C4FA35B005937C2 /* MainNavigationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754062C4FA35B005937C2 /* MainNavigationViewController.swift */; };
 		5867540A2C4FA35B005937C2 /* SeparateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754072C4FA35B005937C2 /* SeparateViewController.swift */; };
 		5867541F2C4FA3A1005937C2 /* ExamplesViewControllerr_BannerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5867540B2C4FA3A1005937C2 /* ExamplesViewControllerr_BannerAPI.swift */; };
@@ -30,8 +32,6 @@
 		5867543C2C4FA3D4005937C2 /* ExamplesViewController_RenderingReward.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754332C4FA3D4005937C2 /* ExamplesViewController_RenderingReward.swift */; };
 		5867543D2C4FA3D4005937C2 /* SeparateViewController_RenderingRewarded.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754342C4FA3D4005937C2 /* SeparateViewController_RenderingRewarded.swift */; };
 		586754402C4FA480005937C2 /* UIViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5867543F2C4FA480005937C2 /* UIViewExtension.swift */; };
-		587512972BA1A764004BB7E9 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; };
-		587512982BA1A764004BB7E9 /* AudienzziOSSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5875129E2BA2FF9A004BB7E9 /* AdContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5875129D2BA2FF9A004BB7E9 /* AdContainerView.swift */; };
 		587512A02BA30F18004BB7E9 /* LazyAdContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5875129F2BA30F18004BB7E9 /* LazyAdContainerView.swift */; };
 		58C73F9E2B9F0C7000AE52EC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C73F9D2B9F0C7000AE52EC /* AppDelegate.swift */; };
@@ -43,13 +43,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		587512992BA1A765004BB7E9 /* Embed Frameworks */ = {
+		58392B822C5A4BC7002AC5A5 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				587512982BA1A764004BB7E9 /* AudienzziOSSDK.framework in Embed Frameworks */,
+				58392B812C5A4BC7002AC5A5 /* AudienzziOSSDK.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -104,8 +104,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				587512972BA1A764004BB7E9 /* AudienzziOSSDK.framework in Frameworks */,
 				34D92797E93582A82145040C /* Pods_DemoSwiftApp.framework in Frameworks */,
+				58392B802C5A4BC7002AC5A5 /* AudienzziOSSDK.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -338,9 +338,9 @@
 				58C73F962B9F0C7000AE52EC /* Sources */,
 				58C73F972B9F0C7000AE52EC /* Frameworks */,
 				58C73F982B9F0C7000AE52EC /* Resources */,
-				587512992BA1A765004BB7E9 /* Embed Frameworks */,
 				957B5FEA112E83AAD0BDC4A2 /* [CP] Embed Pods Frameworks */,
 				8B2981D88848B9D5E3AEFC78 /* [CP] Copy Pods Resources */,
+				58392B822C5A4BC7002AC5A5 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

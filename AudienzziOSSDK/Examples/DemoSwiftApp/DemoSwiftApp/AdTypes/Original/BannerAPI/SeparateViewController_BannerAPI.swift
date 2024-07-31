@@ -104,14 +104,16 @@ extension SeparateViewController {
         gamBanner.delegate = self
         let gamRequest = GAMRequest()
         
-        bannerView_320x250 = AUBannerView(configId: storedImpDisplayBanner_320x250, adSize: adVideoSize, adFormats: [.banner], isLazyLoad: false)
+        bannerView_320x250 = AUBannerView(configId: storedImpDisplayBanner_320x250, adSize: adSizeMult, adFormats: [.banner], isLazyLoad: false)
         bannerView_320x250.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: self.view.frame.width, height: 250))
         bannerView_320x250.backgroundColor = .clear
         adContainerView.addSubview(bannerView_320x250)
         
         addDebugLabel(toView: bannerView_320x250, name: "bannerView_320x250")
         
-        bannerView_320x250.createAd(with: gamRequest, gamBanner: gamBanner)
+        let handler = AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal_320x250, gamView: gamBanner)
+        
+        bannerView_320x250.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
         
         bannerView_320x250.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {
@@ -137,7 +139,8 @@ extension SeparateViewController {
         
         addDebugLabel(toView: bannerMultisizeView, name: "bannerMultisizeView")
         
-        bannerMultisizeView.createAd(with: gamRequest, gamBanner: gamBanner)
+        let handler = AUBannerEventHandler(adUnitId: gamAdUnitDisplayAdaptiveBanner, gamView: gamBanner)
+        bannerMultisizeView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
         
         bannerMultisizeView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {
@@ -238,6 +241,8 @@ extension SeparateViewController {
         bannerLazyView_320x50.backgroundColor = .clear
         lazyAdContainerView.addSubview(bannerLazyView_320x50)
         
+        bannerLazyView_320x50.adUnitConfiguration.setAutoRefreshMillis(time: 30000)
+        
         addDebugLabel(toView: bannerLazyView_320x50, name: "bannerLazyView_320x50")
         
         bannerLazyView_320x50.createAd(with: gamRequest, gamBanner: gamBanner, 
@@ -268,7 +273,9 @@ extension SeparateViewController {
         
         addDebugLabel(toView: bannerLazyView_320x250, name: "bannerLazyView_320x250")
         
-        bannerLazyView_320x250.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal_320x250, gamView: gamBanner))
+        bannerLazyView_320x250.createAd(with: gamRequest,
+                                        gamBanner: gamBanner,
+                                        eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal_320x250, gamView: gamBanner))
         
         bannerLazyView_320x250.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {
@@ -295,7 +302,9 @@ extension SeparateViewController {
         
         addDebugLabel(toView: bannerLazyMultisizeView, name: "bannerLazyMultisizeView")
         
-        bannerLazyMultisizeView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitDisplayAdaptiveBannerLazy, gamView: gamBanner))
+        bannerLazyMultisizeView.createAd(with: gamRequest, 
+                                         gamBanner: gamBanner,
+                                         eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitDisplayAdaptiveBannerLazy, gamView: gamBanner))
         
         bannerLazyMultisizeView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {
@@ -326,7 +335,9 @@ extension SeparateViewController {
         
         addDebugLabel(toView: bannerLazyVideoView, name: "bannerLazyVideoView")
         
-        bannerLazyVideoView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitVideoBannerOriginalLazy, gamView: gamBanner))
+        bannerLazyVideoView.createAd(with: gamRequest, 
+                                     gamBanner: gamBanner,
+                                     eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitVideoBannerOriginalLazy, gamView: gamBanner))
         
         bannerLazyVideoView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {
@@ -365,7 +376,9 @@ extension SeparateViewController {
         
         addDebugLabel(toView: bannerLazyMultiplatformView, name: "bannerLazyMultiplatformView")
         
-        bannerLazyMultiplatformView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitMultiformatBannerOriginalLazy, gamView: gamBanner))
+        bannerLazyMultiplatformView.createAd(with: gamRequest, 
+                                             gamBanner: gamBanner,
+                                             eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitMultiformatBannerOriginalLazy, gamView: gamBanner))
         bannerLazyMultiplatformView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {
                 print("Faild request unwrap")
@@ -411,7 +424,7 @@ extension SeparateViewController: GADBannerViewDelegate {
             bannerView.resize(GADAdSizeFromCGSize(adaptiveSize.size))
         } else if bannerView.adUnitID == gamAdUnitDisplayBannerOriginal_320x250 ||
                     bannerView.adUnitID == gamAdUnitDisplayBannerOriginal_320x250_Lazy {
-            bannerView.resize(GADAdSizeFromCGSize(adVideoSize))
+            bannerView.resize(GADAdSizeFromCGSize(adSizeMult))
         }
     }
 }

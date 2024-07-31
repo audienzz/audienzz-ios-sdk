@@ -124,6 +124,7 @@ public class AUBannerRenderingView: AUAdView {
      If you use VIDEO please use 'setVideoParameters' method befrore.
      */
     public func createAd() {
+        AUEventsManager.shared.checkImpression(self, adUnitID: eventHandler?.adUnitID)
         bannerView.delegate = subdelegate
         
         self.addSubview(bannerView)
@@ -221,7 +222,7 @@ fileprivate extension AUBannerRenderingView {
     func makeCreationEvent(_ format: AUAdFormat, eventHandler: AUGAMBannerEventHandler) {
         let event = AUAdCreationEvent(adViewId: configId,
                                       adUnitID: eventHandler.adUnitID,
-                                      size: "\(adSize.width)x\(adSize.height)",
+                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
                                       adType: adTypeString,
                                       adSubType: format == .banner ? "HTML" : "VIDEO",
                                       apiType: apiTypeString)

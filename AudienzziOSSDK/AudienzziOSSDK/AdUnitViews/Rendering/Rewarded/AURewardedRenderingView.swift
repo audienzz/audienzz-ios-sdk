@@ -71,6 +71,7 @@ public class AURewardedRenderingView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd() {
+        AUEventsManager.shared.checkImpression(self, adUnitID: eventHandler?.adUnitID)
         rewardedAdUnit.delegate = subdelegate
         
         if !isLazyLoad {
@@ -102,7 +103,7 @@ fileprivate extension AURewardedRenderingView {
     func makeCreationEvent(eventHandler: AUGAMRewardedAdEventHandler) {
         let event = AUAdCreationEvent(adViewId: configId,
                                       adUnitID: eventHandler.adUnitID,
-                                      size: "\(adSize.width)x\(adSize.height)",
+                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
                                       adType: adTypeString,
                                       adSubType: "VIDEO",
                                       apiType: apiTypeString)

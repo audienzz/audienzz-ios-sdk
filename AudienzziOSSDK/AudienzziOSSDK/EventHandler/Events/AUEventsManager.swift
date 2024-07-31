@@ -35,9 +35,12 @@ class AUEventsManager: AULogEventType {
     func configure(companyId: String) {
         storage = makeLocalStorage()
         networkManager = AUEventsNetworkManager<AUBatchResultModel>()
-        requestIDFApermission()
         visitorId = makeVisitorId()
         self.companyId = companyId
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            self?.requestIDFApermission()
+        }
     }
     
     // MARK: - Network
@@ -56,13 +59,13 @@ class AUEventsManager: AULogEventType {
         }
     }
     
-    func checkImpression(_ view: AUAdView) {
+    func checkImpression(_ view: AUAdView, adUnitID: String?) {
         let (shoudAdd, screenName) = impressionManager.shouldAddEvent(of: view)
         AULogEvent.logDebug("isModelExist shoudAdd: \(shoudAdd)")
         
         if shoudAdd, let name = screenName {
             guard let payload = PayloadModel(adViewId: view.configId,
-                                             adUnitID: view.configId,
+                                             adUnitID: adUnitID ?? view.configId,
                                              type: .SCREEN_IMPRESSION,
                                              visitorId: visitorId,
                                              companyId: companyId,

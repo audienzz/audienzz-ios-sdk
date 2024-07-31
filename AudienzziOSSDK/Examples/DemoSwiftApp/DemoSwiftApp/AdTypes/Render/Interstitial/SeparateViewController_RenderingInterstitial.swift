@@ -47,11 +47,9 @@ extension SeparateViewController {
         nameLabel.text = "AUInterstitialRenderingView"
         interstitialRenderingBannerView.addSubview(nameLabel)
         #endif
-        
-        interstitialRenderingBannerView.createAd()
-        
+
         lazyAdContainerView.addSubview(interstitialRenderingBannerView)
-        
+        interstitialRenderingBannerView.createAd()
     }
     
     func createRenderingIntertitiaVideoView() {
@@ -74,10 +72,8 @@ extension SeparateViewController {
         interstitialRenderingVideoView.addSubview(nameLabel)
         #endif
         
-        interstitialRenderingVideoView.createAd()
-        
         lazyAdContainerView.addSubview(interstitialRenderingVideoView)
-        
+        interstitialRenderingVideoView.createAd()
     }
 }
 
