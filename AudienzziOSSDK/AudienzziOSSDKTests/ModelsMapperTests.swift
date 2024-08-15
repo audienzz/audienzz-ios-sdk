@@ -39,7 +39,7 @@ class ModelsMapperTests: XCTestCase {
         
         switch type {
         case .BID_WINNER:
-            eventModel = AUBidWinnerEven(payloadModel)
+            eventModel = AUBidWinnerEvent(payloadModel)
         case .AD_CLICK:
             eventModel = AUAdClickEvent(payloadModel)
         case .BID_REQUEST:
@@ -70,7 +70,7 @@ class ModelsMapperTests: XCTestCase {
         
         switch type {
         case .BID_WINNER:
-            eventModel = AUBidWinnerEven(payloadModel)
+            eventModel = AUBidWinnerEvent(payloadModel)
         case .AD_CLICK:
             eventModel = AUAdClickEvent(payloadModel)
         case .BID_REQUEST:
@@ -103,7 +103,7 @@ class ModelsMapperTests: XCTestCase {
     func testConvertNetworkBidWinner() {
         let type: AUAdEventType = .BID_WINNER
         let payloadModel = makePayloadModel(.BID_WINNER)
-        let eventModel = AUBidWinnerEven(payloadModel)
+        let eventModel = AUBidWinnerEvent(payloadModel)
         
         XCTAssertNotNil(eventModel, "EnetModel \(type.rawValue) musn't be a nil")
         XCTAssertTrue(eventModel?.type == type, "\(type.rawValue) model has incorrect type")
@@ -115,7 +115,7 @@ class ModelsMapperTests: XCTestCase {
             
         let dbModel = AUEventDB(payload)
         
-        let convertedToNetModel = convertToNetworkModel(dbModel) as! AUBidWinnerEven
+        let convertedToNetModel = convertToNetworkModel(dbModel) as! AUBidWinnerEvent
         
         XCTAssertEqual(convertedToNetModel.resultCode, eventModel?.resultCode, "Not Equal models")
         XCTAssertEqual(convertedToNetModel.adUnitID, eventModel?.adUnitID, "Not Equal models")
@@ -290,7 +290,7 @@ class ModelsMapperTests: XCTestCase {
     private func convert(fromType: AUAdEventType, of payload: PayloadModel) -> AUEventHandlerType? {
         switch fromType {
         case .BID_WINNER:
-            return AUBidWinnerEven(payload)
+            return AUBidWinnerEvent(payload)
         case .AD_CLICK:
             return AUAdClickEvent(payload)
         case .BID_REQUEST:

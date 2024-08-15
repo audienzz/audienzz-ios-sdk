@@ -21,7 +21,7 @@ import GoogleMobileAds
 fileprivate let storedImpDisplayBanner = "prebid-demo-banner-320-50"
 fileprivate let gamAdUnitDisplayBannerOriginal = "ca-app-pub-3940256099942544/2934735716"
 // 320x250
-fileprivate let storedImpDisplayBanner_320x250 = "prebid-demo-banner-320-250"
+fileprivate let storedImpDisplayBanner_320x250 = "prebid-demo-banner-300-250"
 fileprivate let gamAdUnitDisplayBannerOriginal_320x250 = "ca-app-pub-3940256099942544/6300978111"
 
 // multisize
@@ -47,7 +47,7 @@ fileprivate let storedImpDisplayBannerLazy = "prebid-demo-banner-320-50"
 fileprivate let gamAdUnitDisplayBannerOriginalLazy = "ca-app-pub-3940256099942544/2934735716"
 
 //320x250
-fileprivate let storedImpDisplayBanner_320x250_Lazy = "prebid-demo-banner-320-250"
+fileprivate let storedImpDisplayBanner_320x250_Lazy = "prebid-demo-banner-300-250"
 fileprivate let gamAdUnitDisplayBannerOriginal_320x250_Lazy = "ca-app-pub-6632294249825318/7709196874"
 
 // multisize
@@ -85,8 +85,8 @@ extension SeparateViewController {
         
         bannerView_320x50.adUnitConfiguration.setAutoRefreshMillis(time: 30000)
         
-        bannerView_320x50.createAd(with: gamRequest, gamBanner: gamBanner,
-                                   eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal, gamView: gamBanner))
+        let handler = AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal, gamView: gamBanner)
+        bannerView_320x50.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
         
         bannerView_320x50.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {

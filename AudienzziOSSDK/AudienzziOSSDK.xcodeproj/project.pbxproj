@@ -19,6 +19,7 @@
 		58249B1C2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B1B2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift */; };
 		58249B1E2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58249B1D2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift */; };
 		58392B842C5A50B4002AC5A5 /* AUInternalResultCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58392B832C5A50B4002AC5A5 /* AUInternalResultCode.swift */; };
+		58392B862C5B79E5002AC5A5 /* AUUniqHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58392B852C5B79E5002AC5A5 /* AUUniqHelper.swift */; };
 		583B554B2BD66D2E00226302 /* AUMORTBAppContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B554A2BD66D2E00226302 /* AUMORTBAppContent.swift */; };
 		583B55552BD66F5B00226302 /* AUMORTBAppContent_Internal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */; };
 		583B55592BD671A900226302 /* AUMORTBContentData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B55582BD671A900226302 /* AUMORTBContentData.swift */; };
@@ -200,6 +201,7 @@
 		58249B1B2BC575BA00E5C4C6 /* AUBannerParameters_Private.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUBannerParameters_Private.swift; sourceTree = "<group>"; };
 		58249B1D2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUNativeRequestParameter_Private.swift; sourceTree = "<group>"; };
 		58392B832C5A50B4002AC5A5 /* AUInternalResultCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUInternalResultCode.swift; sourceTree = "<group>"; };
+		58392B852C5B79E5002AC5A5 /* AUUniqHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUUniqHelper.swift; sourceTree = "<group>"; };
 		583B554A2BD66D2E00226302 /* AUMORTBAppContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBAppContent.swift; sourceTree = "<group>"; };
 		583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBAppContent_Internal.swift; sourceTree = "<group>"; };
 		583B55582BD671A900226302 /* AUMORTBContentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUMORTBContentData.swift; sourceTree = "<group>"; };
@@ -504,6 +506,7 @@
 				58436ABB2C076C1F00E83155 /* AUHTTPType.swift */,
 				58AECFE82C2979800020E98D /* AURequestBuilder.swift */,
 				58AECFEF2C29B9C70020E98D /* AUAPIError.swift */,
+				58392B852C5B79E5002AC5A5 /* AUUniqHelper.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -969,6 +972,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				58392B862C5B79E5002AC5A5 /* AUUniqHelper.swift in Sources */,
 				58D9BC602BEBAEBB000C4149 /* AUNativeTitle.swift in Sources */,
 				58436AA22C06233A00E83155 /* AUSQLiteConfigurator.swift in Sources */,
 				58F8BD102C1701A900E08F1E /* AUScreenImpressionManager.swift in Sources */,

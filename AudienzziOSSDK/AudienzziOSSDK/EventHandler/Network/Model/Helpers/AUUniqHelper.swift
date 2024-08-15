@@ -14,16 +14,19 @@
  */
 
 import Foundation
-import SQLite
 
-struct AUEventDB: Equatable {
-    let id: String
-    let payload: String
-}
-
-extension AUEventDB {
-    init(_ payload: String) {
-        self.id = AUUniqHelper.makeUniqID()
-        self.payload = payload
+internal class AUUniqHelper {
+    static let sizeUndefined = "Undefined"
+    
+    static func makeUniqID() -> String {
+        UUID().uuidString.lowercased()
+    }
+    
+    static func sizeMaker(_ size: CGSize) -> String {
+        guard size.width > 0 && size.height > 0 else {
+            return sizeUndefined
+        }
+        
+        return "\(Int(size.width))x\(Int(size.height))"
     }
 }

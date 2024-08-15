@@ -15,7 +15,7 @@
 
 import Foundation
 
-struct AUBidWinnerEven: Codable, AUEventHandlerType {
+struct AUBidWinnerEvent: Codable, AUEventHandlerType {
     let resultCode: String
     let adUnitID: String
     let targetKeywords: [String: String]
@@ -104,7 +104,7 @@ struct AUBidWinnerEven: Codable, AUEventHandlerType {
     }
 }
 
-extension AUBidWinnerEven: BodyObjectEncodable {
+extension AUBidWinnerEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
         var result = JSONObject()
         
@@ -112,7 +112,7 @@ extension AUBidWinnerEven: BodyObjectEncodable {
         result["type"] = type.rawValue
         result["datacontenttype"] = "application/json"
         result["specversion"] = "1.0"
-        result["id"] = UUID().uuidString
+        result["id"] = AUUniqHelper.makeUniqID()
         
         var dataObject = JSONObject()
         dataObject["adUnitId"] = adUnitID
@@ -120,7 +120,11 @@ extension AUBidWinnerEven: BodyObjectEncodable {
         dataObject["companyId"] = companyId
         dataObject["sessionId"] = sessionId
         dataObject["deviceId"] = deviceId
-        dataObject["sizes"] = size
+        
+        if size != AUUniqHelper.sizeUndefined {
+            dataObject["sizes"] = size
+        }
+        
         dataObject["adType"] = adType
         dataObject["adSubtype"] = adSubType
         dataObject["apiType"] = apiType

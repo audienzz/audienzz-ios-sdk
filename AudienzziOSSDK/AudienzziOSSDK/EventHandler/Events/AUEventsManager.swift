@@ -26,7 +26,7 @@ class AUEventsManager: AULogEventType {
     
     private var visitorId: String = "visitorId"
     private var companyId: String = "companyId"
-    private var sessionId: String = UUID().uuidString
+    private var sessionId: String = AUUniqHelper.makeUniqID()
     private var deviceId: String = "00000000-0000-0000-0000-000000000000"
     
     //  batches time implementation
@@ -101,8 +101,8 @@ class AUEventsManager: AULogEventType {
                 AULogEvent.logDebug("disable tracking")
             }
             
-            self?.deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString
-            AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString)
+            self?.deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
+            AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased())
         }
     }
     
@@ -110,7 +110,7 @@ class AUEventsManager: AULogEventType {
         if let visId = UserDefaults.standard.string(forKey: keyVisitorId) {
             return visId
         } else {
-            let visId: String = UUID().uuidString
+            let visId: String = AUUniqHelper.makeUniqID()
             UserDefaults.standard.setValue(visId, forKey: keyVisitorId)
             UserDefaults.standard.synchronize()
             return visId
@@ -172,7 +172,7 @@ fileprivate extension AUEventsManager {
     func convert(fromType: AUAdEventType, of payload: PayloadModel) -> AUEventHandlerType? {
         switch fromType {
         case .BID_WINNER:
-            var model = AUBidWinnerEven(payload)
+            var model = AUBidWinnerEvent(payload)
             model?.visitorId = visitorId
             model?.companyId = companyId
             model?.sessionId = sessionId

@@ -52,7 +52,7 @@ extension SeparateViewController {
         let gamRequest = GAMRequest()
         
         
-        multiformatView.create(with: gamRequest)
+        multiformatView.create(with: gamRequest, adUnitID: gamRenderingMultiformatAdUnitId)
         
         multiformatView.onLoadRequest = { [weak self] request in
             guard let self = self, let updateRequest = request as? GADRequest else { return }
@@ -90,7 +90,7 @@ extension SeparateViewController {
         lazyAdContainerView.addSubview(multiformatLazyView)
         
         let gamRequest = GAMRequest()
-        multiformatLazyView.create(with: gamRequest)
+        multiformatLazyView.create(with: gamRequest, adUnitID: gamRenderingMultiformatAdUnitId)
         
         multiformatLazyView.onLoadRequest = { [weak self] request in
             guard let self = self, let updateRequest = request as? GADRequest else { return }

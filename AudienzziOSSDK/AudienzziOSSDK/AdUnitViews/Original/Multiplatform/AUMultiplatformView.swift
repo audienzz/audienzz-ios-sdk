@@ -25,6 +25,7 @@ public class AUMultiplatformView: AUAdView {
     internal var adUnit: PrebidAdUnit!
     internal var gamRequest: AnyObject?
     internal var prebidRequest: PrebidRequest!
+    internal var gadUnitID: String?
     
     public weak var delegate: AUNativeAdDelegate?
     public var onGetNativeAd: ((NativeAd) -> Void)?
@@ -62,9 +63,10 @@ public class AUMultiplatformView: AUAdView {
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
-    public func create(with gamRequest: AnyObject) {
+    public func create(with gamRequest: AnyObject, adUnitID: String) {
         self.gamRequest = gamRequest
-        AUEventsManager.shared.checkImpression(self, adUnitID: nil)
+        self.gadUnitID = adUnitID
+        AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         
         makeCreationEvent()
         

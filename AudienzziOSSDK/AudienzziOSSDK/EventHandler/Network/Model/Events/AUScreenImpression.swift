@@ -77,7 +77,7 @@ extension AUScreenImpression: BodyObjectEncodable {
         result["type"] = type.rawValue
         result["datacontenttype"] = "application/json"
         result["specversion"] = "1.0"
-        result["id"] = UUID().uuidString
+        result["id"] = AUUniqHelper.makeUniqID()
         
         var dataObject = JSONObject()
         dataObject["adUnitId"] = adUnitID

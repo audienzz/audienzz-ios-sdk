@@ -37,6 +37,7 @@ extension AUBannerView {
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
+            guard self.adUnit != nil else { return }
             AULogEvent.logDebug("Audienz demand fetch for GAM \(resultCode.name())")
             self.makeWinnerEvent(AUResulrCodeConverter.convertResultCodeName(resultCode))
             self.isInitialAutorefresh = false
@@ -62,7 +63,7 @@ extension AUBannerView {
         
         let event = AUBidRequestEvent(adViewId: configId,
                                       adUnitID: adUnitID,
-                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
+                                      size: AUUniqHelper.sizeMaker(adSize),
                                       isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
                                       autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
                                       initialRefresh: isInitialAutorefresh,
@@ -76,20 +77,21 @@ extension AUBannerView {
     }
     
     private func makeWinnerEvent(_ resultCode: String) {
+        AULogEvent.logDebug("makeWinnerEvent")
         guard let autorefreshM = adUnitConfiguration as? AUAdUnitConfigurationEventProtocol,
               let adUnitID = eventHandler?.adUnitID else { return }
         
-        let event = AUBidWinnerEven(resultCode: resultCode,
-                                    adUnitID: adUnitID,
-                                    targetKeywords: [:],
-                                    isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
-                                    autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
-                                    initialRefresh: isInitialAutorefresh,
-                                    adViewId: configId,
-                                    size: "\(Int(adSize.width))x\(Int(adSize.height))",
-                                    adType: adTypeString,
-                                    adSubType: makeAdSubType(),
-                                    apiType: apiTypeString)
+        let event = AUBidWinnerEvent(resultCode: resultCode,
+                                     adUnitID: adUnitID,
+                                     targetKeywords: [:],
+                                     isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
+                                     autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
+                                     initialRefresh: isInitialAutorefresh,
+                                     adViewId: configId,
+                                     size: AUUniqHelper.sizeMaker(adSize),
+                                     adType: adTypeString,
+                                     adSubType: makeAdSubType(),
+                                     apiType: apiTypeString)
         
         guard let payload = event.convertToJSONString() else { return }
         
@@ -97,7 +99,7 @@ extension AUBannerView {
     }
     
     private func makeAdSubType() -> String {
-        if adUnit.adFormats.contains([.banner, .video]) {
+        if adUnit.adFormats.count >= 2 {
             return "MULTIFORMAT"
         } else if adUnit.adFormats.contains(where: { $0.rawValue == 1 }) && adUnit.adFormats.count == 1 {
             return "HTML"
@@ -111,7 +113,7 @@ extension AUBannerView {
     internal func makeCreationEvent() {
         let event = AUAdCreationEvent(adViewId: configId,
                                       adUnitID: eventHandler?.adUnitID ?? "-1",
-                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
+                                      size: AUUniqHelper.sizeMaker(adSize),
                                       adType: adTypeString,
                                       adSubType: makeAdSubType(),
                                       apiType: apiTypeString)
@@ -120,4 +122,64 @@ extension AUBannerView {
         
         AUEventsManager.shared.addEvent(event: AUEventDB(payload))
     }
+}
+
+
+protocol Reflectable: AnyObject {
+    func reflected() -> [String: Any?]
+}
+
+extension Reflectable {
+    
+    func reflected() -> [String: Any?] {
+        let mirror = Mirror(reflecting: self)
+        var dict: [String: Any?] = [:]
+        for child in mirror.children {
+            guard let key = child.label else {
+                continue
+            }
+            dict[key] = child.value
+        }
+        return dict
+    }
+    
+    var reflectedString: String {
+        let reflection = reflected()
+        var result = String(describing: self)
+        result += " { \n"
+        for (key, val) in reflection {
+            result += "\t\(key): \(val ?? "null")\n"
+        }
+        return result + "}"
+    }
+    
+}
+
+extension Reflectable where Self: NSObject {
+    
+    func reflected() -> [String : Any?] {
+        
+        var count: UInt32 = 0
+        
+        guard let properties = class_copyPropertyList(Self.self, &count) else {
+            return [:]
+        }
+        
+        var dict: [String: Any] = [:]
+        for i in 0..<Int(count) {
+            let name = property_getName(properties[i])
+            guard let nsKey = NSString(utf8String: name) else {
+                continue
+            }
+            let key = nsKey as String
+            guard responds(to: Selector(key)) else {
+                continue
+            }
+            dict[key] = value(forKey: key)
+        }
+        free(properties)
+        
+        return dict
+    }
+    
 }

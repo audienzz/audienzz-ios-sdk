@@ -58,7 +58,14 @@ public class AUBannerView: AUAdView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    public override func removeFromSuperview() {
+        super.removeFromSuperview()
+        adUnit.stopAutoRefresh()
+        adUnit = nil
+    }
+    
     deinit {
+        self.eventHandler = nil
         AULogEvent.logDebug("AUBannerView")
     }
     

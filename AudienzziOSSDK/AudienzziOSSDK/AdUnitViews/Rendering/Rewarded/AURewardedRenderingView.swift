@@ -18,7 +18,7 @@ import PrebidMobile
 import PrebidMobileGAMEventHandlers
 
 fileprivate let adTypeString = "REWARDED"
-fileprivate let apiTypeString = "RENDERING"
+fileprivate let apiTypeString = "RENDER"
 
 @objcMembers
 public class AUGAMRewardedAdEventHandler: NSObject {
@@ -103,7 +103,7 @@ fileprivate extension AURewardedRenderingView {
     func makeCreationEvent(eventHandler: AUGAMRewardedAdEventHandler) {
         let event = AUAdCreationEvent(adViewId: configId,
                                       adUnitID: eventHandler.adUnitID,
-                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
+                                      size: AUUniqHelper.sizeMaker(adSize),
                                       adType: adTypeString,
                                       adSubType: "VIDEO",
                                       apiType: apiTypeString)

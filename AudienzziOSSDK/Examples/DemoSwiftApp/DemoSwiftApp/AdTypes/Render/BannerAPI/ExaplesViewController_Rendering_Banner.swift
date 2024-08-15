@@ -57,6 +57,7 @@ extension ExamplesViewController {
                                                    validGADAdSizes: [GADAdSizeMediumRectangle].map(NSValueFromGADAdSize))
         bannerRenderingVideoView = AUBannerRenderingView(configId: storedImpVideoBanner,
                                                          adSize: CGSize(width: 300, height: 250),
+                                                         format: .video,
                                                          isLazyLoad: false,
                                                          eventHandler: eventHandler)
         bannerRenderingVideoView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: 300, height: 250))
@@ -107,6 +108,7 @@ extension ExamplesViewController {
                                                    validGADAdSizes: [GADAdSizeMediumRectangle].map(NSValueFromGADAdSize))
         bannerRenderingVideoLazyView = AUBannerRenderingView(configId: storedImpVideoBanner,
                                                              adSize: CGSize(width: 300, height: 250),
+                                                             format: .video,
                                                              eventHandler: eventHandler)
         bannerRenderingVideoLazyView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)), size: CGSize(width: 300, height: 250))
         bannerRenderingVideoLazyView.backgroundColor = .systemPink

@@ -31,8 +31,10 @@ internal extension AUMultiplatformView {
     }
     
     func fetchRequest(_ gamRequest: AnyObject, prebidRequest: PrebidRequest) {
-        adUnit.fetchDemand(adObject: gamRequest, request: prebidRequest) { [weak self] _ in
+        makeRequestEvent()
+        adUnit.fetchDemand(adObject: gamRequest, request: prebidRequest) { [weak self] info in
             guard let self = self else { return }
+            self.makeWinnerEvent(AUResulrCodeConverter.convertResultCodeName(info.resultCode))
             self.onLoadRequest?(gamRequest)
         }
     }
@@ -53,12 +55,52 @@ internal extension AUMultiplatformView {
     }
     
     func makeCreationEvent() {
+        guard let adUnitID = gadUnitID else { return }
         let event = AUAdCreationEvent(adViewId: configId,
-                                      adUnitID: "",
-                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
+                                      adUnitID: adUnitID,
+                                      size: AUUniqHelper.sizeMaker(adSize),
                                       adType: "MULTIFORMAT",
                                       adSubType: makeAdSubType(),
                                       apiType: "ORIGINAL")
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    }
+    
+    private func makeRequestEvent() {
+        guard let adUnitID = gadUnitID else { return }
+        
+        let event = AUBidRequestEvent(adViewId: configId,
+                                      adUnitID: adUnitID,
+                                      size: AUUniqHelper.sizeMaker(adSize),
+                                      isAutorefresh: false,
+                                      autorefreshTime: Int(0),
+                                      initialRefresh: false,
+                                      adType: "MULTIFORMAT",
+                                      adSubType: makeAdSubType(),
+                                      apiType: "ORIGINAL")
+        
+        guard let payload = event.convertToJSONString() else { return }
+        
+        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    }
+    
+    private func makeWinnerEvent(_ resultCode: String) {
+        AULogEvent.logDebug("makeWinnerEvent")
+        guard let adUnitID = gadUnitID else { return }
+        
+        let event = AUBidWinnerEvent(resultCode: resultCode,
+                                     adUnitID: adUnitID,
+                                     targetKeywords: [:],
+                                     isAutorefresh: false,
+                                     autorefreshTime: Int(0),
+                                     initialRefresh: false,
+                                     adViewId: configId,
+                                     size: AUUniqHelper.sizeMaker(adSize),
+                                     adType: "MULTIFORMAT",
+                                     adSubType: makeAdSubType(),
+                                     apiType: "ORIGINAL")
         
         guard let payload = event.convertToJSONString() else { return }
         

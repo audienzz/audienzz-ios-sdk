@@ -48,7 +48,7 @@ extension AUInterstitialView {
         
         let event = AUBidRequestEvent(adViewId: configId,
                                       adUnitID: adUnitID,
-                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
+                                      size: AUUniqHelper.sizeMaker(adSize),
                                       isAutorefresh: false,
                                       autorefreshTime: Int(0),
                                       initialRefresh: false,
@@ -64,17 +64,17 @@ extension AUInterstitialView {
     private func makeWinnerEvent(_ resultCode: String) {
         guard let adUnitID = gadUnitID else { return }
         
-        let event = AUBidWinnerEven(resultCode: resultCode,
-                                    adUnitID: adUnitID,
-                                    targetKeywords: [:],
-                                    isAutorefresh: false,
-                                    autorefreshTime: Int(0),
-                                    initialRefresh: false,
-                                    adViewId: configId,
-                                    size: "\(Int(adSize.width))x\(Int(adSize.height))",
-                                    adType: adTypeString,
-                                    adSubType: makeAdSubType(),
-                                    apiType: apiTypeString)
+        let event = AUBidWinnerEvent(resultCode: resultCode,
+                                     adUnitID: adUnitID,
+                                     targetKeywords: [:],
+                                     isAutorefresh: false,
+                                     autorefreshTime: Int(0),
+                                     initialRefresh: false,
+                                     adViewId: configId,
+                                     size: AUUniqHelper.sizeMaker(adSize),
+                                     adType: adTypeString,
+                                     adSubType: makeAdSubType(),
+                                     apiType: apiTypeString)
         
         guard let payload = event.convertToJSONString() else { return }
         
@@ -82,7 +82,7 @@ extension AUInterstitialView {
     }
     
     private func makeAdSubType() -> String {
-        if adUnit.adFormats.contains([.banner, .video]) {
+        if adUnit.adFormats.count >= 2 {
             return "MULTIFORMAT"
         } else if adUnit.adFormats.contains(where: { $0.rawValue == 1 }) && adUnit.adFormats.count == 1 {
             return "HTML"
@@ -96,7 +96,7 @@ extension AUInterstitialView {
     internal func makeCreationEvent() {
         let event = AUAdCreationEvent(adViewId: configId,
                                       adUnitID: eventHandler?.adUnitID ?? "",
-                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
+                                      size: AUUniqHelper.sizeMaker(adSize),
                                       adType: adTypeString,
                                       adSubType: makeAdSubType(),
                                       apiType: apiTypeString)

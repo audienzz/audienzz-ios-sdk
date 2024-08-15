@@ -18,7 +18,7 @@ import PrebidMobile
 import PrebidMobileGAMEventHandlers
 
 fileprivate let adTypeString = "BANNER"
-fileprivate let apiTypeString = "RENDERING"
+fileprivate let apiTypeString = "RENDER"
 
 /**
  * AUGAMBannerEventHandler.
@@ -97,7 +97,7 @@ public class AUBannerRenderingView: AUAdView {
                 format: AUAdFormat = .banner,
                 isLazyLoad: Bool = true,
                 eventHandler: AUGAMBannerEventHandler) {
-        super.init(configId: configId, isLazyLoad: isLazyLoad)
+        super.init(configId: configId, adSize: adSize, isLazyLoad: isLazyLoad)
         self.eventHandler = eventHandler
         let bannerEventHandler = GAMBannerEventHandler(adUnitID: eventHandler.adUnitID,
                                                        validGADAdSizes: eventHandler.validGADAdSizes)
@@ -222,7 +222,7 @@ fileprivate extension AUBannerRenderingView {
     func makeCreationEvent(_ format: AUAdFormat, eventHandler: AUGAMBannerEventHandler) {
         let event = AUAdCreationEvent(adViewId: configId,
                                       adUnitID: eventHandler.adUnitID,
-                                      size: "\(Int(adSize.width))x\(Int(adSize.height))",
+                                      size: AUUniqHelper.sizeMaker(adSize),
                                       adType: adTypeString,
                                       adSubType: format == .banner ? "HTML" : "VIDEO",
                                       apiType: apiTypeString)

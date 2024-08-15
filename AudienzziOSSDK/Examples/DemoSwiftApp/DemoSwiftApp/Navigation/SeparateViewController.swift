@@ -183,6 +183,10 @@ class SeparateViewController: UIViewController {
         
         setupALazydContainer()
     }
+    
+    deinit {
+        print("deinit SeparateViewController")
+    }
 }
 
 // MARK: - Helpers
