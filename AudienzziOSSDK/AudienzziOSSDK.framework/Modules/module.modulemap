@@ -1,0 +1,11 @@
+framework module AudienzziOSSDK {
+  umbrella header "AudienzziOSSDK.h"
+  export *
+
+  module * { export * }
+}
+
+module AudienzziOSSDK.Swift {
+  header "AudienzziOSSDK-Swift.h"
+  requires objc
+}
