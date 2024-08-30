@@ -1,7 +1,6 @@
 PODS:
-  - Google-Mobile-Ads-SDK (11.7.0):
+  - Google-Mobile-Ads-SDK (11.8.0):
     - GoogleUserMessagingPlatform (>= 1.1)
-  - GoogleAds-IMA-iOS-SDK (3.23.0)
   - GoogleUserMessagingPlatform (2.5.0)
   - PrebidMobile (2.2.3):
     - PrebidMobile/core (= 2.2.3)
@@ -14,8 +13,6 @@ PODS:
   - SQLite.swift/standard (0.14.1)
 
 DEPENDENCIES:
-  - Google-Mobile-Ads-SDK
-  - GoogleAds-IMA-iOS-SDK
   - PrebidMobile
   - PrebidMobileGAMEventHandlers
   - SQLite.swift (~> 0.14.0)
@@ -23,20 +20,18 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - Google-Mobile-Ads-SDK
-    - GoogleAds-IMA-iOS-SDK
     - GoogleUserMessagingPlatform
     - PrebidMobile
     - PrebidMobileGAMEventHandlers
     - SQLite.swift
 
 SPEC CHECKSUMS:
-  Google-Mobile-Ads-SDK: 204b517c9765169144cf39763c7f5d23c57a9db0
-  GoogleAds-IMA-iOS-SDK: ee2a68ed7a1a17c7bb81bdb1b81590b35a3fc8f3
+  Google-Mobile-Ads-SDK: c1c53687b572122c5b0bdaf354335bbf40fd81ef
   GoogleUserMessagingPlatform: 6b4f48a370e77ce121d034c908cc6ee4fdafaf13
   PrebidMobile: 82d8ae0c61bad3fd0f13528795b5f4b1cc83f967
   PrebidMobileGAMEventHandlers: 3d432226f93931c0ed5423a609730a41202a8a6a
   SQLite.swift: 2992550ebf3c5b268bf4352603e3df87d2a4ed72
 
-PODFILE CHECKSUM: 8dfe20527ae337e8569d04928811d125c29b3b21
+PODFILE CHECKSUM: 80aa0906ce59a72207b48b6d956a725c694bc361
 
 COCOAPODS: 1.15.2

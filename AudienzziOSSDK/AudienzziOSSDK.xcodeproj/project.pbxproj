@@ -290,7 +290,7 @@
 		58F877962BA09CE90093CD63 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AudienzziOSSDK.h; sourceTree = "<group>"; };
 		58F8779E2BA09CE90093CD63 /* AudienzziOSSDKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AudienzziOSSDKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		58F877A32BA09CE90093CD63 /* AudienzziOSSDKTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudienzziOSSDKTests.swift; sourceTree = "<group>"; };
+		58F877A32BA09CE90093CD63 /* AudienzziOSSDKTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudienzziOSSDKTests.swift; sourceTree = "<group>"; };
 		58F8BD052C1700BA00E08F1E /* AUScreenImpression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUScreenImpression.swift; sourceTree = "<group>"; };
 		58F8BD0F2C1701A900E08F1E /* AUScreenImpressionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUScreenImpressionManager.swift; sourceTree = "<group>"; };
 		58F8BD112C1731F000E08F1E /* BoolExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoolExtension.swift; sourceTree = "<group>"; };
@@ -1314,6 +1314,8 @@
 					"$(BUILT_PRODUCTS_DIR)/SQLite",
 					"$(BUILT_PRODUCTS_DIR)/PrebidMobile",
 					"$(BUILT_PRODUCTS_DIR)/PrebidMobileGAMEventHandlers",
+					"$(BUILT_PRODUCTS_DIR)/Google-Mobile-Ads-SDK",
+					"$(BUILT_PRODUCTS_DIR)/GoogleAds-IMA-iOS-SDK",
 				);
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
@@ -1359,6 +1361,8 @@
 					"$(BUILT_PRODUCTS_DIR)/SQLite",
 					"$(BUILT_PRODUCTS_DIR)/PrebidMobile",
 					"$(BUILT_PRODUCTS_DIR)/PrebidMobileGAMEventHandlers",
+					"$(BUILT_PRODUCTS_DIR)/Google-Mobile-Ads-SDK",
+					"$(BUILT_PRODUCTS_DIR)/GoogleAds-IMA-iOS-SDK",
 				);
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
