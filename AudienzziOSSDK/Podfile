@@ -1,4 +1,4 @@
-platform :ios
+platform :ios, '12.0'
 
 workspace 'AudienzziOSSDK'
 
@@ -29,6 +29,16 @@ target 'AudienzziOSSDK' do
     prd_pods
   end
 end
+
+target 'DemoSwiftApp' do
+  project 'Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj'
+  use_frameworks!
+  pod 'SQLite.swift', '~> 0.14.0'
+  prd_pods
+  ima_pod
+  gma_pods
+end
+
 
 post_install do |pi|
   pi.pods_project.targets.each do |t|
