@@ -9,10 +9,12 @@ Pod::Spec.new do |spec|
 
   spec.swift_version         = '5.0'
   spec.ios.deployment_target = '16.0'
-  spec.source_files          = 'AudienzziOSSDK/**/*.swift', 'AudienzziOSSDK/**/*.{h, m}'
+
   spec.static_framework      = true
   spec.requires_arc          = true
-  spec.exclude_files         = 'AudienzziOSSDK/AudienzziOSSDKTests/*.swift'
+
+  spec.source_files          = 'AudienzziOSSDK/**/*.swift'
+  spec.exclude_files         = 'AudienzziOSSDK/AudienzziOSSDKTests/'
 
   spec.dependency 'PrebidMobile'
   spec.dependency 'PrebidMobileGAMEventHandlers'
