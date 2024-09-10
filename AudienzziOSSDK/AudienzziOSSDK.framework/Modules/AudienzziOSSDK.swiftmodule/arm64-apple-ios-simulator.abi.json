@@ -56963,6 +56963,45 @@
             ],
             "isFromExtension": true,
             "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "getPrivateBidRequester",
+            "printedName": "getPrivateBidRequester(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(any PrebidMobile.PBMBidRequesterProtocol)?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "PBMBidRequesterProtocol",
+                    "printedName": "any PrebidMobile.PBMBidRequesterProtocol",
+                    "usr": "c:objc(pl)PBMBidRequesterProtocol"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ProtocolComposition",
+                "printedName": "AnyObject"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@AudienzziOSSDK@objc(cs)AUBannerView(im)getPrivateBidRequesterFrom:",
+            "mangledName": "$s14AudienzziOSSDK12AUBannerViewC22getPrivateBidRequester4fromSo06PBMBidH8Protocol_pSgyXl_tF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "Dynamic",
+              "Custom",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
           }
         ],
         "declKind": "Class",
@@ -77643,14 +77682,14 @@
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/Private_AdTypes\/AUBannerView_Private.swift",
       "kind": "StringLiteral",
-      "offset": 647,
+      "offset": 644,
       "length": 8,
       "value": "\"BANNER\""
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/Private_AdTypes\/AUBannerView_Private.swift",
       "kind": "StringLiteral",
-      "offset": 688,
+      "offset": 685,
       "length": 10,
       "value": "\"ORIGINAL\""
     },
