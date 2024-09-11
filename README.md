@@ -36,16 +36,20 @@ import AudienzziOSSDK and import GoogleMobileAds
 
 Lazy Loading
 -------
-Sometimes application doesn't need to load an ad once the screen (activity/fragment)
+Sometimes application doesn't need to load an ad once the screen.
 is instantiated. Instead of that it might be more optimal to start loading when the ad is actually
 presented to user, for example scroll reached the required view.
+
+```
+AUBannerView(configId: storedImpDisplayBanner, adSize: adSize, adFormats: [.banner], isLazyLoad: true)
+```
 
 Examples
 ========
 
 You can find more examples of practical implementation here:
 
-[Examples](Examples/DemoSwiftApp)
+[Examples](AudienzziOSSDK/Examples/DemoSwiftApp)
 
 License
 ========
