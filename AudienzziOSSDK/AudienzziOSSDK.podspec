@@ -1,13 +1,12 @@
 Pod::Spec.new do |spec|
     spec.name     = 'AudienzziOSSDK'
-    spec.version  = '0.0.6'
+    spec.version  = '0.0.7'
     spec.license  = { :type => 'Apache-2.0', :file => 'LICENSE' }
     spec.homepage = 'https://github.com/audienzz/audienzz-ios-sdk'
     spec.authors  = { 'Audienzz <tech@audienzz.ch>' => 'https://audienzz.ch' }
     spec.summary  = 'iOS implementation of the Audienzz SDK'
     spec.source   = { :git => 'https://github.com/audienzz/audienzz-ios-sdk.git',
-                      :branch => 'bug/dublicate_files_error',
-                      :tag => '0.0.6' }
+                      :tag => '0.0.7' }
 
     spec.swift_version         = '5.0'
     spec.ios.deployment_target = '16.0'
