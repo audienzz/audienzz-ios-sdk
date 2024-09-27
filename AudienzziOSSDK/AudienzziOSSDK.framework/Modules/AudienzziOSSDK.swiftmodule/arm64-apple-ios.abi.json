@@ -79909,84 +79909,84 @@
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "StringLiteral",
-      "offset": 1081,
+      "offset": 1074,
       "length": 25,
       "value": "\"document.body.innerHTML\""
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "StringLiteral",
-      "offset": 1157,
+      "offset": 1150,
       "length": 15,
       "value": "\"[0-9]+x[0-9]+\""
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "StringLiteral",
-      "offset": 1224,
+      "offset": 1217,
       "length": 40,
       "value": "\"hb_size\\W+\""
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "StringLiteral",
-      "offset": 1263,
+      "offset": 1256,
       "length": 5,
       "value": "\"\""
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "StringLiteral",
-      "offset": 1353,
+      "offset": 1346,
       "length": 29,
       "value": "\"width:\\d+px;height:\\d+px;\""
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "IntegerLiteral",
-      "offset": 9070,
+      "offset": 8739,
       "length": 3,
       "value": "101"
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "IntegerLiteral",
-      "offset": 9141,
+      "offset": 8806,
       "length": 3,
       "value": "111"
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "IntegerLiteral",
-      "offset": 9182,
+      "offset": 8847,
       "length": 3,
       "value": "126"
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "IntegerLiteral",
-      "offset": 9214,
+      "offset": 8879,
       "length": 3,
       "value": "130"
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "IntegerLiteral",
-      "offset": 9252,
+      "offset": 8917,
       "length": 3,
       "value": "140"
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "IntegerLiteral",
-      "offset": 9289,
+      "offset": 8954,
       "length": 3,
       "value": "150"
     },
     {
       "filePath": "\/Users\/deryzemlia\/Desktop\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUAdViewUtils.swift",
       "kind": "IntegerLiteral",
-      "offset": 9327,
+      "offset": 8992,
       "length": 3,
       "value": "160"
     },
