@@ -1,6 +1,7 @@
 // swift-interface-format-version: 1.0
-// swift-compiler-version: Apple Swift version 5.10 (swiftlang-5.10.0.13 clang-1500.3.9.4)
-// swift-module-flags: -target arm64-apple-ios16.0 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -Onone -enable-bare-slash-regex -module-name AudienzziOSSDK
+// swift-compiler-version: Apple Swift version 6.0 effective-5.10 (swiftlang-6.0.0.9.10 clang-1600.0.26.2)
+// swift-module-flags: -target arm64-apple-ios16.0 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -Onone -enable-experimental-feature OpaqueTypeErasure -enable-bare-slash-regex -module-name AudienzziOSSDK
+// swift-module-flags-ignorable: -no-verify-emitted-module-interface
 import AdSupport
 import AppTrackingTransparency
 @_exported import AudienzziOSSDK
@@ -53,12 +54,12 @@ extension AudienzziOSSDK.AudienzzGAMUtils {
   @objc public var ext: [Swift.String : Any]?
   @objc deinit
 }
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AURewardedView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor(unsafe) public var parameters: AudienzziOSSDK.AUVideoParameters?
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String)
-  @_Concurrency.MainActor(unsafe) @objc override public init(configId: Swift.String, isLazyLoad: Swift.Bool)
-  @objc @_Concurrency.MainActor(unsafe) public func createAd(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
-  @objc @_Concurrency.MainActor(unsafe) public func connectHandler(_ eventHandler: AudienzziOSSDK.AURewardedEventHandler)
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AURewardedView : AudienzziOSSDK.AUAdView {
+  @objc @_Concurrency.MainActor @preconcurrency public var parameters: AudienzziOSSDK.AUVideoParameters?
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String)
+  @_Concurrency.MainActor @preconcurrency @objc override public init(configId: Swift.String, isLazyLoad: Swift.Bool)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func connectHandler(_ eventHandler: AudienzziOSSDK.AURewardedEventHandler)
   @objc deinit
 }
 @objc @objcMembers public class AUAdFormat : ObjectiveC.NSObject, Swift.OptionSet {
@@ -143,19 +144,19 @@ public struct AUNativeRequestParameter {
   public var ext: [Swift.String : Any]?
   public init()
 }
-@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class VisibleView : UIKit.UIView {
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public class func awakeFromNib()
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func didMoveToWindow()
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func removeFromSuperview()
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class VisibleView : UIKit.UIView {
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public class func awakeFromNib()
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func didMoveToWindow()
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func removeFromSuperview()
   @objc deinit
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func observeValue(forKeyPath keyPath: Swift.String?, of object: Any?, change: [Foundation.NSKeyValueChangeKey : Any]?, context: Swift.UnsafeMutableRawPointer?)
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
-  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func observeValue(forKeyPath keyPath: Swift.String?, of object: Any?, change: [Foundation.NSKeyValueChangeKey : Any]?, context: Swift.UnsafeMutableRawPointer?)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor @preconcurrency @objc required dynamic public init?(coder: Foundation.NSCoder)
 }
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AUNativeBannerView : AudienzziOSSDK.AUAdView {
-  @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, configuration: AudienzziOSSDK.AUNativeRequestParameter)
-  @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, configuration: AudienzziOSSDK.AUNativeRequestParameter, isLazyLoad: Swift.Bool)
-  @_Concurrency.MainActor(unsafe) public func createAd(with gamRequest: Swift.AnyObject, gamBanner: UIKit.UIView, configuration: AudienzziOSSDK.AUNativeRequestParameter)
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUNativeBannerView : AudienzziOSSDK.AUAdView {
+  @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, configuration: AudienzziOSSDK.AUNativeRequestParameter)
+  @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, configuration: AudienzziOSSDK.AUNativeRequestParameter, isLazyLoad: Swift.Bool)
+  @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, gamBanner: UIKit.UIView, configuration: AudienzziOSSDK.AUNativeRequestParameter)
   @objc deinit
 }
 @objc @objcMembers public class AUInterstitialEventHandler : ObjectiveC.NSObject {
@@ -231,36 +232,36 @@ public struct AUNativeRequestParameter {
   @objc public init(adUnitID: Swift.String, validGADAdSizes: [Foundation.NSValue])
   @objc deinit
 }
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AUBannerRenderingView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any AudienzziOSSDK.AUBannerRenderingAdDelegate)?
-  @objc @_Concurrency.MainActor(unsafe) public var configID: Swift.String {
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUBannerRenderingView : AudienzziOSSDK.AUAdView {
+  @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any AudienzziOSSDK.AUBannerRenderingAdDelegate)?
+  @objc @_Concurrency.MainActor @preconcurrency public var configID: Swift.String {
     @objc get
   }
-  @objc @_Concurrency.MainActor(unsafe) public var bannerParameters: AudienzziOSSDK.AUBannerParameters {
+  @objc @_Concurrency.MainActor @preconcurrency public var bannerParameters: AudienzziOSSDK.AUBannerParameters {
     @objc get
   }
-  @objc @_Concurrency.MainActor(unsafe) public var videoParameters: AudienzziOSSDK.AUVideoParameters {
+  @objc @_Concurrency.MainActor @preconcurrency public var videoParameters: AudienzziOSSDK.AUVideoParameters {
     @objc get
   }
-  @objc @_Concurrency.MainActor(unsafe) public var refreshInterval: Foundation.TimeInterval {
-    @objc get
-    @objc set
-  }
-  @objc @_Concurrency.MainActor(unsafe) public var additionalSizes: [CoreFoundation.CGSize]? {
+  @objc @_Concurrency.MainActor @preconcurrency public var refreshInterval: Foundation.TimeInterval {
     @objc get
     @objc set
   }
-  @objc @_Concurrency.MainActor(unsafe) public var adFormat: AudienzziOSSDK.AUAdFormat {
+  @objc @_Concurrency.MainActor @preconcurrency public var additionalSizes: [CoreFoundation.CGSize]? {
     @objc get
     @objc set
   }
-  @objc @_Concurrency.MainActor(unsafe) public var adPosition: AudienzziOSSDK.AUAdPosition {
+  @objc @_Concurrency.MainActor @preconcurrency public var adFormat: AudienzziOSSDK.AUAdFormat {
     @objc get
     @objc set
   }
-  @objc @_Concurrency.MainActor(unsafe) public func setVideoParameters(_ videoParameters: AudienzziOSSDK.AUVideoParameters)
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, adSize: CoreFoundation.CGSize, format: AudienzziOSSDK.AUAdFormat = .banner, isLazyLoad: Swift.Bool = true, eventHandler: AudienzziOSSDK.AUGAMBannerEventHandler)
-  @objc @_Concurrency.MainActor(unsafe) public func createAd()
+  @objc @_Concurrency.MainActor @preconcurrency public var adPosition: AudienzziOSSDK.AUAdPosition {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor @preconcurrency public func setVideoParameters(_ videoParameters: AudienzziOSSDK.AUVideoParameters)
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adSize: CoreFoundation.CGSize, format: AudienzziOSSDK.AUAdFormat = .banner, isLazyLoad: Swift.Bool = true, eventHandler: AudienzziOSSDK.AUGAMBannerEventHandler)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd()
   @objc deinit
 }
 @objc public enum AUNativeType : Swift.Int {
@@ -276,19 +277,19 @@ public struct AUNativeRequestParameter {
   @objc func nativeAdNotFound()
   @objc func nativeAdNotValid()
 }
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AUNativeView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor(unsafe) public var onNativeLoadRequest: ((Swift.AnyObject, [Swift.String : Swift.String]) -> Swift.Void)?
-  @objc @_Concurrency.MainActor(unsafe) public var onGetNativeAd: ((AudienzziOSSDK.AUNativeAd) -> Swift.Void)?
-  @_Concurrency.MainActor(unsafe) public var nativeParameter: AudienzziOSSDK.AUNativeRequestParameter!
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any AudienzziOSSDK.AUNativeAdDelegate)?
-  @_Concurrency.MainActor(unsafe) public var adType: AudienzziOSSDK.AUNativeType!
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, adType: AudienzziOSSDK.AUNativeType = .origin)
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, isLazyLoad: Swift.Bool, adType: AudienzziOSSDK.AUNativeType = .origin)
-  @objc @_Concurrency.MainActor(unsafe) public func createAd(with gamRequest: Swift.AnyObject)
-  @objc @_Concurrency.MainActor(unsafe) public func findNative(adObject: Swift.AnyObject)
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUNativeView : AudienzziOSSDK.AUAdView {
+  @objc @_Concurrency.MainActor @preconcurrency public var onNativeLoadRequest: ((Swift.AnyObject, [Swift.String : Swift.String]) -> Swift.Void)?
+  @objc @_Concurrency.MainActor @preconcurrency public var onGetNativeAd: ((AudienzziOSSDK.AUNativeAd) -> Swift.Void)?
+  @_Concurrency.MainActor @preconcurrency public var nativeParameter: AudienzziOSSDK.AUNativeRequestParameter!
+  @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any AudienzziOSSDK.AUNativeAdDelegate)?
+  @_Concurrency.MainActor @preconcurrency public var adType: AudienzziOSSDK.AUNativeType!
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adType: AudienzziOSSDK.AUNativeType = .origin)
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, isLazyLoad: Swift.Bool, adType: AudienzziOSSDK.AUNativeType = .origin)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject)
+  @objc @_Concurrency.MainActor @preconcurrency public func findNative(adObject: Swift.AnyObject)
   @objc @discardableResult
-  @_Concurrency.MainActor(unsafe) public func registerView(clickableViews: [UIKit.UIView]?) -> Swift.Bool
-  @objc @_Concurrency.MainActor(unsafe) public func findRenderingAd(_ ad: AudienzziOSSDK.AUNativeAd?)
+  @_Concurrency.MainActor @preconcurrency public func registerView(clickableViews: [UIKit.UIView]?) -> Swift.Bool
+  @objc @_Concurrency.MainActor @preconcurrency public func findRenderingAd(_ ad: AudienzziOSSDK.AUNativeAd?)
   @objc deinit
 }
 @objc public protocol AUInterstitialenderingAdDelegate : ObjectiveC.NSObjectProtocol {
@@ -368,12 +369,12 @@ public struct AUNativeRequestParameter {
   @objc override dynamic public init()
   @objc deinit
 }
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AUMultiplatformView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any AudienzziOSSDK.AUNativeAdDelegate)?
-  @objc @_Concurrency.MainActor(unsafe) public var onGetNativeAd: ((PrebidMobile.NativeAd) -> Swift.Void)?
-  @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, isLazyLoad: Swift.Bool = true, bannerParameters: AudienzziOSSDK.AUBannerParameters? = nil, videoParameters: AudienzziOSSDK.AUVideoParameters? = nil, nativeParameters: AudienzziOSSDK.AUNativeRequestParameter? = nil, isInterstitial: Swift.Bool = false, isRewarded: Swift.Bool = false)
-  @objc @_Concurrency.MainActor(unsafe) public func create(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
-  @objc @_Concurrency.MainActor(unsafe) public func findNative(adObject: Swift.AnyObject)
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUMultiplatformView : AudienzziOSSDK.AUAdView {
+  @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any AudienzziOSSDK.AUNativeAdDelegate)?
+  @objc @_Concurrency.MainActor @preconcurrency public var onGetNativeAd: ((PrebidMobile.NativeAd) -> Swift.Void)?
+  @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, isLazyLoad: Swift.Bool = true, bannerParameters: AudienzziOSSDK.AUBannerParameters? = nil, videoParameters: AudienzziOSSDK.AUVideoParameters? = nil, nativeParameters: AudienzziOSSDK.AUNativeRequestParameter? = nil, isInterstitial: Swift.Bool = false, isRewarded: Swift.Bool = false)
+  @objc @_Concurrency.MainActor @preconcurrency public func create(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func findNative(adObject: Swift.AnyObject)
   @objc deinit
 }
 @_hasMissingDesignatedInitializers @objcMembers public class AUAdUnitConfiguration : AudienzziOSSDK.AUAdUnitConfigurationType {
@@ -656,35 +657,35 @@ extension AudienzziOSSDK.AUAdUnitConfiguration : AudienzziOSSDK.AUADunitConfigur
     get
   }
 }
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AUAdView : AudienzziOSSDK.VisibleView {
-  @objc @_Concurrency.MainActor(unsafe) public var adUnitConfiguration: (any AudienzziOSSDK.AUAdUnitConfigurationType)!
-  @objc @_Concurrency.MainActor(unsafe) public var onLoadRequest: ((Swift.AnyObject) -> Swift.Void)?
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func awakeFromNib()
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, adSize: CoreFoundation.CGSize, isLazyLoad: Swift.Bool)
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, isLazyLoad: Swift.Bool)
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, adSize: CoreFoundation.CGSize)
-  @objc @_Concurrency.MainActor(unsafe) public func setupConfigId(_ configId: Swift.String)
-  @objc @_Concurrency.MainActor(unsafe) public func collapseBehaviour(forView: UIKit.UIView)
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUAdView : AudienzziOSSDK.VisibleView {
+  @objc @_Concurrency.MainActor @preconcurrency public var adUnitConfiguration: (any AudienzziOSSDK.AUAdUnitConfigurationType)!
+  @objc @_Concurrency.MainActor @preconcurrency public var onLoadRequest: ((Swift.AnyObject) -> Swift.Void)?
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func awakeFromNib()
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adSize: CoreFoundation.CGSize, isLazyLoad: Swift.Bool)
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, isLazyLoad: Swift.Bool)
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adSize: CoreFoundation.CGSize)
+  @objc @_Concurrency.MainActor @preconcurrency public func setupConfigId(_ configId: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func collapseBehaviour(forView: UIKit.UIView)
   @objc deinit
 }
 @objc @objcMembers public class AUGAMRewardedAdEventHandler : ObjectiveC.NSObject {
   @objc public init(adUnitID: Swift.String)
   @objc deinit
 }
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AURewardedRenderingView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any AudienzziOSSDK.AURewardedAdUnitDelegate)?
-  @objc @_Concurrency.MainActor(unsafe) required public init(configId: Swift.String, isLazyLoad: Swift.Bool = true, minSizePercentage: Foundation.NSValue? = nil, eventHandler: AudienzziOSSDK.AUGAMRewardedAdEventHandler)
-  @objc @_Concurrency.MainActor(unsafe) public func createAd()
-  @objc @_Concurrency.MainActor(unsafe) public func showAd(_ controller: UIKit.UIViewController)
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AURewardedRenderingView : AudienzziOSSDK.AUAdView {
+  @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any AudienzziOSSDK.AURewardedAdUnitDelegate)?
+  @objc @_Concurrency.MainActor @preconcurrency required public init(configId: Swift.String, isLazyLoad: Swift.Bool = true, minSizePercentage: Foundation.NSValue? = nil, eventHandler: AudienzziOSSDK.AUGAMRewardedAdEventHandler)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd()
+  @objc @_Concurrency.MainActor @preconcurrency public func showAd(_ controller: UIKit.UIViewController)
   @objc deinit
 }
 public typealias Keywords = [Swift.String : Swift.String]
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AUInstreamView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor(unsafe) public var parameters: AudienzziOSSDK.AUVideoParameters?
-  @objc @_Concurrency.MainActor(unsafe) public var onLoadInstreamRequest: (([Swift.String : Swift.String]?) -> Swift.Void)?
-  @_Concurrency.MainActor(unsafe) @objc override public init(configId: Swift.String, adSize: CoreFoundation.CGSize)
-  @_Concurrency.MainActor(unsafe) @objc override public init(configId: Swift.String, adSize: CoreFoundation.CGSize, isLazyLoad: Swift.Bool)
-  @objc @_Concurrency.MainActor(unsafe) public func createAd(size: CoreFoundation.CGSize)
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUInstreamView : AudienzziOSSDK.AUAdView {
+  @objc @_Concurrency.MainActor @preconcurrency public var parameters: AudienzziOSSDK.AUVideoParameters?
+  @objc @_Concurrency.MainActor @preconcurrency public var onLoadInstreamRequest: (([Swift.String : Swift.String]?) -> Swift.Void)?
+  @_Concurrency.MainActor @preconcurrency @objc override public init(configId: Swift.String, adSize: CoreFoundation.CGSize)
+  @_Concurrency.MainActor @preconcurrency @objc override public init(configId: Swift.String, adSize: CoreFoundation.CGSize, isLazyLoad: Swift.Bool)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd(size: CoreFoundation.CGSize)
   @objc deinit
 }
 @objc public enum AUContextType : Swift.Int {
@@ -763,14 +764,14 @@ public typealias Keywords = [Swift.String : Swift.String]
     get
   }
 }
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AUBannerView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor(unsafe) public var parameters: AudienzziOSSDK.AUVideoParameters?
-  @objc @_Concurrency.MainActor(unsafe) public var bannerParameters: AudienzziOSSDK.AUBannerParameters?
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, adSize: CoreFoundation.CGSize, adFormats: [AudienzziOSSDK.AUAdFormat])
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, adSize: CoreFoundation.CGSize, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool)
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func removeFromSuperview()
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUBannerView : AudienzziOSSDK.AUAdView {
+  @objc @_Concurrency.MainActor @preconcurrency public var parameters: AudienzziOSSDK.AUVideoParameters?
+  @objc @_Concurrency.MainActor @preconcurrency public var bannerParameters: AudienzziOSSDK.AUBannerParameters?
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adSize: CoreFoundation.CGSize, adFormats: [AudienzziOSSDK.AUAdFormat])
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adSize: CoreFoundation.CGSize, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func removeFromSuperview()
   @objc deinit
-  @objc @_Concurrency.MainActor(unsafe) public func createAd(with gamRequest: Swift.AnyObject, gamBanner: UIKit.UIView, eventHandler: AudienzziOSSDK.AUBannerEventHandler? = nil)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, gamBanner: UIKit.UIView, eventHandler: AudienzziOSSDK.AUBannerEventHandler? = nil)
 }
 @objc @_hasMissingDesignatedInitializers @objcMembers public class AUNativeAdMarkupAsset : ObjectiveC.NSObject {
   public var id: Swift.Int?
@@ -864,32 +865,32 @@ public typealias Keywords = [Swift.String : Swift.String]
     get
   }
 }
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AUInterstitialRenderingView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any AudienzziOSSDK.AUInterstitialenderingAdDelegate)?
-  @objc @_Concurrency.MainActor(unsafe) public var skipButtonArea: Swift.Double {
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUInterstitialRenderingView : AudienzziOSSDK.AUAdView {
+  @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any AudienzziOSSDK.AUInterstitialenderingAdDelegate)?
+  @objc @_Concurrency.MainActor @preconcurrency public var skipButtonArea: Swift.Double {
     @objc get
     @objc set
   }
-  @objc @_Concurrency.MainActor(unsafe) public var skipButtonPosition: AudienzziOSSDK.AUAdInterstitialPosition {
+  @objc @_Concurrency.MainActor @preconcurrency public var skipButtonPosition: AudienzziOSSDK.AUAdInterstitialPosition {
     @objc get
     @objc set
   }
-  @objc @_Concurrency.MainActor(unsafe) public var skipDelay: Swift.Double {
+  @objc @_Concurrency.MainActor @preconcurrency public var skipDelay: Swift.Double {
     @objc get
     @objc set
   }
-  @objc @_Concurrency.MainActor(unsafe) required public init(configId: Swift.String, isLazyLoad: Swift.Bool = true, adFormat: AudienzziOSSDK.AURenderingInsterstitialAdFormat, minSizePercentage: Foundation.NSValue? = nil, eventHandler: AudienzziOSSDK.AUGAMInterstitialEventHandler)
-  @objc @_Concurrency.MainActor(unsafe) public func createAd()
-  @objc @_Concurrency.MainActor(unsafe) public func showAd(_ controller: UIKit.UIViewController)
+  @objc @_Concurrency.MainActor @preconcurrency required public init(configId: Swift.String, isLazyLoad: Swift.Bool = true, adFormat: AudienzziOSSDK.AURenderingInsterstitialAdFormat, minSizePercentage: Foundation.NSValue? = nil, eventHandler: AudienzziOSSDK.AUGAMInterstitialEventHandler)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd()
+  @objc @_Concurrency.MainActor @preconcurrency public func showAd(_ controller: UIKit.UIViewController)
   @objc deinit
 }
-@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class AUInterstitialView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor(unsafe) public var parameters: AudienzziOSSDK.AUVideoParameters?
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat])
-  @objc @_Concurrency.MainActor(unsafe) public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool)
-  @objc @_Concurrency.MainActor(unsafe) convenience public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool, minWidthPerc: Swift.Int, minHeightPerc: Swift.Int)
-  @objc @_Concurrency.MainActor(unsafe) public func createAd(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
-  @objc @_Concurrency.MainActor(unsafe) public func connectHandler(_ eventHandler: AudienzziOSSDK.AUInterstitialEventHandler)
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUInterstitialView : AudienzziOSSDK.AUAdView {
+  @objc @_Concurrency.MainActor @preconcurrency public var parameters: AudienzziOSSDK.AUVideoParameters?
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat])
+  @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool)
+  @objc @_Concurrency.MainActor @preconcurrency convenience public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool, minWidthPerc: Swift.Int, minHeightPerc: Swift.Int)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func connectHandler(_ eventHandler: AudienzziOSSDK.AUInterstitialEventHandler)
   @objc deinit
 }
 @objc(AUAdPosition) public enum AUAdPosition : Swift.Int {
