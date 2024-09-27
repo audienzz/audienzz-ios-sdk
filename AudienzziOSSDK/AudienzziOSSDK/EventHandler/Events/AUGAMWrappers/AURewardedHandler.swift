@@ -84,7 +84,7 @@ class AURewardedHandler: NSObject,
                                       errorMessage: error.localizedDescription,
                                       errorCode: error.errorCode ?? -1)
         
-        guard let _ = event.convertToJSONString() else {
+        guard let payload = event.convertToJSONString() else {
             fullScreentDelegate?.ad?(ad, didFailToPresentFullScreenContentWithError: error)
             return
         }

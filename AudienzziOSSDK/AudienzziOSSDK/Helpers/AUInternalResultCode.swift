@@ -55,8 +55,6 @@ internal class AUResulrCodeConverter {
             return "SDKMisusePreviousFetchNotCompletedYet".capitalized
         case .prebidInvalidRequest:
             return "InvalidRequest".capitalized
-        @unknown default:
-            fatalError("Unknown Error")
         }
     }
 }
