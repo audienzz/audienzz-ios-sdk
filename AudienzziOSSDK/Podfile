@@ -5,38 +5,38 @@ workspace 'AudienzziOSSDK'
 project 'AudienzziOSSDK.xcodeproj'
 project 'Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj'
 
-def prd_pods
-  pod 'PrebidMobileGAMEventHandlers'
-  pod 'PrebidMobile'
+def prebid_pods
+  pod 'PrebidMobileGAMEventHandlers', '2.3.0'
+  pod 'PrebidMobile', '2.3.0'
 end
 
-def gma_pods
-  pod 'Google-Mobile-Ads-SDK'
+def google_ads_pods
+  pod 'Google-Mobile-Ads-SDK', '11.10.0'
+  pod 'GoogleAds-IMA-iOS-SDK', '3.23.0'
 end
 
-def ima_pod
-  pod 'GoogleAds-IMA-iOS-SDK'
+def sqlite_pod
+  pod 'SQLite.swift', '0.14.1'
 end
 
 target 'AudienzziOSSDK' do
   project 'AudienzziOSSDK.xcodeproj'
   use_frameworks!
-  pod 'SQLite.swift', '~> 0.14.0'
-  prd_pods
+  sqlite_pod
+  prebid_pods
   target 'AudienzziOSSDKTests' do
     inherit! :search_paths
-    pod 'SQLite.swift', '~> 0.14.0'
-    prd_pods
+    sqlite_pod
+    prebid_pods
   end
 end
 
 target 'DemoSwiftApp' do
   project 'Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj'
   use_frameworks!
-  pod 'SQLite.swift', '~> 0.14.0'
-  prd_pods
-  ima_pod
-  gma_pods
+  sqlite_pod
+  prebid_pods
+  google_ads_pods
 end
 
 

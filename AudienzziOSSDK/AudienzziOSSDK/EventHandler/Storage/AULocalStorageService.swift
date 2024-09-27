@@ -52,8 +52,8 @@ fileprivate extension AULocalStorageService {
     func getEvents() -> [AUEventDB] {
         let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
         
-        let id = Expression<String>("id")
-        let payload = Expression<String>("payload")
+        let id = Expression<String>(value: "id")
+        let payload = Expression<String>(value: "payload")
         
         do {
             let events = Array(try dataBase.prepare(eventsTable))
@@ -76,8 +76,8 @@ fileprivate extension AULocalStorageService {
     func saveEvents(_ events: [AUEventDB]) {
         let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
         
-        let id = Expression<String>("id")
-        let payload = Expression<String>("payload")
+        let id = Expression<String>(value: "id")
+        let payload = Expression<String>(value: "payload")
         
         do {
             removeAllEvents()
@@ -105,8 +105,8 @@ fileprivate extension AULocalStorageService {
     func insertEvents(_ events: [AUEventDB]) {
         let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
         
-        let id = Expression<String>("id")
-        let payload = Expression<String>("payload")
+        let id = Expression<String>(value: "id")
+        let payload = Expression<String>(value: "payload")
         
         do {
             try events.forEach { event in
@@ -123,7 +123,7 @@ fileprivate extension AULocalStorageService {
         let dictToModyfy: [String: String] = ["Kia": "KIA", "Ram": "RAM", "FIAT": "Fiat", "MINI": "Mini"]
         
         let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
-        let payload = Expression<String>("payload")
+        let payload = Expression<String>(value: "payload")
         
         do {
             for (oldV, newV) in dictToModyfy {
