@@ -34,6 +34,7 @@
 		586754402C4FA480005937C2 /* UIViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5867543F2C4FA480005937C2 /* UIViewExtension.swift */; };
 		5875129E2BA2FF9A004BB7E9 /* AdContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5875129D2BA2FF9A004BB7E9 /* AdContainerView.swift */; };
 		587512A02BA30F18004BB7E9 /* LazyAdContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5875129F2BA30F18004BB7E9 /* LazyAdContainerView.swift */; };
+		589A87582CC6491E00977099 /* AdDebugViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 589A87572CC644F200977099 /* AdDebugViewController.swift */; };
 		58C73F9E2B9F0C7000AE52EC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C73F9D2B9F0C7000AE52EC /* AppDelegate.swift */; };
 		58C73FA02B9F0C7000AE52EC /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C73F9F2B9F0C7000AE52EC /* SceneDelegate.swift */; };
 		58C73FA52B9F0C7000AE52EC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 58C73FA32B9F0C7000AE52EC /* Main.storyboard */; };
@@ -82,6 +83,7 @@
 		587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5875129D2BA2FF9A004BB7E9 /* AdContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdContainerView.swift; sourceTree = "<group>"; };
 		5875129F2BA30F18004BB7E9 /* LazyAdContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyAdContainerView.swift; sourceTree = "<group>"; };
+		589A87572CC644F200977099 /* AdDebugViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdDebugViewController.swift; sourceTree = "<group>"; };
 		58C73F9A2B9F0C7000AE52EC /* DemoSwiftApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DemoSwiftApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		58C73F9D2B9F0C7000AE52EC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		58C73F9F2B9F0C7000AE52EC /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -116,7 +118,7 @@
 			isa = PBXGroup;
 			children = (
 				586754062C4FA35B005937C2 /* MainNavigationViewController.swift */,
-				586754072C4FA35B005937C2 /* SeparateViewController.swift */,
+				589A87592CC67E7700977099 /* Controllers */,
 			);
 			path = Navigation;
 			sourceTree = "<group>";
@@ -268,6 +270,16 @@
 			path = AdTypes;
 			sourceTree = "<group>";
 		};
+		589A87592CC67E7700977099 /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */,
+				589A87572CC644F200977099 /* AdDebugViewController.swift */,
+				586754072C4FA35B005937C2 /* SeparateViewController.swift */,
+			);
+			path = Controllers;
+			sourceTree = "<group>";
+		};
 		58C73F912B9F0C7000AE52EC = {
 			isa = PBXGroup;
 			children = (
@@ -291,7 +303,6 @@
 			children = (
 				58C73F9D2B9F0C7000AE52EC /* AppDelegate.swift */,
 				58C73F9F2B9F0C7000AE52EC /* SceneDelegate.swift */,
-				58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */,
 				5867543E2C4FA46E005937C2 /* Helpers */,
 				586754082C4FA35B005937C2 /* Navigation */,
 				5890CFF92BD278F10034E2FD /* AdTypes */,
@@ -465,6 +476,7 @@
 				586754292C4FA3A1005937C2 /* ExamplesViewController_RewardedAPI.swift in Sources */,
 				587512A02BA30F18004BB7E9 /* LazyAdContainerView.swift in Sources */,
 				586754392C4FA3D4005937C2 /* ExamplesViewController_RenderingInterstitialView.swift in Sources */,
+				589A87582CC6491E00977099 /* AdDebugViewController.swift in Sources */,
 				586754212C4FA3A1005937C2 /* ExamplesViewController_InstreamAPI.swift in Sources */,
 				586754092C4FA35B005937C2 /* MainNavigationViewController.swift in Sources */,
 				5867540A2C4FA35B005937C2 /* SeparateViewController.swift in Sources */,
