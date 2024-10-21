@@ -28,6 +28,7 @@ enum AdTypeExample: String {
     case interstitialRenderVideo = "Interstitial Render Video"
     case rewardedRender = "Rewarded Render"
     case allExample = "All examples"
+    case debug = "Ad Debug"
 }
 
 class MainNavigationViewController: UIViewController {
@@ -35,6 +36,7 @@ class MainNavigationViewController: UIViewController {
     
     fileprivate var rows: [AdTypeExample] = [
         .allExample,
+        .debug,
         .bannerOrigin,
         .bannerOriginVideo,
         .bannerOriginMulti,
@@ -75,6 +77,9 @@ extension MainNavigationViewController: UITableViewDelegate, UITableViewDataSour
         
         if indexPath.row == 0 {
             let destination = mainStoryboard.instantiateViewController(withIdentifier: "ExamplesViewController") as! ExamplesViewController
+            self.navigationController?.pushViewController(destination, animated: true)
+        } else if indexPath.row == 1 {
+            let destination = mainStoryboard.instantiateViewController(withIdentifier: "AdDebugViewController") as! AdDebugViewController
             self.navigationController?.pushViewController(destination, animated: true)
         } else {
             let destination = mainStoryboard.instantiateViewController(withIdentifier: "SeparateViewController") as! SeparateViewController

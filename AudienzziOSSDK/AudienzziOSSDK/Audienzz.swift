@@ -16,8 +16,9 @@
 import Foundation
 import PrebidMobile
 
-fileprivate let customPrebidServerURL = "https://prebid-server-test-j.prebid.org/openrtb2/auction"
-fileprivate let prebidServerAccountId = "0689a263-318d-448b-a3d4-b02e8a709d9d"
+fileprivate let customPrebidServerURL = "https://ib.adnxs.com/openrtb2/prebid"
+fileprivate let prebidServerAccountId = "3927"
+fileprivate let customStatusEndpoint = "https://ib.adnxs.com/status"
 
 @objcMembers
 public class Audienzz: NSObject {
@@ -48,9 +49,7 @@ public class Audienzz: NSObject {
     public static let shared = Audienzz()
     
     public func configureSDK(audienzzKey: String) {
-        AUEventsManager.shared.configure(companyId: audienzzKey)
-        Prebid.shared.prebidServerAccountId = prebidServerAccountId
-        try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
+        setupPrebid(audienzzKey)
         
         // Initialize Prebid SDK
         Prebid.initializeSDK { status, error in
@@ -73,9 +72,7 @@ public class Audienzz: NSObject {
     }
     
     public func configureSDK(audienzzKey: String, gadMobileAdsVersion: String? = nil) {
-        AUEventsManager.shared.configure(companyId: audienzzKey)
-        Prebid.shared.prebidServerAccountId = prebidServerAccountId
-        try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
+        setupPrebid(audienzzKey)
         
         Prebid.initializeSDK(gadMobileAdsVersion: gadMobileAdsVersion) { status, error in
             if let error = error {
@@ -93,10 +90,6 @@ public class Audienzz: NSObject {
             @unknown default:
                 AULogEvent.logDebug("Audienzz Status: Unexpected Error")
             }
-            
-            if let error = error {
-                AULogEvent.logDebug("Error: \(error)")
-            }
         }
     }
     
@@ -106,6 +99,7 @@ public class Audienzz: NSObject {
         Task {
             AUEventsManager.shared.configure(companyId: audienzzKey)
             Prebid.shared.prebidServerAccountId = prebidServerAccountId
+            Prebid.shared.customStatusEndpoint = customStatusEndpoint
             try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
             
             // Initialize Prebid SDK
@@ -136,6 +130,7 @@ public class Audienzz: NSObject {
         Task {
             AUEventsManager.shared.configure(companyId: audienzzKey)
             Prebid.shared.prebidServerAccountId = prebidServerAccountId
+            Prebid.shared.customStatusEndpoint = customStatusEndpoint
             try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
             
             Prebid.initializeSDK(gadMobileAdsVersion: gadMobileAdsVersion) { status, error in
@@ -213,5 +208,12 @@ public class Audienzz: NSObject {
     
     public func clearCustomHeaders() {
         customHeaders.removeAll()
+    }
+    
+    private func setupPrebid(_ audienzzKey: String) {
+        AUEventsManager.shared.configure(companyId: audienzzKey)
+        Prebid.shared.prebidServerAccountId = prebidServerAccountId
+        Prebid.shared.customStatusEndpoint = customStatusEndpoint
+        try! Prebid.shared.setCustomPrebidServer(url: customPrebidServerURL)
     }
 }
