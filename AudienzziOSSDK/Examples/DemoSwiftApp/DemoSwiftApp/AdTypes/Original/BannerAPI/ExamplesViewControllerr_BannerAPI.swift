@@ -83,6 +83,7 @@ extension ExamplesViewController {
         addDebugLabel(toView: bannerView_320x50, name: "bannerView_320x50")
         
         bannerView_320x50.adUnitConfiguration.setAutoRefreshMillis(time: 30000)
+        bannerView_320x50.addAdditionalSize(sizes: [CGSize(width: 500, height: 600)])
         
         bannerView_320x50.createAd(with: gamRequest, gamBanner: gamBanner,
                                    eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal, gamView: gamBanner))
