@@ -63,6 +63,10 @@ public class AUBannerView: AUAdView {
         adUnit?.stopAutoRefresh()
         adUnit = nil
     }
+    
+    public func addAdditionalSize(sizes: [CGSize]) {
+        adUnit.addAdditionalSize(sizes: sizes)
+    }
 
     deinit {
         self.eventHandler = nil
