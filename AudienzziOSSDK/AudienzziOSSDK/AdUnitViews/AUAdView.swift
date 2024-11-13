@@ -66,7 +66,18 @@ public class AUAdView: VisibleView {
     internal var isInitialAutorefresh: Bool = true
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [AdFormat] {
-        formats.compactMap { AdFormat(rawValue: $0.rawValue) }
+        formats.compactMap { element in
+            switch element {
+            case .banner:
+                return AdFormat.banner
+            case .video:
+                return AdFormat.video
+            case .native:
+                return AdFormat.native
+            default:
+                return nil
+            }
+        }
     }
     
     public func collapseBehaviour(forView: UIView) {
