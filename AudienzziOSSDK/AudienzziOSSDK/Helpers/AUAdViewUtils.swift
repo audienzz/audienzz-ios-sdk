@@ -17,16 +17,6 @@ import UIKit
 import PrebidMobile
 import WebKit
 
-//@objcMembers
-//public final class AUAdViewUtils: NSObject {
-//    private override init() {}
-//
-//    @objc
-//    public static func findCreativeSize(_ adView: UIView, success: @escaping (CGSize) -> Void, failure: @escaping (Error) -> Void) {
-//        AdViewUtils.findPrebidCreativeSize(adView, success: success, failure: failure)
-//    }
-//}
-
 @objcMembers
 public final class AUAdViewUtils: NSObject {
 
