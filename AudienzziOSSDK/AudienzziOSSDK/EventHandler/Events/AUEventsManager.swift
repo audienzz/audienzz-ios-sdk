@@ -91,18 +91,25 @@ class AUEventsManager: AULogEventType {
     }
     
     private func requestIDFApermission() {
-        ATTrackingManager.requestTrackingAuthorization { [weak self] status in
-            switch status {
-            case .authorized:
-                AULogEvent.logDebug("enable tracking")
-            case .denied:
-                AULogEvent.logDebug("disable tracking")
-            default:
-                AULogEvent.logDebug("disable tracking")
+        if #available(iOS 14, *) {
+            ATTrackingManager.requestTrackingAuthorization { [weak self] status in
+                switch status {
+                case .authorized:
+                    AULogEvent.logDebug("enable tracking")
+                case .denied:
+                    AULogEvent.logDebug("disable tracking")
+                default:
+                    AULogEvent.logDebug("disable tracking")
+                }
+                
+                self?.deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
+                AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased())
             }
-            
-            self?.deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
-            AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased())
+        } else {
+            if ASIdentifierManager.shared().isAdvertisingTrackingEnabled {
+                deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
+                AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased())
+            }
         }
     }
     
