@@ -83,17 +83,22 @@ class AdDebugViewController: UIViewController {
     }
     
     private func createBannerView_320x250() {
-        let gamBanner = GAMBannerView(adSize: GADAdSizeFromCGSize(adVideoSize))
+//        let gamBanner = GAMBannerView(adSize: GADAdSizeFromCGSize(adSize))
+        let viewWidth = view.frame.inset(by: view.safeAreaInsets).width
+        let adaptiveSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(viewWidth)
+        let gamBanner = GAMBannerView(adSize: adaptiveSize)
         gamBanner.adUnitID = gamAdUnitDisplayBannerOriginal_320x250
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = GAMRequest()
         
-        bannerView_300x250 = AUBannerView(configId: storedImpDisplayBanner_320x250, adSize: adSizeMult, adFormats: [.banner], isLazyLoad: false)
+        bannerView_300x250 = AUBannerView(configId: storedImpDisplayBanner_320x250, adSize: adVideoSize, adFormats: [.banner], isLazyLoad: false)
         bannerView_300x250.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)),
                                           size: CGSize(width: self.view.frame.width, height: 250))
         bannerView_300x250.backgroundColor = .clear
         adContainerView.addSubview(bannerView_300x250)
+        
+        bannerView_300x250.addAdditionalSize(sizes: [CGSize(width: 300, height: 250), CGSize(width: 450, height: 700)])
         
         let handler = AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal_320x250, gamView: gamBanner)
         
@@ -121,10 +126,6 @@ class AdDebugViewController: UIViewController {
 extension AdDebugViewController: GADBannerViewDelegate {
     func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
         guard let bannerView = bannerView as? GAMBannerView else { return }
-        if bannerView.adUnitID == gamNativeBannerAdUnitId {
-            bannerView.resize(GADAdSizeFullWidthPortraitWithHeight(adVideoSize.height))
-            return
-        }
         AUAdViewUtils.findCreativeSize(bannerView, success: { size in
             bannerView.resize(GADAdSizeFromCGSize(size))
         }, failure: { [weak self] (error) in
