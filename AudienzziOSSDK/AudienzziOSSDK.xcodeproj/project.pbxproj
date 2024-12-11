@@ -67,6 +67,12 @@
 		586A878E2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */; };
 		586C6C002BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */; };
 		587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 587512A22BA36053004BB7E9 /* VisibleView.swift */; };
+		5880C97E2D09DFFA0063F249 /* AUTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C97D2D09DFFA0063F249 /* AUTargeting.swift */; };
+		5880C97F2D09DFFA0063F249 /* AUTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C97D2D09DFFA0063F249 /* AUTargeting.swift */; };
+		5880C9812D09E1EB0063F249 /* AUGender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C9802D09E1EB0063F249 /* AUGender.swift */; };
+		5880C9822D09E1EB0063F249 /* AUGender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C9802D09E1EB0063F249 /* AUGender.swift */; };
+		5880C9842D09E6E40063F249 /* AUExternalUserId.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C9832D09E6E40063F249 /* AUExternalUserId.swift */; };
+		5880C9852D09E6E40063F249 /* AUExternalUserId.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C9832D09E6E40063F249 /* AUExternalUserId.swift */; };
 		5890CFEF2BD150F20034E2FD /* AUAdParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890CFEE2BD150F20034E2FD /* AUAdParameters.swift */; };
 		5890D0092BD29F9E0034E2FD /* AUAdUnitConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */; };
 		58927A1A2BE0E412001A0F45 /* AUAdFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58927A192BE0E412001A0F45 /* AUAdFormat.swift */; };
@@ -244,6 +250,9 @@
 		586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedAdUnitDelegate.swift; sourceTree = "<group>"; };
 		586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdUnitConfiguration_Private.swift; sourceTree = "<group>"; };
 		587512A22BA36053004BB7E9 /* VisibleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisibleView.swift; sourceTree = "<group>"; };
+		5880C97D2D09DFFA0063F249 /* AUTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUTargeting.swift; sourceTree = "<group>"; };
+		5880C9802D09E1EB0063F249 /* AUGender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUGender.swift; sourceTree = "<group>"; };
+		5880C9832D09E6E40063F249 /* AUExternalUserId.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUExternalUserId.swift; sourceTree = "<group>"; };
 		5890CFEE2BD150F20034E2FD /* AUAdParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdParameters.swift; sourceTree = "<group>"; };
 		5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdUnitConfiguration.swift; sourceTree = "<group>"; };
 		58927A192BE0E412001A0F45 /* AUAdFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdFormat.swift; sourceTree = "<group>"; };
@@ -368,6 +377,7 @@
 		582745812BAAFDF200FE77D6 /* AdUnitConfiguration */ = {
 			isa = PBXGroup;
 			children = (
+				5880C97C2D09DFC40063F249 /* AUTargeting */,
 				5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */,
 				58B90CFA2C19DF4200BA6E1B /* AUAdUnitConfigurationProtocols.swift */,
 				5896C94C2C20449F00BB434E /* Rendering */,
@@ -633,6 +643,16 @@
 				584391FE2BBD63500053B583 /* AUNativeApi */,
 			);
 			path = Helpers;
+			sourceTree = "<group>";
+		};
+		5880C97C2D09DFC40063F249 /* AUTargeting */ = {
+			isa = PBXGroup;
+			children = (
+				5880C97D2D09DFFA0063F249 /* AUTargeting.swift */,
+				5880C9802D09E1EB0063F249 /* AUGender.swift */,
+				5880C9832D09E6E40063F249 /* AUExternalUserId.swift */,
+			);
+			path = AUTargeting;
 			sourceTree = "<group>";
 		};
 		5896C94C2C20449F00BB434E /* Rendering */ = {
@@ -1043,6 +1063,7 @@
 				58436A8A2C060F9200E83155 /* UIViewExtension.swift in Sources */,
 				58D9BC342BE9053A000C4149 /* AUBannerView_Private.swift in Sources */,
 				58AECFE92C2979800020E98D /* AURequestBuilder.swift in Sources */,
+				5880C9852D09E6E40063F249 /* AUExternalUserId.swift in Sources */,
 				58249B1A2BC5747200E5C4C6 /* AUBannerParameters.swift in Sources */,
 				583B554B2BD66D2E00226302 /* AUMORTBAppContent.swift in Sources */,
 				58DCF5492BDFDC4E00683A3E /* AUNativeEventTracker.swift in Sources */,
@@ -1076,6 +1097,7 @@
 				58436AC52C09BD7800E83155 /* AUBidWinnerEven.swift in Sources */,
 				58436AD52C09C5BC00E83155 /* AUBannerHandler.swift in Sources */,
 				58436ABE2C08707800E83155 /* Common.swift in Sources */,
+				5880C9812D09E1EB0063F249 /* AUGender.swift in Sources */,
 				58DCF5472BDFCCAC00683A3E /* AUNativeAsset.swift in Sources */,
 				585A79722BC97FDF005D531C /* AUInterstitialRenderingView.swift in Sources */,
 				585608772BB190BE00F9F073 /* AUInterstitialView.swift in Sources */,
@@ -1084,6 +1106,7 @@
 				583B55552BD66F5B00226302 /* AUMORTBAppContent_Internal.swift in Sources */,
 				58436ACD2C09BE1200E83155 /* AUAdCreationEvent.swift in Sources */,
 				58D9BC3E2BE913F2000C4149 /* AUInterstitialView_Private.swift in Sources */,
+				5880C97E2D09DFFA0063F249 /* AUTargeting.swift in Sources */,
 				58F8BD062C1700BA00E08F1E /* AUScreenImpression.swift in Sources */,
 				58D9BC702BEBBC6E000C4149 /* AUNativeImageAssetType.swift in Sources */,
 			);
@@ -1094,6 +1117,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				58EB06F82C21972B00CE6E86 /* AUBannerParameters_Private.swift in Sources */,
+				5880C97F2D09DFFA0063F249 /* AUTargeting.swift in Sources */,
 				58EB06DE2C21957800CE6E86 /* AUAdUnitConfigurationProtocols.swift in Sources */,
 				58EB06BC2C2194B300CE6E86 /* AURewardedHandler.swift in Sources */,
 				58EB06C12C2194C700CE6E86 /* AULocalStorageService.swift in Sources */,
@@ -1106,6 +1130,7 @@
 				58EB06D52C21957100CE6E86 /* AUBannerView.swift in Sources */,
 				58EB06E52C2195E200CE6E86 /* UIViewExtension.swift in Sources */,
 				58EB06C72C2194E300CE6E86 /* AUFailedLoadEvent.swift in Sources */,
+				5880C9822D09E1EB0063F249 /* AUGender.swift in Sources */,
 				58EB06C82C2194E300CE6E86 /* AUAdCreationEvent.swift in Sources */,
 				58EB06E32C2195C400CE6E86 /* AUMORTBAppContent.swift in Sources */,
 				58EB06C92C2194E300CE6E86 /* AUScreenImpression.swift in Sources */,
@@ -1124,6 +1149,7 @@
 				58EB06F22C21965E00CE6E86 /* AUBannerView_Private.swift in Sources */,
 				58D078AF2C23132A00D49175 /* TestableModel.swift in Sources */,
 				58EB06EB2C21964600CE6E86 /* AUAdUnitConfiguration_Private.swift in Sources */,
+				5880C9842D09E6E40063F249 /* AUExternalUserId.swift in Sources */,
 				58EB06CF2C2194E300CE6E86 /* AUBidWinnerEven.swift in Sources */,
 				58EB06E22C2195B700CE6E86 /* AUAdParameters.swift in Sources */,
 				58EB06D02C2194E300CE6E86 /* AUAdClickEvent.swift in Sources */,
