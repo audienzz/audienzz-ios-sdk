@@ -29,6 +29,7 @@ public class AUInterstitialView: AUAdView {
     internal var gadUnitID: String?
     
     public var parameters: AUVideoParameters?
+    public var bannerParameters: AUBannerParameters?
     
     /**
      Initialize Interstitial view
@@ -73,6 +74,10 @@ public class AUInterstitialView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd(with gamRequest: AnyObject, adUnitID: String) {
+        if let parameters = bannerParameters {
+            adUnit.bannerParameters = parameters.makeBannerParameters()
+        }
+        
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
         self.gamRequest = gamRequest
