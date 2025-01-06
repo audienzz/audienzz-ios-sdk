@@ -76,7 +76,7 @@ class ExamplesViewController: UIViewController {
     
     private func setupAdContainer() {
         createBannerView_320x50()
-        createBannerView_320x250()
+        createbannerView_300x250()
         createMultisizeBanner()
         createVideoBannerView()
 

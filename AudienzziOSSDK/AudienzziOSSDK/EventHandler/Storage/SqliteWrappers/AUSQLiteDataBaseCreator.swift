@@ -49,8 +49,8 @@ fileprivate extension AUSQLiteDataBaseCreator {
     func createEventsTable(on dataBase: Connection) throws {
         let events = Table(SQLiteConstants.DataBaseTables.events)
         
-        let id = Expression<String>(value: "id")
-        let payload = Expression<String>(value: "payload")
+        let id = SQLite.Expression<String>("id")
+        let payload = SQLite.Expression<String>("payload")
         
         try dataBase.run(events.create { t in
             t.column(id, primaryKey: true)

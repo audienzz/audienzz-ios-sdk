@@ -36,7 +36,7 @@ fileprivate let storedImpsBanner = ["prebid-demo-banner-300-250", "prebid-demo-v
 fileprivate let gamAdUnitMultiformatBannerOriginal = "/21808260008/prebid-demo-original-banner-multiformat"
 
 fileprivate var bannerView_320x50: AUBannerView!
-fileprivate var bannerView_320x250: AUBannerView!
+fileprivate var bannerView_300x250: AUBannerView!
 fileprivate var bannerMultisizeView: AUBannerView!
 fileprivate var bannerVideoView: AUBannerView!
 fileprivate var bannerMultiplatformView: AUBannerView!
@@ -62,7 +62,7 @@ fileprivate let storedImpsBannerLazy = ["prebid-demo-banner-300-250", "prebid-de
 fileprivate let gamAdUnitMultiformatBannerOriginalLazy = "/21808260008/prebid-demo-original-banner-multiformat"
 
 fileprivate var bannerLazyView_320x50: AUBannerView!
-fileprivate var bannerLazyView_320x250: AUBannerView!
+fileprivate var bannerLazyView_300x250: AUBannerView!
 fileprivate var bannerLazyMultisizeView: AUBannerView!
 fileprivate var bannerLazyVideoView: AUBannerView!
 fileprivate var bannerLazyMultiplatformView: AUBannerView!
@@ -98,25 +98,25 @@ extension SeparateViewController {
         }
     }
     
-    func createBannerView_320x250() {
+    func createbannerView_300x250() {
         let gamBanner = GAMBannerView(adSize: GADAdSizeFromCGSize(adVideoSize))
         gamBanner.adUnitID = gamAdUnitDisplayBannerOriginal_320x250
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = GAMRequest()
         
-        bannerView_320x250 = AUBannerView(configId: storedImpDisplayBanner_320x250, adSize: adSizeMult, adFormats: [.banner], isLazyLoad: false)
-        bannerView_320x250.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: self.view.frame.width, height: 250))
-        bannerView_320x250.backgroundColor = .clear
-        adContainerView.addSubview(bannerView_320x250)
+        bannerView_300x250 = AUBannerView(configId: storedImpDisplayBanner_320x250, adSize: adSizeMult, adFormats: [.banner], isLazyLoad: false)
+        bannerView_300x250.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: self.view.frame.width, height: 250))
+        bannerView_300x250.backgroundColor = .clear
+        adContainerView.addSubview(bannerView_300x250)
         
-        addDebugLabel(toView: bannerView_320x250, name: "bannerView_320x250")
+        addDebugLabel(toView: bannerView_300x250, name: "bannerView_300x250")
         
         let handler = AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal_320x250, gamView: gamBanner)
         
-        bannerView_320x250.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
+        bannerView_300x250.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
         
-        bannerView_320x250.onLoadRequest = { gamRequest in
+        bannerView_300x250.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {
                 print("Faild request unwrap")
                 return
@@ -266,19 +266,19 @@ extension SeparateViewController {
 
         let gamRequest = GAMRequest()
         
-        bannerLazyView_320x250 = AUBannerView(configId: storedImpDisplayBanner_320x250_Lazy, adSize: adSize, adFormats: [.banner], isLazyLoad: true)
-        bannerLazyView_320x250.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
+        bannerLazyView_300x250 = AUBannerView(configId: storedImpDisplayBanner_320x250_Lazy, adSize: adSize, adFormats: [.banner], isLazyLoad: true)
+        bannerLazyView_300x250.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
                                               size: CGSize(width: self.view.frame.width, height: 250))
-        bannerLazyView_320x250.backgroundColor = .clear
-        lazyAdContainerView.addSubview(bannerLazyView_320x250)
+        bannerLazyView_300x250.backgroundColor = .clear
+        lazyAdContainerView.addSubview(bannerLazyView_300x250)
         
-        addDebugLabel(toView: bannerLazyView_320x250, name: "bannerLazyView_320x250")
+        addDebugLabel(toView: bannerLazyView_300x250, name: "bannerLazyView_300x250")
         
-        bannerLazyView_320x250.createAd(with: gamRequest,
+        bannerLazyView_300x250.createAd(with: gamRequest,
                                         gamBanner: gamBanner,
                                         eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal_320x250, gamView: gamBanner))
         
-        bannerLazyView_320x250.onLoadRequest = { gamRequest in
+        bannerLazyView_300x250.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {
                 print("Faild request unwrap")
                 return

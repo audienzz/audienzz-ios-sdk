@@ -27,7 +27,7 @@ class SeparateViewController: UIViewController {
     
     internal let adSize = CGSize(width: 320, height: 50)
     internal let adSizeMult = CGSize(width: 300, height: 250)
-    internal let adVideoSize = CGSize(width: 320, height: 250)
+    internal let adVideoSize = CGSize(width: 300, height: 250)
     internal var adaptiveSize: GADAdSize!
     
     // Multiformat
@@ -80,7 +80,7 @@ class SeparateViewController: UIViewController {
         switch selectedType {
         case .bannerOrigin:
             createBannerView_320x50()
-            createBannerView_320x250()
+            createbannerView_300x250()
         case .bannerOriginVideo:
             createVideoBannerView()
         case .bannerOriginMulti:

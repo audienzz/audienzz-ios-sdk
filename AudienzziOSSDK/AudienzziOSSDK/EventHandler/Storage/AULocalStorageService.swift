@@ -52,8 +52,8 @@ fileprivate extension AULocalStorageService {
     func getEvents() -> [AUEventDB] {
         let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
         
-        let id = Expression<String>(value: "id")
-        let payload = Expression<String>(value: "payload")
+        let id = SQLite.Expression<String>("id")
+        let payload = SQLite.Expression<String>("payload")
         
         do {
             let events = Array(try dataBase.prepare(eventsTable))
@@ -76,15 +76,17 @@ fileprivate extension AULocalStorageService {
     func saveEvents(_ events: [AUEventDB]) {
         let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
         
-        let id = Expression<String>(value: "id")
-        let payload = Expression<String>(value: "payload")
+        let id = SQLite.Expression<String>("id")
+        let payload = SQLite.Expression<String>("payload")
         
         do {
             removeAllEvents()
             try events.forEach { event in
-                _ = try dataBase.run(eventsTable.insert(or: .replace,
-                                                        id <- event.id,
-                                                        payload <- event.payload))
+                let query = eventsTable.insert(or: .replace,
+                                               id <- event.id,
+                                               payload <- event.payload)
+                print("query: \(query)")
+                _ = try dataBase.run(query)
             }
         } catch let error {
             AULogEvent.logDebug(error.localizedDescription)
