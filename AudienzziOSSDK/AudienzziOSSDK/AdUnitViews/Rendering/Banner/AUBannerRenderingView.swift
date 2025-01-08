@@ -224,7 +224,7 @@ fileprivate extension AUBannerRenderingView {
                                       adUnitID: eventHandler.adUnitID,
                                       size: AUUniqHelper.sizeMaker(adSize),
                                       adType: adTypeString,
-                                      adSubType: format == .banner ? "HTML" : "VIDEO",
+                                      adSubType: "MULTIFORMAT",
                                       apiType: apiTypeString)
         
         guard let payload = event.convertToJSONString() else { return }

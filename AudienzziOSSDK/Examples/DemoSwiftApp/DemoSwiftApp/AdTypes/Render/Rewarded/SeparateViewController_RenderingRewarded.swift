@@ -50,15 +50,16 @@ extension SeparateViewController {
 }
 
 extension SeparateViewController: AURewardedAdUnitDelegate {
-    @MainActor
     func rewardedAdDidDisplayOnScreen() {
-        print("rewardedAdDidDisplayOnScreen")
-        stopScroll()
-        
-        activityIndicator = UIActivityIndicatorView(style: .medium)
-        activityIndicator.frame = CGRect(x: 150, y: 30, width: 50, height: 50)
-        rewardedRenderingLazyView.addSubview(activityIndicator)
-        activityIndicator.startAnimating()
+        DispatchQueue.main.async {
+            print("rewardedAdDidDisplayOnScreen")
+            self.stopScroll()
+            
+            activityIndicator = UIActivityIndicatorView(style: .medium)
+            activityIndicator.frame = CGRect(x: 150, y: 30, width: 50, height: 50)
+            rewardedRenderingLazyView.addSubview(activityIndicator)
+            activityIndicator.startAnimating()
+        }
     }
     
     func rewardedAdDidReceiveAd() {
