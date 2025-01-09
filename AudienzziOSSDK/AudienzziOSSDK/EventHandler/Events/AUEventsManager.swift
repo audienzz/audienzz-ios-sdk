@@ -37,7 +37,6 @@ class AUEventsManager: AULogEventType {
         networkManager = AUEventsNetworkManager<AUBatchResultModel>()
         visitorId = makeVisitorId()
         self.companyId = companyId
-        self.requestDeviceId()
     }
     
     // MARK: - Network
@@ -88,9 +87,10 @@ class AUEventsManager: AULogEventType {
     }
     
     private func requestDeviceId() {
-        guard deviceId.isEmpty else { return }
-        deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
-        AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased())
+        if deviceId.isEmpty || deviceId == "00000000-0000-0000-0000-000000000000" {
+            deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
+            AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased())
+        }
     }
     
     private func makeVisitorId() -> String {
@@ -202,7 +202,9 @@ fileprivate extension AUEventsManager {
             model?.deviceId = deviceId
             return model
         case .SCREEN_IMPRESSION:
-            return AUScreenImpression(payload)
+            var model = AUScreenImpression(payload)
+            model?.deviceId = deviceId
+            return model
         }
     }
     
