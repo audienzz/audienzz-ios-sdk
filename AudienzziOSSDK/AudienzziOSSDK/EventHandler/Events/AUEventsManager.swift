@@ -27,7 +27,7 @@ class AUEventsManager: AULogEventType {
     private var visitorId: String = "visitorId"
     private var companyId: String = "companyId"
     private var sessionId: String = AUUniqHelper.makeUniqID()
-    private var deviceId: String = "00000000-0000-0000-0000-000000000000"
+    private var deviceId: String = ""
     
     //  batches time implementation
     fileprivate var timer: Timer?
@@ -37,10 +37,7 @@ class AUEventsManager: AULogEventType {
         networkManager = AUEventsNetworkManager<AUBatchResultModel>()
         visitorId = makeVisitorId()
         self.companyId = companyId
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            self?.requestIDFApermission()
-        }
+        self.requestDeviceId()
     }
     
     // MARK: - Network
@@ -90,27 +87,10 @@ class AUEventsManager: AULogEventType {
         stopTimer()
     }
     
-    private func requestIDFApermission() {
-        if #available(iOS 14, *) {
-            ATTrackingManager.requestTrackingAuthorization { [weak self] status in
-                switch status {
-                case .authorized:
-                    AULogEvent.logDebug("enable tracking")
-                case .denied:
-                    AULogEvent.logDebug("disable tracking")
-                default:
-                    AULogEvent.logDebug("disable tracking")
-                }
-                
-                self?.deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
-                AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased())
-            }
-        } else {
-            if ASIdentifierManager.shared().isAdvertisingTrackingEnabled {
-                deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
-                AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased())
-            }
-        }
+    private func requestDeviceId() {
+        guard deviceId.isEmpty else { return }
+        deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
+        AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased())
     }
     
     private func makeVisitorId() -> String {
@@ -177,6 +157,7 @@ fileprivate extension AUEventsManager {
     }
     
     func convert(fromType: AUAdEventType, of payload: PayloadModel) -> AUEventHandlerType? {
+        requestDeviceId()
         switch fromType {
         case .BID_WINNER:
             var model = AUBidWinnerEvent(payload)

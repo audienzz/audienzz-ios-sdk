@@ -13,6 +13,8 @@
  limitations under the License.
  */
 import UIKit
+import AppTrackingTransparency
+import AdSupport
 
 enum AdTypeExample: String {
     case bannerOrigin = "Banner Origin HTML"
@@ -54,6 +56,28 @@ class MainNavigationViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            self?.requestTrackingAuthorization()
+        }
+    }
+    
+    private func requestTrackingAuthorization() {
+        if #available(iOS 14, *) {
+            ATTrackingManager.requestTrackingAuthorization { status in
+                switch status {
+                case .authorized:
+                    print("enable tracking")
+                case .denied:
+                    print("disable tracking")
+                default:
+                    print("disable tracking")
+                }
+            }
+        } else {
+            if ASIdentifierManager.shared().isAdvertisingTrackingEnabled {
+                print("asked")
+            }
+        }
     }
 }
 
