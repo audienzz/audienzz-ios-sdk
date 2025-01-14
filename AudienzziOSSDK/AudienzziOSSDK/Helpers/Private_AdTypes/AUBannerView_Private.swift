@@ -15,6 +15,7 @@
 
 import UIKit
 import PrebidMobile
+import ObjectiveC.runtime
 
 fileprivate let adTypeString = "BANNER"
 fileprivate let apiTypeString = "ORIGINAL"
@@ -38,6 +39,18 @@ extension AUBannerView {
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
+            
+            if let bidRequester = getPrivateBidRequester(from: adUnit) {
+                print("Got bidRequester: \(bidRequester)")
+
+                bidRequester.requestBids { bidResponse, error in
+                    guard let bidResponse else { return }
+                    print(bidResponse)
+                }
+            } else {
+                print("Failed to access bidRequester")
+            }
+            
             AULogEvent.logDebug("Audienz demand fetch for GAM \(resultCode.name())")
             self.makeWinnerEvent(AUResulrCodeConverter.convertResultCodeName(resultCode))
             self.isInitialAutorefresh = false
@@ -45,6 +58,18 @@ extension AUBannerView {
         }
     }
     
+    func getPrivateBidRequester(from object: AnyObject) -> PBMBidRequesterProtocol? {
+        let objectClass: AnyClass = object_getClass(object)!
+
+        // Get the instance variable for "bidRequester"
+        if let ivar = class_getInstanceVariable(objectClass, "bidRequester") {
+            // Get the value of the instance variable
+            return object_getIvar(object, ivar) as? PBMBidRequesterProtocol
+        }
+
+        return nil
+    }
+
     private func isVisible(view: UIView) -> Bool {
         func isVisible(view: UIView, inView: UIView?) -> Bool {
             guard let inView = inView else { return true }
@@ -122,64 +147,4 @@ extension AUBannerView {
         
         AUEventsManager.shared.addEvent(event: AUEventDB(payload))
     }
-}
-
-
-protocol Reflectable: AnyObject {
-    func reflected() -> [String: Any?]
-}
-
-extension Reflectable {
-    
-    func reflected() -> [String: Any?] {
-        let mirror = Mirror(reflecting: self)
-        var dict: [String: Any?] = [:]
-        for child in mirror.children {
-            guard let key = child.label else {
-                continue
-            }
-            dict[key] = child.value
-        }
-        return dict
-    }
-    
-    var reflectedString: String {
-        let reflection = reflected()
-        var result = String(describing: self)
-        result += " { \n"
-        for (key, val) in reflection {
-            result += "\t\(key): \(val ?? "null")\n"
-        }
-        return result + "}"
-    }
-    
-}
-
-extension Reflectable where Self: NSObject {
-    
-    func reflected() -> [String : Any?] {
-        
-        var count: UInt32 = 0
-        
-        guard let properties = class_copyPropertyList(Self.self, &count) else {
-            return [:]
-        }
-        
-        var dict: [String: Any] = [:]
-        for i in 0..<Int(count) {
-            let name = property_getName(properties[i])
-            guard let nsKey = NSString(utf8String: name) else {
-                continue
-            }
-            let key = nsKey as String
-            guard responds(to: Selector(key)) else {
-                continue
-            }
-            dict[key] = value(forKey: key)
-        }
-        free(properties)
-        
-        return dict
-    }
-    
 }

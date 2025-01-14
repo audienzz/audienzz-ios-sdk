@@ -25,7 +25,7 @@ fileprivate let storedImpVideoInterstitial = "prebid-demo-video-interstitial-320
 fileprivate let gamAdUnitVideoInterstitialOriginal = "ca-app-pub-3940256099942544/5135589807"
 
 fileprivate let storedImpsInterstitial = ["prebid-demo-display-interstitial-320-480", "prebid-demo-video-interstitial-320-480-original-api"]
-fileprivate let gamAdUnitMultiformatInterstitialOriginal = "/21808260008/prebid-demo-intestitial-multiformat"
+fileprivate let gamAdUnitMultiformatInterstitialOriginal = "/96628199/de_audienzz.ch_v2/de_audienzz.ch_320_adnz_wideboard_1"
 
 extension SeparateViewController {
     func createInterstitialView() {

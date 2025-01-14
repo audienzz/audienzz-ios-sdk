@@ -85,7 +85,6 @@ fileprivate extension AULocalStorageService {
                 let query = eventsTable.insert(or: .replace,
                                                id <- event.id,
                                                payload <- event.payload)
-                print("query: \(query)")
                 _ = try dataBase.run(query)
             }
         } catch let error {

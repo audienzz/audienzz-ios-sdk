@@ -55,7 +55,6 @@ struct AUCloseAdEvent: Codable, AUEventHandlerType {
             
             // Convert JSON data to a JSON string
             if let jsonString = String(data: jsonData, encoding: .utf8) {
-                AULogEvent.logDebug("JSON String:\n\(jsonString)")
                 return jsonString
             }
         } catch {

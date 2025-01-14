@@ -77,6 +77,9 @@ class ExamplesViewController: UIViewController {
     private func setupAdContainer() {
         createBannerView_320x50()
         createbannerView_300x250()
+        
+        // will be implement in next verisions
+/*
         createMultisizeBanner()
         createVideoBannerView()
 
@@ -91,16 +94,20 @@ class ExamplesViewController: UIViewController {
         createRenderingBannerView()
         createRenderingBannerVideoView()
         createRenderingNativeView()
+ */
     }
     
     private func setupALazydContainer() {
         createBannerLazyView_320x50()
         createBannerLazyView_320x250()
+        // will be implement in next verisions
+        /*
         createMultisizeBannerLazyView()
         createVideoLazyBannerView()
         createBannerMultiplatformLazyView()
         
         createMultiplatformLazyView()
+        */
 
         createInterstitialView()
         createInterstitialVideoView()
@@ -108,6 +115,8 @@ class ExamplesViewController: UIViewController {
         
         createRewardedView()
 
+        // will be implement in next verisions
+        /*
         createLazyNativeView()
         createLazyNativeBannerView()
 
@@ -118,6 +127,7 @@ class ExamplesViewController: UIViewController {
         createRenderingIntertitiaBannerView()
         createRenderingIntertitiaVideoView()
         createRenderingRewardLazyView()
+         */
     }
     
     private func addRenderingLabel(_ viewContainer: UIView) {
@@ -158,6 +168,10 @@ class ExamplesViewController: UIViewController {
         }
         
         setupALazydContainer()
+    }
+    
+    deinit {
+        print("deinit ExamplesViewController")
     }
 }
 

@@ -89,7 +89,6 @@ class AUEventsManager: AULogEventType {
     private func requestDeviceId() {
         if deviceId.isEmpty || deviceId == "00000000-0000-0000-0000-000000000000" {
             deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
-            AULogEvent.logDebug(ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased())
         }
     }
     
