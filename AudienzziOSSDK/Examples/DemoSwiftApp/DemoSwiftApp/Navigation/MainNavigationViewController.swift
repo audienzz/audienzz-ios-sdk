@@ -35,22 +35,22 @@ enum AdTypeExample: String {
 
 class MainNavigationViewController: UIViewController {
     @IBOutlet private var tableView: UITableView!
-    
+    // the commented types will be implemented in next version
     fileprivate var rows: [AdTypeExample] = [
         .allExample,
         .debug,
         .bannerOrigin,
-        .bannerOriginVideo,
-        .bannerOriginMulti,
+//        .bannerOriginVideo,
+//        .bannerOriginMulti,
         .interstitalOrigin,
         .interstitalOriginVideo,
         .interstitalOriginMulti,
-        .rewardedOrigin,
-        .bannerRender,
-        .bannerRenderVideo,
-        .interstitialRender,
-        .interstitialRenderVideo,
-        .rewardedRender
+        .rewardedOrigin
+//        .bannerRender,
+//        .bannerRenderVideo,
+//        .interstitialRender,
+//        .interstitialRenderVideo,
+//        .rewardedRender
     ]
     
     override func viewDidLoad() {
