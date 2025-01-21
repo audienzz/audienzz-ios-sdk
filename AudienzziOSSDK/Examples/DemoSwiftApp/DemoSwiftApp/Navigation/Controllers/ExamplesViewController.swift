@@ -169,6 +169,10 @@ class ExamplesViewController: UIViewController {
         
         setupALazydContainer()
     }
+    
+    deinit {
+        print("deinit ExamplesViewController")
+    }
 }
 
 // MARK: - Helpers

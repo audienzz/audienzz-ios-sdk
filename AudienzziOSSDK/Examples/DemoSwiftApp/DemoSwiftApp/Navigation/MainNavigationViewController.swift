@@ -31,6 +31,29 @@ enum AdTypeExample: String {
     case rewardedRender = "Rewarded Render"
     case allExample = "All examples"
     case debug = "Ad Debug"
+    case adaptive = "Adaptive - 'multi-size GAM'"
+    
+    var indexRow: Int {
+        switch self {
+        case .allExample:
+            return 0
+        case .debug:
+            return 1
+        case .adaptive:
+            return 2
+        case .bannerOrigin:
+            return 3
+        case .interstitalOrigin:
+            return 6
+        case .interstitalOriginVideo:
+            return 7
+        case .interstitalOriginMulti:
+            return 8
+        case .rewardedOrigin:
+            return 9
+        default: return 0
+        }
+    }
 }
 
 class MainNavigationViewController: UIViewController {
@@ -39,6 +62,7 @@ class MainNavigationViewController: UIViewController {
     fileprivate var rows: [AdTypeExample] = [
         .allExample,
         .debug,
+        .adaptive,
         .bannerOrigin,
 //        .bannerOriginVideo,
 //        .bannerOriginMulti,
@@ -98,16 +122,21 @@ extension MainNavigationViewController: UITableViewDelegate, UITableViewDataSour
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let mainStoryboard:UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+        let choosedRow = rows[indexPath.row]
         
-        if indexPath.row == 0 {
+        switch choosedRow {
+        case .bannerOrigin, .bannerOriginVideo, .bannerOriginMulti, .interstitalOrigin, .interstitalOriginVideo,.interstitalOriginMulti,.rewardedOrigin, .bannerRender, .bannerRenderVideo, .interstitialRender, .interstitialRenderVideo, .rewardedRender:
+            let destination = mainStoryboard.instantiateViewController(withIdentifier: "SeparateViewController") as! SeparateViewController
+            destination.selectedType = choosedRow
+            self.navigationController?.pushViewController(destination, animated: true)
+        case .allExample:
             let destination = mainStoryboard.instantiateViewController(withIdentifier: "ExamplesViewController") as! ExamplesViewController
             self.navigationController?.pushViewController(destination, animated: true)
-        } else if indexPath.row == 1 {
+        case .debug:
             let destination = mainStoryboard.instantiateViewController(withIdentifier: "AdDebugViewController") as! AdDebugViewController
             self.navigationController?.pushViewController(destination, animated: true)
-        } else {
-            let destination = mainStoryboard.instantiateViewController(withIdentifier: "SeparateViewController") as! SeparateViewController
-            destination.selectedType = rows[indexPath.row]
+        case .adaptive:
+            let destination = mainStoryboard.instantiateViewController(withIdentifier: "AdAdaptiveViewController") as! AdAdaptiveViewController
             self.navigationController?.pushViewController(destination, animated: true)
         }
         

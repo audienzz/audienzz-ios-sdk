@@ -20,10 +20,10 @@ import GoogleMobileAds
 fileprivate let storedImpDisplayBanner = "prebid-demo-banner-320-50"
 fileprivate let gamAdUnitDisplayBannerOriginal = "ca-app-pub-3940256099942544/2934735716"
 // 320x250
-fileprivate let storedImpDisplayBanner_320x250 = "prebid-demo-banner-300-250"
-fileprivate let gamAdUnitDisplayBannerOriginal_320x250 = "ca-app-pub-3940256099942544/6300978111"
+fileprivate let storedImpDisplayBanner_320x250 = "33994718"//"prebid-demo-banner-300-250"
+fileprivate let gamAdUnitDisplayBannerOriginal_320x250 = "/96628199/de_audienzz.ch_v2/de_audienzz.ch_320_adnz_wideboard_1"//"ca-app-pub-3940256099942544/6300978111""
 
-// multisize
+// adaptive
 fileprivate let gamAdUnitDisplayAdaptiveBanner = "ca-app-pub-3940256099942544/2435281174"
 
 // Video outstream
@@ -381,14 +381,9 @@ extension ExamplesViewController {
 extension ExamplesViewController: GADBannerViewDelegate {
     func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
         guard let bannerView = bannerView as? GAMBannerView else { return }
-        if bannerView.adUnitID == gamNativeBannerAdUnitId {
-            bannerView.resize(GADAdSizeFullWidthPortraitWithHeight(adVideoSize.height))
-            return
-        }
         AUAdViewUtils.findCreativeSize(bannerView, success: { size in
             bannerView.resize(GADAdSizeFromCGSize(size))
         }, failure: { [weak self] (error) in
-            self?.helperForSize(bannerView: bannerView)
             self?.showSizeError(forView: bannerView, error: error)
         })
     }
@@ -396,23 +391,5 @@ extension ExamplesViewController: GADBannerViewDelegate {
     func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
         print("GAM did fail to receive ad with error: \(error)")
         errorHandling(forView: bannerView, error: error)
-    }
-    
-    private func helperForSize(bannerView: GAMBannerView) {
-        if bannerView.adUnitID == gamAdUnitDisplayBannerOriginal {
-            bannerView.resize(GADAdSizeFromCGSize(adSize))
-        } else if bannerView.adUnitID == gamAdUnitVideoBannerOriginal ||
-                    bannerView.adUnitID == gamAdUnitVideoBannerOriginalLazy {
-            bannerView.resize(GADAdSizeFromCGSize(adVideoSize))
-        } else if bannerView.adUnitID == gamNativeBannerAdUnitId {
-            bannerView.resize(GADAdSizeFullWidthPortraitWithHeight(adVideoSize.height))
-        } else if bannerView.adUnitID == gamAdUnitMultiformatBannerOriginal {
-            bannerView.resize(GADAdSizeFromCGSize(adSizeMult))
-        } else if bannerView.adUnitID == gamAdUnitDisplayAdaptiveBanner {
-            bannerView.resize(GADAdSizeFromCGSize(adaptiveSize.size))
-        } else if bannerView.adUnitID == gamAdUnitDisplayBannerOriginal_320x250 ||
-                    bannerView.adUnitID == gamAdUnitDisplayBannerOriginal_300x250_Lazy {
-            bannerView.resize(GADAdSizeFromCGSize(adVideoSize))
-        }
     }
 }

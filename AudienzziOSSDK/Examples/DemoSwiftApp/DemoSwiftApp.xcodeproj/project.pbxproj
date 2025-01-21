@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		34D92797E93582A82145040C /* Pods_DemoSwiftApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B5BE8EC2178524AE8225FF2 /* Pods_DemoSwiftApp.framework */; };
+		58076A172D3AB4D70043DE9A /* AdaptiveViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58076A162D3AB4CD0043DE9A /* AdaptiveViewController.swift */; };
 		58392B802C5A4BC7002AC5A5 /* AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; };
 		58392B812C5A4BC7002AC5A5 /* AudienzziOSSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 587512962BA1A764004BB7E9 /* AudienzziOSSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		586754092C4FA35B005937C2 /* MainNavigationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754062C4FA35B005937C2 /* MainNavigationViewController.swift */; };
@@ -58,6 +59,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		58076A162D3AB4CD0043DE9A /* AdaptiveViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveViewController.swift; sourceTree = "<group>"; };
 		586754062C4FA35B005937C2 /* MainNavigationViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainNavigationViewController.swift; sourceTree = "<group>"; };
 		586754072C4FA35B005937C2 /* SeparateViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeparateViewController.swift; sourceTree = "<group>"; };
 		5867540B2C4FA3A1005937C2 /* ExamplesViewControllerr_BannerAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExamplesViewControllerr_BannerAPI.swift; sourceTree = "<group>"; };
@@ -276,6 +278,7 @@
 				58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */,
 				589A87572CC644F200977099 /* AdDebugViewController.swift */,
 				586754072C4FA35B005937C2 /* SeparateViewController.swift */,
+				58076A162D3AB4CD0043DE9A /* AdaptiveViewController.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -489,6 +492,7 @@
 				586754252C4FA3A1005937C2 /* SeparateViewController_MultiformatAPI.swift in Sources */,
 				586754372C4FA3D4005937C2 /* ExaplesViewController_Rendering_Banner.swift in Sources */,
 				5867543D2C4FA3D4005937C2 /* SeparateViewController_RenderingRewarded.swift in Sources */,
+				58076A172D3AB4D70043DE9A /* AdaptiveViewController.swift in Sources */,
 				58C73FA02B9F0C7000AE52EC /* SceneDelegate.swift in Sources */,
 				5867543B2C4FA3D4005937C2 /* ExamplesViewController_RenderingNative.swift in Sources */,
 				586754222C4FA3A1005937C2 /* ExamplesViewControllerr_InterstitialAPI.swift in Sources */,

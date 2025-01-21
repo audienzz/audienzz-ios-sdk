@@ -127,7 +127,7 @@ extension AdDebugViewController: GADBannerViewDelegate {
         }
         AUAdViewUtils.findCreativeSize(bannerView, success: { size in
             bannerView.resize(GADAdSizeFromCGSize(size))
-        }, failure: { [weak self] (error) in
+        }, failure: { (error) in
             print(error)
         })
     }
