@@ -61,7 +61,9 @@ public class AUBannerView: AUAdView {
     public override func removeFromSuperview() {
         super.removeFromSuperview()
         adUnit?.stopAutoRefresh()
-        adUnit = nil
+        self.adUnit = nil
+        self.gamRequest = nil
+        self.eventHandler = nil
     }
     
     public func addAdditionalSize(sizes: [CGSize]) {
@@ -70,7 +72,6 @@ public class AUBannerView: AUAdView {
 
     deinit {
         self.eventHandler = nil
-        AULogEvent.logDebug("AUBannerView")
     }
 
     /**

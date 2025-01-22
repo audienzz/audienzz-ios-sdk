@@ -20,8 +20,8 @@ import GoogleMobileAds
 fileprivate let storedImpDisplayBanner = "prebid-demo-banner-320-50"
 fileprivate let gamAdUnitDisplayBannerOriginal = "ca-app-pub-3940256099942544/2934735716"
 // 320x250
-fileprivate let storedImpDisplayBanner_320x250 = "33994718"//"prebid-demo-banner-300-250"
-fileprivate let gamAdUnitDisplayBannerOriginal_320x250 = "/96628199/de_audienzz.ch_v2/de_audienzz.ch_320_adnz_wideboard_1"//"ca-app-pub-3940256099942544/6300978111""
+fileprivate let storedImpDisplayBanner_320x250 = "prebid-demo-banner-300-250"
+fileprivate let gamAdUnitDisplayBannerOriginal_320x250 = "ca-app-pub-3940256099942544/6300978111"
 
 // adaptive
 fileprivate let gamAdUnitDisplayAdaptiveBanner = "ca-app-pub-3940256099942544/2435281174"
@@ -33,12 +33,6 @@ fileprivate let gamAdUnitVideoBannerOriginal = "/21808260008/prebid-demo-origina
 //  Multiformat video + HTML banner
 fileprivate let storedImpsBanner = ["prebid-demo-banner-300-250", "prebid-demo-video-outstream-original-api"]
 fileprivate let gamAdUnitMultiformatBannerOriginal = "/21808260008/prebid-demo-original-banner-multiformat"
-
-fileprivate var bannerView_320x50: AUBannerView!
-fileprivate var bannerView_300x250: AUBannerView!
-fileprivate var bannerMultisizeView: AUBannerView!
-fileprivate var bannerVideoView: AUBannerView!
-fileprivate var bannerMultiplatformView: AUBannerView!
 
 //  ========== Lazy ==========
 // 320x50
@@ -59,12 +53,6 @@ fileprivate let gamAdUnitVideoBannerOriginalLazy = "/21808260008/prebid-demo-ori
 //  Multiformat video + HTML banner
 fileprivate let storedImpsBannerLazy = ["prebid-demo-banner-300-250", "prebid-demo-video-outstream-original-api"]
 fileprivate let gamAdUnitMultiformatBannerOriginalLazy = "/21808260008/prebid-demo-original-banner-multiformat"
-
-fileprivate var bannerLazyView_320x50: AUBannerView!
-fileprivate var bannerLazyView_300x250: AUBannerView!
-fileprivate var bannerLazyMultisizeView: AUBannerView!
-fileprivate var bannerLazyVideoView: AUBannerView!
-fileprivate var bannerLazyMultiplatformView: AUBannerView!
 
 // MARK: - Banner API
 extension ExamplesViewController {

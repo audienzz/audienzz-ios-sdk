@@ -53,6 +53,17 @@ public class AURewardedView: AUAdView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    public override func removeFromSuperview() {
+        super.removeFromSuperview()
+        adUnit?.stopAutoRefresh()
+        adUnit = nil
+        self.eventHandler = nil
+    }
+    
+    deinit {
+        self.eventHandler = nil
+    }
+    
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */

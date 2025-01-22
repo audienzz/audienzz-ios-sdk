@@ -30,6 +30,18 @@ class SeparateViewController: UIViewController {
     internal let adVideoSize = CGSize(width: 300, height: 250)
     internal var adaptiveSize: GADAdSize!
     
+    //HTML_Banner
+    internal var bannerView_320x50: AUBannerView!
+    internal var bannerView_300x250: AUBannerView!
+    internal var bannerMultisizeView: AUBannerView!
+    internal var bannerVideoView: AUBannerView!
+    internal var bannerMultiplatformView: AUBannerView!
+    internal var bannerLazyView_320x50: AUBannerView!
+    internal var bannerLazyView_300x250: AUBannerView!
+    internal var bannerLazyMultisizeView: AUBannerView!
+    internal var bannerLazyVideoView: AUBannerView!
+    internal var bannerLazyMultiplatformView: AUBannerView!
+    
     // Multiformat
     internal var adMultiLoader: GADAdLoader!
     internal var adMultiLoaderSecond: GADAdLoader!

@@ -21,8 +21,8 @@ import GoogleMobileAds
 fileprivate let storedImpDisplayBanner = "prebid-demo-banner-320-50"
 fileprivate let gamAdUnitDisplayBannerOriginal = "ca-app-pub-3940256099942544/2934735716"
 // 320x250
-fileprivate let storedImpDisplayBanner_320x250 = "33994718"//"prebid-demo-banner-300-250"
-fileprivate let gamAdUnitDisplayBannerOriginal_320x250 = "/96628199/de_audienzz.ch_v2/de_audienzz.ch_320_adnz_wideboard_1"//"ca-app-pub-3940256099942544/6300978111"
+fileprivate let storedImpDisplayBanner_320x250 = "33994718"
+fileprivate let gamAdUnitDisplayBannerOriginal_320x250 = "/96628199/de_audienzz.ch_v2/de_audienzz.ch_320_adnz_wideboard_1"
 
 // adaptive
 fileprivate let gamAdUnitDisplayAdaptiveBanner = "ca-app-pub-3940256099942544/2435281174"
@@ -34,12 +34,6 @@ fileprivate let gamAdUnitVideoBannerOriginal = "/21808260008/prebid-demo-origina
 //  Multiformat video + HTML banner
 fileprivate let storedImpsBanner = ["prebid-demo-banner-300-250", "prebid-demo-video-outstream-original-api"]
 fileprivate let gamAdUnitMultiformatBannerOriginal = "/21808260008/prebid-demo-original-banner-multiformat"
-
-fileprivate var bannerView_320x50: AUBannerView!
-fileprivate var bannerView_300x250: AUBannerView!
-fileprivate var bannerMultisizeView: AUBannerView!
-fileprivate var bannerVideoView: AUBannerView!
-fileprivate var bannerMultiplatformView: AUBannerView!
 
 //  ========== Lazy ==========
 // 320x50
@@ -60,12 +54,6 @@ fileprivate let gamAdUnitVideoBannerOriginalLazy = "/21808260008/prebid-demo-ori
 //  Multiformat video + HTML banner
 fileprivate let storedImpsBannerLazy = ["prebid-demo-banner-300-250", "prebid-demo-video-outstream-original-api"]
 fileprivate let gamAdUnitMultiformatBannerOriginalLazy = "/21808260008/prebid-demo-original-banner-multiformat"
-
-fileprivate var bannerLazyView_320x50: AUBannerView!
-fileprivate var bannerLazyView_300x250: AUBannerView!
-fileprivate var bannerLazyMultisizeView: AUBannerView!
-fileprivate var bannerLazyVideoView: AUBannerView!
-fileprivate var bannerLazyMultiplatformView: AUBannerView!
 
 // MARK: - Banner API
 extension SeparateViewController {
@@ -117,33 +105,6 @@ extension SeparateViewController {
         bannerView_300x250.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
         
         bannerView_300x250.onLoadRequest = { gamRequest in
-            guard let request = gamRequest as? GADRequest else {
-                print("Faild request unwrap")
-                return
-            }
-            gamBanner.load(request)
-        }
-    }
-    
-    func createMultisizeBanner() {
-        let viewWidth = view.frame.inset(by: view.safeAreaInsets).width
-        adaptiveSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(viewWidth)
-        let gamBanner = GAMBannerView(adSize: adaptiveSize)
-        gamBanner.adUnitID = gamAdUnitDisplayAdaptiveBanner
-        gamBanner.rootViewController = self
-        gamBanner.delegate = self
-        let gamRequest = GAMRequest()
-        
-        bannerMultisizeView = AUBannerView(configId: storedImpDisplayBanner, adSize: adaptiveSize.size, adFormats: [.banner], isLazyLoad: false)
-        bannerMultisizeView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: adaptiveSize.size)
-        adContainerView.addSubview(bannerMultisizeView)
-        
-        addDebugLabel(toView: bannerMultisizeView, name: "bannerMultisizeView")
-        
-        let handler = AUBannerEventHandler(adUnitId: gamAdUnitDisplayAdaptiveBanner, gamView: gamBanner)
-        bannerMultisizeView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
-        
-        bannerMultisizeView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {
                 print("Faild request unwrap")
                 return

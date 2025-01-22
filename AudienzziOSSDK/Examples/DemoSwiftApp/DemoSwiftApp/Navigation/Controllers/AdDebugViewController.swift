@@ -121,10 +121,6 @@ class AdDebugViewController: UIViewController {
 extension AdDebugViewController: GADBannerViewDelegate {
     func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
         guard let bannerView = bannerView as? GAMBannerView else { return }
-        if bannerView.adUnitID == gamNativeBannerAdUnitId {
-            bannerView.resize(GADAdSizeFullWidthPortraitWithHeight(adVideoSize.height))
-            return
-        }
         AUAdViewUtils.findCreativeSize(bannerView, success: { size in
             bannerView.resize(GADAdSizeFromCGSize(size))
         }, failure: { (error) in
