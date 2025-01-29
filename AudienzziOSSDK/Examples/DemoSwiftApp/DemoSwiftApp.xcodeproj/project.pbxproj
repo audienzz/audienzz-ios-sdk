@@ -42,6 +42,7 @@
 		58C73FA72B9F0C7200AE52EC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 58C73FA62B9F0C7200AE52EC /* Assets.xcassets */; };
 		58C73FAA2B9F0C7200AE52EC /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 58C73FA82B9F0C7200AE52EC /* LaunchScreen.storyboard */; };
 		58C73FB22B9F0EB500AE52EC /* ExamplesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */; };
+		58F6F2A42D47E5A4002283D8 /* CPULoaderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F6F2A32D47E596002283D8 /* CPULoaderViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -96,6 +97,7 @@
 		58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamplesViewController.swift; sourceTree = "<group>"; };
 		58C73FB42B9F0F8C00AE52EC /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58C73FB82B9F18A700AE52EC /* libPrebidMobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libPrebidMobile.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		58F6F2A32D47E596002283D8 /* CPULoaderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPULoaderViewController.swift; sourceTree = "<group>"; };
 		58F877AE2BA09E5C0093CD63 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58F877B22BA09F7E0093CD63 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B5BE8EC2178524AE8225FF2 /* Pods_DemoSwiftApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_DemoSwiftApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -275,6 +277,7 @@
 		589A87592CC67E7700977099 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				58F6F2A32D47E596002283D8 /* CPULoaderViewController.swift */,
 				58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */,
 				589A87572CC644F200977099 /* AdDebugViewController.swift */,
 				586754072C4FA35B005937C2 /* SeparateViewController.swift */,
@@ -480,6 +483,7 @@
 				587512A02BA30F18004BB7E9 /* LazyAdContainerView.swift in Sources */,
 				586754392C4FA3D4005937C2 /* ExamplesViewController_RenderingInterstitialView.swift in Sources */,
 				589A87582CC6491E00977099 /* AdDebugViewController.swift in Sources */,
+				58F6F2A42D47E5A4002283D8 /* CPULoaderViewController.swift in Sources */,
 				586754212C4FA3A1005937C2 /* ExamplesViewController_InstreamAPI.swift in Sources */,
 				586754092C4FA35B005937C2 /* MainNavigationViewController.swift in Sources */,
 				5867540A2C4FA35B005937C2 /* SeparateViewController.swift in Sources */,

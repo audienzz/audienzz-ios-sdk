@@ -31,6 +31,7 @@ enum AdTypeExample: String {
     case rewardedRender = "Rewarded Render"
     case allExample = "All examples"
     case debug = "Ad Debug"
+    case cpu = "CPU LOAD DEBUG"
     case adaptive = "Adaptive - 'multi-size GAM'"
     
     var indexRow: Int {
@@ -51,6 +52,8 @@ enum AdTypeExample: String {
             return 8
         case .rewardedOrigin:
             return 9
+        case .cpu:
+            return 10
         default: return 0
         }
     }
@@ -69,7 +72,8 @@ class MainNavigationViewController: UIViewController {
         .interstitalOrigin,
         .interstitalOriginVideo,
         .interstitalOriginMulti,
-        .rewardedOrigin
+        .rewardedOrigin,
+        .cpu
 //        .bannerRender,
 //        .bannerRenderVideo,
 //        .interstitialRender,
@@ -137,6 +141,9 @@ extension MainNavigationViewController: UITableViewDelegate, UITableViewDataSour
             self.navigationController?.pushViewController(destination, animated: true)
         case .adaptive:
             let destination = mainStoryboard.instantiateViewController(withIdentifier: "AdAdaptiveViewController") as! AdAdaptiveViewController
+            self.navigationController?.pushViewController(destination, animated: true)
+        case .cpu:
+            let destination = mainStoryboard.instantiateViewController(withIdentifier: "CPULoaderViewController") as! CPULoaderViewController
             self.navigationController?.pushViewController(destination, animated: true)
         }
         

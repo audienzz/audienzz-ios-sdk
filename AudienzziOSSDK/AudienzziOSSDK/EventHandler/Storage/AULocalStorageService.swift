@@ -41,6 +41,7 @@ final class AULocalStorageService: AULocalStorageServiceType {
         try AUSQLiteConfigurator().configureStorage()
         let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
         self.dataBase = try Connection("\(path)/\(SQLiteConstants.dbPathComponent)")
+        try dataBase.execute("PRAGMA journal_mode = WAL;")
     }
     
     func removeEvents() {

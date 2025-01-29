@@ -40,6 +40,9 @@ extension AUBannerView {
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
             
+            /*
+             use for debug more deep events
+             
             if let bidRequester = getPrivateBidRequester(from: adUnit) {
                 print("Got bidRequester: \(bidRequester)")
 
@@ -50,6 +53,7 @@ extension AUBannerView {
             } else {
                 print("Failed to access bidRequester")
             }
+            */
             
             AULogEvent.logDebug("Audienz demand fetch for GAM \(resultCode.name())")
             self.makeWinnerEvent(AUResulrCodeConverter.convertResultCodeName(resultCode))
