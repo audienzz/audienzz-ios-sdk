@@ -19,7 +19,7 @@ import GoogleInteractiveMediaAds
 
 // 320x250
 fileprivate let storedImpDisplayBanner_320x250 = "33994718"
-fileprivate let gamAdUnitDisplayBannerOriginal_320x250 = "/96628199/de_audienzz.ch_v2/de_audienzz.ch_320_adnz_wideboard_1"
+fileprivate let gamAdUnitDisplayBannerOriginal_320x250 = "/21775744923/example/fixed-size-banner"
 
 // 320x50
 fileprivate let storedImpDisplayBanner = "prebid-demo-banner-320-50"
