@@ -58,8 +58,8 @@ internal class AURewardedRenderingDelegateType: NSObject, RewardedAdUnitDelegate
     }
     
     /// Called when user is able to receive a reward from the app
-    public func rewardedAdUserDidEarnReward(_ rewardedAd: RewardedAdUnit) {
-        parent?.delegate?.rewardedAdUserDidEarnReward?(rewardedAd.reward)
+    public func rewardedAdUserDidEarnReward(_ rewardedAd: RewardedAdUnit, reward: PrebidReward) {
+        parent?.delegate?.rewardedAdUserDidEarnReward?(reward)
     }
     
     private func makeCloseEvent(_ parent: AURewardedRenderingView) {

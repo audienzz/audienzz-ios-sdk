@@ -1,13 +1,14 @@
 // swift-interface-format-version: 1.0
-// swift-compiler-version: Apple Swift version 6.0 effective-5.10 (swiftlang-6.0.0.9.10 clang-1600.0.26.2)
-// swift-module-flags: -target arm64-apple-ios16.0 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -Onone -enable-experimental-feature OpaqueTypeErasure -enable-bare-slash-regex -module-name AudienzziOSSDK
-// swift-module-flags-ignorable: -no-verify-emitted-module-interface
+// swift-compiler-version: Apple Swift version 6.1 effective-5.10 (swiftlang-6.1.0.110.21 clang-1700.0.13.3)
+// swift-module-flags: -target arm64-apple-ios13 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -Onone -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -module-name AudienzziOSSDK
+// swift-module-flags-ignorable: -no-verify-emitted-module-interface -interface-compiler-version 6.1
 import AdSupport
 import AppTrackingTransparency
 @_exported import AudienzziOSSDK
 import Foundation
 import GoogleMobileAds
 import Network
+import ObjectiveC
 import PrebidMobile
 import PrebidMobileGAMEventHandlers
 import SQLite
@@ -17,6 +18,7 @@ import WebKit
 import _Concurrency
 import _StringProcessing
 import _SwiftConcurrencyShims
+import ObjectiveC.runtime
 @objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objcMembers public class AUNativeTitle : ObjectiveC.NSObject {
   @objc public var text: Swift.String?
   public var length: Swift.Int?
@@ -24,20 +26,21 @@ import _SwiftConcurrencyShims
   @objc override dynamic public init()
   @objc deinit
 }
-@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objcMembers public class AudienzzGAMUtils : ObjectiveC.NSObject {
+@objc @_inheritsConvenienceInitializers @objcMembers public class AudienzzGAMUtils : ObjectiveC.NSObject {
   @objc public static let shared: AudienzziOSSDK.AudienzzGAMUtils
   @objc public static var errorDomain: Swift.String {
     @objc get
   }
   @objc public func initializeGAM()
-  @objc public func prepareRequest(_ request: GoogleMobileAds.GAMRequest, bidTargeting: [Swift.String : Swift.String])
+  @objc public func prepareRequest(_ request: GoogleMobileAds.AdManagerRequest, bidTargeting: [Swift.String : Swift.String])
+  @objc override dynamic public init()
   @objc deinit
 }
 extension AudienzziOSSDK.AudienzzGAMUtils {
-  public func findNativeAd(for nativeAd: GoogleMobileAds.GADNativeAd) -> Swift.Result<PrebidMobile.NativeAd, PrebidMobileGAMEventHandlers.GAMEventHandlerError>
-  @objc dynamic public func findNativeAdObjc(for nativeAd: GoogleMobileAds.GADNativeAd, completion: @escaping (PrebidMobile.NativeAd?, Foundation.NSError?) -> Swift.Void)
-  @objc dynamic public func findCustomNativeAd(for nativeAd: GoogleMobileAds.GADCustomNativeAd, completion: @escaping (AudienzziOSSDK.AUNativeAd?, Foundation.NSError?) -> Swift.Void)
-  @objc dynamic public func findCustomNativeAdObjc(for nativeAd: GoogleMobileAds.GADCustomNativeAd, completion: @escaping (PrebidMobile.NativeAd?, Foundation.NSError?) -> Swift.Void)
+  public func findNativeAd(for nativeAd: GoogleMobileAds.NativeAd) -> Swift.Result<PrebidMobile.NativeAd, PrebidMobileGAMEventHandlers.GAMEventHandlerError>
+  @objc dynamic public func findNativeAdObjc(for nativeAd: GoogleMobileAds.NativeAd, completion: @escaping (PrebidMobile.NativeAd?, Foundation.NSError?) -> Swift.Void)
+  @objc dynamic public func findCustomNativeAd(for nativeAd: GoogleMobileAds.CustomNativeAd, completion: @escaping (AudienzziOSSDK.AUNativeAd?, Foundation.NSError?) -> Swift.Void)
+  @objc dynamic public func findCustomNativeAdObjc(for nativeAd: GoogleMobileAds.CustomNativeAd, completion: @escaping (PrebidMobile.NativeAd?, Foundation.NSError?) -> Swift.Void)
 }
 @objc @_hasMissingDesignatedInitializers @objcMembers public class AUNativeEventTrackerResponse : ObjectiveC.NSObject {
   public var event: Swift.Int?
@@ -58,9 +61,10 @@ extension AudienzziOSSDK.AudienzzGAMUtils {
   @objc @_Concurrency.MainActor @preconcurrency public var parameters: AudienzziOSSDK.AUVideoParameters?
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String)
   @_Concurrency.MainActor @preconcurrency @objc override public init(configId: Swift.String, isLazyLoad: Swift.Bool)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func removeFromSuperview()
+  @objc deinit
   @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
   @objc @_Concurrency.MainActor @preconcurrency public func connectHandler(_ eventHandler: AudienzziOSSDK.AURewardedEventHandler)
-  @objc deinit
 }
 @objc @objcMembers public class AUAdFormat : ObjectiveC.NSObject, Swift.OptionSet {
   public typealias RawValue = Swift.Int
@@ -145,11 +149,9 @@ public struct AUNativeRequestParameter {
   public init()
 }
 @objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class VisibleView : UIKit.UIView {
-  @_Concurrency.MainActor @preconcurrency @objc override dynamic public class func awakeFromNib()
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public func didMoveToWindow()
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public func removeFromSuperview()
   @objc deinit
-  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func observeValue(forKeyPath keyPath: Swift.String?, of object: Any?, change: [Foundation.NSKeyValueChangeKey : Any]?, context: Swift.UnsafeMutableRawPointer?)
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public init(frame: CoreFoundation.CGRect)
   @_Concurrency.MainActor @preconcurrency @objc required dynamic public init?(coder: Foundation.NSCoder)
 }
@@ -160,7 +162,7 @@ public struct AUNativeRequestParameter {
   @objc deinit
 }
 @objc @objcMembers public class AUInterstitialEventHandler : ObjectiveC.NSObject {
-  @objc public init(adUnit: GoogleMobileAds.GADInterstitialAd)
+  @objc public init(adUnit: GoogleMobileAds.InterstitialAd)
   @objc deinit
 }
 @objc public protocol AUBannerRenderingAdDelegate : ObjectiveC.NSObjectProtocol {
@@ -294,7 +296,7 @@ public struct AUNativeRequestParameter {
 }
 @objc public protocol AUInterstitialenderingAdDelegate : ObjectiveC.NSObjectProtocol {
   @objc optional func interstitialAdDidDisplayOnScreen()
-  @objc optional func interstitialDidReceiveAd(with configId: Swift.String)
+  @objc optional func interstitialDidReceiveAd()
   @objc optional func interstitialDidFailToReceiveAdWithError(error: (any Swift.Error)?)
   @objc optional func interstitialWillPresentAd()
   @objc optional func interstitialDidDismissAd()
@@ -351,10 +353,10 @@ public struct AUNativeRequestParameter {
     @objc set
   }
   @objc public static let shared: AudienzziOSSDK.Audienzz
-  @objc public func configureSDK(audienzzKey: Swift.String)
-  @objc public func configureSDK(audienzzKey: Swift.String, gadMobileAdsVersion: Swift.String? = nil)
-  @objc public func configureSDK_RN(audienzzKey: Swift.String, _ completion: (() -> Swift.Void)? = nil)
-  @objc public func configureSDK_RN(audienzzKey: Swift.String, gadMobileAdsVersion: Swift.String?, _ completion: (() -> Swift.Void)? = nil)
+  @objc public func configureSDK(companyId: Swift.String)
+  @objc public func configureSDK(companyId: Swift.String, gadMobileAdsVersion: Swift.String? = nil)
+  @objc public func configureSDK_RN(companyId: Swift.String, _ completion: (() -> Swift.Void)? = nil)
+  @objc public func configureSDK_RN(companyId: Swift.String, gadMobileAdsVersion: Swift.String?, _ completion: (() -> Swift.Void)? = nil)
   @objc public var timeoutMillis: Swift.Int {
     @objc get
     @objc set
@@ -393,35 +395,9 @@ extension AudienzziOSSDK.AUAdUnitConfiguration : AudienzziOSSDK.AUAdUnitConfigur
   @objc dynamic public func stopAutoRefresh()
   @objc dynamic public func resumeAutoRefresh()
 }
-extension AudienzziOSSDK.AUAdUnitConfiguration : AudienzziOSSDK.AUAdUnitConfigurationAppContentProtocol {
-  @objc dynamic public func setAppContent(_ appContentObject: AudienzziOSSDK.AUMORTBAppContent)
-  @objc dynamic public func getAppContent() -> AudienzziOSSDK.AUMORTBAppContent?
-  @objc dynamic public func clearAppContent()
-  @objc dynamic public func addAppContentData(_ dataObjects: [AudienzziOSSDK.AUMORTBContentData])
-  @objc dynamic public func removeAppContentData(_ dataObject: AudienzziOSSDK.AUMORTBContentData)
-  @objc dynamic public func clearAppContentData()
-}
-extension AudienzziOSSDK.AUAdUnitConfiguration : AudienzziOSSDK.AUAdUnitConfigurationContextKeywordProtocol {
-  @objc dynamic public func addExtKeyword(_ newElement: Swift.String)
-  @objc dynamic public func addExtKeywords(_ newElements: Swift.Set<Swift.String>)
-  @objc dynamic public func removeExtKeyword(_ element: Swift.String)
-  @objc dynamic public func clearExtKeywords()
-}
-extension AudienzziOSSDK.AUAdUnitConfiguration : AudienzziOSSDK.AUAdUnitConfigurationUserDataProtocol {
-  @objc dynamic public func getUserData() -> [AudienzziOSSDK.AUMORTBContentData]?
-  @objc dynamic public func addUserData(_ userDataObjects: [AudienzziOSSDK.AUMORTBContentData])
-  @objc dynamic public func removeUserData(_ userDataObject: AudienzziOSSDK.AUMORTBContentData)
-  @objc dynamic public func clearUserData()
-}
 extension AudienzziOSSDK.AUAdUnitConfiguration : AudienzziOSSDK.AUAdUnitConfigurationGRIPProtocol {
   @objc dynamic public func setGPID(_ gpid: Swift.String?)
   @objc dynamic public func getGPID() -> Swift.String?
-}
-extension AudienzziOSSDK.AUAdUnitConfiguration : AudienzziOSSDK.AUADunitConfigurationDataObjectProtocol {
-  @objc dynamic public func addExtData(key: Swift.String, value: Swift.String)
-  @objc dynamic public func updateExtData(key: Swift.String, value: Swift.Set<Swift.String>)
-  @objc dynamic public func removeExtData(forKey: Swift.String)
-  @objc dynamic public func clearExtData()
 }
 @objc public enum AUResultCode : Swift.Int {
   case audienzzDemandFetchSuccess = 0
@@ -557,7 +533,7 @@ extension AudienzziOSSDK.AUAdUnitConfiguration : AudienzziOSSDK.AUADunitConfigur
   public func registerView(view: UIKit.UIView?, clickableViews: [UIKit.UIView]?) -> Swift.Bool
   @objc deinit
 }
-@objc public protocol AUAdUnitConfigurationType : AudienzziOSSDK.AUADunitConfigurationDataObjectProtocol, AudienzziOSSDK.AUAdUnitConfigurationAppContentProtocol, AudienzziOSSDK.AUAdUnitConfigurationAutorefreshProtocol, AudienzziOSSDK.AUAdUnitConfigurationContextKeywordProtocol, AudienzziOSSDK.AUAdUnitConfigurationGRIPProtocol, AudienzziOSSDK.AUAdUnitConfigurationSlotProtocol, AudienzziOSSDK.AUAdUnitConfigurationUserDataProtocol {
+@objc public protocol AUAdUnitConfigurationType : AudienzziOSSDK.AUAdUnitConfigurationAutorefreshProtocol, AudienzziOSSDK.AUAdUnitConfigurationGRIPProtocol, AudienzziOSSDK.AUAdUnitConfigurationSlotProtocol {
 }
 @objc public protocol AUAdUnitConfigurationSlotProtocol {
   @objc var adSlot: Swift.String? { get set }
@@ -567,35 +543,9 @@ extension AudienzziOSSDK.AUAdUnitConfiguration : AudienzziOSSDK.AUADunitConfigur
   @objc func stopAutoRefresh()
   @objc func resumeAutoRefresh()
 }
-@objc public protocol AUAdUnitConfigurationAppContentProtocol {
-  @objc func setAppContent(_ appContentObject: AudienzziOSSDK.AUMORTBAppContent)
-  @objc func getAppContent() -> AudienzziOSSDK.AUMORTBAppContent?
-  @objc func clearAppContent()
-  @objc func addAppContentData(_ dataObjects: [AudienzziOSSDK.AUMORTBContentData])
-  @objc func removeAppContentData(_ dataObject: AudienzziOSSDK.AUMORTBContentData)
-  @objc func clearAppContentData()
-}
-@objc public protocol AUAdUnitConfigurationUserDataProtocol {
-  @objc func getUserData() -> [AudienzziOSSDK.AUMORTBContentData]?
-  @objc func addUserData(_ userDataObjects: [AudienzziOSSDK.AUMORTBContentData])
-  @objc func removeUserData(_ userDataObject: AudienzziOSSDK.AUMORTBContentData)
-  @objc func clearUserData()
-}
 @objc public protocol AUAdUnitConfigurationGRIPProtocol {
   @objc func setGPID(_ gpid: Swift.String?)
   @objc func getGPID() -> Swift.String?
-}
-@objc public protocol AUAdUnitConfigurationContextKeywordProtocol {
-  @objc func addExtKeyword(_ newElement: Swift.String)
-  @objc func addExtKeywords(_ newElements: Swift.Set<Swift.String>)
-  @objc func removeExtKeyword(_ element: Swift.String)
-  @objc func clearExtKeywords()
-}
-@objc public protocol AUADunitConfigurationDataObjectProtocol {
-  @objc func addExtData(key: Swift.String, value: Swift.String)
-  @objc func updateExtData(key: Swift.String, value: Swift.Set<Swift.String>)
-  @objc func removeExtData(forKey: Swift.String)
-  @objc func clearExtData()
 }
 @objc public enum AUVideoProtocolsType : Swift.Int {
   case VAST_1_0 = 1
@@ -770,6 +720,7 @@ public typealias Keywords = [Swift.String : Swift.String]
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adSize: CoreFoundation.CGSize, adFormats: [AudienzziOSSDK.AUAdFormat])
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adSize: CoreFoundation.CGSize, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool)
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public func removeFromSuperview()
+  @objc @_Concurrency.MainActor @preconcurrency public func addAdditionalSize(sizes: [CoreFoundation.CGSize])
   @objc deinit
   @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, gamBanner: UIKit.UIView, eventHandler: AudienzziOSSDK.AUBannerEventHandler? = nil)
 }
@@ -784,11 +735,11 @@ public typealias Keywords = [Swift.String : Swift.String]
   @objc deinit
 }
 @objc @objcMembers public class AURewardedEventHandler : ObjectiveC.NSObject {
-  @objc public init(adUnit: GoogleMobileAds.GADRewardedAd)
+  @objc public init(adUnit: GoogleMobileAds.RewardedAd)
   @objc deinit
 }
 @objc @objcMembers public class AUBannerEventHandler : ObjectiveC.NSObject {
-  @objc public init(adUnitId: Swift.String, gamView: GoogleMobileAds.GAMBannerView)
+  @objc public init(adUnitId: Swift.String, gamView: GoogleMobileAds.AdManagerBannerView)
   @objc deinit
 }
 @objc @objcMembers public class AUNativeAsset : ObjectiveC.NSObject {
@@ -828,7 +779,7 @@ public typealias Keywords = [Swift.String : Swift.String]
     get
     set
   }
-  @objc public var mimes: Swift.Array<Swift.String>? {
+  @objc public var mimes: [Swift.String]? {
     @objc get
     @objc set
   }
@@ -886,12 +837,14 @@ public typealias Keywords = [Swift.String : Swift.String]
 }
 @objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUInterstitialView : AudienzziOSSDK.AUAdView {
   @objc @_Concurrency.MainActor @preconcurrency public var parameters: AudienzziOSSDK.AUVideoParameters?
+  @objc @_Concurrency.MainActor @preconcurrency public var bannerParameters: AudienzziOSSDK.AUBannerParameters?
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat])
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool)
   @objc @_Concurrency.MainActor @preconcurrency convenience public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool, minWidthPerc: Swift.Int, minHeightPerc: Swift.Int)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func removeFromSuperview()
+  @objc deinit
   @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
   @objc @_Concurrency.MainActor @preconcurrency public func connectHandler(_ eventHandler: AudienzziOSSDK.AUInterstitialEventHandler)
-  @objc deinit
 }
 @objc(AUAdPosition) public enum AUAdPosition : Swift.Int {
   case undefined = 0
@@ -921,6 +874,118 @@ public typealias Keywords = [Swift.String : Swift.String]
   public var rawValue: Swift.Int {
     get
   }
+}
+@objc @_inheritsConvenienceInitializers @objcMembers public class AUTargeting : ObjectiveC.NSObject {
+  @objc public static var shared: AudienzziOSSDK.AUTargeting
+  @objc public var omidPartnerName: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @objc public var omidPartnerVersion: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @objc public var eids: [[Swift.String : Any]]? {
+    @objc get
+    @objc set
+  }
+  @objc public var userExt: [Swift.String : Swift.AnyHashable]? {
+    @objc get
+    @objc set
+  }
+  @objc public var coppa: Foundation.NSNumber? {
+    @objc get
+    @objc set
+  }
+  public var subjectToCOPPA: Swift.Bool? {
+    get
+    set
+  }
+  public var subjectToGDPR: Swift.Bool? {
+    get
+    set
+  }
+  @objc public func setSubjectToGDPR(_ newValue: Foundation.NSNumber?)
+  @objc public func getSubjectToGDPR() -> Foundation.NSNumber?
+  @objc public var gdprConsentString: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @objc public var purposeConsents: Swift.String? {
+    @objc get
+    @objc set
+  }
+  public func getDeviceAccessConsent() -> Swift.Bool?
+  @objc public func getDeviceAccessConsentObjc() -> Foundation.NSNumber?
+  public func getPurposeConsent(index: Swift.Int) -> Swift.Bool?
+  @objc public func isAllowedAccessDeviceData() -> Swift.Bool
+  @objc public func getExternalUserIds() -> [[Swift.AnyHashable : Any]]?
+  @objc public var contentUrl: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @objc public var publisherName: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @objc public var sourceapp: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @objc public var storeURL: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @objc public var domain: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @objc public var itunesID: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @objc public var location: CoreLocation.CLLocation? {
+    @objc get
+    @objc set
+  }
+  @objc public var coordinate: Foundation.NSValue? {
+    @objc get
+    @objc set
+  }
+  @objc public func addParam(_ value: Swift.String, withName: Swift.String?)
+  @objc public func setLatitude(_ latitude: Swift.Double, longitude: Swift.Double)
+  @objc public func addBidderToAccessControlList(_ bidderName: Swift.String)
+  @objc public func removeBidderFromAccessControlList(_ bidderName: Swift.String)
+  @objc public func clearAccessControlList()
+  @objc public func getAccessControlList() -> [Swift.String]
+  @objc public var accessControlList: [Swift.String] {
+    @objc get
+  }
+  @objc public func addUserData(key: Swift.String, value: Swift.String)
+  @objc public func updateUserData(key: Swift.String, value: Swift.Set<Swift.String>)
+  @objc public func addUserKeyword(_ newElement: Swift.String)
+  @objc public func addUserKeywords(_ newElements: Swift.Set<Swift.String>)
+  @objc public func removeUserKeyword(_ element: Swift.String)
+  @objc public func clearUserKeywords()
+  @objc public func getUserKeywords() -> [Swift.String]
+  @objc public func addAppExtData(key: Swift.String, value: Swift.String)
+  @objc public func updateAppExtData(key: Swift.String, value: Swift.Set<Swift.String>)
+  @objc public func removeAppExtData(for key: Swift.String)
+  @objc public func clearAppExtData()
+  @objc public func getAppExtData() -> [Swift.String : [Swift.String]]
+  @objc public func addAppKeyword(_ newElement: Swift.String)
+  @objc public func addAppKeywords(_ newElements: Swift.Set<Swift.String>)
+  @objc public func removeAppKeyword(_ element: Swift.String)
+  @objc public func clearAppKeywords()
+  @objc public func getAppKeywords() -> [Swift.String]
+  @objc override dynamic public init()
+  @objc deinit
+}
+extension PrebidMobile.UserUniqueID {
+  @objc public static func from(json: [Swift.String : Any]) -> PrebidMobile.UserUniqueID?
+}
+extension PrebidMobile.ExternalUserId {
+  @objc public static func from(json: [Swift.String : Any]) -> PrebidMobile.ExternalUserId?
 }
 @objc public enum AUNativeImageAssetType : Swift.Int {
   case icon = 1

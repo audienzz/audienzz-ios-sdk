@@ -1,4 +1,4 @@
-/*   Copyright 2018-2024 Audienzz.org, Inc.
+/*   Copyright 2018-2025 Audienzz.org, Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -16,24 +16,24 @@
 import Foundation
 import GoogleMobileAds
 
-
 @objcMembers
 public class AURewardedEventHandler: NSObject {
-    let adUnit: GADRewardedAd
+    let adUnit: RewardedAd
 
-    public init(adUnit: GADRewardedAd) {
+    public init(adUnit: RewardedAd) {
         self.adUnit = adUnit
     }
 }
 
 class AURewardedHandler: NSObject,
-                         GADFullScreenContentDelegate,
-                         GADAppEventDelegate,
-                         AULogEventType {
+    FullScreenContentDelegate,
+    AppEventDelegate,
+    AULogEventType
+{
 
     let handler: AURewardedEventHandler
     let adView: AURewardedView
-    weak var fullScreentDelegate: GADFullScreenContentDelegate?
+    weak var fullScreentDelegate: FullScreenContentDelegate?
 
     init(handler: AURewardedEventHandler, adView: AURewardedView) {
         self.handler = handler
@@ -55,16 +55,18 @@ class AURewardedHandler: NSObject,
         AULogEvent.logDebug("AURewardedHandler")
     }
 
-
-    func adDidRecordImpression(_ ad: any GADFullScreenPresentingAd) {
+    func adDidRecordImpression(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordImpression")
         fullScreentDelegate?.adDidRecordImpression?(ad)
     }
 
-    func adDidRecordClick(_ ad: any GADFullScreenPresentingAd) {
+    func adDidRecordClick(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordClick")
 
-        let event = AUAdClickEvent(adViewId: adView.configId, adUnitID: adUnitID)
+        let event = AUAdClickEvent(
+            adViewId: adView.configId,
+            adUnitID: adUnitID
+        )
 
         guard let payload = event.convertToJSONString() else {
             fullScreentDelegate?.adDidRecordClick?(ad)
@@ -76,36 +78,50 @@ class AURewardedHandler: NSObject,
         fullScreentDelegate?.adDidRecordClick?(ad)
     }
 
-    func ad(_ ad: any GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: any Error) {
+    func ad(
+        _ ad: any FullScreenPresentingAd,
+        didFailToPresentFullScreenContentWithError error: any Error
+    ) {
         LogEvent("didFailToPresentFullScreenContentWithError")
 
-        let event = AUFailedLoadEvent(adViewId: adView.configId,
-                                      adUnitID: adUnitID,
-                                      errorMessage: error.localizedDescription,
-                                      errorCode: error.errorCode ?? -1)
+        let event = AUFailedLoadEvent(
+            adViewId: adView.configId,
+            adUnitID: adUnitID,
+            errorMessage: error.localizedDescription,
+            errorCode: error.errorCode ?? -1
+        )
 
-        guard let _ = event.convertToJSONString() else {
-            fullScreentDelegate?.ad?(ad, didFailToPresentFullScreenContentWithError: error)
+        guard event.convertToJSONString() != nil else {
+            fullScreentDelegate?.ad?(
+                ad,
+                didFailToPresentFullScreenContentWithError: error
+            )
             return
         }
 
-        fullScreentDelegate?.ad?(ad, didFailToPresentFullScreenContentWithError: error)
+        fullScreentDelegate?.ad?(
+            ad,
+            didFailToPresentFullScreenContentWithError: error
+        )
     }
 
-    func adWillPresentFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
+    func adWillPresentFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adWillPresentFullScreenContent")
         fullScreentDelegate?.adWillPresentFullScreenContent?(ad)
     }
 
-    func adWillDismissFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
+    func adWillDismissFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adWillDismissFullScreenContent")
         fullScreentDelegate?.adWillDismissFullScreenContent?(ad)
     }
 
-    func adDidDismissFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
+    func adDidDismissFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidDismissFullScreenContent")
 
-        let event = AUCloseAdEvent(adViewId: adView.configId, adUnitID: adUnitID)
+        let event = AUCloseAdEvent(
+            adViewId: adView.configId,
+            adUnitID: adUnitID
+        )
         guard let payload = event.convertToJSONString() else {
             fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
             return

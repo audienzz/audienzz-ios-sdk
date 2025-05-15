@@ -1,4 +1,4 @@
-/*   Copyright 2018-2024 Audienzz.org, Inc.
+/*   Copyright 2018-2025 Audienzz.org, Inc.
  
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import PrebidMobile
     @objc optional func interstitialAdDidDisplayOnScreen()
 
     /// Called when an ad is loaded and ready for display
-    @objc optional func interstitialDidReceiveAd(with configId: String)
+    @objc optional func interstitialDidReceiveAd()
 
     /// Called when the load process fails to produce a viable ad
     @objc optional func interstitialDidFailToReceiveAdWithError(error: Error?)

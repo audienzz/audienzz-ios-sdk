@@ -1,11 +1,11 @@
-/*   Copyright 2018-2024 Audienzz.org, Inc.
- 
+/*   Copyright 2018-2025 Audienzz.org, Inc.
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,15 @@ import PrebidMobile
 
 @objc public class AUNativeEventTracker: NSObject {
     private var nativeEventTracker: NativeEventTracker!
-    
+
     @objc
     public init(event: AUEventType, methods: [AUEventTracking]) {
-        self.nativeEventTracker = NativeEventTracker(event: event.unwrap(), methods: methods.compactMap { $0.trackingType.unwrap() })
+        self.nativeEventTracker = NativeEventTracker(
+            event: event.unwrap(),
+            methods: methods.compactMap { $0.trackingType.unwrap() }
+        )
     }
-    
+
     internal func unwrap() -> NativeEventTracker {
         nativeEventTracker
     }
@@ -35,7 +38,7 @@ import PrebidMobile
     case ViewableImpression100 = 3
     case ViewableVideoImpression50 = 4
     case Custom = 500
-    
+
     internal func unwrap() -> EventType {
         EventType(integerLiteral: self.rawValue)
     }
@@ -44,7 +47,7 @@ import PrebidMobile
 @objc
 public class AUEventTracking: NSObject {
     @objc var trackingType: AUEventTrackingType
-    
+
     @objc public init(trackingType: AUEventTrackingType) {
         self.trackingType = trackingType
     }
@@ -54,7 +57,7 @@ public class AUEventTracking: NSObject {
     case Image = 1
     case js = 2
     case Custom = 500
-    
+
     internal func unwrap() -> EventTracking {
         EventTracking(integerLiteral: self.rawValue)
     }

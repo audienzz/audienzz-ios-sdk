@@ -1,11 +1,11 @@
-/*   Copyright 2018-2024 Audienzz.org, Inc.
- 
+/*   Copyright 2018-2025 Audienzz.org, Inc.
+
  Licensed under the Apache License, Version 2.0 (the "License";
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ import Foundation
 import PrebidMobile
 
 @objc public enum AUContextSubType: Int {
-        
+
     case General = 10
 
     case Article = 11
@@ -43,7 +43,7 @@ import PrebidMobile
     case ReviewSite = 32
 
     case Custom = 500
-    
+
     internal var toContextSubType: ContextSubType {
         ContextSubType(integerLiteral: self.rawValue)
     }
