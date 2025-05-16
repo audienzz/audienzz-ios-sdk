@@ -1,4 +1,4 @@
-/*   Copyright 2018-2024 Audienzz.org, Inc.
+/*   Copyright 2018-2025 Audienzz.org, Inc.
  
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -49,17 +49,17 @@ extension ExamplesViewController {
         
         adContainerView.addSubview(multiformatView)
         
-        let gamRequest = GAMRequest()
+        let gamRequest = AdManagerRequest()
         
         
         multiformatView.create(with: gamRequest, adUnitID: gamRenderingMultiformatAdUnitId)
         
         multiformatView.onLoadRequest = { [weak self] request in
-            guard let self = self, let updateRequest = request as? GADRequest else { return }
+            guard let self = self, let updateRequest = request as? Request else { return }
             
             // 5. Configure and make a GAM ad request
-            self.adMultiLoader = GADAdLoader(adUnitID: gamRenderingMultiformatAdUnitId, rootViewController: self,
-                                        adTypes: [GADAdLoaderAdType.customNative, GADAdLoaderAdType.gamBanner], options: [])
+            self.adMultiLoader = AdLoader(adUnitID: gamRenderingMultiformatAdUnitId, rootViewController: self,
+                                             adTypes: [AdLoaderAdType.customNative, AdLoaderAdType.adManagerBanner], options: [])
             self.adMultiLoader.delegate = self
             self.adMultiLoader.load(updateRequest)
         }
@@ -89,15 +89,15 @@ extension ExamplesViewController {
         
         lazyAdContainerView.addSubview(multiformatLazyView)
         
-        let gamRequest = GAMRequest()
+        let gamRequest = AdManagerRequest()
         multiformatLazyView.create(with: gamRequest, adUnitID: gamRenderingMultiformatAdUnitId)
         
         multiformatLazyView.onLoadRequest = { [weak self] request in
-            guard let self = self, let updateRequest = request as? GADRequest else { return }
+            guard let self = self, let updateRequest = request as? Request else { return }
             
             // 5. Configure and make a GAM ad request
-            self.adLazyMultiLoader = GADAdLoader(adUnitID: gamRenderingMultiformatAdUnitId, rootViewController: self,
-                                                 adTypes: [GADAdLoaderAdType.customNative, GADAdLoaderAdType.gamBanner], options: [])
+            self.adLazyMultiLoader = AdLoader(adUnitID: gamRenderingMultiformatAdUnitId, rootViewController: self,
+                                                 adTypes: [AdLoaderAdType.customNative, AdLoaderAdType.adManagerBanner], options: [])
             self.adLazyMultiLoader.delegate = self
             self.adLazyMultiLoader.load(updateRequest)
         }
@@ -130,17 +130,17 @@ extension ExamplesViewController {
     }
 }
 
-extension ExamplesViewController: GAMBannerAdLoaderDelegate {
-    func validBannerSizes(for adLoader: GADAdLoader) -> [NSValue] {
-        return [NSValueFromGADAdSize(GADAdSizeFromCGSize(adSizeMult))]
+extension ExamplesViewController: AdManagerBannerAdLoaderDelegate {
+    func validBannerSizes(for adLoader: AdLoader) -> [NSValue] {
+        return [nsValue(for: adSizeFor(cgSize: adSizeMult))]
     }
     
-    func adLoader(_ adLoader: GADAdLoader, didReceive bannerView: GAMBannerView) {
+    func adLoader(_ adLoader: AdLoader, didReceive bannerView: AdManagerBannerView) {
         if adLoader == adMultiLoader {
             self.multiformatView.addSubview(bannerView)
             
             AUAdViewUtils.findCreativeSize(bannerView, success: { size in
-                bannerView.resize(GADAdSizeFromCGSize(size))
+                bannerView.resize(adSizeFor(cgSize: size))
             }, failure: { [weak self] (error) in
                 print("Error occuring during searching for Prebid creative size: \(error)")
                 self?.showSizeError(forView: bannerView, error: error)
@@ -149,7 +149,7 @@ extension ExamplesViewController: GAMBannerAdLoaderDelegate {
             self.multiformatLazyView.addSubview(bannerView)
             
             AUAdViewUtils.findCreativeSize(bannerView, success: { size in
-                bannerView.resize(GADAdSizeFromCGSize(size))
+                bannerView.resize(adSizeFor(cgSize: size))
             }, failure: { [weak self] (error) in
                 print("Error occuring during searching for Prebid creative size: \(error)")
                 self?.showSizeError(forView: bannerView, error: error)

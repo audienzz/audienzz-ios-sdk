@@ -6,13 +6,13 @@ project 'AudienzziOSSDK.xcodeproj'
 project 'Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj'
 
 def prebid_pods
-  pod 'PrebidMobileGAMEventHandlers', '2.3.0'
-  pod 'PrebidMobile', '2.3.0'
+  pod 'PrebidMobileGAMEventHandlers', '3.0.0'
+  pod 'PrebidMobile', '3.0.0'
 end
 
 def google_ads_pods
-  pod 'Google-Mobile-Ads-SDK', '11.10.0'
-  pod 'GoogleAds-IMA-iOS-SDK', '3.23.0'
+  pod 'Google-Mobile-Ads-SDK', '12.3.0'
+  pod 'GoogleAds-IMA-iOS-SDK', '3.26.1'
 end
 
 def sqlite_pod

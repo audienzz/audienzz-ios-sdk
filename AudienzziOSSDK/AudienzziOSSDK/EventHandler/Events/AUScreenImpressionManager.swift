@@ -1,4 +1,4 @@
-/*   Copyright 2018-2024 Audienzz.org, Inc.
+/*   Copyright 2018-2025 Audienzz.org, Inc.
  
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -37,14 +37,14 @@ class AUScreenImpressionManager: NSObject {
         
         let model = ScreenImpressionModel(name: name, hash: hash, nibName: nibName)
         
-        let isModelExist = checkModel(model)
-        AULogEvent.logDebug("isModelExist: \(isModelExist)")
+        let isModelAvailable = checkModel(model)
+        AULogEvent.logDebug("model available: \(isModelAvailable)")
         
-        if isModelExist.not() {
+        if !isModelAvailable {
             appendModel(model)
         }
         
-        return (isModelExist.not(), model.name)
+        return (!isModelAvailable, model.name)
     }
     
     private func checkModel(_ model: ScreenImpressionModel) -> Bool {

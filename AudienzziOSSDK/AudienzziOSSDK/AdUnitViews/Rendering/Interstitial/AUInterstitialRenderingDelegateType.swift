@@ -25,7 +25,7 @@ internal class AUInterstitialRenderingDelegateType: NSObject, InterstitialAdUnit
     }
     
     public func interstitialDidReceiveAd(_ interstitial: InterstitialRenderingAdUnit) {
-        parent?.delegate?.interstitialDidReceiveAd?(with: interstitial.configID)
+        parent?.delegate?.interstitialDidReceiveAd?()
     }
 
     public func interstitial(_ interstitial: InterstitialRenderingAdUnit, didFailToReceiveAdWithError error: Error?) {
