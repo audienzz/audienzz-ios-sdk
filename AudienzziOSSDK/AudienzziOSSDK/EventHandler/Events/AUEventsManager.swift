@@ -1,4 +1,4 @@
-/*   Copyright 2018-2024 Audienzz.org, Inc.
+/*   Copyright 2018-2025 Audienzz.org, Inc.
  
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ fileprivate extension AUEventsManager {
         
         AULogEvent.logDebug("current Network Status: \(networkManager.isConnection)")
         
-        if events.isEmpty.not() && networkManager.isConnection {
+        if !events.isEmpty && networkManager.isConnection {
             sentEventsToServer(events)
         }
     }

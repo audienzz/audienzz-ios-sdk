@@ -1,11 +1,13 @@
-/*   Copyright 2018-2024 Audienzz.org, Inc.
- 
+import AudienzziOSSDK
+import GoogleMobileAds
+/*   Copyright 2018-2025 Audienzz.org, Inc.
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,62 +15,86 @@
  limitations under the License.
  */
 import UIKit
-import AudienzziOSSDK
-import GoogleMobileAds
 
-fileprivate let storedImpDisplayBanner = "prebid-demo-banner-320-50"
-fileprivate let gamAdUnitDisplayBannerRendering = "/21808260008/prebid_oxb_320x50_banner"
+private let storedImpDisplayBanner = "prebid-demo-banner-320-50"
+private let gamAdUnitDisplayBannerRendering =
+    "/21808260008/prebid_oxb_320x50_banner"
 
-fileprivate let storedImpVideoBanner = "prebid-demo-video-outstream"
-fileprivate let gamAdUnitVideoBannerRendering = "/21808260008/prebid_oxb_300x250_banner"
+private let storedImpVideoBanner = "prebid-demo-video-outstream"
+private let gamAdUnitVideoBannerRendering =
+    "/21808260008/prebid_oxb_300x250_banner"
 
-fileprivate var bannerRenderingView: AUBannerRenderingView!
-fileprivate var bannerRenderingVideoView: AUBannerRenderingView!
+private var bannerRenderingView: AUBannerRenderingView!
+private var bannerRenderingVideoView: AUBannerRenderingView!
 
-fileprivate var bannerRenderingLazyView: AUBannerRenderingView!
-fileprivate var bannerRenderingVideoLazyView: AUBannerRenderingView!
+private var bannerRenderingLazyView: AUBannerRenderingView!
+private var bannerRenderingVideoLazyView: AUBannerRenderingView!
 
 extension SeparateViewController {
     func createRenderingBannerView() {
-        let eventHandler = AUGAMBannerEventHandler(adUnitID: gamAdUnitDisplayBannerRendering,
-                                                   validGADAdSizes: [GADAdSizeBanner].map(NSValueFromGADAdSize))
-        bannerRenderingView = AUBannerRenderingView(configId: storedImpDisplayBanner,
-                                                    adSize: adSize,
-                                                    isLazyLoad: false,
-                                                    eventHandler: eventHandler)
-        bannerRenderingView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: 320, height: 50))
+        let eventHandler = AUGAMBannerEventHandler(
+            adUnitID: gamAdUnitDisplayBannerRendering,
+            validGADAdSizes: [AdSizeBanner].map(nsValue)
+        )
+        bannerRenderingView = AUBannerRenderingView(
+            configId: storedImpDisplayBanner,
+            adSize: adSize,
+            isLazyLoad: false,
+            eventHandler: eventHandler
+        )
+        bannerRenderingView.frame = CGRect(
+            origin: CGPoint(x: 0, y: getPositionY(adContainerView)),
+            size: CGSize(width: 320, height: 50)
+        )
         bannerRenderingView.delegate = self
-        
+
         #if DEBUG
-        let nameLabel = UILabel(frame: CGRect(x: 0,
-                                              y: 0,
-                                              width: bannerRenderingView.frame.size.width, height: 30))
-        nameLabel.text = "AUBannerRenderingView"
-        bannerRenderingView.addSubview(nameLabel)
+            let nameLabel = UILabel(
+                frame: CGRect(
+                    x: 0,
+                    y: 0,
+                    width: bannerRenderingView.frame.size.width,
+                    height: 30
+                )
+            )
+            nameLabel.text = "AUBannerRenderingView"
+            bannerRenderingView.addSubview(nameLabel)
         #endif
         adContainerView.addSubview(bannerRenderingView)
         bannerRenderingView.createAd()
     }
-    
+
     func createRenderingBannerVideoView() {
-        let eventHandler = AUGAMBannerEventHandler(adUnitID: gamAdUnitVideoBannerRendering,
-                                                   validGADAdSizes: [GADAdSizeMediumRectangle].map(NSValueFromGADAdSize))
-        bannerRenderingVideoView = AUBannerRenderingView(configId: storedImpVideoBanner,
-                                                         adSize: CGSize(width: 300, height: 250),
-                                                         format: .video,
-                                                         isLazyLoad: false,
-                                                         eventHandler: eventHandler)
-        bannerRenderingVideoView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: CGSize(width: 300, height: 250))
+        let eventHandler = AUGAMBannerEventHandler(
+            adUnitID: gamAdUnitVideoBannerRendering,
+            validGADAdSizes: [AdSizeMediumRectangle].map(nsValue)
+        )
+        bannerRenderingVideoView = AUBannerRenderingView(
+            configId: storedImpVideoBanner,
+            adSize: CGSize(width: 300, height: 250),
+            format: .video,
+            isLazyLoad: false,
+            eventHandler: eventHandler
+        )
+        bannerRenderingVideoView.frame = CGRect(
+            origin: CGPoint(x: 0, y: getPositionY(adContainerView)),
+            size: CGSize(width: 300, height: 250)
+        )
         bannerRenderingVideoView.delegate = self
-        
+
         #if DEBUG
-        let nameLabel = UILabel(frame: CGRect(x: 0,
-                                              y: 50,
-                                              width: bannerRenderingVideoView.frame.size.width, height: 30))
-        nameLabel.text = "AUBannerRenderingViewVideo"
-        bannerRenderingVideoView.addSubview(nameLabel)
+            let nameLabel = UILabel(
+                frame: CGRect(
+                    x: 0,
+                    y: 50,
+                    width: bannerRenderingVideoView.frame.size.width,
+                    height: 30
+                )
+            )
+            nameLabel.text = "AUBannerRenderingViewVideo"
+            bannerRenderingVideoView.addSubview(nameLabel)
         #endif
-        
+
         let videoParams = AUVideoParameters(mimes: ["video/mp4"])
         videoParams.placement = .InBanner
         bannerRenderingVideoView.setVideoParameters(videoParams)
@@ -80,45 +106,69 @@ extension SeparateViewController {
 // MARK: - Lazy
 extension SeparateViewController {
     func createRenderingBannerLazyView() {
-        let eventHandler = AUGAMBannerEventHandler(adUnitID: gamAdUnitDisplayBannerRendering,
-                                                   validGADAdSizes: [GADAdSizeBanner].map(NSValueFromGADAdSize))
-        bannerRenderingLazyView = AUBannerRenderingView(configId: storedImpDisplayBanner,
-                                                        adSize: adSize,
-                                                        eventHandler: eventHandler)
-        bannerRenderingLazyView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)), size: CGSize(width: 320, height: 50))
+        let eventHandler = AUGAMBannerEventHandler(
+            adUnitID: gamAdUnitDisplayBannerRendering,
+            validGADAdSizes: [AdSizeBanner].map(nsValue)
+        )
+        bannerRenderingLazyView = AUBannerRenderingView(
+            configId: storedImpDisplayBanner,
+            adSize: adSize,
+            eventHandler: eventHandler
+        )
+        bannerRenderingLazyView.frame = CGRect(
+            origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
+            size: CGSize(width: 320, height: 50)
+        )
         bannerRenderingLazyView.backgroundColor = .cyan
         bannerRenderingLazyView.delegate = self
-        
+
         #if DEBUG
-        let nameLabel = UILabel(frame: CGRect(x: 0,
-                                              y: 0,
-                                              width: bannerRenderingLazyView.frame.size.width, height: 30))
-        nameLabel.text = "AUBannerRenderingView - Lazy"
-        bannerRenderingLazyView.addSubview(nameLabel)
+            let nameLabel = UILabel(
+                frame: CGRect(
+                    x: 0,
+                    y: 0,
+                    width: bannerRenderingLazyView.frame.size.width,
+                    height: 30
+                )
+            )
+            nameLabel.text = "AUBannerRenderingView - Lazy"
+            bannerRenderingLazyView.addSubview(nameLabel)
         #endif
         lazyAdContainerView.addSubview(bannerRenderingLazyView)
         bannerRenderingLazyView.createAd()
     }
-    
+
     func createRenderingBannerVideoLazyView() {
-        let eventHandler = AUGAMBannerEventHandler(adUnitID: gamAdUnitVideoBannerRendering,
-                                                   validGADAdSizes: [GADAdSizeMediumRectangle].map(NSValueFromGADAdSize))
-        bannerRenderingVideoLazyView = AUBannerRenderingView(configId: storedImpVideoBanner,
-                                                             adSize: CGSize(width: 300, height: 250),
-                                                             format: .video,
-                                                             eventHandler: eventHandler)
-        bannerRenderingVideoLazyView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)), size: CGSize(width: 300, height: 250))
+        let eventHandler = AUGAMBannerEventHandler(
+            adUnitID: gamAdUnitVideoBannerRendering,
+            validGADAdSizes: [AdSizeMediumRectangle].map(nsValue)
+        )
+        bannerRenderingVideoLazyView = AUBannerRenderingView(
+            configId: storedImpVideoBanner,
+            adSize: CGSize(width: 300, height: 250),
+            format: .video,
+            eventHandler: eventHandler
+        )
+        bannerRenderingVideoLazyView.frame = CGRect(
+            origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
+            size: CGSize(width: 300, height: 250)
+        )
         bannerRenderingVideoLazyView.backgroundColor = .systemPink
         bannerRenderingVideoLazyView.delegate = self
-        
+
         #if DEBUG
-        let nameLabel = UILabel(frame: CGRect(x: 0,
-                                              y: 50,
-                                              width: bannerRenderingVideoLazyView.frame.size.width, height: 30))
-        nameLabel.text = "AUBannerRenderingViewVideo - Lazy"
-        bannerRenderingVideoLazyView.addSubview(nameLabel)
+            let nameLabel = UILabel(
+                frame: CGRect(
+                    x: 0,
+                    y: 50,
+                    width: bannerRenderingVideoLazyView.frame.size.width,
+                    height: 30
+                )
+            )
+            nameLabel.text = "AUBannerRenderingViewVideo - Lazy"
+            bannerRenderingVideoLazyView.addSubview(nameLabel)
         #endif
-        
+
         let videoParams = AUVideoParameters(mimes: ["video/mp4"])
         videoParams.placement = .InBanner
         bannerRenderingVideoLazyView.setVideoParameters(videoParams)
@@ -131,10 +181,11 @@ extension SeparateViewController: AUBannerRenderingAdDelegate {
     func bannerViewPresentationController() -> UIViewController? {
         self
     }
-    
-    func bannerView(_ bannerView: AUBannerRenderingView, didFailToReceiveAdWith error: Error) {
+
+    func bannerView(
+        _ bannerView: AUBannerRenderingView,
+        didFailToReceiveAdWith error: Error
+    ) {
         print("Banner view did fail to receive ad with error: \(error)")
     }
 }
-
-

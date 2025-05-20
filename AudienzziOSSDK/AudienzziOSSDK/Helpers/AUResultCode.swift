@@ -1,4 +1,4 @@
-/*   Copyright 2018-2024 Audienzz.org, Inc.
+/*   Copyright 2018-2025 Audienzz.org, Inc.
  
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -44,27 +44,27 @@ import PrebidMobile
         switch self {
         
         case .audienzzDemandFetchSuccess:
-            return "audienzz demand fetch successful"
+            return "Audienzz demand fetch successful"
         case .audienzzServerNotSpecified:
-            return "audienzz server not specified"
+            return "Audienzz server not specified"
         case .audienzzInvalidAccountId:
-            return "audienzz server does not recognize account id"
+            return "Audienzz server does not recognize account id"
         case .audienzzInvalidConfigId:
-            return "audienzz server does not recognize config id"
+            return "Audienzz server does not recognize config id"
         case .audienzzInvalidSize:
-            return "audienzz server does not recognize the size requested"
+            return "Audienzz server does not recognize the size requested"
         case .audienzzNetworkError:
             return "Network Error"
         case .audienzzServerError:
-            return "audienzz server error"
+            return "Audienzz server error"
         case .audienzzDemandNoBids:
-            return "audienzz Server did not return bids"
+            return "Audienzz Server did not return bids"
         case .audienzzDemandTimedOut:
-            return "audienzz demand timedout"
+            return "Audienzz demand timedout"
         case .audienzzServerURLInvalid:
-            return "audienzz server url is invalid"
+            return "Audienzz server url is invalid"
         case .audienzzUnknownError:
-            return "audienzz unknown error occurred"
+            return "Audienzz unknown error occurred"
         case .audienzzInvalidResponseStructure:
             return "Response structure is invalid"
         case .audienzzInternalSDKError:
@@ -78,7 +78,7 @@ import PrebidMobile
         case .audienzzSDKMisusePreviousFetchNotCompletedYet:
             return "SDK misuse, previous fetch has not complete yet"
         case .audienzzInvalidRequest:
-            return "audienzz Request does not contain any parameters"
+            return "Audienzz Request does not contain any parameters"
         }
     }
 }

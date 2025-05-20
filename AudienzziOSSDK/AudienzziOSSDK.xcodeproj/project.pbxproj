@@ -65,14 +65,9 @@
 		586753FD2C4F9B94005937C2 /* DateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586753FC2C4F9B94005937C2 /* DateExtension.swift */; };
 		586A878C2BC936D200F997BD /* AURewardedRenderingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586A878B2BC936D200F997BD /* AURewardedRenderingView.swift */; };
 		586A878E2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */; };
-		586C6C002BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */; };
 		587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 587512A22BA36053004BB7E9 /* VisibleView.swift */; };
 		5880C97E2D09DFFA0063F249 /* AUTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C97D2D09DFFA0063F249 /* AUTargeting.swift */; };
 		5880C97F2D09DFFA0063F249 /* AUTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C97D2D09DFFA0063F249 /* AUTargeting.swift */; };
-		5880C9812D09E1EB0063F249 /* AUGender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C9802D09E1EB0063F249 /* AUGender.swift */; };
-		5880C9822D09E1EB0063F249 /* AUGender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C9802D09E1EB0063F249 /* AUGender.swift */; };
-		5880C9842D09E6E40063F249 /* AUExternalUserId.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C9832D09E6E40063F249 /* AUExternalUserId.swift */; };
-		5880C9852D09E6E40063F249 /* AUExternalUserId.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5880C9832D09E6E40063F249 /* AUExternalUserId.swift */; };
 		5890CFEF2BD150F20034E2FD /* AUAdParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890CFEE2BD150F20034E2FD /* AUAdParameters.swift */; };
 		5890D0092BD29F9E0034E2FD /* AUAdUnitConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */; };
 		58927A1A2BE0E412001A0F45 /* AUAdFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58927A192BE0E412001A0F45 /* AUAdFormat.swift */; };
@@ -148,11 +143,9 @@
 		58EB06E42C2195C800CE6E86 /* AUMORTBContentData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B55582BD671A900226302 /* AUMORTBContentData.swift */; };
 		58EB06E52C2195E200CE6E86 /* UIViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58436A892C060F9200E83155 /* UIViewExtension.swift */; };
 		58EB06E62C21960400CE6E86 /* AUAdUnitConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */; };
-		58EB06E72C21961400CE6E86 /* BoolExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F8BD112C1731F000E08F1E /* BoolExtension.swift */; };
 		58EB06E82C21962400CE6E86 /* AUVideoParameters_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D9BC5A2BEB8996000C4149 /* AUVideoParameters_Private.swift */; };
 		58EB06E92C21962C00CE6E86 /* AUMORTBAppContent_Internal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */; };
 		58EB06EA2C21963F00CE6E86 /* AUMORTBContentData_Internal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583B555A2BD6727F00226302 /* AUMORTBContentData_Internal.swift */; };
-		58EB06EB2C21964600CE6E86 /* AUAdUnitConfiguration_Private.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */; };
 		58EB06EC2C21964D00CE6E86 /* AUInterstitialRenderingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5896C94D2C2044BD00BB434E /* AUInterstitialRenderingConfiguration.swift */; };
 		58EB06ED2C21964D00CE6E86 /* AURewardedRenderingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5896C94F2C20457B00BB434E /* AURewardedRenderingConfiguration.swift */; };
 		58EB06EE2C21964D00CE6E86 /* AUBannerRenderingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D9BC4E2BEA109A000C4149 /* AUBannerRenderingConfiguration.swift */; };
@@ -166,7 +159,6 @@
 		58F877A52BA09CE90093CD63 /* AudienzziOSSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 58F877992BA09CE90093CD63 /* AudienzziOSSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		58F8BD062C1700BA00E08F1E /* AUScreenImpression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F8BD052C1700BA00E08F1E /* AUScreenImpression.swift */; };
 		58F8BD102C1701A900E08F1E /* AUScreenImpressionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F8BD0F2C1701A900E08F1E /* AUScreenImpressionManager.swift */; };
-		58F8BD122C1731F000E08F1E /* BoolExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F8BD112C1731F000E08F1E /* BoolExtension.swift */; };
 		5E9F414E3855411F512AF9C5 /* Pods_AudienzziOSSDKTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7AAB61EAED49658E0BE430B8 /* Pods_AudienzziOSSDKTests.framework */; };
 		A20B14BFE29157593679D23E /* Pods_AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53A789D94F25679F0B84E9E3 /* Pods_AudienzziOSSDK.framework */; };
 /* End PBXBuildFile section */
@@ -248,11 +240,8 @@
 		586753FC2C4F9B94005937C2 /* DateExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateExtension.swift; sourceTree = "<group>"; };
 		586A878B2BC936D200F997BD /* AURewardedRenderingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedRenderingView.swift; sourceTree = "<group>"; };
 		586A878D2BC946FE00F997BD /* AURewardedAdUnitDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AURewardedAdUnitDelegate.swift; sourceTree = "<group>"; };
-		586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdUnitConfiguration_Private.swift; sourceTree = "<group>"; };
 		587512A22BA36053004BB7E9 /* VisibleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisibleView.swift; sourceTree = "<group>"; };
 		5880C97D2D09DFFA0063F249 /* AUTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUTargeting.swift; sourceTree = "<group>"; };
-		5880C9802D09E1EB0063F249 /* AUGender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUGender.swift; sourceTree = "<group>"; };
-		5880C9832D09E6E40063F249 /* AUExternalUserId.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUExternalUserId.swift; sourceTree = "<group>"; };
 		5890CFEE2BD150F20034E2FD /* AUAdParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdParameters.swift; sourceTree = "<group>"; };
 		5890D0082BD29F9E0034E2FD /* AUAdUnitConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdUnitConfiguration.swift; sourceTree = "<group>"; };
 		58927A192BE0E412001A0F45 /* AUAdFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUAdFormat.swift; sourceTree = "<group>"; };
@@ -303,7 +292,6 @@
 		58F877A32BA09CE90093CD63 /* AudienzziOSSDKTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudienzziOSSDKTests.swift; sourceTree = "<group>"; };
 		58F8BD052C1700BA00E08F1E /* AUScreenImpression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUScreenImpression.swift; sourceTree = "<group>"; };
 		58F8BD0F2C1701A900E08F1E /* AUScreenImpressionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUScreenImpressionManager.swift; sourceTree = "<group>"; };
-		58F8BD112C1731F000E08F1E /* BoolExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoolExtension.swift; sourceTree = "<group>"; };
 		66690F01B538B1E747D6D638 /* Pods-AudienzziOSSDK.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDK.debug.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK.debug.xcconfig"; sourceTree = "<group>"; };
 		7AAB61EAED49658E0BE430B8 /* Pods_AudienzziOSSDKTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AudienzziOSSDKTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A3552F230C55FD68639F681F /* Pods-AudienzziOSSDK.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDK.release.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK.release.xcconfig"; sourceTree = "<group>"; };
@@ -410,7 +398,6 @@
 			children = (
 				583B55542BD66F5A00226302 /* AUMORTBAppContent_Internal.swift */,
 				583B555A2BD6727F00226302 /* AUMORTBContentData_Internal.swift */,
-				586C6BFF2BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift */,
 			);
 			path = AdConfigData_Private;
 			sourceTree = "<group>";
@@ -440,7 +427,6 @@
 			isa = PBXGroup;
 			children = (
 				58436A892C060F9200E83155 /* UIViewExtension.swift */,
-				58F8BD112C1731F000E08F1E /* BoolExtension.swift */,
 				586753FC2C4F9B94005937C2 /* DateExtension.swift */,
 			);
 			path = Extensions;
@@ -658,8 +644,6 @@
 			isa = PBXGroup;
 			children = (
 				5880C97D2D09DFFA0063F249 /* AUTargeting.swift */,
-				5880C9802D09E1EB0063F249 /* AUGender.swift */,
-				5880C9832D09E6E40063F249 /* AUExternalUserId.swift */,
 			);
 			path = AUTargeting;
 			sourceTree = "<group>";
@@ -938,9 +922,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDKTests/Pods-AudienzziOSSDKTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDKTests/Pods-AudienzziOSSDKTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -977,9 +965,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -994,9 +986,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDKTests/Pods-AudienzziOSSDKTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDKTests/Pods-AudienzziOSSDKTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1041,7 +1037,6 @@
 				585A796C2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift in Sources */,
 				5896C9502C20457B00BB434E /* AURewardedRenderingConfiguration.swift in Sources */,
 				585608742BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */,
-				586C6C002BDBF35B008AA84C /* AUAdUnitConfiguration_Private.swift in Sources */,
 				58D9BC4F2BEA109A000C4149 /* AUBannerRenderingConfiguration.swift in Sources */,
 				583B55592BD671A900226302 /* AUMORTBContentData.swift in Sources */,
 				58D9BC662BEBB234000C4149 /* AUNativeLink.swift in Sources */,
@@ -1063,7 +1058,6 @@
 				58436A8A2C060F9200E83155 /* UIViewExtension.swift in Sources */,
 				58D9BC342BE9053A000C4149 /* AUBannerView_Private.swift in Sources */,
 				58AECFE92C2979800020E98D /* AURequestBuilder.swift in Sources */,
-				5880C9852D09E6E40063F249 /* AUExternalUserId.swift in Sources */,
 				58249B1A2BC5747200E5C4C6 /* AUBannerParameters.swift in Sources */,
 				583B554B2BD66D2E00226302 /* AUMORTBAppContent.swift in Sources */,
 				58DCF5492BDFDC4E00683A3E /* AUNativeEventTracker.swift in Sources */,
@@ -1097,11 +1091,9 @@
 				58436AC52C09BD7800E83155 /* AUBidWinnerEven.swift in Sources */,
 				58436AD52C09C5BC00E83155 /* AUBannerHandler.swift in Sources */,
 				58436ABE2C08707800E83155 /* Common.swift in Sources */,
-				5880C9812D09E1EB0063F249 /* AUGender.swift in Sources */,
 				58DCF5472BDFCCAC00683A3E /* AUNativeAsset.swift in Sources */,
 				585A79722BC97FDF005D531C /* AUInterstitialRenderingView.swift in Sources */,
 				585608772BB190BE00F9F073 /* AUInterstitialView.swift in Sources */,
-				58F8BD122C1731F000E08F1E /* BoolExtension.swift in Sources */,
 				58D9BC592BEA1A41000C4149 /* AUAdPosition.swift in Sources */,
 				583B55552BD66F5B00226302 /* AUMORTBAppContent_Internal.swift in Sources */,
 				58436ACD2C09BE1200E83155 /* AUAdCreationEvent.swift in Sources */,
@@ -1130,7 +1122,6 @@
 				58EB06D52C21957100CE6E86 /* AUBannerView.swift in Sources */,
 				58EB06E52C2195E200CE6E86 /* UIViewExtension.swift in Sources */,
 				58EB06C72C2194E300CE6E86 /* AUFailedLoadEvent.swift in Sources */,
-				5880C9822D09E1EB0063F249 /* AUGender.swift in Sources */,
 				58EB06C82C2194E300CE6E86 /* AUAdCreationEvent.swift in Sources */,
 				58EB06E32C2195C400CE6E86 /* AUMORTBAppContent.swift in Sources */,
 				58EB06C92C2194E300CE6E86 /* AUScreenImpression.swift in Sources */,
@@ -1142,14 +1133,11 @@
 				58EB06CC2C2194E300CE6E86 /* Common.swift in Sources */,
 				58EB06CD2C2194E300CE6E86 /* AUCloseAdEvent.swift in Sources */,
 				58EB06E62C21960400CE6E86 /* AUAdUnitConfiguration.swift in Sources */,
-				58EB06E72C21961400CE6E86 /* BoolExtension.swift in Sources */,
 				58D078B02C23132A00D49175 /* ModelsMapperTests.swift in Sources */,
 				58EB06F02C21965E00CE6E86 /* AUInterstitialView_Private.swift in Sources */,
 				58EB06F12C21965E00CE6E86 /* AURewardedView_Private.swift in Sources */,
 				58EB06F22C21965E00CE6E86 /* AUBannerView_Private.swift in Sources */,
 				58D078AF2C23132A00D49175 /* TestableModel.swift in Sources */,
-				58EB06EB2C21964600CE6E86 /* AUAdUnitConfiguration_Private.swift in Sources */,
-				5880C9842D09E6E40063F249 /* AUExternalUserId.swift in Sources */,
 				58EB06CF2C2194E300CE6E86 /* AUBidWinnerEven.swift in Sources */,
 				58EB06E22C2195B700CE6E86 /* AUAdParameters.swift in Sources */,
 				58EB06D02C2194E300CE6E86 /* AUAdClickEvent.swift in Sources */,
@@ -1417,6 +1405,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YQ63ZZYZV7;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
@@ -1438,6 +1427,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YQ63ZZYZV7;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;

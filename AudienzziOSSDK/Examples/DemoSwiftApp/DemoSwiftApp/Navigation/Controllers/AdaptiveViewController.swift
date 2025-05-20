@@ -1,11 +1,11 @@
-/*   Copyright 2018-2024 Audienzz.org, Inc.
- 
+/*   Copyright 2018-2025 Audienzz.org, Inc.
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,10 +13,10 @@
  limitations under the License.
  */
 
-import UIKit
 import AudienzziOSSDK
-import GoogleMobileAds
 import GoogleInteractiveMediaAds
+import GoogleMobileAds
+import UIKit
 
 /**
 Multi-Size Banner Options in Google Mobile Ads SDK for iOS
@@ -60,23 +60,24 @@ class AdAdaptiveViewController: UIViewController {
     @IBOutlet private var applyButton: UIButton!
     @IBOutlet private var sizeDisplayLabel: UILabel!
     @IBOutlet private var maxHeightEnable: UISwitch!
-    
+
     private var adWidth: CGFloat = 320
     private var selectedSegment: AdTypes = .adaptive
-    
+
     /// id was used from https://developers.google.com/admob/ios/test-ads
     private let testAdUnitId: String = "ca-app-pub-3940256099942544/2435281174"
-    
-    private let storedImpDisplayBanner = "" /// https://github.com/prebid/prebid-mobile-ios/issues/836 - the issue describes the prebid can't support Adaptive banners.
+
+    private let storedImpDisplayBanner = ""
+    /// https://github.com/prebid/prebid-mobile-ios/issues/836 - the issue describes the prebid can't support Adaptive banners.
 
     ///https://developers.google.com/admob/ios/banner/inline-adaptive#limit_inline_adaptive_banner_height  Limit inline adaptive banner height By default, inline adaptive banners instantiated without a maxHeight value have a maxHeight equal to the device height. To limit the inline adaptive banner height, use the GADInlineAdaptiveBannerAdSizeWithWidthAndMaxHeight(CGFloat width, CGFloat maxHeight) method.
     private let maxHeightAdaptive: CGFloat = 250
-    
+
     override func viewDidLoad() {
         textField.text = "\(Int(adWidth))"
         addAdaptiveBannerView()
     }
-    
+
     private enum AdTypes: Int {
         case adaptive
         case multiSize
@@ -84,16 +85,17 @@ class AdAdaptiveViewController: UIViewController {
     }
 
     @IBAction func changeTypePress(_ sender: UISegmentedControl) {
-        selectedSegment = AdTypes(rawValue: sender.selectedSegmentIndex) ?? .adaptive
+        selectedSegment =
+            AdTypes(rawValue: sender.selectedSegmentIndex) ?? .adaptive
         setupAd()
     }
-    
+
     @IBAction private func applyTaped() {
         guard let size = Double(textField.text ?? "") else { return }
         adWidth = size
         setupAd()
     }
-    
+
     private func setupAd() {
         removeAd()
         switch selectedSegment {
@@ -108,147 +110,198 @@ class AdAdaptiveViewController: UIViewController {
             updateUIInputs(false)
         }
     }
-    
+
     private func removeAd() {
         containerView.subviews.forEach { $0.removeFromSuperview() }
     }
-    
+
     private func updateUIInputs(_ flag: Bool) {
         textField.isUserInteractionEnabled = flag
         applyButton.isUserInteractionEnabled = flag
         maxHeightEnable.isUserInteractionEnabled = flag
     }
-    
+
     private func addAdaptiveBannerView() {
         /// https://developers.google.com/admob/ios/banner/inline-adaptive#limit_inline_adaptive_banner_height
-        let adSize = maxHeightEnable.isOn ? GADInlineAdaptiveBannerAdSizeWithWidthAndMaxHeight(adWidth, 250) : GADCurrentOrientationInlineAdaptiveBannerAdSizeWithWidth(adWidth)
-        
+        let adSize =
+            maxHeightEnable.isOn
+            ? inlineAdaptiveBanner(width: adWidth, maxHeight: 250)
+            : currentOrientationInlineAdaptiveBanner(width: adWidth)
+
         // Step 2: Create banner with the inline size and set ad unit ID.
-        let gamBannerView = GAMBannerView(adSize: adSize)
+        let gamBannerView = AdManagerBannerView(adSize: adSize)
         gamBannerView.adUnitID = testAdUnitId
         gamBannerView.rootViewController = self
         gamBannerView.delegate = self
         /// Set the adSizeDelegate to respond to dynamically received sizes from Google Ad Manager. You can filter or reject ad sizes that do not fit within your desired range
-//        gamBannerView.adSizeDelegate = self
-        
-        let bannerMultisizeView = AUBannerView(configId: storedImpDisplayBanner, adSize: adSize.size, adFormats: [.banner], isLazyLoad: false)
+        //        gamBannerView.adSizeDelegate = self
+
+        let bannerMultisizeView = AUBannerView(
+            configId: storedImpDisplayBanner,
+            adSize: adSize.size,
+            adFormats: [.banner],
+            isLazyLoad: false
+        )
         bannerMultisizeView.frame = CGRect.zero
         containerView.addSubview(bannerMultisizeView)
-        
-        let request = GADRequest()
+
+        let request = Request()
         bannerMultisizeView.createAd(with: request, gamBanner: gamBannerView)
-        
+
         bannerMultisizeView.onLoadRequest = { gamRequest in
-            guard let request = gamRequest as? GADRequest else { return }
+            guard let request = gamRequest as? Request else { return }
             gamBannerView.load(request)
         }
-        
+
         bannerMultisizeView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         // Set constraints to pin the child view to all sides of the parent view
         NSLayoutConstraint.activate([
-            bannerMultisizeView.topAnchor.constraint(equalTo: containerView.topAnchor),
-            bannerMultisizeView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
-            bannerMultisizeView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            bannerMultisizeView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor)
+            bannerMultisizeView.topAnchor.constraint(
+                equalTo: containerView.topAnchor
+            ),
+            bannerMultisizeView.bottomAnchor.constraint(
+                equalTo: containerView.bottomAnchor
+            ),
+            bannerMultisizeView.leadingAnchor.constraint(
+                equalTo: containerView.leadingAnchor
+            ),
+            bannerMultisizeView.trailingAnchor.constraint(
+                equalTo: containerView.trailingAnchor
+            ),
         ])
     }
-    
+
     private func addValideSizesBanner() {
         // Create a banner view
-        let gamBannerView = GAMBannerView(adSize: GADAdSizeBanner)
+        let gamBannerView = AdManagerBannerView(adSize: AdSizeBanner)
         gamBannerView.adUnitID = testAdUnitId
         gamBannerView.rootViewController = self
         gamBannerView.delegate = self
-        
+
         // Define multiple valid ad sizes
         gamBannerView.validAdSizes = [
-            NSValueFromGADAdSize(GADAdSizeBanner),          // 320x50
-            NSValueFromGADAdSize(GADAdSizeLargeBanner),     // 320x100
-            NSValueFromGADAdSize(GADAdSizeMediumRectangle)  // 300x250
+            nsValue(for: AdSizeBanner),  // 320x50
+            nsValue(for: AdSizeLargeBanner),  // 320x100
+            nsValue(for: AdSizeMediumRectangle),  // 300x250
         ]
-        
-        let bannerMultisizeView = AUBannerView(configId: storedImpDisplayBanner, adSize: GADAdSizeBanner.size, adFormats: [.banner], isLazyLoad: false)
+
+        let bannerMultisizeView = AUBannerView(
+            configId: storedImpDisplayBanner,
+            adSize: AdSizeBanner.size,
+            adFormats: [.banner],
+            isLazyLoad: false
+        )
         bannerMultisizeView.frame = CGRect.zero
         containerView.addSubview(bannerMultisizeView)
-        
-        let request = GADRequest()
+
+        let request = Request()
         bannerMultisizeView.createAd(with: request, gamBanner: gamBannerView)
-        
+
         bannerMultisizeView.onLoadRequest = { gamRequest in
-            guard let request = gamRequest as? GADRequest else { return }
+            guard let request = gamRequest as? Request else { return }
             gamBannerView.load(request)
         }
-        
+
         bannerMultisizeView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         // Set constraints to pin the child view to all sides of the parent view
         NSLayoutConstraint.activate([
-            bannerMultisizeView.topAnchor.constraint(equalTo: containerView.topAnchor),
-            bannerMultisizeView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
-            bannerMultisizeView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            bannerMultisizeView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor)
+            bannerMultisizeView.topAnchor.constraint(
+                equalTo: containerView.topAnchor
+            ),
+            bannerMultisizeView.bottomAnchor.constraint(
+                equalTo: containerView.bottomAnchor
+            ),
+            bannerMultisizeView.leadingAnchor.constraint(
+                equalTo: containerView.leadingAnchor
+            ),
+            bannerMultisizeView.trailingAnchor.constraint(
+                equalTo: containerView.trailingAnchor
+            ),
         ])
     }
-    
-/// An ad size that spans the full width of its container, with a height dynamically determined by
-/// the ad.
+
+    /// An ad size that spans the full width of its container, with a height dynamically determined by
+    /// the ad.
     private func addFluidBanner() {
         // Create a fluid ad size banner
-        let gamBannerView = GAMBannerView(adSize: GADAdSizeFluid)
+        let gamBannerView = AdManagerBannerView(adSize: AdSizeFluid)
         gamBannerView.adUnitID = testAdUnitId
         gamBannerView.rootViewController = self
         gamBannerView.delegate = self
-        
-        let bannerMultisizeView = AUBannerView(configId: storedImpDisplayBanner, adSize: GADAdSizeFluid.size, adFormats: [.banner], isLazyLoad: false)
+
+        let bannerMultisizeView = AUBannerView(
+            configId: storedImpDisplayBanner,
+            adSize: AdSizeFluid.size,
+            adFormats: [.banner],
+            isLazyLoad: false
+        )
         bannerMultisizeView.frame = CGRect.zero
         containerView.addSubview(bannerMultisizeView)
-        
-        let request = GADRequest()
+
+        let request = Request()
         bannerMultisizeView.createAd(with: request, gamBanner: gamBannerView)
-        
+
         bannerMultisizeView.onLoadRequest = { gamRequest in
-            guard let request = gamRequest as? GADRequest else { return }
+            guard let request = gamRequest as? Request else { return }
             gamBannerView.load(request)
         }
-        
+
         bannerMultisizeView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         // Set constraints to pin the child view to all sides of the parent view
         NSLayoutConstraint.activate([
-            bannerMultisizeView.topAnchor.constraint(equalTo: containerView.topAnchor),
-            bannerMultisizeView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
-            bannerMultisizeView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            bannerMultisizeView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor)
+            bannerMultisizeView.topAnchor.constraint(
+                equalTo: containerView.topAnchor
+            ),
+            bannerMultisizeView.bottomAnchor.constraint(
+                equalTo: containerView.bottomAnchor
+            ),
+            bannerMultisizeView.leadingAnchor.constraint(
+                equalTo: containerView.leadingAnchor
+            ),
+            bannerMultisizeView.trailingAnchor.constraint(
+                equalTo: containerView.trailingAnchor
+            ),
         ])
     }
 }
 
 // MARK: - GADBannerViewDelegate
-extension AdAdaptiveViewController: GADBannerViewDelegate {
-    func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
-        guard let bannerView = bannerView as? GAMBannerView else { return }
-        AUAdViewUtils.findCreativeSize(bannerView, success: { [weak self] size in
-            self?.sizeDisplayLabel.text = "Ad size is: \(size)"
-            bannerView.resize(GADAdSizeFromCGSize(size))
-        }, failure: { (error) in
-            print(error)
-        })
+extension AdAdaptiveViewController: BannerViewDelegate {
+    func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+        guard let bannerView = bannerView as? AdManagerBannerView else {
+            return
+        }
+        AUAdViewUtils.findCreativeSize(
+            bannerView,
+            success: { [weak self] size in
+                self?.sizeDisplayLabel.text = "Ad size is: \(size)"
+                bannerView.resize(adSizeFor(cgSize: size))
+            },
+            failure: { (error) in
+                print(error)
+            }
+        )
     }
 
-    func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+    func bannerView(
+        _ bannerView: BannerView,
+        didFailToReceiveAdWithError error: Error
+    ) {
         print("GAM did fail to receive ad with error: \(error)")
     }
 }
 
 // MARK: - GADAdSizeDelegate
 /// Set the adSizeDelegate to respond to dynamically received sizes from Google Ad Manager. You can filter or reject ad sizes that do not fit within your desired range
-extension AdAdaptiveViewController: GADAdSizeDelegate {
-    func adView(_ bannerView: GADBannerView, willChangeAdSizeTo size: GADAdSize) {
+extension AdAdaptiveViewController: AdSizeDelegate {
+    func adView(_ bannerView: BannerView, willChangeAdSizeTo size: AdSize) {
         // Check if the received size fits your desired range
         let minHeight: CGFloat = 50
         let maxHeight: CGFloat = 250
-        
+
         if size.size.height >= minHeight && size.size.height <= maxHeight {
             print("Ad size within range: \(size.size)")
             // Update banner view constraints if necessary
@@ -257,7 +310,7 @@ extension AdAdaptiveViewController: GADAdSizeDelegate {
             print("Ad size out of range: \(size.size). Fixing to default size.")
             // Fix to a default size if out of range
         }
-        
+
         sizeDisplayLabel.text = "GADAdSizeDelegate size is:\(size.size)"
     }
 }
