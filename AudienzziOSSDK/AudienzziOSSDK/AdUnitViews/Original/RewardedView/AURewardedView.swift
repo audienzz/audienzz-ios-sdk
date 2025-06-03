@@ -27,7 +27,7 @@ public class AURewardedView: AUAdView {
     internal var gamRequest: AnyObject?
     internal var eventHandler: AURewardedHandler?
     internal var gadUnitID: String?
-    public var parameters: AUVideoParameters?
+    public var videoParameters: AUVideoParameters?
     
     /**
      Initialize rewarded view.
@@ -64,14 +64,21 @@ public class AURewardedView: AUAdView {
         self.eventHandler = nil
     }
     
+    public func setImpOrtbConfig(ortbConfig: String){
+        adUnit.setImpORTBConfig(ortbConfig)
+    }
+    
+    public func getImpOrtbConfig() -> String? {
+        return adUnit.getImpORTBConfig()
+    }
+    
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd(with gamRequest: AnyObject, adUnitID: String) {
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
-        let parameters = parameters?.unwrap() ?? defaultVideoParameters()
-        adUnit.videoParameters = parameters
+        adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters()
         self.gamRequest = gamRequest
         if !self.isLazyLoad {
             fetchRequest(gamRequest)

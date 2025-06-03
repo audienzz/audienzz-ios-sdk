@@ -216,7 +216,7 @@ extension ExamplesViewController {
             adFormats: [.video],
             isLazyLoad: false
         )
-        bannerVideoView.parameters = videoParameters
+        bannerVideoView.videoParameters = videoParameters
         bannerVideoView.frame = CGRect(
             origin: CGPoint(x: 0, y: getPositionY(adContainerView)),
             size: adVideoSize
@@ -275,7 +275,7 @@ extension ExamplesViewController {
             size: adSizeMult
         )
         bannerMultiplatformView.bannerParameters = bannerParameters
-        bannerMultiplatformView.parameters = videoParameters
+        bannerMultiplatformView.videoParameters = videoParameters
         bannerMultiplatformView.backgroundColor = .clear
         adContainerView.addSubview(bannerMultiplatformView)
 
@@ -466,7 +466,7 @@ extension ExamplesViewController {
             adFormats: [.video],
             isLazyLoad: true
         )
-        bannerLazyVideoView.parameters = videoParameters
+        bannerLazyVideoView.videoParameters = videoParameters
         bannerLazyVideoView.frame = CGRect(
             origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
             size: adVideoSize
@@ -525,7 +525,7 @@ extension ExamplesViewController {
             size: adSizeMult
         )
         bannerLazyMultiplatformView.bannerParameters = bannerParameters
-        bannerLazyMultiplatformView.parameters = videoParameters
+        bannerLazyMultiplatformView.videoParameters = videoParameters
         bannerLazyMultiplatformView.backgroundColor = .clear
         lazyAdContainerView.addSubview(bannerLazyMultiplatformView)
 

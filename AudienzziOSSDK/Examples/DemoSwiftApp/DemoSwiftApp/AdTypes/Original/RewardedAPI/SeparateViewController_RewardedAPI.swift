@@ -39,7 +39,7 @@ extension SeparateViewController {
             size: CGSize(width: view.frame.size.width, height: 300)
         )
         rewardedView.backgroundColor = .magenta
-        rewardedView.parameters = videoParameters
+        rewardedView.videoParameters = videoParameters
 
         lazyAdContainerView.addSubview(rewardedView)
         rewardedView.createAd(

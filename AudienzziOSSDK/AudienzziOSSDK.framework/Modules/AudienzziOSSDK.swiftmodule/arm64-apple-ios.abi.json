@@ -6659,8 +6659,8 @@
           },
           {
             "kind": "Var",
-            "name": "parameters",
-            "printedName": "parameters",
+            "name": "videoParameters",
+            "printedName": "videoParameters",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -6678,8 +6678,8 @@
               }
             ],
             "declKind": "Var",
-            "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(py)parameters",
-            "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10parametersAA17AUVideoParametersCSgvp",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(py)videoParameters",
+            "mangledName": "$s14AudienzziOSSDK14AURewardedViewC15videoParametersAA07AUVideoF0CSgvp",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -6713,8 +6713,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(im)parameters",
-                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10parametersAA17AUVideoParametersCSgvg",
+                "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(im)videoParameters",
+                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC15videoParametersAA07AUVideoF0CSgvg",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -6749,8 +6749,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(im)setParameters:",
-                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10parametersAA17AUVideoParametersCSgvs",
+                "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(im)setVideoParameters:",
+                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC15videoParametersAA07AUVideoF0CSgvs",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -6771,8 +6771,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:14AudienzziOSSDK14AURewardedViewC10parametersAA17AUVideoParametersCSgvM",
-                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10parametersAA17AUVideoParametersCSgvM",
+                "usr": "s:14AudienzziOSSDK14AURewardedViewC15videoParametersAA07AUVideoF0CSgvM",
+                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC15videoParametersAA07AUVideoF0CSgvM",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -6917,6 +6917,69 @@
               "Custom",
               "Override",
               "AccessControl"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setImpOrtbConfig",
+            "printedName": "setImpOrtbConfig(ortbConfig:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(im)setImpOrtbConfigWithOrtbConfig:",
+            "mangledName": "$s14AudienzziOSSDK14AURewardedViewC16setImpOrtbConfig04ortbH0ySS_tF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom",
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "getImpOrtbConfig",
+            "printedName": "getImpOrtbConfig()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(im)getImpOrtbConfig",
+            "mangledName": "$s14AudienzziOSSDK14AURewardedViewC16getImpOrtbConfigSSSgyF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom",
+              "AccessControl",
+              "ObjC"
             ],
             "funcSelfKind": "NonMutating"
           },
@@ -29682,6 +29745,57 @@
         "children": [
           {
             "kind": "Var",
+            "name": "audienzzSchainObjectConfig",
+            "printedName": "audienzzSchainObjectConfig",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)Audienzz(py)audienzzSchainObjectConfig",
+            "mangledName": "$s14AudienzziOSSDK8AudienzzC26audienzzSchainObjectConfigSSvp",
+            "moduleName": "AudienzziOSSDK",
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "ObjC"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@AudienzziOSSDK@objc(cs)Audienzz(im)audienzzSchainObjectConfig",
+                "mangledName": "$s14AudienzziOSSDK8AudienzzC26audienzzSchainObjectConfigSSvg",
+                "moduleName": "AudienzziOSSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
             "name": "timeoutUpdated",
             "printedName": "timeoutUpdated",
             "children": [
@@ -48736,8 +48850,8 @@
           },
           {
             "kind": "Var",
-            "name": "parameters",
-            "printedName": "parameters",
+            "name": "videoParameters",
+            "printedName": "videoParameters",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -48755,8 +48869,8 @@
               }
             ],
             "declKind": "Var",
-            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInstreamView(py)parameters",
-            "mangledName": "$s14AudienzziOSSDK14AUInstreamViewC10parametersAA17AUVideoParametersCSgvp",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInstreamView(py)videoParameters",
+            "mangledName": "$s14AudienzziOSSDK14AUInstreamViewC15videoParametersAA07AUVideoF0CSgvp",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -48790,8 +48904,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInstreamView(im)parameters",
-                "mangledName": "$s14AudienzziOSSDK14AUInstreamViewC10parametersAA17AUVideoParametersCSgvg",
+                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInstreamView(im)videoParameters",
+                "mangledName": "$s14AudienzziOSSDK14AUInstreamViewC15videoParametersAA07AUVideoF0CSgvg",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -48826,8 +48940,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInstreamView(im)setParameters:",
-                "mangledName": "$s14AudienzziOSSDK14AUInstreamViewC10parametersAA17AUVideoParametersCSgvs",
+                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInstreamView(im)setVideoParameters:",
+                "mangledName": "$s14AudienzziOSSDK14AUInstreamViewC15videoParametersAA07AUVideoF0CSgvs",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -48848,8 +48962,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:14AudienzziOSSDK14AUInstreamViewC10parametersAA17AUVideoParametersCSgvM",
-                "mangledName": "$s14AudienzziOSSDK14AUInstreamViewC10parametersAA17AUVideoParametersCSgvM",
+                "usr": "s:14AudienzziOSSDK14AUInstreamViewC15videoParametersAA07AUVideoF0CSgvM",
+                "mangledName": "$s14AudienzziOSSDK14AUInstreamViewC15videoParametersAA07AUVideoF0CSgvM",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -49208,6 +49322,69 @@
               "Required"
             ],
             "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "setImpOrtbConfig",
+            "printedName": "setImpOrtbConfig(ortbConfig:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInstreamView(im)setImpOrtbConfigWithOrtbConfig:",
+            "mangledName": "$s14AudienzziOSSDK14AUInstreamViewC16setImpOrtbConfig04ortbH0ySS_tF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom",
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "getImpOrtbConfig",
+            "printedName": "getImpOrtbConfig()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInstreamView(im)getImpOrtbConfig",
+            "mangledName": "$s14AudienzziOSSDK14AUInstreamViewC16getImpOrtbConfigSSSgyF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom",
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
           },
           {
             "kind": "Function",
@@ -54587,8 +54764,8 @@
           },
           {
             "kind": "Var",
-            "name": "parameters",
-            "printedName": "parameters",
+            "name": "videoParameters",
+            "printedName": "videoParameters",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -54606,8 +54783,8 @@
               }
             ],
             "declKind": "Var",
-            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUBannerView(py)parameters",
-            "mangledName": "$s14AudienzziOSSDK12AUBannerViewC10parametersAA17AUVideoParametersCSgvp",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUBannerView(py)videoParameters",
+            "mangledName": "$s14AudienzziOSSDK12AUBannerViewC15videoParametersAA07AUVideoF0CSgvp",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -54641,8 +54818,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUBannerView(im)parameters",
-                "mangledName": "$s14AudienzziOSSDK12AUBannerViewC10parametersAA17AUVideoParametersCSgvg",
+                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUBannerView(im)videoParameters",
+                "mangledName": "$s14AudienzziOSSDK12AUBannerViewC15videoParametersAA07AUVideoF0CSgvg",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -54677,8 +54854,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUBannerView(im)setParameters:",
-                "mangledName": "$s14AudienzziOSSDK12AUBannerViewC10parametersAA17AUVideoParametersCSgvs",
+                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUBannerView(im)setVideoParameters:",
+                "mangledName": "$s14AudienzziOSSDK12AUBannerViewC15videoParametersAA07AUVideoF0CSgvs",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -54699,8 +54876,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:14AudienzziOSSDK12AUBannerViewC10parametersAA17AUVideoParametersCSgvM",
-                "mangledName": "$s14AudienzziOSSDK12AUBannerViewC10parametersAA17AUVideoParametersCSgvM",
+                "usr": "s:14AudienzziOSSDK12AUBannerViewC15videoParametersAA07AUVideoF0CSgvM",
+                "mangledName": "$s14AudienzziOSSDK12AUBannerViewC15videoParametersAA07AUVideoF0CSgvM",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -55036,6 +55213,69 @@
             "declKind": "Func",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AUBannerView(im)addAdditionalSizeWithSizes:",
             "mangledName": "$s14AudienzziOSSDK12AUBannerViewC17addAdditionalSize5sizesySaySo6CGSizeVG_tF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom",
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setImpOrtbConfig",
+            "printedName": "setImpOrtbConfig(ortbConfig:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUBannerView(im)setImpOrtbConfigWithOrtbConfig:",
+            "mangledName": "$s14AudienzziOSSDK12AUBannerViewC16setImpOrtbConfig04ortbH0ySS_tF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom",
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "getImpOrtbConfig",
+            "printedName": "getImpOrtbConfig()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUBannerView(im)getImpOrtbConfig",
+            "mangledName": "$s14AudienzziOSSDK12AUBannerViewC16getImpOrtbConfigSSSgyF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -69357,8 +69597,8 @@
           },
           {
             "kind": "Var",
-            "name": "parameters",
-            "printedName": "parameters",
+            "name": "videoParameters",
+            "printedName": "videoParameters",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -69376,8 +69616,8 @@
               }
             ],
             "declKind": "Var",
-            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInterstitialView(py)parameters",
-            "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC10parametersAA17AUVideoParametersCSgvp",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInterstitialView(py)videoParameters",
+            "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC15videoParametersAA07AUVideoF0CSgvp",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -69411,8 +69651,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInterstitialView(im)parameters",
-                "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC10parametersAA17AUVideoParametersCSgvg",
+                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInterstitialView(im)videoParameters",
+                "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC15videoParametersAA07AUVideoF0CSgvg",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -69447,8 +69687,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInterstitialView(im)setParameters:",
-                "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC10parametersAA17AUVideoParametersCSgvs",
+                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInterstitialView(im)setVideoParameters:",
+                "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC15videoParametersAA07AUVideoF0CSgvs",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -69469,8 +69709,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:14AudienzziOSSDK18AUInterstitialViewC10parametersAA17AUVideoParametersCSgvM",
-                "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC10parametersAA17AUVideoParametersCSgvM",
+                "usr": "s:14AudienzziOSSDK18AUInterstitialViewC15videoParametersAA07AUVideoF0CSgvM",
+                "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC15videoParametersAA07AUVideoF0CSgvM",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -69827,6 +70067,69 @@
               "Custom",
               "Override",
               "AccessControl"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setImpOrtbConfig",
+            "printedName": "setImpOrtbConfig(ortbConfig:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInterstitialView(im)setImpOrtbConfigWithOrtbConfig:",
+            "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC16setImpOrtbConfig04ortbH0ySS_tF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom",
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "getImpOrtbConfig",
+            "printedName": "getImpOrtbConfig()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInterstitialView(im)getImpOrtbConfig",
+            "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC16getImpOrtbConfigSSSgyF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom",
+              "AccessControl",
+              "ObjC"
             ],
             "funcSelfKind": "NonMutating"
           },
@@ -75479,6 +75782,66 @@
             "funcSelfKind": "NonMutating"
           },
           {
+            "kind": "Function",
+            "name": "getGlobalOrtbConfig",
+            "printedName": "getGlobalOrtbConfig()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)getGlobalOrtbConfig",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC19getGlobalOrtbConfigSSSgyF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setGlobalOrtbConfig",
+            "printedName": "setGlobalOrtbConfig(ortbConfig:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)setGlobalOrtbConfigWithOrtbConfig:",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC19setGlobalOrtbConfig04ortbG0ySS_tF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
             "kind": "Constructor",
             "name": "init",
             "printedName": "init()",
@@ -79554,8 +79917,15 @@
     },
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Audienzz.swift",
+      "kind": "StringLiteral",
+      "offset": 903,
+      "length": 93,
+      "value": "\"{ \"source\": { \"schain\": [{ \"asi\":\"audienzz.ch\", \"sid\":\"812net\", \"hp\":1 }] } }\""
+    },
+    {
+      "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Audienzz.swift",
       "kind": "BooleanLiteral",
-      "offset": 1224,
+      "offset": 1372,
       "length": 5,
       "value": "false"
     },
