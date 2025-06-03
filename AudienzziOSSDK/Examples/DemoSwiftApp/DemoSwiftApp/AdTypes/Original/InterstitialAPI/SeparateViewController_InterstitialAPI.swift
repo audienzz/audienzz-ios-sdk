@@ -113,7 +113,7 @@ extension SeparateViewController {
             name: "interstitialVideoView"
         )
 
-        interstitialVideoView.parameters = videoParameters
+        interstitialVideoView.videoParameters = videoParameters
         interstitialVideoView.createAd(
             with: gamRequest,
             adUnitID: gamAdUnitVideoInterstitialOriginal
@@ -173,7 +173,7 @@ extension SeparateViewController {
             name: "interstitialMultiplatformView"
         )
 
-        interstitialMultiplatformView.parameters = videoParameters
+        interstitialMultiplatformView.videoParameters = videoParameters
         interstitialMultiplatformView.createAd(
             with: gamRequest,
             adUnitID: gamAdUnitMultiformatInterstitialOriginal

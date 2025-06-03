@@ -311,6 +311,16 @@ public class AUTargeting: NSObject {
     public func getAppKeywords() -> [String] {
         Targeting.shared.getAppKeywords()
     }
+    
+    // MARK: - Global ORTB config
+    
+    public func getGlobalOrtbConfig() -> String? {
+        Targeting.shared.getGlobalORTBConfig()
+    }
+    
+    public func setGlobalOrtbConfig(ortbConfig: String){
+        Targeting.shared.setGlobalORTBConfig(ortbConfig)
+    }
 }
 
 extension UserUniqueID {

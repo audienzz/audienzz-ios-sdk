@@ -28,7 +28,7 @@ public class AUInterstitialView: AUAdView {
     internal var eventHandler: AUInterstitialHandler?
     internal var gadUnitID: String?
     
-    public var parameters: AUVideoParameters?
+    public var videoParameters: AUVideoParameters?
     public var bannerParameters: AUBannerParameters?
     
     /**
@@ -81,6 +81,14 @@ public class AUInterstitialView: AUAdView {
         self.eventHandler = nil
     }
     
+    public func setImpOrtbConfig(ortbConfig: String){
+        adUnit.setImpORTBConfig(ortbConfig)
+    }
+    
+    public func getImpOrtbConfig() -> String? {
+        return adUnit.getImpORTBConfig()
+    }
+    
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
@@ -88,6 +96,8 @@ public class AUInterstitialView: AUAdView {
         if let parameters = bannerParameters {
             adUnit.bannerParameters = parameters.makeBannerParameters()
         }
+        
+        adUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters()
         
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID

@@ -28,7 +28,7 @@ public class AUInstreamView: AUAdView {
     internal var adUnit: InstreamVideoAdUnit!
     internal var customKeywords: Keywords?
     
-    public var parameters: AUVideoParameters?
+    public var videoParameters: AUVideoParameters?
     public var onLoadInstreamRequest: (([String: String]?) -> Void)?
     
     /**
@@ -55,12 +55,19 @@ public class AUInstreamView: AUAdView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    public func setImpOrtbConfig(ortbConfig: String){
+        adUnit.setImpORTBConfig(ortbConfig)
+    }
+    
+    public func getImpOrtbConfig() -> String? {
+        return adUnit.getImpORTBConfig()
+    }
+    
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd(size: CGSize) {
-        let parameters = parameters?.unwrap() ?? defaultVideoParameters()
-        adUnit.videoParameters = parameters
+        adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters()
         
         if !self.isLazyLoad {
             fetchRequest()

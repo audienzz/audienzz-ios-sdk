@@ -43,7 +43,7 @@ extension ExamplesViewController {
             size: CGSize(width: view.frame.size.width, height: 480)
         )
         instreamView.backgroundColor = .black
-        instreamView.parameters = videoParameters
+        instreamView.videoParameters = videoParameters
         adContainerView.addSubview(instreamView)
 
         setupPlayerForInstreamExample()
