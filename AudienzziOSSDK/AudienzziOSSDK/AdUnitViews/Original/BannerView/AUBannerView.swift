@@ -27,7 +27,7 @@ public class AUBannerView: AUAdView {
     internal var gamRequest: AnyObject?
     internal var eventHandler: AUBannerHandler?
 
-    public var parameters: AUVideoParameters?
+    public var videoParameters: AUVideoParameters?
     public var bannerParameters: AUBannerParameters?
 
     /**
@@ -69,6 +69,14 @@ public class AUBannerView: AUAdView {
     public func addAdditionalSize(sizes: [CGSize]) {
         adUnit.addAdditionalSize(sizes: sizes)
     }
+    
+    public func setImpOrtbConfig(ortbConfig: String){
+        adUnit.setImpORTBConfig(ortbConfig)
+    }
+    
+    public func getImpOrtbConfig() -> String? {
+        return adUnit.getImpORTBConfig()
+    }
 
     deinit {
         self.eventHandler = nil
@@ -87,7 +95,7 @@ public class AUBannerView: AUAdView {
         }
         addSubview(gamBanner)
 
-        adUnit.videoParameters = self.parameters?.unwrap() ?? defaultVideoParameters()
+        adUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters()
 
         self.gamRequest = gamRequest
 

@@ -1,7 +1,7 @@
 // swift-interface-format-version: 1.0
-// swift-compiler-version: Apple Swift version 6.1 effective-5.10 (swiftlang-6.1.0.110.21 clang-1700.0.13.3)
+// swift-compiler-version: Apple Swift version 6.1.2 effective-5.10 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
 // swift-module-flags: -target arm64-apple-ios13 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -Onone -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -module-name AudienzziOSSDK
-// swift-module-flags-ignorable: -no-verify-emitted-module-interface -interface-compiler-version 6.1
+// swift-module-flags-ignorable: -no-verify-emitted-module-interface -interface-compiler-version 6.1.2
 import AdSupport
 import AppTrackingTransparency
 @_exported import AudienzziOSSDK
@@ -58,11 +58,13 @@ extension AudienzziOSSDK.AudienzzGAMUtils {
   @objc deinit
 }
 @objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AURewardedView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor @preconcurrency public var parameters: AudienzziOSSDK.AUVideoParameters?
+  @objc @_Concurrency.MainActor @preconcurrency public var videoParameters: AudienzziOSSDK.AUVideoParameters?
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String)
   @_Concurrency.MainActor @preconcurrency @objc override public init(configId: Swift.String, isLazyLoad: Swift.Bool)
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public func removeFromSuperview()
   @objc deinit
+  @objc @_Concurrency.MainActor @preconcurrency public func setImpOrtbConfig(ortbConfig: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func getImpOrtbConfig() -> Swift.String?
   @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
   @objc @_Concurrency.MainActor @preconcurrency public func connectHandler(_ eventHandler: AudienzziOSSDK.AURewardedEventHandler)
 }
@@ -335,6 +337,7 @@ public struct AUNativeRequestParameter {
   @objc deinit
 }
 @objc @_inheritsConvenienceInitializers @objcMembers public class Audienzz : ObjectiveC.NSObject {
+  @objc final public let audienzzSchainObjectConfig: Swift.String
   @objc public var timeoutUpdated: Swift.Bool {
     @objc get
     @objc set
@@ -631,10 +634,12 @@ extension AudienzziOSSDK.AUAdUnitConfiguration : AudienzziOSSDK.AUAdUnitConfigur
 }
 public typealias Keywords = [Swift.String : Swift.String]
 @objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUInstreamView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor @preconcurrency public var parameters: AudienzziOSSDK.AUVideoParameters?
+  @objc @_Concurrency.MainActor @preconcurrency public var videoParameters: AudienzziOSSDK.AUVideoParameters?
   @objc @_Concurrency.MainActor @preconcurrency public var onLoadInstreamRequest: (([Swift.String : Swift.String]?) -> Swift.Void)?
   @_Concurrency.MainActor @preconcurrency @objc override public init(configId: Swift.String, adSize: CoreFoundation.CGSize)
   @_Concurrency.MainActor @preconcurrency @objc override public init(configId: Swift.String, adSize: CoreFoundation.CGSize, isLazyLoad: Swift.Bool)
+  @objc @_Concurrency.MainActor @preconcurrency public func setImpOrtbConfig(ortbConfig: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func getImpOrtbConfig() -> Swift.String?
   @objc @_Concurrency.MainActor @preconcurrency public func createAd(size: CoreFoundation.CGSize)
   @objc deinit
 }
@@ -715,12 +720,14 @@ public typealias Keywords = [Swift.String : Swift.String]
   }
 }
 @objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUBannerView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor @preconcurrency public var parameters: AudienzziOSSDK.AUVideoParameters?
+  @objc @_Concurrency.MainActor @preconcurrency public var videoParameters: AudienzziOSSDK.AUVideoParameters?
   @objc @_Concurrency.MainActor @preconcurrency public var bannerParameters: AudienzziOSSDK.AUBannerParameters?
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adSize: CoreFoundation.CGSize, adFormats: [AudienzziOSSDK.AUAdFormat])
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adSize: CoreFoundation.CGSize, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool)
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public func removeFromSuperview()
   @objc @_Concurrency.MainActor @preconcurrency public func addAdditionalSize(sizes: [CoreFoundation.CGSize])
+  @objc @_Concurrency.MainActor @preconcurrency public func setImpOrtbConfig(ortbConfig: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func getImpOrtbConfig() -> Swift.String?
   @objc deinit
   @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, gamBanner: UIKit.UIView, eventHandler: AudienzziOSSDK.AUBannerEventHandler? = nil)
 }
@@ -836,13 +843,15 @@ public typealias Keywords = [Swift.String : Swift.String]
   @objc deinit
 }
 @objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUInterstitialView : AudienzziOSSDK.AUAdView {
-  @objc @_Concurrency.MainActor @preconcurrency public var parameters: AudienzziOSSDK.AUVideoParameters?
+  @objc @_Concurrency.MainActor @preconcurrency public var videoParameters: AudienzziOSSDK.AUVideoParameters?
   @objc @_Concurrency.MainActor @preconcurrency public var bannerParameters: AudienzziOSSDK.AUBannerParameters?
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat])
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool)
   @objc @_Concurrency.MainActor @preconcurrency convenience public init(configId: Swift.String, adFormats: [AudienzziOSSDK.AUAdFormat], isLazyLoad: Swift.Bool, minWidthPerc: Swift.Int, minHeightPerc: Swift.Int)
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public func removeFromSuperview()
   @objc deinit
+  @objc @_Concurrency.MainActor @preconcurrency public func setImpOrtbConfig(ortbConfig: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func getImpOrtbConfig() -> Swift.String?
   @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
   @objc @_Concurrency.MainActor @preconcurrency public func connectHandler(_ eventHandler: AudienzziOSSDK.AUInterstitialEventHandler)
 }
@@ -978,6 +987,8 @@ public typealias Keywords = [Swift.String : Swift.String]
   @objc public func removeAppKeyword(_ element: Swift.String)
   @objc public func clearAppKeywords()
   @objc public func getAppKeywords() -> [Swift.String]
+  @objc public func getGlobalOrtbConfig() -> Swift.String?
+  @objc public func setGlobalOrtbConfig(ortbConfig: Swift.String)
   @objc override dynamic public init()
   @objc deinit
 }
