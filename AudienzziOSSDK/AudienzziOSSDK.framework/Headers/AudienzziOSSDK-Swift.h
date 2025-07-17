@@ -555,6 +555,7 @@ SWIFT_CLASS("_TtC14AudienzziOSSDK21AUBannerRenderingView")
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId adSize:(CGSize)adSize SWIFT_UNAVAILABLE;
 @end
 
+@class GAMRequest;
 /// AUBannerView.
 /// Ad view for demand  banner and/or video.
 /// Lazy load is true by default.
@@ -573,7 +574,7 @@ SWIFT_CLASS("_TtC14AudienzziOSSDK12AUBannerView")
 - (void)setImpOrtbConfigWithOrtbConfig:(NSString * _Nonnull)ortbConfig;
 - (NSString * _Nullable)getImpOrtbConfig SWIFT_WARN_UNUSED_RESULT;
 /// Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
-- (void)createAdWith:(id _Nonnull)gamRequest gamBanner:(UIView * _Nonnull)gamBanner eventHandler:(AUBannerEventHandler * _Nullable)eventHandler;
+- (void)createAdWith:(GAMRequest * _Nonnull)gamRequest gamBanner:(UIView * _Nonnull)gamBanner eventHandler:(AUBannerEventHandler * _Nullable)eventHandler;
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId adSize:(CGSize)adSize isLazyLoad:(BOOL)isLazyLoad SWIFT_UNAVAILABLE;
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId isLazyLoad:(BOOL)isLazyLoad SWIFT_UNAVAILABLE;
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId adSize:(CGSize)adSize SWIFT_UNAVAILABLE;
@@ -750,7 +751,7 @@ SWIFT_CLASS("_TtC14AudienzziOSSDK18AUInterstitialView")
 - (void)setImpOrtbConfigWithOrtbConfig:(NSString * _Nonnull)ortbConfig;
 - (NSString * _Nullable)getImpOrtbConfig SWIFT_WARN_UNUSED_RESULT;
 /// Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
-- (void)createAdWith:(id _Nonnull)gamRequest adUnitID:(NSString * _Nonnull)adUnitID;
+- (void)createAdWith:(GAMRequest * _Nonnull)gamRequest adUnitID:(NSString * _Nonnull)adUnitID;
 - (void)connectHandler:(AUInterstitialEventHandler * _Nonnull)eventHandler;
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId adSize:(CGSize)adSize isLazyLoad:(BOOL)isLazyLoad SWIFT_UNAVAILABLE;
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId isLazyLoad:(BOOL)isLazyLoad SWIFT_UNAVAILABLE;
@@ -887,7 +888,7 @@ SWIFT_CLASS("_TtC14AudienzziOSSDK19AUMultiplatformView")
 @property (nonatomic, weak) id <AUNativeAdDelegate> _Nullable delegate;
 @property (nonatomic, copy) void (^ _Nullable onGetNativeAd)(NativeAd * _Nonnull);
 /// Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
-- (void)createWith:(id _Nonnull)gamRequest adUnitID:(NSString * _Nonnull)adUnitID;
+- (void)createWith:(GAMRequest * _Nonnull)gamRequest adUnitID:(NSString * _Nonnull)adUnitID;
 - (void)findNativeWithAdObject:(id _Nonnull)adObject;
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId adSize:(CGSize)adSize isLazyLoad:(BOOL)isLazyLoad SWIFT_UNAVAILABLE;
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId isLazyLoad:(BOOL)isLazyLoad SWIFT_UNAVAILABLE;
@@ -1175,7 +1176,7 @@ SWIFT_CLASS("_TtC14AudienzziOSSDK12AUNativeView")
 /// Lazy load is true by default.
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId isLazyLoad:(BOOL)isLazyLoad adType:(enum AUNativeType)adType OBJC_DESIGNATED_INITIALIZER;
 /// Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
-- (void)createAdWith:(id _Nonnull)gamRequest;
+- (void)createAdWith:(GAMRequest * _Nonnull)gamRequest;
 - (void)findNativeWithAdObject:(id _Nonnull)adObject;
 - (BOOL)registerViewWithClickableViews:(NSArray<UIView *> * _Nullable)clickableViews;
 - (void)findRenderingAd:(AUNativeAd * _Nullable)ad;
@@ -1300,7 +1301,7 @@ SWIFT_CLASS("_TtC14AudienzziOSSDK14AURewardedView")
 - (void)setImpOrtbConfigWithOrtbConfig:(NSString * _Nonnull)ortbConfig;
 - (NSString * _Nullable)getImpOrtbConfig SWIFT_WARN_UNUSED_RESULT;
 /// Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
-- (void)createAdWith:(id _Nonnull)gamRequest adUnitID:(NSString * _Nonnull)adUnitID;
+- (void)createAdWith:(GAMRequest * _Nonnull)gamRequest adUnitID:(NSString * _Nonnull)adUnitID;
 - (void)connectHandler:(AURewardedEventHandler * _Nonnull)eventHandler;
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId adSize:(CGSize)adSize isLazyLoad:(BOOL)isLazyLoad SWIFT_UNAVAILABLE;
 - (nonnull instancetype)initWithConfigId:(NSString * _Nonnull)configId adSize:(CGSize)adSize SWIFT_UNAVAILABLE;
@@ -1370,6 +1371,14 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, strong) AUTargeting * _Nonnull
 - (NSArray<NSString *> * _Nonnull)getAppKeywords SWIFT_WARN_UNUSED_RESULT;
 - (NSString * _Nullable)getGlobalOrtbConfig SWIFT_WARN_UNUSED_RESULT;
 - (void)setGlobalOrtbConfigWithOrtbConfig:(NSString * _Nonnull)ortbConfig;
+/// Add single key-value targeting
+- (void)addCustomTargetingWithKey:(NSString * _Nonnull)key value:(NSString * _Nonnull)value;
+/// Add single key - multiple values targeting
+- (void)addCustomTargetingWithKey:(NSString * _Nonnull)key values:(NSSet<NSString *> * _Nonnull)values;
+/// Remove targeting for specific key
+- (void)removeCustomTargetingWithKey:(NSString * _Nonnull)key;
+/// Clear all targeting
+- (void)clearCustomTargeting;
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
 @end
 
@@ -1519,7 +1528,6 @@ typedef SWIFT_ENUM_NAMED(NSInteger, AUVideoStartDelay, "AUVideoStartDelay", open
 
 SWIFT_CLASS("_TtC14AudienzziOSSDK8Audienzz")
 @interface Audienzz : NSObject
-@property (nonatomic, readonly, copy) NSString * _Nonnull audienzzSchainObjectConfig;
 @property (nonatomic) BOOL timeoutUpdated;
 @property (nonatomic, copy) NSString * _Nonnull audienzServerAccountId;
 @property (nonatomic) BOOL pbsDebug;
@@ -1544,7 +1552,6 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, readonly, strong) Audienzz * _
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
 @end
 
-@class GAMRequest;
 SWIFT_CLASS("_TtC14AudienzziOSSDK16AudienzzGAMUtils")
 @interface AudienzzGAMUtils : NSObject
 SWIFT_CLASS_PROPERTY(@property (nonatomic, class, readonly, strong) AudienzzGAMUtils * _Nonnull shared;)

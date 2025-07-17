@@ -15,6 +15,7 @@
 
 import UIKit
 import PrebidMobile
+import GoogleMobileAds
 
 /**
  AUInterstitialView.
@@ -92,7 +93,7 @@ public class AUInterstitialView: AUAdView {
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
-    public func createAd(with gamRequest: AnyObject, adUnitID: String) {
+    public func createAd(with gamRequest: AdManagerRequest, adUnitID: String) {
         if let parameters = bannerParameters {
             adUnit.bannerParameters = parameters.makeBannerParameters()
         }
@@ -101,7 +102,8 @@ public class AUInterstitialView: AUAdView {
         
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
-        self.gamRequest = gamRequest
+        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
+        
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
         }

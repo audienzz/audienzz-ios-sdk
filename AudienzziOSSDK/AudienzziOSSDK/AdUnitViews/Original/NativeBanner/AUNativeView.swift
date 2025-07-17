@@ -15,6 +15,10 @@
 
 import UIKit
 import PrebidMobile
+import GoogleMobileAds
+
+public typealias PrebidNativeAd = PrebidMobile.NativeAd
+typealias PrebidNativeAdDelegate = PrebidMobile.NativeAdDelegate
 
 @objc
 public enum AUNativeType: Int {
@@ -44,7 +48,7 @@ public enum AUNativeType: Int {
 public class AUNativeView: AUAdView {
     internal var nativeUnit: NativeRequest!
     internal var nativeAd: AUNativeAd!
-    internal var gamRequest: AnyObject?
+    internal var gamRequest: AdManagerRequest?
     
     public var onNativeLoadRequest: ((AnyObject, [String:String]) -> Void)?
     public var onGetNativeAd: ((AUNativeAd) -> Void)?
@@ -85,7 +89,7 @@ public class AUNativeView: AUAdView {
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
-    public func createAd(with gamRequest: AnyObject) {
+    public func createAd(with gamRequest: AdManagerRequest) {
         nativeUnit.context = nativeParameter.context?.toContentType
         nativeUnit.assets = nativeParameter.assets?.compactMap { $0.unwrap() }
         nativeUnit.placementType = nativeParameter.placementType?.toPlacementType
@@ -109,7 +113,7 @@ public class AUNativeView: AUAdView {
         }
         
         nativeUnit.ext = nativeParameter.ext
-        self.gamRequest = gamRequest
+        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
         
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
@@ -136,7 +140,7 @@ public class AUNativeView: AUAdView {
     }
 }
 
-internal class NativeAdDelegateType: NSObject, NativeAdDelegate {
+internal class NativeAdDelegateType: NSObject, PrebidNativeAdDelegate {
     private weak var parent: AUNativeView?
 
     init(parent: AUNativeView) {
@@ -144,7 +148,7 @@ internal class NativeAdDelegateType: NSObject, NativeAdDelegate {
         self.parent = parent
     }
     
-    public func nativeAdLoaded(ad: NativeAd) {
+    public func nativeAdLoaded(ad: PrebidNativeAd) {
         guard let parent = parent else { return }
         parent.nativeAd = AUNativeAd(ad)
         if parent.isLazyLoad, parent.isLazyLoaded {

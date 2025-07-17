@@ -145,7 +145,7 @@ class AdAdaptiveViewController: UIViewController {
         bannerMultisizeView.frame = CGRect.zero
         containerView.addSubview(bannerMultisizeView)
 
-        let request = Request()
+        let request = AdManagerRequest()
         bannerMultisizeView.createAd(with: request, gamBanner: gamBannerView)
 
         bannerMultisizeView.onLoadRequest = { gamRequest in
@@ -195,7 +195,7 @@ class AdAdaptiveViewController: UIViewController {
         bannerMultisizeView.frame = CGRect.zero
         containerView.addSubview(bannerMultisizeView)
 
-        let request = Request()
+        let request = AdManagerRequest()
         bannerMultisizeView.createAd(with: request, gamBanner: gamBannerView)
 
         bannerMultisizeView.onLoadRequest = { gamRequest in
@@ -240,7 +240,7 @@ class AdAdaptiveViewController: UIViewController {
         bannerMultisizeView.frame = CGRect.zero
         containerView.addSubview(bannerMultisizeView)
 
-        let request = Request()
+        let request = AdManagerRequest()
         bannerMultisizeView.createAd(with: request, gamBanner: gamBannerView)
 
         bannerMultisizeView.onLoadRequest = { gamRequest in

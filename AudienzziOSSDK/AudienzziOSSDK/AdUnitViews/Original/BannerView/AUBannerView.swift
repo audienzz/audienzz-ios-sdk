@@ -15,6 +15,7 @@
 
 import UIKit
 import PrebidMobile
+import GoogleMobileAds
 
 /**
  AUBannerView.
@@ -85,7 +86,7 @@ public class AUBannerView: AUAdView {
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
-    public func createAd(with gamRequest: AnyObject, gamBanner: UIView, eventHandler: AUBannerEventHandler? = nil) {
+    public func createAd(with gamRequest: AdManagerRequest, gamBanner: UIView, eventHandler: AUBannerEventHandler? = nil) {
         if let parameters = bannerParameters {
             adUnit.bannerParameters = parameters.makeBannerParameters()
         } else {
@@ -97,7 +98,7 @@ public class AUBannerView: AUAdView {
 
         adUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters()
 
-        self.gamRequest = gamRequest
+        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
 
         if let bannerEventHandler = eventHandler {
             self.eventHandler = AUBannerHandler(auBannerView: self, gamView: bannerEventHandler.gamView)

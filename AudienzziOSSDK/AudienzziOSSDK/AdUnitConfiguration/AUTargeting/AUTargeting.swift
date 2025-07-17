@@ -19,7 +19,14 @@ import PrebidMobile
 @objcMembers
 public class AUTargeting: NSObject {
 
+    let audienzzSchainObjectConfig =
+        """
+        { "source": { "schain": [{ "asi":"audienzz.ch", "sid":"812net", "hp":1 }] } }
+        """
+
     public static var shared = AUTargeting()
+
+    internal var customTargetingManager = CustomTargetingManager()
 
     // MARK: - OMID Partner
 
@@ -311,15 +318,97 @@ public class AUTargeting: NSObject {
     public func getAppKeywords() -> [String] {
         Targeting.shared.getAppKeywords()
     }
-    
+
     // MARK: - Global ORTB config
-    
+
     public func getGlobalOrtbConfig() -> String? {
         Targeting.shared.getGlobalORTBConfig()
     }
-    
-    public func setGlobalOrtbConfig(ortbConfig: String){
-        Targeting.shared.setGlobalORTBConfig(ortbConfig)
+
+    public func setGlobalOrtbConfig(ortbConfig: String) {
+        let customOrtb = ArbitraryGlobalORTBHelper.init(ortb: ortbConfig)
+            .getValidatedORTBDict()
+        let schainOrtb = ArbitraryGlobalORTBHelper.init(
+            ortb: audienzzSchainObjectConfig
+        ).getValidatedORTBDict()
+
+        guard let customOrtb = customOrtb else {
+            AULogEvent.logDebug(
+                "Provided ortb config couldn't be parsed successfully"
+            )
+            return
+        }
+
+        let combinedOrtb = schainOrtb?.deepMerging(with: customOrtb)
+
+        guard let combinedOrtb = combinedOrtb else {
+            AULogEvent.logDebug(
+                "Couldn't combine custom ortb configs"
+            )
+            return
+        }
+
+        guard
+            let combinedOrtbString = try? AUTargetingUtils.toString(
+                jsonDictionary: combinedOrtb
+            )
+        else {
+            AULogEvent.logDebug(
+                "Combined ortbConfig object is not valid JSON and will be ignored."
+            )
+            return
+        }
+
+        Targeting.shared.setGlobalORTBConfig(combinedOrtbString)
+    }
+
+    /** Add single key-value targeting */
+    public func addGlobalTargeting(key: String, value: String) {
+        customTargetingManager.addCustomTargeting(key: key, value: value)
+
+        applyTargeting()
+
+    }
+
+    /** Add single key - multiple values targeting */
+    public func addGlobalTargeting(key: String, values: Set<String>) {
+        customTargetingManager.addCustomTargeting(key: key, values: values)
+
+        applyTargeting()
+
+    }
+
+    private func applyTargeting() {
+        let customTargetingDictionary =
+            customTargetingManager.buildOrtbCustomTargeting()
+
+        guard
+            let customTargetingJsonString = try? AUTargetingUtils.toString(
+                jsonDictionary: customTargetingDictionary
+            )
+        else {
+            AULogEvent.logDebug(
+                "Received ortbConfig object is not valid JSON and will be ignored."
+            )
+            return
+
+        }
+
+        setGlobalOrtbConfig(ortbConfig: customTargetingJsonString)
+    }
+
+    /** Remove targeting for specific key */
+    public func removeGlobalTargeting(key: String) {
+        customTargetingManager.removeCustomTargeting(key: key)
+
+        applyTargeting()
+    }
+
+    /** Clear all targeting */
+    public func clearGlobalTargeting() {
+        customTargetingManager.clearCustomTargeting()
+
+        applyTargeting()
     }
 }
 

@@ -15,6 +15,7 @@
 
 import UIKit
 import PrebidMobile
+import GoogleMobileAds
 
 /**
  * AUNativeBannerView.
@@ -23,7 +24,7 @@ import PrebidMobile
 */
 @objcMembers
 public class AUNativeBannerView: AUAdView {
-    internal var gamRequest: AnyObject?
+    internal var gamRequest: AdManagerRequest?
     internal var nativeUnit: NativeRequest!
     
     /**
@@ -55,7 +56,7 @@ public class AUNativeBannerView: AUAdView {
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
-    public func createAd(with gamRequest: AnyObject, gamBanner: UIView, configuration: AUNativeRequestParameter) {
+    public func createAd(with gamRequest: AdManagerRequest, gamBanner: UIView, configuration: AUNativeRequestParameter) {
         nativeUnit.context = configuration.context?.toContentType
         nativeUnit.placementType = configuration.placementType?.toPlacementType
         nativeUnit.contextSubType = configuration.contextSubType?.toContextSubType
@@ -81,7 +82,7 @@ public class AUNativeBannerView: AUAdView {
         
         addSubview(gamBanner)
         
-        self.gamRequest = gamRequest
+        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
         
         if !self.isLazyLoad {
             fetchRequest(gamRequest)

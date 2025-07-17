@@ -15,6 +15,7 @@
 
 import UIKit
 import PrebidMobile
+import GoogleMobileAds
 
 /**
  * AURewardedView.
@@ -24,7 +25,7 @@ import PrebidMobile
 @objcMembers
 public class AURewardedView: AUAdView {
     internal var adUnit: RewardedVideoAdUnit!
-    internal var gamRequest: AnyObject?
+    internal var gamRequest: AdManagerRequest?
     internal var eventHandler: AURewardedHandler?
     internal var gadUnitID: String?
     public var videoParameters: AUVideoParameters?
@@ -75,11 +76,11 @@ public class AURewardedView: AUAdView {
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
-    public func createAd(with gamRequest: AnyObject, adUnitID: String) {
+    public func createAd(with gamRequest: AdManagerRequest, adUnitID: String) {
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
         adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters()
-        self.gamRequest = gamRequest
+        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
         }

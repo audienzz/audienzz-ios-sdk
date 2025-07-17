@@ -224,7 +224,7 @@ class CPUTableCell: UITableViewCell {
     func setupViews(
         by gamID: String,
         gamBanner: AdManagerBannerView,
-        gamRequest: Request
+        gamRequest: AdManagerRequest
     ) {
         var adSize = CGSize.zero
         var configID: String!

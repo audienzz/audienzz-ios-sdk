@@ -65,7 +65,7 @@ extension AudienzziOSSDK.AudienzzGAMUtils {
   @objc deinit
   @objc @_Concurrency.MainActor @preconcurrency public func setImpOrtbConfig(ortbConfig: Swift.String)
   @objc @_Concurrency.MainActor @preconcurrency public func getImpOrtbConfig() -> Swift.String?
-  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: GoogleMobileAds.AdManagerRequest, adUnitID: Swift.String)
   @objc @_Concurrency.MainActor @preconcurrency public func connectHandler(_ eventHandler: AudienzziOSSDK.AURewardedEventHandler)
 }
 @objc @objcMembers public class AUAdFormat : ObjectiveC.NSObject, Swift.OptionSet {
@@ -160,7 +160,7 @@ public struct AUNativeRequestParameter {
 @objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUNativeBannerView : AudienzziOSSDK.AUAdView {
   @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, configuration: AudienzziOSSDK.AUNativeRequestParameter)
   @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, configuration: AudienzziOSSDK.AUNativeRequestParameter, isLazyLoad: Swift.Bool)
-  @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, gamBanner: UIKit.UIView, configuration: AudienzziOSSDK.AUNativeRequestParameter)
+  @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: GoogleMobileAds.AdManagerRequest, gamBanner: UIKit.UIView, configuration: AudienzziOSSDK.AUNativeRequestParameter)
   @objc deinit
 }
 @objc @objcMembers public class AUInterstitialEventHandler : ObjectiveC.NSObject {
@@ -268,6 +268,7 @@ public struct AUNativeRequestParameter {
   @objc @_Concurrency.MainActor @preconcurrency public func createAd()
   @objc deinit
 }
+public typealias PrebidNativeAd = PrebidMobile.NativeAd
 @objc public enum AUNativeType : Swift.Int {
   case origin
   case rendering
@@ -289,7 +290,7 @@ public struct AUNativeRequestParameter {
   @_Concurrency.MainActor @preconcurrency public var adType: AudienzziOSSDK.AUNativeType!
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, adType: AudienzziOSSDK.AUNativeType = .origin)
   @objc @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, isLazyLoad: Swift.Bool, adType: AudienzziOSSDK.AUNativeType = .origin)
-  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: GoogleMobileAds.AdManagerRequest)
   @objc @_Concurrency.MainActor @preconcurrency public func findNative(adObject: Swift.AnyObject)
   @objc @discardableResult
   @_Concurrency.MainActor @preconcurrency public func registerView(clickableViews: [UIKit.UIView]?) -> Swift.Bool
@@ -337,7 +338,6 @@ public struct AUNativeRequestParameter {
   @objc deinit
 }
 @objc @_inheritsConvenienceInitializers @objcMembers public class Audienzz : ObjectiveC.NSObject {
-  @objc final public let audienzzSchainObjectConfig: Swift.String
   @objc public var timeoutUpdated: Swift.Bool {
     @objc get
     @objc set
@@ -376,9 +376,9 @@ public struct AUNativeRequestParameter {
 }
 @objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor @preconcurrency public class AUMultiplatformView : AudienzziOSSDK.AUAdView {
   @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any AudienzziOSSDK.AUNativeAdDelegate)?
-  @objc @_Concurrency.MainActor @preconcurrency public var onGetNativeAd: ((PrebidMobile.NativeAd) -> Swift.Void)?
+  @objc @_Concurrency.MainActor @preconcurrency public var onGetNativeAd: ((AudienzziOSSDK.PrebidNativeAd) -> Swift.Void)?
   @_Concurrency.MainActor @preconcurrency public init(configId: Swift.String, isLazyLoad: Swift.Bool = true, bannerParameters: AudienzziOSSDK.AUBannerParameters? = nil, videoParameters: AudienzziOSSDK.AUVideoParameters? = nil, nativeParameters: AudienzziOSSDK.AUNativeRequestParameter? = nil, isInterstitial: Swift.Bool = false, isRewarded: Swift.Bool = false)
-  @objc @_Concurrency.MainActor @preconcurrency public func create(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func create(with gamRequest: GoogleMobileAds.AdManagerRequest, adUnitID: Swift.String)
   @objc @_Concurrency.MainActor @preconcurrency public func findNative(adObject: Swift.AnyObject)
   @objc deinit
 }
@@ -729,7 +729,7 @@ public typealias Keywords = [Swift.String : Swift.String]
   @objc @_Concurrency.MainActor @preconcurrency public func setImpOrtbConfig(ortbConfig: Swift.String)
   @objc @_Concurrency.MainActor @preconcurrency public func getImpOrtbConfig() -> Swift.String?
   @objc deinit
-  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, gamBanner: UIKit.UIView, eventHandler: AudienzziOSSDK.AUBannerEventHandler? = nil)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: GoogleMobileAds.AdManagerRequest, gamBanner: UIKit.UIView, eventHandler: AudienzziOSSDK.AUBannerEventHandler? = nil)
 }
 @objc @_hasMissingDesignatedInitializers @objcMembers public class AUNativeAdMarkupAsset : ObjectiveC.NSObject {
   public var id: Swift.Int?
@@ -852,7 +852,7 @@ public typealias Keywords = [Swift.String : Swift.String]
   @objc deinit
   @objc @_Concurrency.MainActor @preconcurrency public func setImpOrtbConfig(ortbConfig: Swift.String)
   @objc @_Concurrency.MainActor @preconcurrency public func getImpOrtbConfig() -> Swift.String?
-  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: Swift.AnyObject, adUnitID: Swift.String)
+  @objc @_Concurrency.MainActor @preconcurrency public func createAd(with gamRequest: GoogleMobileAds.AdManagerRequest, adUnitID: Swift.String)
   @objc @_Concurrency.MainActor @preconcurrency public func connectHandler(_ eventHandler: AudienzziOSSDK.AUInterstitialEventHandler)
 }
 @objc(AUAdPosition) public enum AUAdPosition : Swift.Int {
@@ -989,6 +989,10 @@ public typealias Keywords = [Swift.String : Swift.String]
   @objc public func getAppKeywords() -> [Swift.String]
   @objc public func getGlobalOrtbConfig() -> Swift.String?
   @objc public func setGlobalOrtbConfig(ortbConfig: Swift.String)
+  @objc public func addCustomTargeting(key: Swift.String, value: Swift.String)
+  @objc public func addCustomTargeting(key: Swift.String, values: Swift.Set<Swift.String>)
+  @objc public func removeCustomTargeting(key: Swift.String)
+  @objc public func clearCustomTargeting()
   @objc override dynamic public init()
   @objc deinit
 }
