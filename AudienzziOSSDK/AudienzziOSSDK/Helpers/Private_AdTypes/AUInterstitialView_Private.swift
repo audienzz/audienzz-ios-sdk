@@ -15,6 +15,7 @@
 
 import PrebidMobile
 import UIKit
+import GoogleMobileAds
 
 private let adTypeString = "INTERSTITIAL"
 private let apiTypeString = "ORIGINAL"
@@ -22,7 +23,7 @@ private let apiTypeString = "ORIGINAL"
 @objc
 extension AUInterstitialView {
     internal override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded, let request = gamRequest else {
+        guard isLazyLoad, !isLazyLoaded, let request = gamRequest as? AdManagerRequest else {
             return
         }
 
@@ -33,7 +34,7 @@ extension AUInterstitialView {
         isLazyLoaded = true
     }
 
-    internal override func fetchRequest(_ gamRequest: AnyObject) {
+    internal override func fetchRequest(_ gamRequest: AdManagerRequest) {
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             AULogEvent.logDebug(

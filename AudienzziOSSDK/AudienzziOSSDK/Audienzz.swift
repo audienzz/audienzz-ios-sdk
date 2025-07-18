@@ -22,11 +22,6 @@ private let customStatusEndpoint = "https://ib.adnxs.com/status"
 
 @objcMembers
 public class Audienzz: NSObject {
-    
-    public let audienzzSchainObjectConfig = 
-    """
-    { "source": { "schain": [{ "asi":"audienzz.ch", "sid":"812net", "hp":1 }] } }
-    """
 
     // MARK: - Properties (SDK)
     public var timeoutUpdated: Bool {
@@ -216,7 +211,7 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = customStatusEndpoint
-        AUTargeting.shared.setGlobalOrtbConfig(ortbConfig: audienzzSchainObjectConfig)
+        AUTargeting.shared.setGlobalOrtbConfig(ortbConfig: AUTargeting.shared.audienzzSchainObjectConfig)
     }
     
     private func initializePrebid() {

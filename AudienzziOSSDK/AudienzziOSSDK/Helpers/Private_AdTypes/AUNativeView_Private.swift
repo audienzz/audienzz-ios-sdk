@@ -15,6 +15,7 @@
 
 import PrebidMobile
 import UIKit
+import GoogleMobileAds
 
 @objc
 extension AUNativeView {
@@ -30,7 +31,7 @@ extension AUNativeView {
         isLazyLoaded = true
     }
 
-    override func fetchRequest(_ gamRequest: AnyObject) {
+    override func fetchRequest(_ gamRequest: AdManagerRequest) {
         switch adType {
         case .origin:
             nativeUnit.fetchDemand(adObject: gamRequest) {

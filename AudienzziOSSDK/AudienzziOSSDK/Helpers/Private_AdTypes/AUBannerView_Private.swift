@@ -16,6 +16,7 @@
 import ObjectiveC.runtime
 import PrebidMobile
 import UIKit
+import GoogleMobileAds
 
 private let adTypeString = "BANNER"
 private let apiTypeString = "ORIGINAL"
@@ -23,9 +24,10 @@ private let apiTypeString = "ORIGINAL"
 @objc
 extension AUBannerView {
     override func detectVisible() {
-        guard isLazyLoad, !isLazyLoaded, let request = gamRequest else {
+        guard isLazyLoad, !isLazyLoaded, let request = gamRequest as? AdManagerRequest else {
             return
         }
+        
 
         #if DEBUG
             AULogEvent.logDebug("[AUBannerView] became visible")
@@ -34,7 +36,7 @@ extension AUBannerView {
         isLazyLoaded = true
     }
 
-    override func fetchRequest(_ gamRequest: AnyObject) {
+    override func fetchRequest(_ gamRequest: AdManagerRequest) {
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }

@@ -14,6 +14,7 @@
  */
 import UIKit
 import PrebidMobile
+import GoogleMobileAds
 
 /**
  * AUMultiplatformView.
@@ -23,12 +24,12 @@ import PrebidMobile
 @objcMembers
 public class AUMultiplatformView: AUAdView {
     internal var adUnit: PrebidAdUnit!
-    internal var gamRequest: AnyObject?
+    internal var gamRequest: AdManagerRequest?
     internal var prebidRequest: PrebidRequest!
     internal var gadUnitID: String?
     
     public weak var delegate: AUNativeAdDelegate?
-    public var onGetNativeAd: ((NativeAd) -> Void)?
+    public var onGetNativeAd: ((PrebidNativeAd) -> Void)?
     
     internal var subdelegate: AUMultiplatformDelegateType?
     
@@ -63,8 +64,8 @@ public class AUMultiplatformView: AUAdView {
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
-    public func create(with gamRequest: AnyObject, adUnitID: String) {
-        self.gamRequest = gamRequest
+    public func create(with gamRequest: AdManagerRequest, adUnitID: String) {
+        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
         self.gadUnitID = adUnitID
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         
@@ -81,7 +82,7 @@ public class AUMultiplatformView: AUAdView {
     }
 }
 
-internal class AUMultiplatformDelegateType: NSObject, NativeAdDelegate {
+internal class AUMultiplatformDelegateType: NSObject, PrebidNativeAdDelegate {
     private weak var parent: AUMultiplatformView?
     
     init(parent: AUMultiplatformView) {
@@ -89,7 +90,7 @@ internal class AUMultiplatformDelegateType: NSObject, NativeAdDelegate {
         self.parent = parent
     }
     
-    public func nativeAdLoaded(ad: NativeAd) {
+    public func nativeAdLoaded(ad: PrebidNativeAd) {
         guard let parent = parent else { return }
         if parent.isLazyLoad, parent.isLazyLoaded {
             parent.onGetNativeAd?(ad)

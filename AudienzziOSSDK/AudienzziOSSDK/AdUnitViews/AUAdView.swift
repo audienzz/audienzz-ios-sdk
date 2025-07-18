@@ -15,6 +15,10 @@
 
 import UIKit
 import PrebidMobile
+import GoogleMobileAds
+
+typealias GAMRequest = GoogleMobileAds.AdManagerRequest
+typealias PrebidAdFormat = PrebidMobile.AdFormat
 
 @objcMembers
 public class AUAdView: VisibleView {
@@ -62,18 +66,18 @@ public class AUAdView: VisibleView {
         self.configId = configId
     }
     
-    internal dynamic func fetchRequest(_ gamRequest: AnyObject) {}
+    internal dynamic func fetchRequest(_ gamRequest: GAMRequest) {}
     internal var isInitialAutorefresh: Bool = true
     
-    internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [AdFormat] {
+    internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in
             switch element {
             case .banner:
-                return AdFormat.banner
+                return PrebidAdFormat.banner
             case .video:
-                return AdFormat.video
+                return PrebidAdFormat.video
             case .native:
-                return AdFormat.native
+                return PrebidAdFormat.native
             default:
                 return nil
             }

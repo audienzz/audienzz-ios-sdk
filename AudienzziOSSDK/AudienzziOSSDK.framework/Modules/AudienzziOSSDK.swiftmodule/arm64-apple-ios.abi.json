@@ -6164,6 +6164,13 @@
         "moduleName": "AudienzziOSSDK"
       },
       {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
         "kind": "TypeDecl",
         "name": "AURewardedView",
         "printedName": "AURewardedView",
@@ -6299,12 +6306,13 @@
               {
                 "kind": "TypeNominal",
                 "name": "Optional",
-                "printedName": "AnyObject?",
+                "printedName": "GoogleMobileAds.AdManagerRequest?",
                 "children": [
                   {
                     "kind": "TypeNominal",
-                    "name": "ProtocolComposition",
-                    "printedName": "AnyObject"
+                    "name": "AdManagerRequest",
+                    "printedName": "GoogleMobileAds.AdManagerRequest",
+                    "usr": "c:objc(cs)GAMRequest"
                   }
                 ],
                 "usr": "s:Sq"
@@ -6312,7 +6320,7 @@
             ],
             "declKind": "Var",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(py)gamRequest",
-            "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10gamRequestyXlSgvp",
+            "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10gamRequestSo10GAMRequestCSgvp",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -6333,12 +6341,13 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "AnyObject?",
+                    "printedName": "GoogleMobileAds.AdManagerRequest?",
                     "children": [
                       {
                         "kind": "TypeNominal",
-                        "name": "ProtocolComposition",
-                        "printedName": "AnyObject"
+                        "name": "AdManagerRequest",
+                        "printedName": "GoogleMobileAds.AdManagerRequest",
+                        "usr": "c:objc(cs)GAMRequest"
                       }
                     ],
                     "usr": "s:Sq"
@@ -6346,7 +6355,7 @@
                 ],
                 "declKind": "Accessor",
                 "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(im)gamRequest",
-                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10gamRequestyXlSgvg",
+                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10gamRequestSo10GAMRequestCSgvg",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -6368,12 +6377,13 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "AnyObject?",
+                    "printedName": "GoogleMobileAds.AdManagerRequest?",
                     "children": [
                       {
                         "kind": "TypeNominal",
-                        "name": "ProtocolComposition",
-                        "printedName": "AnyObject"
+                        "name": "AdManagerRequest",
+                        "printedName": "GoogleMobileAds.AdManagerRequest",
+                        "usr": "c:objc(cs)GAMRequest"
                       }
                     ],
                     "usr": "s:Sq"
@@ -6381,7 +6391,7 @@
                 ],
                 "declKind": "Accessor",
                 "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(im)setGamRequest:",
-                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10gamRequestyXlSgvs",
+                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10gamRequestSo10GAMRequestCSgvs",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -6402,8 +6412,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:14AudienzziOSSDK14AURewardedViewC10gamRequestyXlSgvM",
-                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10gamRequestyXlSgvM",
+                "usr": "s:14AudienzziOSSDK14AURewardedViewC10gamRequestSo10GAMRequestCSgvM",
+                "mangledName": "$s14AudienzziOSSDK14AURewardedViewC10gamRequestSo10GAMRequestCSgvM",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -6995,8 +7005,9 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               },
               {
                 "kind": "TypeNominal",
@@ -7007,7 +7018,7 @@
             ],
             "declKind": "Func",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AURewardedView(im)createAdWith:adUnitID:",
-            "mangledName": "$s14AudienzziOSSDK14AURewardedViewC8createAd4with8adUnitIDyyXl_SStF",
+            "mangledName": "$s14AudienzziOSSDK14AURewardedViewC8createAd4with8adUnitIDySo10GAMRequestC_SStF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -7173,13 +7184,14 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               }
             ],
             "declKind": "Func",
             "usr": "c:@CM@AudienzziOSSDK@objc(cs)AURewardedView(im)fetchRequest:",
-            "mangledName": "$s14AudienzziOSSDK14AURewardedViewC12fetchRequestyyyXlF",
+            "mangledName": "$s14AudienzziOSSDK14AURewardedViewC12fetchRequestyySo10GAMRequestCF",
             "moduleName": "AudienzziOSSDK",
             "overriding": true,
             "isOpen": true,
@@ -9418,6 +9430,13 @@
         "declAttributes": [
           "RawDocComment"
         ]
+      },
+      {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
       },
       {
         "kind": "Import",
@@ -13767,6 +13786,13 @@
         "moduleName": "AudienzziOSSDK"
       },
       {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
         "kind": "TypeDecl",
         "name": "AUNativeBannerView",
         "printedName": "AUNativeBannerView",
@@ -13779,12 +13805,13 @@
               {
                 "kind": "TypeNominal",
                 "name": "Optional",
-                "printedName": "AnyObject?",
+                "printedName": "GoogleMobileAds.AdManagerRequest?",
                 "children": [
                   {
                     "kind": "TypeNominal",
-                    "name": "ProtocolComposition",
-                    "printedName": "AnyObject"
+                    "name": "AdManagerRequest",
+                    "printedName": "GoogleMobileAds.AdManagerRequest",
+                    "usr": "c:objc(cs)GAMRequest"
                   }
                 ],
                 "usr": "s:Sq"
@@ -13792,7 +13819,7 @@
             ],
             "declKind": "Var",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AUNativeBannerView(py)gamRequest",
-            "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC10gamRequestyXlSgvp",
+            "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC10gamRequestSo10GAMRequestCSgvp",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -13813,12 +13840,13 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "AnyObject?",
+                    "printedName": "GoogleMobileAds.AdManagerRequest?",
                     "children": [
                       {
                         "kind": "TypeNominal",
-                        "name": "ProtocolComposition",
-                        "printedName": "AnyObject"
+                        "name": "AdManagerRequest",
+                        "printedName": "GoogleMobileAds.AdManagerRequest",
+                        "usr": "c:objc(cs)GAMRequest"
                       }
                     ],
                     "usr": "s:Sq"
@@ -13826,7 +13854,7 @@
                 ],
                 "declKind": "Accessor",
                 "usr": "c:@M@AudienzziOSSDK@objc(cs)AUNativeBannerView(im)gamRequest",
-                "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC10gamRequestyXlSgvg",
+                "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC10gamRequestSo10GAMRequestCSgvg",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -13848,12 +13876,13 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "AnyObject?",
+                    "printedName": "GoogleMobileAds.AdManagerRequest?",
                     "children": [
                       {
                         "kind": "TypeNominal",
-                        "name": "ProtocolComposition",
-                        "printedName": "AnyObject"
+                        "name": "AdManagerRequest",
+                        "printedName": "GoogleMobileAds.AdManagerRequest",
+                        "usr": "c:objc(cs)GAMRequest"
                       }
                     ],
                     "usr": "s:Sq"
@@ -13861,7 +13890,7 @@
                 ],
                 "declKind": "Accessor",
                 "usr": "c:@M@AudienzziOSSDK@objc(cs)AUNativeBannerView(im)setGamRequest:",
-                "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC10gamRequestyXlSgvs",
+                "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC10gamRequestSo10GAMRequestCSgvs",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -13882,8 +13911,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:14AudienzziOSSDK18AUNativeBannerViewC10gamRequestyXlSgvM",
-                "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC10gamRequestyXlSgvM",
+                "usr": "s:14AudienzziOSSDK18AUNativeBannerViewC10gamRequestSo10GAMRequestCSgvM",
+                "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC10gamRequestSo10GAMRequestCSgvM",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -14145,8 +14174,9 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               },
               {
                 "kind": "TypeNominal",
@@ -14162,8 +14192,8 @@
               }
             ],
             "declKind": "Func",
-            "usr": "s:14AudienzziOSSDK18AUNativeBannerViewC8createAd4with03gamD013configurationyyXl_So6UIViewCAA0C16RequestParameterVtF",
-            "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC8createAd4with03gamD013configurationyyXl_So6UIViewCAA0C16RequestParameterVtF",
+            "usr": "s:14AudienzziOSSDK18AUNativeBannerViewC8createAd4with03gamD013configurationySo10GAMRequestC_So6UIViewCAA0C16RequestParameterVtF",
+            "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC8createAd4with03gamD013configurationySo10GAMRequestC_So6UIViewCAA0C16RequestParameterVtF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -14337,13 +14367,14 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               }
             ],
             "declKind": "Func",
             "usr": "c:@CM@AudienzziOSSDK@objc(cs)AUNativeBannerView(im)fetchRequest:",
-            "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC12fetchRequestyyyXlF",
+            "mangledName": "$s14AudienzziOSSDK18AUNativeBannerViewC12fetchRequestyySo10GAMRequestCF",
             "moduleName": "AudienzziOSSDK",
             "overriding": true,
             "isOpen": true,
@@ -15246,6 +15277,284 @@
             "printedName": "CustomDebugStringConvertible",
             "usr": "s:s28CustomDebugStringConvertibleP",
             "mangledName": "$ss28CustomDebugStringConvertibleP"
+          }
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "CustomTargetingManager",
+        "printedName": "CustomTargetingManager",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "targetingMap",
+            "printedName": "targetingMap",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.String : Swift.String]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC12targetingMap33_699EFB76E7C35B862CBB4478AA1B41FBLLSDyS2SGvp",
+            "mangledName": "$s14AudienzziOSSDK22CustomTargetingManagerC12targetingMap33_699EFB76E7C35B862CBB4478AA1B41FBLLSDyS2SGvp",
+            "moduleName": "AudienzziOSSDK",
+            "isInternal": true,
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage",
+              "AccessControl"
+            ],
+            "fixedbinaryorder": 0,
+            "hasStorage": true
+          },
+          {
+            "kind": "Function",
+            "name": "addCustomTargeting",
+            "printedName": "addCustomTargeting(key:value:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC03addcD03key5valueySS_SStF",
+            "mangledName": "$s14AudienzziOSSDK22CustomTargetingManagerC03addcD03key5valueySS_SStF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "addCustomTargeting",
+            "printedName": "addCustomTargeting(key:values:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Set",
+                "printedName": "Swift.Set<Swift.String>",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sh"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC03addcD03key6valuesySS_ShySSGtF",
+            "mangledName": "$s14AudienzziOSSDK22CustomTargetingManagerC03addcD03key6valuesySS_ShySSGtF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "removeCustomTargeting",
+            "printedName": "removeCustomTargeting(key:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC06removecD03keyySS_tF",
+            "mangledName": "$s14AudienzziOSSDK22CustomTargetingManagerC06removecD03keyySS_tF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "clearCustomTargeting",
+            "printedName": "clearCustomTargeting()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC05clearcD0yyF",
+            "mangledName": "$s14AudienzziOSSDK22CustomTargetingManagerC05clearcD0yyF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "buildOrtbCustomTargeting",
+            "printedName": "buildOrtbCustomTargeting()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.String : Any]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ProtocolComposition",
+                    "printedName": "Any"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC09buildOrtbcD0SDySSypGyF",
+            "mangledName": "$s14AudienzziOSSDK22CustomTargetingManagerC09buildOrtbcD0SDySSypGyF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "applyToGamRequest",
+            "printedName": "applyToGamRequest(request:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC17applyToGamRequest7requestSo10GAMRequestCAG_tF",
+            "mangledName": "$s14AudienzziOSSDK22CustomTargetingManagerC17applyToGamRequest7requestSo10GAMRequestCAG_tF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "CustomTargetingManager",
+                "printedName": "AudienzziOSSDK.CustomTargetingManager",
+                "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:14AudienzziOSSDK22CustomTargetingManagerCACycfc",
+            "mangledName": "$s14AudienzziOSSDK22CustomTargetingManagerCACycfc",
+            "moduleName": "AudienzziOSSDK",
+            "implicit": true,
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC",
+        "mangledName": "$s14AudienzziOSSDK22CustomTargetingManagerC",
+        "moduleName": "AudienzziOSSDK",
+        "isOpen": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
           }
         ]
       },
@@ -23955,6 +24264,13 @@
         "moduleName": "AudienzziOSSDK"
       },
       {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
         "kind": "TypeDecl",
         "name": "AUNativeType",
         "printedName": "AUNativeType",
@@ -24518,12 +24834,13 @@
               {
                 "kind": "TypeNominal",
                 "name": "Optional",
-                "printedName": "AnyObject?",
+                "printedName": "GoogleMobileAds.AdManagerRequest?",
                 "children": [
                   {
                     "kind": "TypeNominal",
-                    "name": "ProtocolComposition",
-                    "printedName": "AnyObject"
+                    "name": "AdManagerRequest",
+                    "printedName": "GoogleMobileAds.AdManagerRequest",
+                    "usr": "c:objc(cs)GAMRequest"
                   }
                 ],
                 "usr": "s:Sq"
@@ -24531,7 +24848,7 @@
             ],
             "declKind": "Var",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AUNativeView(py)gamRequest",
-            "mangledName": "$s14AudienzziOSSDK12AUNativeViewC10gamRequestyXlSgvp",
+            "mangledName": "$s14AudienzziOSSDK12AUNativeViewC10gamRequestSo10GAMRequestCSgvp",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -24552,12 +24869,13 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "AnyObject?",
+                    "printedName": "GoogleMobileAds.AdManagerRequest?",
                     "children": [
                       {
                         "kind": "TypeNominal",
-                        "name": "ProtocolComposition",
-                        "printedName": "AnyObject"
+                        "name": "AdManagerRequest",
+                        "printedName": "GoogleMobileAds.AdManagerRequest",
+                        "usr": "c:objc(cs)GAMRequest"
                       }
                     ],
                     "usr": "s:Sq"
@@ -24565,7 +24883,7 @@
                 ],
                 "declKind": "Accessor",
                 "usr": "c:@M@AudienzziOSSDK@objc(cs)AUNativeView(im)gamRequest",
-                "mangledName": "$s14AudienzziOSSDK12AUNativeViewC10gamRequestyXlSgvg",
+                "mangledName": "$s14AudienzziOSSDK12AUNativeViewC10gamRequestSo10GAMRequestCSgvg",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -24587,12 +24905,13 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "AnyObject?",
+                    "printedName": "GoogleMobileAds.AdManagerRequest?",
                     "children": [
                       {
                         "kind": "TypeNominal",
-                        "name": "ProtocolComposition",
-                        "printedName": "AnyObject"
+                        "name": "AdManagerRequest",
+                        "printedName": "GoogleMobileAds.AdManagerRequest",
+                        "usr": "c:objc(cs)GAMRequest"
                       }
                     ],
                     "usr": "s:Sq"
@@ -24600,7 +24919,7 @@
                 ],
                 "declKind": "Accessor",
                 "usr": "c:@M@AudienzziOSSDK@objc(cs)AUNativeView(im)setGamRequest:",
-                "mangledName": "$s14AudienzziOSSDK12AUNativeViewC10gamRequestyXlSgvs",
+                "mangledName": "$s14AudienzziOSSDK12AUNativeViewC10gamRequestSo10GAMRequestCSgvs",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -24621,8 +24940,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:14AudienzziOSSDK12AUNativeViewC10gamRequestyXlSgvM",
-                "mangledName": "$s14AudienzziOSSDK12AUNativeViewC10gamRequestyXlSgvM",
+                "usr": "s:14AudienzziOSSDK12AUNativeViewC10gamRequestSo10GAMRequestCSgvM",
+                "mangledName": "$s14AudienzziOSSDK12AUNativeViewC10gamRequestSo10GAMRequestCSgvM",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -25632,13 +25951,14 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               }
             ],
             "declKind": "Func",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AUNativeView(im)createAdWith:",
-            "mangledName": "$s14AudienzziOSSDK12AUNativeViewC8createAd4withyyXl_tF",
+            "mangledName": "$s14AudienzziOSSDK12AUNativeViewC8createAd4withySo10GAMRequestC_tF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -25929,13 +26249,14 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               }
             ],
             "declKind": "Func",
             "usr": "c:@CM@AudienzziOSSDK@objc(cs)AUNativeView(im)fetchRequest:",
-            "mangledName": "$s14AudienzziOSSDK12AUNativeViewC12fetchRequestyyyXlF",
+            "mangledName": "$s14AudienzziOSSDK12AUNativeViewC12fetchRequestyySo10GAMRequestCF",
             "moduleName": "AudienzziOSSDK",
             "overriding": true,
             "isOpen": true,
@@ -28170,6 +28491,13 @@
       },
       {
         "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
+        "kind": "Import",
         "name": "PrebidMobile",
         "printedName": "PrebidMobile",
         "declKind": "Import",
@@ -28177,6 +28505,13 @@
         "declAttributes": [
           "RawDocComment"
         ]
+      },
+      {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
       },
       {
         "kind": "Import",
@@ -29743,57 +30078,6 @@
         "name": "Audienzz",
         "printedName": "Audienzz",
         "children": [
-          {
-            "kind": "Var",
-            "name": "audienzzSchainObjectConfig",
-            "printedName": "audienzzSchainObjectConfig",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "String",
-                "printedName": "Swift.String",
-                "usr": "s:SS"
-              }
-            ],
-            "declKind": "Var",
-            "usr": "c:@M@AudienzziOSSDK@objc(cs)Audienzz(py)audienzzSchainObjectConfig",
-            "mangledName": "$s14AudienzziOSSDK8AudienzzC26audienzzSchainObjectConfigSSvp",
-            "moduleName": "AudienzziOSSDK",
-            "declAttributes": [
-              "HasInitialValue",
-              "Final",
-              "HasStorage",
-              "AccessControl",
-              "ObjC"
-            ],
-            "isLet": true,
-            "hasStorage": true,
-            "accessors": [
-              {
-                "kind": "Accessor",
-                "name": "Get",
-                "printedName": "Get()",
-                "children": [
-                  {
-                    "kind": "TypeNominal",
-                    "name": "String",
-                    "printedName": "Swift.String",
-                    "usr": "s:SS"
-                  }
-                ],
-                "declKind": "Accessor",
-                "usr": "c:@M@AudienzziOSSDK@objc(cs)Audienzz(im)audienzzSchainObjectConfig",
-                "mangledName": "$s14AudienzziOSSDK8AudienzzC26audienzzSchainObjectConfigSSvg",
-                "moduleName": "AudienzziOSSDK",
-                "implicit": true,
-                "declAttributes": [
-                  "Final",
-                  "ObjC"
-                ],
-                "accessorKind": "get"
-              }
-            ]
-          },
           {
             "kind": "Var",
             "name": "timeoutUpdated",
@@ -31670,6 +31954,13 @@
         "moduleName": "AudienzziOSSDK"
       },
       {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
         "kind": "TypeDecl",
         "name": "AUMultiplatformView",
         "printedName": "AUMultiplatformView",
@@ -31805,12 +32096,13 @@
               {
                 "kind": "TypeNominal",
                 "name": "Optional",
-                "printedName": "AnyObject?",
+                "printedName": "GoogleMobileAds.AdManagerRequest?",
                 "children": [
                   {
                     "kind": "TypeNominal",
-                    "name": "ProtocolComposition",
-                    "printedName": "AnyObject"
+                    "name": "AdManagerRequest",
+                    "printedName": "GoogleMobileAds.AdManagerRequest",
+                    "usr": "c:objc(cs)GAMRequest"
                   }
                 ],
                 "usr": "s:Sq"
@@ -31818,7 +32110,7 @@
             ],
             "declKind": "Var",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AUMultiplatformView(py)gamRequest",
-            "mangledName": "$s14AudienzziOSSDK19AUMultiplatformViewC10gamRequestyXlSgvp",
+            "mangledName": "$s14AudienzziOSSDK19AUMultiplatformViewC10gamRequestSo10GAMRequestCSgvp",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -31839,12 +32131,13 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "AnyObject?",
+                    "printedName": "GoogleMobileAds.AdManagerRequest?",
                     "children": [
                       {
                         "kind": "TypeNominal",
-                        "name": "ProtocolComposition",
-                        "printedName": "AnyObject"
+                        "name": "AdManagerRequest",
+                        "printedName": "GoogleMobileAds.AdManagerRequest",
+                        "usr": "c:objc(cs)GAMRequest"
                       }
                     ],
                     "usr": "s:Sq"
@@ -31852,7 +32145,7 @@
                 ],
                 "declKind": "Accessor",
                 "usr": "c:@M@AudienzziOSSDK@objc(cs)AUMultiplatformView(im)gamRequest",
-                "mangledName": "$s14AudienzziOSSDK19AUMultiplatformViewC10gamRequestyXlSgvg",
+                "mangledName": "$s14AudienzziOSSDK19AUMultiplatformViewC10gamRequestSo10GAMRequestCSgvg",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -31874,12 +32167,13 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "AnyObject?",
+                    "printedName": "GoogleMobileAds.AdManagerRequest?",
                     "children": [
                       {
                         "kind": "TypeNominal",
-                        "name": "ProtocolComposition",
-                        "printedName": "AnyObject"
+                        "name": "AdManagerRequest",
+                        "printedName": "GoogleMobileAds.AdManagerRequest",
+                        "usr": "c:objc(cs)GAMRequest"
                       }
                     ],
                     "usr": "s:Sq"
@@ -31887,7 +32181,7 @@
                 ],
                 "declKind": "Accessor",
                 "usr": "c:@M@AudienzziOSSDK@objc(cs)AUMultiplatformView(im)setGamRequest:",
-                "mangledName": "$s14AudienzziOSSDK19AUMultiplatformViewC10gamRequestyXlSgvs",
+                "mangledName": "$s14AudienzziOSSDK19AUMultiplatformViewC10gamRequestSo10GAMRequestCSgvs",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -31908,8 +32202,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:14AudienzziOSSDK19AUMultiplatformViewC10gamRequestyXlSgvM",
-                "mangledName": "$s14AudienzziOSSDK19AUMultiplatformViewC10gamRequestyXlSgvM",
+                "usr": "s:14AudienzziOSSDK19AUMultiplatformViewC10gamRequestSo10GAMRequestCSgvM",
+                "mangledName": "$s14AudienzziOSSDK19AUMultiplatformViewC10gamRequestSo10GAMRequestCSgvM",
                 "moduleName": "AudienzziOSSDK",
                 "implicit": true,
                 "isOpen": true,
@@ -32710,8 +33004,9 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               },
               {
                 "kind": "TypeNominal",
@@ -32722,7 +33017,7 @@
             ],
             "declKind": "Func",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AUMultiplatformView(im)createWith:adUnitID:",
-            "mangledName": "$s14AudienzziOSSDK19AUMultiplatformViewC6create4with8adUnitIDyyXl_SStF",
+            "mangledName": "$s14AudienzziOSSDK19AUMultiplatformViewC6create4with8adUnitIDySo10GAMRequestC_SStF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -35148,6 +35443,13 @@
         "kind": "Import",
         "name": "UIKit",
         "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
         "declKind": "Import",
         "moduleName": "AudienzziOSSDK"
       },
@@ -46286,6 +46588,878 @@
         ]
       },
       {
+        "kind": "TypeDecl",
+        "name": "AUTargetingUtils",
+        "printedName": "AUTargetingUtils",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "dictionary",
+            "printedName": "dictionary(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "[Swift.String : Any]?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[Swift.String : Any]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "ProtocolComposition",
+                        "printedName": "Any"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK16AUTargetingUtilsC10dictionary4fromSDySSypGSgSS_tKFZ",
+            "mangledName": "$s14AudienzziOSSDK16AUTargetingUtilsC10dictionary4fromSDySSypGSgSS_tKFZ",
+            "moduleName": "AudienzziOSSDK",
+            "static": true,
+            "declAttributes": [
+              "Final",
+              "RawDocComment"
+            ],
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "dictionary",
+            "printedName": "dictionary(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "[Swift.String : Any]?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[Swift.String : Any]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "ProtocolComposition",
+                        "printedName": "Any"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Data",
+                "printedName": "Foundation.Data",
+                "usr": "s:10Foundation4DataV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK16AUTargetingUtilsC10dictionary4fromSDySSypGSg10Foundation4DataV_tKFZ",
+            "mangledName": "$s14AudienzziOSSDK16AUTargetingUtilsC10dictionary4fromSDySSypGSg10Foundation4DataV_tKFZ",
+            "moduleName": "AudienzziOSSDK",
+            "static": true,
+            "declAttributes": [
+              "Final"
+            ],
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "toString",
+            "printedName": "toString(jsonDictionary:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.String : Any]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ProtocolComposition",
+                    "printedName": "Any"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK16AUTargetingUtilsC8toString14jsonDictionarySSSDySSypG_tKFZ",
+            "mangledName": "$s14AudienzziOSSDK16AUTargetingUtilsC8toString14jsonDictionarySSSDySSypG_tKFZ",
+            "moduleName": "AudienzziOSSDK",
+            "static": true,
+            "declAttributes": [
+              "Final"
+            ],
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "dictionaries",
+            "printedName": "dictionaries(for:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "[[Swift.String : Any]]?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[[Swift.String : Any]]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Dictionary",
+                        "printedName": "[Swift.String : Any]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "ProtocolComposition",
+                            "printedName": "Any"
+                          }
+                        ],
+                        "usr": "s:SD"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ProtocolComposition",
+                "printedName": "Any"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK16AUTargetingUtilsC12dictionaries3forSaySDySSypGGSgyp_tFZ",
+            "mangledName": "$s14AudienzziOSSDK16AUTargetingUtilsC12dictionaries3forSaySDySSypGGSgyp_tFZ",
+            "moduleName": "AudienzziOSSDK",
+            "static": true,
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "AUTargetingUtils",
+                "printedName": "AudienzziOSSDK.AUTargetingUtils",
+                "usr": "s:14AudienzziOSSDK16AUTargetingUtilsC"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:14AudienzziOSSDK16AUTargetingUtilsCACycfc",
+            "mangledName": "$s14AudienzziOSSDK16AUTargetingUtilsCACycfc",
+            "moduleName": "AudienzziOSSDK",
+            "implicit": true,
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:14AudienzziOSSDK16AUTargetingUtilsC",
+        "mangledName": "$s14AudienzziOSSDK16AUTargetingUtilsC",
+        "moduleName": "AudienzziOSSDK",
+        "isOpen": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "AUOrtbError",
+        "printedName": "AUOrtbError",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "invalidData",
+            "printedName": "invalidData",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(AudienzziOSSDK.AUOrtbError.Type) -> (Swift.String) -> AudienzziOSSDK.AUOrtbError",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Swift.String) -> AudienzziOSSDK.AUOrtbError",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "AUOrtbError",
+                        "printedName": "AudienzziOSSDK.AUOrtbError",
+                        "usr": "s:14AudienzziOSSDK11AUOrtbErrorO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "AudienzziOSSDK.AUOrtbError.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "AUOrtbError",
+                        "printedName": "AudienzziOSSDK.AUOrtbError",
+                        "usr": "s:14AudienzziOSSDK11AUOrtbErrorO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:14AudienzziOSSDK11AUOrtbErrorO11invalidDatayACSScACmF",
+            "mangledName": "$s14AudienzziOSSDK11AUOrtbErrorO11invalidDatayACSScACmF",
+            "moduleName": "AudienzziOSSDK",
+            "fixedbinaryorder": 0
+          },
+          {
+            "kind": "Function",
+            "name": "createError",
+            "printedName": "createError(description:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Error",
+                "printedName": "any Swift.Error",
+                "usr": "s:s5ErrorP"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK11AUOrtbErrorO06createD011descriptions0D0_pSS_tFZ",
+            "mangledName": "$s14AudienzziOSSDK11AUOrtbErrorO06createD011descriptions0D0_pSS_tFZ",
+            "moduleName": "AudienzziOSSDK",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:14AudienzziOSSDK11AUOrtbErrorO",
+        "mangledName": "$s14AudienzziOSSDK11AUOrtbErrorO",
+        "moduleName": "AudienzziOSSDK",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Error",
+            "printedName": "Error",
+            "usr": "s:s5ErrorP",
+            "mangledName": "$ss5ErrorP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "ArbitraryGlobalORTBHelper",
+        "printedName": "ArbitraryGlobalORTBHelper",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "ortb",
+            "printedName": "ortb",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC4ortb33_3F9C06AFBCF9109320C0A621330C2778LLSSvp",
+            "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC4ortb33_3F9C06AFBCF9109320C0A621330C2778LLSSvp",
+            "moduleName": "AudienzziOSSDK",
+            "isInternal": true,
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl"
+            ],
+            "fixedbinaryorder": 0,
+            "isLet": true,
+            "hasStorage": true
+          },
+          {
+            "kind": "TypeDecl",
+            "name": "ProtectedFields",
+            "printedName": "ProtectedFields",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "deviceProps",
+                "printedName": "deviceProps",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV11devicePropsSaySSGvpZ",
+                "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV11devicePropsSaySSGvpZ",
+                "moduleName": "AudienzziOSSDK",
+                "static": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[Swift.String]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV11devicePropsSaySSGvgZ",
+                    "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV11devicePropsSaySSGvgZ",
+                    "moduleName": "AudienzziOSSDK",
+                    "static": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "deviceExtProps",
+                "printedName": "deviceExtProps",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV14deviceExtPropsSaySSGvpZ",
+                "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV14deviceExtPropsSaySSGvpZ",
+                "moduleName": "AudienzziOSSDK",
+                "static": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[Swift.String]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV14deviceExtPropsSaySSGvgZ",
+                    "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV14deviceExtPropsSaySSGvgZ",
+                    "moduleName": "AudienzziOSSDK",
+                    "static": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "regsProps",
+                "printedName": "regsProps",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV9regsPropsSaySSGvpZ",
+                "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV9regsPropsSaySSGvpZ",
+                "moduleName": "AudienzziOSSDK",
+                "static": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[Swift.String]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV9regsPropsSaySSGvgZ",
+                    "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV9regsPropsSaySSGvgZ",
+                    "moduleName": "AudienzziOSSDK",
+                    "static": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "regsExtProps",
+                "printedName": "regsExtProps",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV12regsExtPropsSaySSGvpZ",
+                "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV12regsExtPropsSaySSGvpZ",
+                "moduleName": "AudienzziOSSDK",
+                "static": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[Swift.String]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV12regsExtPropsSaySSGvgZ",
+                    "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV12regsExtPropsSaySSGvgZ",
+                    "moduleName": "AudienzziOSSDK",
+                    "static": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "userProps",
+                "printedName": "userProps",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV9userPropsSaySSGvpZ",
+                "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV9userPropsSaySSGvpZ",
+                "moduleName": "AudienzziOSSDK",
+                "static": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[Swift.String]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV9userPropsSaySSGvgZ",
+                    "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV9userPropsSaySSGvgZ",
+                    "moduleName": "AudienzziOSSDK",
+                    "static": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "userExtProps",
+                "printedName": "userExtProps",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV12userExtPropsSaySSGvpZ",
+                "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV12userExtPropsSaySSGvpZ",
+                "moduleName": "AudienzziOSSDK",
+                "static": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[Swift.String]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV12userExtPropsSaySSGvgZ",
+                    "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV12userExtPropsSaySSGvgZ",
+                    "moduleName": "AudienzziOSSDK",
+                    "static": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Constructor",
+                "name": "init",
+                "printedName": "init()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ProtectedFields",
+                    "printedName": "AudienzziOSSDK.ArbitraryGlobalORTBHelper.ProtectedFields",
+                    "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV"
+                  }
+                ],
+                "declKind": "Constructor",
+                "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsVAEycfc",
+                "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsVAEycfc",
+                "moduleName": "AudienzziOSSDK",
+                "implicit": true,
+                "init_kind": "Designated"
+              }
+            ],
+            "declKind": "Struct",
+            "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV",
+            "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC15ProtectedFieldsV",
+            "moduleName": "AudienzziOSSDK",
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "BitwiseCopyable",
+                "printedName": "BitwiseCopyable",
+                "usr": "s:s15BitwiseCopyableP",
+                "mangledName": "$ss15BitwiseCopyableP"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(ortb:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "ArbitraryGlobalORTBHelper",
+                "printedName": "AudienzziOSSDK.ArbitraryGlobalORTBHelper",
+                "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC4ortbACSS_tcfc",
+            "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC4ortbACSS_tcfc",
+            "moduleName": "AudienzziOSSDK",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "getValidatedORTBDict",
+            "printedName": "getValidatedORTBDict()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "[Swift.String : Any]?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[Swift.String : Any]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "ProtocolComposition",
+                        "printedName": "Any"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC20getValidatedORTBDictSDySSypGSgyF",
+            "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC20getValidatedORTBDictSDySSypGSgyF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:14AudienzziOSSDK25ArbitraryGlobalORTBHelperC",
+        "mangledName": "$s14AudienzziOSSDK25ArbitraryGlobalORTBHelperC",
+        "moduleName": "AudienzziOSSDK",
+        "isOpen": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          }
+        ]
+      },
+      {
         "kind": "Import",
         "name": "UIKit",
         "printedName": "UIKit",
@@ -46299,6 +47473,13 @@
         "kind": "Import",
         "name": "PrebidMobile",
         "printedName": "PrebidMobile",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
         "declKind": "Import",
         "moduleName": "AudienzziOSSDK"
       },
@@ -47062,13 +48243,14 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               }
             ],
             "declKind": "Func",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AUAdView(im)fetchRequest:",
-            "mangledName": "$s14AudienzziOSSDK8AUAdViewC12fetchRequestyyyXlF",
+            "mangledName": "$s14AudienzziOSSDK8AUAdViewC12fetchRequestyySo10GAMRequestCF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -54392,6 +55574,13 @@
         "moduleName": "AudienzziOSSDK"
       },
       {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
         "kind": "TypeDecl",
         "name": "AUBannerView",
         "printedName": "AUBannerView",
@@ -55298,8 +56487,9 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               },
               {
                 "kind": "TypeNominal",
@@ -55325,7 +56515,7 @@
             ],
             "declKind": "Func",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AUBannerView(im)createAdWith:gamBanner:eventHandler:",
-            "mangledName": "$s14AudienzziOSSDK12AUBannerViewC8createAd4with9gamBanner12eventHandleryyXl_So6UIViewCAA0c5EventK0CSgtF",
+            "mangledName": "$s14AudienzziOSSDK12AUBannerViewC8createAd4with9gamBanner12eventHandlerySo10GAMRequestC_So6UIViewCAA0c5EventK0CSgtF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -55500,13 +56690,14 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               }
             ],
             "declKind": "Func",
             "usr": "c:@CM@AudienzziOSSDK@objc(cs)AUBannerView(im)fetchRequest:",
-            "mangledName": "$s14AudienzziOSSDK12AUBannerViewC12fetchRequestyyyXlF",
+            "mangledName": "$s14AudienzziOSSDK12AUBannerViewC12fetchRequestyySo10GAMRequestCF",
             "moduleName": "AudienzziOSSDK",
             "overriding": true,
             "isOpen": true,
@@ -59802,6 +60993,13 @@
         "kind": "Import",
         "name": "UIKit",
         "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
         "declKind": "Import",
         "moduleName": "AudienzziOSSDK"
       },
@@ -69102,6 +70300,13 @@
         "moduleName": "AudienzziOSSDK"
       },
       {
+        "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
         "kind": "TypeDecl",
         "name": "AUInterstitialView",
         "printedName": "AUInterstitialView",
@@ -70145,8 +71350,9 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               },
               {
                 "kind": "TypeNominal",
@@ -70157,7 +71363,7 @@
             ],
             "declKind": "Func",
             "usr": "c:@M@AudienzziOSSDK@objc(cs)AUInterstitialView(im)createAdWith:adUnitID:",
-            "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC8createAd4with8adUnitIDyyXl_SStF",
+            "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC8createAd4with8adUnitIDySo10GAMRequestC_SStF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -70363,13 +71569,14 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "ProtocolComposition",
-                "printedName": "AnyObject"
+                "name": "AdManagerRequest",
+                "printedName": "GoogleMobileAds.AdManagerRequest",
+                "usr": "c:objc(cs)GAMRequest"
               }
             ],
             "declKind": "Func",
             "usr": "c:@CM@AudienzziOSSDK@objc(cs)AUInterstitialView(im)fetchRequest:",
-            "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC12fetchRequestyyyXlF",
+            "mangledName": "$s14AudienzziOSSDK18AUInterstitialViewC12fetchRequestyySo10GAMRequestCF",
             "moduleName": "AudienzziOSSDK",
             "overriding": true,
             "isOpen": true,
@@ -72549,6 +73756,13 @@
       },
       {
         "kind": "Import",
+        "name": "GoogleMobileAds",
+        "printedName": "GoogleMobileAds",
+        "declKind": "Import",
+        "moduleName": "AudienzziOSSDK"
+      },
+      {
+        "kind": "Import",
         "name": "Foundation",
         "printedName": "Foundation",
         "declKind": "Import",
@@ -72569,6 +73783,56 @@
         "name": "AUTargeting",
         "printedName": "AUTargeting",
         "children": [
+          {
+            "kind": "Var",
+            "name": "audienzzSchainObjectConfig",
+            "printedName": "audienzzSchainObjectConfig",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(py)audienzzSchainObjectConfig",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC26audienzzSchainObjectConfigSSvp",
+            "moduleName": "AudienzziOSSDK",
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "HasStorage",
+              "ObjC"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)audienzzSchainObjectConfig",
+                "mangledName": "$s14AudienzziOSSDK11AUTargetingC26audienzzSchainObjectConfigSSvg",
+                "moduleName": "AudienzziOSSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
           {
             "kind": "Var",
             "name": "shared",
@@ -72668,6 +73932,96 @@
                 "declAttributes": [
                   "Final"
                 ],
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "customTargetingManager",
+            "printedName": "customTargetingManager",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "CustomTargetingManager",
+                "printedName": "AudienzziOSSDK.CustomTargetingManager",
+                "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:14AudienzziOSSDK11AUTargetingC22customTargetingManagerAA06CustomeF0Cvp",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC22customTargetingManagerAA06CustomeF0Cvp",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage",
+              "AccessControl"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CustomTargetingManager",
+                    "printedName": "AudienzziOSSDK.CustomTargetingManager",
+                    "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:14AudienzziOSSDK11AUTargetingC22customTargetingManagerAA06CustomeF0Cvg",
+                "mangledName": "$s14AudienzziOSSDK11AUTargetingC22customTargetingManagerAA06CustomeF0Cvg",
+                "moduleName": "AudienzziOSSDK",
+                "implicit": true,
+                "isOpen": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CustomTargetingManager",
+                    "printedName": "AudienzziOSSDK.CustomTargetingManager",
+                    "usr": "s:14AudienzziOSSDK22CustomTargetingManagerC"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:14AudienzziOSSDK11AUTargetingC22customTargetingManagerAA06CustomeF0Cvs",
+                "mangledName": "$s14AudienzziOSSDK11AUTargetingC22customTargetingManagerAA06CustomeF0Cvs",
+                "moduleName": "AudienzziOSSDK",
+                "implicit": true,
+                "isOpen": true,
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:14AudienzziOSSDK11AUTargetingC22customTargetingManagerAA06CustomeF0CvM",
+                "mangledName": "$s14AudienzziOSSDK11AUTargetingC22customTargetingManagerAA06CustomeF0CvM",
+                "moduleName": "AudienzziOSSDK",
+                "implicit": true,
+                "isOpen": true,
                 "accessorKind": "_modify"
               }
             ]
@@ -75842,6 +77196,136 @@
             "funcSelfKind": "NonMutating"
           },
           {
+            "kind": "Function",
+            "name": "addCustomTargeting",
+            "printedName": "addCustomTargeting(key:value:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)addCustomTargetingWithKey:value:",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC18addCustomTargeting3key5valueySS_SStF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "addCustomTargeting",
+            "printedName": "addCustomTargeting(key:values:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Set",
+                "printedName": "Swift.Set<Swift.String>",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sh"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)addCustomTargetingWithKey:values:",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC18addCustomTargeting3key6valuesySS_ShySSGtF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "removeCustomTargeting",
+            "printedName": "removeCustomTargeting(key:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)removeCustomTargetingWithKey:",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC21removeCustomTargeting3keyySS_tF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "clearCustomTargeting",
+            "printedName": "clearCustomTargeting()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)clearCustomTargeting",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC20clearCustomTargetingyyF",
+            "moduleName": "AudienzziOSSDK",
+            "isOpen": true,
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
             "kind": "Constructor",
             "name": "init",
             "printedName": "init()",
@@ -77755,6 +79239,123 @@
         "children": [
           {
             "kind": "Function",
+            "name": "toDictionary",
+            "printedName": "toDictionary(with:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[τ_1_0 : τ_0_0]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_1_0"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  }
+                ],
+                "usr": "s:SD"
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(τ_0_0) -> τ_1_0",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_1_0"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  }
+                ],
+                "typeAttributes": [
+                  "noescape"
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:Sa14AudienzziOSSDKE12toDictionary4withSDyqd__xGqd__xXE_tSHRd__lF",
+            "mangledName": "$sSa14AudienzziOSSDKE12toDictionary4withSDyqd__xGqd__xXE_tSHRd__lF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0, τ_1_0 where τ_1_0 : Swift.Hashable>",
+            "sugared_genericSig": "<Element, Key where Key : Swift.Hashable>",
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "getObjectWithoutEmptyValues",
+            "printedName": "getObjectWithoutEmptyValues()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "[τ_0_0]?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[τ_0_0]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "GenericTypeParam",
+                        "printedName": "τ_0_0"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:Sa14AudienzziOSSDKypRszlE27getObjectWithoutEmptyValuesSayypGSgyF",
+            "mangledName": "$sSa14AudienzziOSSDKypRszlE27getObjectWithoutEmptyValuesSayypGSgyF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0 where τ_0_0 == Any>",
+            "sugared_genericSig": "<Element where Element == Any>",
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "removingDuplicates",
+            "printedName": "removingDuplicates()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[τ_0_0]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:Sa14AudienzziOSSDKSHRzlE18removingDuplicatesSayxGyF",
+            "mangledName": "$sSa14AudienzziOSSDKSHRzlE18removingDuplicatesSayxGyF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0 where τ_0_0 : Swift.Hashable>",
+            "sugared_genericSig": "<Element where Element : Swift.Hashable>",
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
             "name": "batched",
             "printedName": "batched(into:)",
             "children": [
@@ -78456,6 +80057,1298 @@
             ],
             "usr": "s:10Foundation26DecodableWithConfigurationP",
             "mangledName": "$s10Foundation26DecodableWithConfigurationP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "Set",
+        "printedName": "Set",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "toCommaSeparatedListString",
+            "printedName": "toCommaSeparatedListString()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:Sh14AudienzziOSSDKE26toCommaSeparatedListStringSSyF",
+            "mangledName": "$sSh14AudienzziOSSDKE26toCommaSeparatedListStringSSyF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0 where τ_0_0 : Swift.Hashable>",
+            "sugared_genericSig": "<Element where Element : Swift.Hashable>",
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:Sh",
+        "mangledName": "$sSh",
+        "moduleName": "Swift",
+        "genericSig": "<τ_0_0 where τ_0_0 : Swift.Hashable>",
+        "sugared_genericSig": "<Element where Element : Swift.Hashable>",
+        "declAttributes": [
+          "EagerMove",
+          "Frozen"
+        ],
+        "isExternal": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "ExpressibleByArrayLiteral",
+            "printedName": "ExpressibleByArrayLiteral",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "ArrayLiteralElement",
+                "printedName": "ArrayLiteralElement",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:s25ExpressibleByArrayLiteralP",
+            "mangledName": "$ss25ExpressibleByArrayLiteralP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sequence",
+            "printedName": "Sequence",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "Element",
+                "printedName": "Element",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "Iterator",
+                "printedName": "Iterator",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Iterator",
+                    "printedName": "Swift.Set<τ_0_0>.Iterator",
+                    "usr": "s:Sh8IteratorV"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:ST",
+            "mangledName": "$sST"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Collection",
+            "printedName": "Collection",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "Element",
+                "printedName": "Element",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "Index",
+                "printedName": "Index",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Index",
+                    "printedName": "Swift.Set<τ_0_0>.Index",
+                    "usr": "s:Sh5IndexV"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "Iterator",
+                "printedName": "Iterator",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Iterator",
+                    "printedName": "Swift.Set<τ_0_0>.Iterator",
+                    "usr": "s:Sh8IteratorV"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "SubSequence",
+                "printedName": "SubSequence",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Slice",
+                    "printedName": "Swift.Slice<Swift.Set<τ_0_0>>",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Set",
+                        "printedName": "Swift.Set<τ_0_0>",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "GenericTypeParam",
+                            "printedName": "τ_0_0"
+                          }
+                        ],
+                        "usr": "s:Sh"
+                      }
+                    ],
+                    "usr": "s:s5SliceV"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "Indices",
+                "printedName": "Indices",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DefaultIndices",
+                    "printedName": "Swift.DefaultIndices<Swift.Set<τ_0_0>>",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Set",
+                        "printedName": "Swift.Set<τ_0_0>",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "GenericTypeParam",
+                            "printedName": "τ_0_0"
+                          }
+                        ],
+                        "usr": "s:Sh"
+                      }
+                    ],
+                    "usr": "s:SI"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:Sl",
+            "mangledName": "$sSl"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_HasCustomAnyHashableRepresentation",
+            "printedName": "_HasCustomAnyHashableRepresentation",
+            "usr": "s:s35_HasCustomAnyHashableRepresentationP",
+            "mangledName": "$ss35_HasCustomAnyHashableRepresentationP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SetAlgebra",
+            "printedName": "SetAlgebra",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "Element",
+                "printedName": "Element",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:s10SetAlgebraP",
+            "mangledName": "$ss10SetAlgebraP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomReflectable",
+            "printedName": "CustomReflectable",
+            "usr": "s:s17CustomReflectableP",
+            "mangledName": "$ss17CustomReflectableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_ObjectiveCBridgeable",
+            "printedName": "_ObjectiveCBridgeable",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "_ObjectiveCType",
+                "printedName": "_ObjectiveCType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "NSSet",
+                    "printedName": "Foundation.NSSet",
+                    "usr": "c:objc(cs)NSSet"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:s21_ObjectiveCBridgeableP",
+            "mangledName": "$ss21_ObjectiveCBridgeableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "Dictionary",
+        "printedName": "Dictionary",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "merge",
+            "printedName": "merge(dict:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[τ_0_0 : τ_0_1]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_1"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:SD14AudienzziOSSDKE5merge4dictySDyxq_G_tF",
+            "mangledName": "$sSD14AudienzziOSSDKE5merge4dictySDyxq_G_tF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0, τ_0_1 where τ_0_0 : Swift.Hashable>",
+            "sugared_genericSig": "<Key, Value where Key : Swift.Hashable>",
+            "declAttributes": [
+              "Mutating"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "Mutating"
+          },
+          {
+            "kind": "Function",
+            "name": "addValue",
+            "printedName": "addValue(_:forKey:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "GenericTypeParam",
+                "printedName": "τ_0_0"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:SD14AudienzziOSSDKShySSGRs_rlE8addValue_6forKeyySS_xtF",
+            "mangledName": "$sSD14AudienzziOSSDKShySSGRs_rlE8addValue_6forKeyySS_xtF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0, τ_0_1 where τ_0_0 : Swift.Hashable, τ_0_1 == Swift.Set<Swift.String>>",
+            "sugared_genericSig": "<Key, Value where Key : Swift.Hashable, Value == Swift.Set<Swift.String>>",
+            "declAttributes": [
+              "Mutating"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "Mutating"
+          },
+          {
+            "kind": "Function",
+            "name": "getCopyWhereValueIsArray",
+            "printedName": "getCopyWhereValueIsArray()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[τ_0_0 : [Swift.String]]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:SD14AudienzziOSSDKShySSGRs_rlE24getCopyWhereValueIsArraySDyxSaySSGGyF",
+            "mangledName": "$sSD14AudienzziOSSDKShySSGRs_rlE24getCopyWhereValueIsArraySDyxSaySSGGyF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0, τ_0_1 where τ_0_0 : Swift.Hashable, τ_0_1 == Swift.Set<Swift.String>>",
+            "sugared_genericSig": "<Key, Value where Key : Swift.Hashable, Value == Swift.Set<Swift.String>>",
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "toCommaSeparatedListString",
+            "printedName": "toCommaSeparatedListString()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:SD14AudienzziOSSDKShySSGRs_rlE26toCommaSeparatedListStringSSyF",
+            "mangledName": "$sSD14AudienzziOSSDKShySSGRs_rlE26toCommaSeparatedListStringSSyF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0, τ_0_1 where τ_0_0 : Swift.Hashable, τ_0_1 == Swift.Set<Swift.String>>",
+            "sugared_genericSig": "<Key, Value where Key : Swift.Hashable, Value == Swift.Set<Swift.String>>",
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "toString",
+            "printedName": "toString(entrySeparator:keyValueSeparator:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:SD14AudienzziOSSDKShySSGRs_rlE8toString14entrySeparator08keyValueF0S2S_SStF",
+            "mangledName": "$sSD14AudienzziOSSDKShySSGRs_rlE8toString14entrySeparator08keyValueF0S2S_SStF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0, τ_0_1 where τ_0_0 : Swift.Hashable, τ_0_1 == Swift.Set<Swift.String>>",
+            "sugared_genericSig": "<Key, Value where Key : Swift.Hashable, Value == Swift.Set<Swift.String>>",
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "getObjectWithoutEmptyValues",
+            "printedName": "getObjectWithoutEmptyValues()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "[τ_0_0 : τ_0_1]?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[τ_0_0 : τ_0_1]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "GenericTypeParam",
+                        "printedName": "τ_0_0"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "GenericTypeParam",
+                        "printedName": "τ_0_1"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:SD14AudienzziOSSDKs11AnyHashableVRszypRs_rlE27getObjectWithoutEmptyValuesSDyACypGSgyF",
+            "mangledName": "$sSD14AudienzziOSSDKs11AnyHashableVRszypRs_rlE27getObjectWithoutEmptyValuesSDyACypGSgyF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0, τ_0_1 where τ_0_0 == Swift.AnyHashable, τ_0_1 == Any>",
+            "sugared_genericSig": "<Key, Value where Key == Swift.AnyHashable, Value == Any>",
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "toString",
+            "printedName": "toString(entrySeparator:keyValueSeparator:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:SD14AudienzziOSSDKs11AnyHashableVRszypRs_rlE8toString14entrySeparator08keyValueH0S2S_SStF",
+            "mangledName": "$sSD14AudienzziOSSDKs11AnyHashableVRszypRs_rlE8toString14entrySeparator08keyValueH0S2S_SStF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0, τ_0_1 where τ_0_0 == Swift.AnyHashable, τ_0_1 == Any>",
+            "sugared_genericSig": "<Key, Value where Key == Swift.AnyHashable, Value == Any>",
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "toString",
+            "printedName": "toString(entrySeparator:keyValueSeparator:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:SD14AudienzziOSSDKSSRszSSRs_rlE8toString14entrySeparator08keyValueF0S2S_SStF",
+            "mangledName": "$sSD14AudienzziOSSDKSSRszSSRs_rlE8toString14entrySeparator08keyValueF0S2S_SStF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0, τ_0_1 where τ_0_0 == Swift.String, τ_0_1 == Swift.String>",
+            "sugared_genericSig": "<Key, Value where Key == Swift.String, Value == Swift.String>",
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "deepMerging",
+            "printedName": "deepMerging(with:shouldReplace:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.String : Any]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ProtocolComposition",
+                    "printedName": "Any"
+                  }
+                ],
+                "usr": "s:SD"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.String : Any]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ProtocolComposition",
+                    "printedName": "Any"
+                  }
+                ],
+                "usr": "s:SD"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "hasDefaultArg": true,
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:SD14AudienzziOSSDKSSRszrlE11deepMerging4with13shouldReplaceSDySSypGAE_SbtF",
+            "mangledName": "$sSD14AudienzziOSSDKSSRszrlE11deepMerging4with13shouldReplaceSDySSypGAE_SbtF",
+            "moduleName": "AudienzziOSSDK",
+            "genericSig": "<τ_0_0, τ_0_1 where τ_0_0 == Swift.String>",
+            "sugared_genericSig": "<Key, Value where Key == Swift.String>",
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:SD",
+        "mangledName": "$sSD",
+        "moduleName": "Swift",
+        "genericSig": "<τ_0_0, τ_0_1 where τ_0_0 : Swift.Hashable>",
+        "sugared_genericSig": "<Key, Value where Key : Swift.Hashable>",
+        "declAttributes": [
+          "EagerMove",
+          "Frozen"
+        ],
+        "isExternal": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sequence",
+            "printedName": "Sequence",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "Element",
+                "printedName": "Element",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Tuple",
+                    "printedName": "(key: τ_0_0, value: τ_0_1)",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "GenericTypeParam",
+                        "printedName": "τ_0_0"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "GenericTypeParam",
+                        "printedName": "τ_0_1"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "Iterator",
+                "printedName": "Iterator",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Iterator",
+                    "printedName": "Swift.Dictionary<τ_0_0, τ_0_1>.Iterator",
+                    "usr": "s:SD8IteratorV"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:ST",
+            "mangledName": "$sST"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Collection",
+            "printedName": "Collection",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "Element",
+                "printedName": "Element",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Tuple",
+                    "printedName": "(key: τ_0_0, value: τ_0_1)",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "GenericTypeParam",
+                        "printedName": "τ_0_0"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "GenericTypeParam",
+                        "printedName": "τ_0_1"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "Index",
+                "printedName": "Index",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Index",
+                    "printedName": "Swift.Dictionary<τ_0_0, τ_0_1>.Index",
+                    "usr": "s:SD5IndexV"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "Iterator",
+                "printedName": "Iterator",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Iterator",
+                    "printedName": "Swift.Dictionary<τ_0_0, τ_0_1>.Iterator",
+                    "usr": "s:SD8IteratorV"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "SubSequence",
+                "printedName": "SubSequence",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Slice",
+                    "printedName": "Swift.Slice<[τ_0_0 : τ_0_1]>",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Dictionary",
+                        "printedName": "[τ_0_0 : τ_0_1]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "GenericTypeParam",
+                            "printedName": "τ_0_0"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "GenericTypeParam",
+                            "printedName": "τ_0_1"
+                          }
+                        ],
+                        "usr": "s:SD"
+                      }
+                    ],
+                    "usr": "s:s5SliceV"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "Indices",
+                "printedName": "Indices",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DefaultIndices",
+                    "printedName": "Swift.DefaultIndices<[τ_0_0 : τ_0_1]>",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Dictionary",
+                        "printedName": "[τ_0_0 : τ_0_1]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "GenericTypeParam",
+                            "printedName": "τ_0_0"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "GenericTypeParam",
+                            "printedName": "τ_0_1"
+                          }
+                        ],
+                        "usr": "s:SD"
+                      }
+                    ],
+                    "usr": "s:SI"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:Sl",
+            "mangledName": "$sSl"
+          },
+          {
+            "kind": "Conformance",
+            "name": "ExpressibleByDictionaryLiteral",
+            "printedName": "ExpressibleByDictionaryLiteral",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "Key",
+                "printedName": "Key",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "Value",
+                "printedName": "Value",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_1"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:s30ExpressibleByDictionaryLiteralP",
+            "mangledName": "$ss30ExpressibleByDictionaryLiteralP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_HasCustomAnyHashableRepresentation",
+            "printedName": "_HasCustomAnyHashableRepresentation",
+            "usr": "s:s35_HasCustomAnyHashableRepresentationP",
+            "mangledName": "$ss35_HasCustomAnyHashableRepresentationP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomReflectable",
+            "printedName": "CustomReflectable",
+            "usr": "s:s17CustomReflectableP",
+            "mangledName": "$ss17CustomReflectableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_ObjectiveCBridgeable",
+            "printedName": "_ObjectiveCBridgeable",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "_ObjectiveCType",
+                "printedName": "_ObjectiveCType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "NSDictionary",
+                    "printedName": "Foundation.NSDictionary",
+                    "usr": "c:objc(cs)NSDictionary"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:s21_ObjectiveCBridgeableP",
+            "mangledName": "$ss21_ObjectiveCBridgeableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "Optional",
+        "printedName": "Optional",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "boolValue",
+            "printedName": "boolValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.Bool?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:Sq14AudienzziOSSDKSo8NSNumberCRszlE9boolValueSbSgvp",
+            "mangledName": "$sSq14AudienzziOSSDKSo8NSNumberCRszlE9boolValueSbSgvp",
+            "moduleName": "AudienzziOSSDK",
+            "isFromExtension": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.Bool?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Bool",
+                        "printedName": "Swift.Bool",
+                        "usr": "s:Sb"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:Sq14AudienzziOSSDKSo8NSNumberCRszlE9boolValueSbSgvg",
+                "mangledName": "$sSq14AudienzziOSSDKSo8NSNumberCRszlE9boolValueSbSgvg",
+                "moduleName": "AudienzziOSSDK",
+                "genericSig": "<τ_0_0 where τ_0_0 == Foundation.NSNumber>",
+                "sugared_genericSig": "<Wrapped where Wrapped == Foundation.NSNumber>",
+                "isFromExtension": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "nsNumberValue",
+            "printedName": "nsNumberValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Foundation.NSNumber?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "NSNumber",
+                    "printedName": "Foundation.NSNumber",
+                    "usr": "c:objc(cs)NSNumber"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:Sq14AudienzziOSSDKSbRszlE13nsNumberValueSo8NSNumberCSgvp",
+            "mangledName": "$sSq14AudienzziOSSDKSbRszlE13nsNumberValueSo8NSNumberCSgvp",
+            "moduleName": "AudienzziOSSDK",
+            "isFromExtension": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Foundation.NSNumber?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "NSNumber",
+                        "printedName": "Foundation.NSNumber",
+                        "usr": "c:objc(cs)NSNumber"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:Sq14AudienzziOSSDKSbRszlE13nsNumberValueSo8NSNumberCSgvg",
+                "mangledName": "$sSq14AudienzziOSSDKSbRszlE13nsNumberValueSo8NSNumberCSgvg",
+                "moduleName": "AudienzziOSSDK",
+                "genericSig": "<τ_0_0 where τ_0_0 == Swift.Bool>",
+                "sugared_genericSig": "<Wrapped where Wrapped == Swift.Bool>",
+                "isFromExtension": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:Sq",
+        "mangledName": "$sSq",
+        "moduleName": "Swift",
+        "genericSig": "<τ_0_0 where τ_0_0 : ~Copyable>",
+        "sugared_genericSig": "<Wrapped where Wrapped : ~Copyable>",
+        "declAttributes": [
+          "Frozen"
+        ],
+        "isExternal": true,
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "BitwiseCopyable",
+            "printedName": "BitwiseCopyable",
+            "usr": "s:s15BitwiseCopyableP",
+            "mangledName": "$ss15BitwiseCopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "ExpressibleByNilLiteral",
+            "printedName": "ExpressibleByNilLiteral",
+            "usr": "s:s23ExpressibleByNilLiteralP",
+            "mangledName": "$ss23ExpressibleByNilLiteralP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomReflectable",
+            "printedName": "CustomReflectable",
+            "usr": "s:s17CustomReflectableP",
+            "mangledName": "$ss17CustomReflectableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_ObjectiveCBridgeable",
+            "printedName": "_ObjectiveCBridgeable",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "_ObjectiveCType",
+                "printedName": "_ObjectiveCType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ProtocolComposition",
+                    "printedName": "AnyObject"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:s21_ObjectiveCBridgeableP",
+            "mangledName": "$ss21_ObjectiveCBridgeableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "EncodableWithConfiguration",
+            "printedName": "EncodableWithConfiguration",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "EncodingConfiguration",
+                "printedName": "EncodingConfiguration",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DependentMember",
+                    "printedName": "τ_0_0.EncodingConfiguration"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:10Foundation26EncodableWithConfigurationP",
+            "mangledName": "$s10Foundation26EncodableWithConfigurationP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "DecodableWithConfiguration",
+            "printedName": "DecodableWithConfiguration",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "DecodingConfiguration",
+                "printedName": "DecodingConfiguration",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DependentMember",
+                    "printedName": "τ_0_0.DecodingConfiguration"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:10Foundation26DecodableWithConfigurationP",
+            "mangledName": "$s10Foundation26DecodableWithConfigurationP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_OptionalType",
+            "printedName": "_OptionalType",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "WrappedType",
+                "printedName": "WrappedType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GenericTypeParam",
+                    "printedName": "τ_0_0"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:6SQLite13_OptionalTypeP",
+            "mangledName": "$s6SQLite13_OptionalTypeP"
           }
         ]
       },
@@ -79804,6 +82697,13 @@
       "value": "500"
     },
     {
+      "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/AdUnitConfiguration\/AUTargeting\/CustomTargetingManager.swift",
+      "kind": "Dictionary",
+      "offset": 105,
+      "length": 3,
+      "value": "[]"
+    },
+    {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/AdUnitViews\/Rendering\/Banner\/AUBannerRenderingView.swift",
       "kind": "StringLiteral",
       "offset": 683,
@@ -79827,7 +82727,7 @@
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/AdUnitViews\/Original\/NativeBanner\/AUNativeView.swift",
       "kind": "IntegerLiteral",
-      "offset": 679,
+      "offset": 824,
       "length": 9,
       "value": "1"
     },
@@ -79881,16 +82781,23 @@
       "value": "7"
     },
     {
+      "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/Extensions\/CollectionsExtenstion.swift",
+      "kind": "BooleanLiteral",
+      "offset": 4187,
+      "length": 5,
+      "value": "false"
+    },
+    {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/Private_AdTypes\/AURewardedView_Private.swift",
       "kind": "StringLiteral",
-      "offset": 640,
+      "offset": 663,
       "length": 10,
       "value": "\"REWARDED\""
     },
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/Private_AdTypes\/AURewardedView_Private.swift",
       "kind": "StringLiteral",
-      "offset": 679,
+      "offset": 702,
       "length": 10,
       "value": "\"ORIGINAL\""
     },
@@ -79917,15 +82824,8 @@
     },
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Audienzz.swift",
-      "kind": "StringLiteral",
-      "offset": 903,
-      "length": 93,
-      "value": "\"{ \"source\": { \"schain\": [{ \"asi\":\"audienzz.ch\", \"sid\":\"812net\", \"hp\":1 }] } }\""
-    },
-    {
-      "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Audienzz.swift",
       "kind": "BooleanLiteral",
-      "offset": 1372,
+      "offset": 1224,
       "length": 5,
       "value": "false"
     },
@@ -79967,21 +82867,21 @@
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/AdUnitViews\/Original\/Multiplatform\/AUMultiplatformView.swift",
       "kind": "BooleanLiteral",
-      "offset": 1555,
+      "offset": 1591,
       "length": 4,
       "value": "true"
     },
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/AdUnitViews\/Original\/Multiplatform\/AUMultiplatformView.swift",
       "kind": "BooleanLiteral",
-      "offset": 1787,
+      "offset": 1823,
       "length": 5,
       "value": "false"
     },
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/AdUnitViews\/Original\/Multiplatform\/AUMultiplatformView.swift",
       "kind": "BooleanLiteral",
-      "offset": 1829,
+      "offset": 1865,
       "length": 5,
       "value": "false"
     },
@@ -80114,14 +83014,14 @@
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/Private_AdTypes\/AUBannerView_Private.swift",
       "kind": "StringLiteral",
-      "offset": 666,
+      "offset": 689,
       "length": 8,
       "value": "\"BANNER\""
     },
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/Private_AdTypes\/AUBannerView_Private.swift",
       "kind": "StringLiteral",
-      "offset": 703,
+      "offset": 726,
       "length": 10,
       "value": "\"ORIGINAL\""
     },
@@ -80373,14 +83273,14 @@
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/AdUnitViews\/AUAdView.swift",
       "kind": "BooleanLiteral",
-      "offset": 695,
+      "offset": 824,
       "length": 5,
       "value": "false"
     },
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/AdUnitViews\/AUAdView.swift",
       "kind": "BooleanLiteral",
-      "offset": 1997,
+      "offset": 2127,
       "length": 4,
       "value": "true"
     },
@@ -80828,16 +83728,23 @@
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/Private_AdTypes\/AUInterstitialView_Private.swift",
       "kind": "StringLiteral",
-      "offset": 640,
+      "offset": 663,
       "length": 14,
       "value": "\"INTERSTITIAL\""
     },
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/Private_AdTypes\/AUInterstitialView_Private.swift",
       "kind": "StringLiteral",
-      "offset": 683,
+      "offset": 706,
       "length": 10,
       "value": "\"ORIGINAL\""
+    },
+    {
+      "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/AdUnitConfiguration\/AUTargeting\/AUTargeting.swift",
+      "kind": "StringLiteral",
+      "offset": 714,
+      "length": 101,
+      "value": "\"{ \"source\": { \"schain\": [{ \"asi\":\"audienzz.ch\", \"sid\":\"812net\", \"hp\":1 }] } }\""
     },
     {
       "filePath": "\/Users\/puha\/StudioProjects\/audienzz-ios-sdk\/AudienzziOSSDK\/AudienzziOSSDK\/Helpers\/AUNativeApi\/AUNativeAssetObjects\/AUNativeImageAssetType.swift",

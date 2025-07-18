@@ -160,6 +160,12 @@
 		58F8BD062C1700BA00E08F1E /* AUScreenImpression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F8BD052C1700BA00E08F1E /* AUScreenImpression.swift */; };
 		58F8BD102C1701A900E08F1E /* AUScreenImpressionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F8BD0F2C1701A900E08F1E /* AUScreenImpressionManager.swift */; };
 		5E9F414E3855411F512AF9C5 /* Pods_AudienzziOSSDKTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7AAB61EAED49658E0BE430B8 /* Pods_AudienzziOSSDKTests.framework */; };
+		91679DD22E2902EE00439661 /* CustomTargetingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91679DD12E2902E900439661 /* CustomTargetingManager.swift */; };
+		91679DD32E2902EE00439661 /* CustomTargetingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91679DD12E2902E900439661 /* CustomTargetingManager.swift */; };
+		918D63542E28EDF3009D04CC /* AUTargetingUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918D63532E28EDEC009D04CC /* AUTargetingUtils.swift */; };
+		918D63552E28EDF3009D04CC /* AUTargetingUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918D63532E28EDEC009D04CC /* AUTargetingUtils.swift */; };
+		918D63572E28F243009D04CC /* CollectionsExtenstion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918D63562E28F23D009D04CC /* CollectionsExtenstion.swift */; };
+		918D63582E28F243009D04CC /* CollectionsExtenstion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918D63562E28F23D009D04CC /* CollectionsExtenstion.swift */; };
 		A20B14BFE29157593679D23E /* Pods_AudienzziOSSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53A789D94F25679F0B84E9E3 /* Pods_AudienzziOSSDK.framework */; };
 /* End PBXBuildFile section */
 
@@ -294,6 +300,9 @@
 		58F8BD0F2C1701A900E08F1E /* AUScreenImpressionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUScreenImpressionManager.swift; sourceTree = "<group>"; };
 		66690F01B538B1E747D6D638 /* Pods-AudienzziOSSDK.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDK.debug.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK.debug.xcconfig"; sourceTree = "<group>"; };
 		7AAB61EAED49658E0BE430B8 /* Pods_AudienzziOSSDKTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AudienzziOSSDKTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		91679DD12E2902E900439661 /* CustomTargetingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTargetingManager.swift; sourceTree = "<group>"; };
+		918D63532E28EDEC009D04CC /* AUTargetingUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AUTargetingUtils.swift; sourceTree = "<group>"; };
+		918D63562E28F23D009D04CC /* CollectionsExtenstion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsExtenstion.swift; sourceTree = "<group>"; };
 		A3552F230C55FD68639F681F /* Pods-AudienzziOSSDK.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDK.release.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK.release.xcconfig"; sourceTree = "<group>"; };
 		FC5E83CC02C2B0F298DC8160 /* Pods-AudienzziOSSDKTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AudienzziOSSDKTests.debug.xcconfig"; path = "Target Support Files/Pods-AudienzziOSSDKTests/Pods-AudienzziOSSDKTests.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -426,6 +435,7 @@
 		58436A802C060F5C00E83155 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				918D63562E28F23D009D04CC /* CollectionsExtenstion.swift */,
 				58436A892C060F9200E83155 /* UIViewExtension.swift */,
 				586753FC2C4F9B94005937C2 /* DateExtension.swift */,
 			);
@@ -643,6 +653,8 @@
 		5880C97C2D09DFC40063F249 /* AUTargeting */ = {
 			isa = PBXGroup;
 			children = (
+				91679DD12E2902E900439661 /* CustomTargetingManager.swift */,
+				918D63532E28EDEC009D04CC /* AUTargetingUtils.swift */,
 				5880C97D2D09DFFA0063F249 /* AUTargeting.swift */,
 			);
 			path = AUTargeting;
@@ -922,9 +934,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDKTests/Pods-AudienzziOSSDKTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDKTests/Pods-AudienzziOSSDKTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -961,9 +977,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDK/Pods-AudienzziOSSDK-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -978,9 +998,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDKTests/Pods-AudienzziOSSDKTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-AudienzziOSSDKTests/Pods-AudienzziOSSDKTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1022,6 +1046,7 @@
 				587512A32BA36053004BB7E9 /* VisibleView.swift in Sources */,
 				58249AF42BBEB89400E5C4C6 /* AUNativeBannerView.swift in Sources */,
 				584359542C0A204000AB8FDA /* AUInterstitialHandler.swift in Sources */,
+				91679DD32E2902EE00439661 /* CustomTargetingManager.swift in Sources */,
 				585A796C2BC9708B005D531C /* AUBannerRenderingAdDelegate.swift in Sources */,
 				5896C9502C20457B00BB434E /* AURewardedRenderingConfiguration.swift in Sources */,
 				585608742BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */,
@@ -1034,6 +1059,7 @@
 				585A79742BC9811D005D531C /* AUInterstitialenderingAdDelegate.swift in Sources */,
 				58436AD12C09BE6200E83155 /* AUFailedLoadEvent.swift in Sources */,
 				5890CFEF2BD150F20034E2FD /* AUAdParameters.swift in Sources */,
+				918D63572E28F243009D04CC /* CollectionsExtenstion.swift in Sources */,
 				58D9BC452BE91FB8000C4149 /* AURewardedView_Private.swift in Sources */,
 				58D9BC6C2BEBB66A000C4149 /* AUNativeAdMarkup.swift in Sources */,
 				58249B1E2BC57B4E00E5C4C6 /* AUNativeRequestParameter_Private.swift in Sources */,
@@ -1055,6 +1081,7 @@
 				5856086E2BADD62A00F9F073 /* AdVideoPropertyParameters.swift in Sources */,
 				58AECFEE2C299D6C0020E98D /* AUVisitorResultModel.swift in Sources */,
 				58436A9B2C0622BD00E83155 /* AULocalStorageService.swift in Sources */,
+				918D63542E28EDF3009D04CC /* AUTargetingUtils.swift in Sources */,
 				5856084B2BAC7A3B00F9F073 /* AUAdView.swift in Sources */,
 				586A878C2BC936D200F997BD /* AURewardedRenderingView.swift in Sources */,
 				58249B0D2BC3F70600E5C4C6 /* AUInstreamView.swift in Sources */,
@@ -1132,11 +1159,13 @@
 				585608752BB18E2F00F9F073 /* AUVideoParameters.swift in Sources */,
 				58EB06C22C2194CB00CE6E86 /* AUEventDB.swift in Sources */,
 				585A434C2C3EB64A00A883A7 /* AUAPIError.swift in Sources */,
+				918D63582E28F243009D04CC /* CollectionsExtenstion.swift in Sources */,
 				58EB06EA2C21963F00CE6E86 /* AUMORTBContentData_Internal.swift in Sources */,
 				5856086F2BADD62A00F9F073 /* AdVideoPropertyParameters.swift in Sources */,
 				58EB06C32C2194D200CE6E86 /* AULocalStorageAdditions.swift in Sources */,
 				58EB06E92C21962C00CE6E86 /* AUMORTBAppContent_Internal.swift in Sources */,
 				58EB06E12C2195A800CE6E86 /* VisibleView.swift in Sources */,
+				91679DD22E2902EE00439661 /* CustomTargetingManager.swift in Sources */,
 				58EB06C42C2194D200CE6E86 /* AUSQLiteDataBaseCreator.swift in Sources */,
 				58EB06E82C21962400CE6E86 /* AUVideoParameters_Private.swift in Sources */,
 				58EB06C52C2194D200CE6E86 /* AUSQLiteConfigurator.swift in Sources */,
@@ -1149,6 +1178,7 @@
 				585A434B2C3EB63500A883A7 /* AUBatchResultModel.swift in Sources */,
 				58EB06C02C2194C100CE6E86 /* AUEventsManager.swift in Sources */,
 				58EB06B32C2194B100CE6E86 /* AULogEvent.swift in Sources */,
+				918D63552E28EDF3009D04CC /* AUTargetingUtils.swift in Sources */,
 				58EB06BE2C2194BA00CE6E86 /* AUBannerHandler.swift in Sources */,
 				58EB06F72C2196E500CE6E86 /* AUBannerParameters.swift in Sources */,
 			);

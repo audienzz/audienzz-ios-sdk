@@ -14,6 +14,7 @@
  */
 
 import PrebidMobile
+import GoogleMobileAds
 import UIKit
 
 private let adTypeString = "REWARDED"
@@ -33,7 +34,7 @@ extension AURewardedView {
         #endif
     }
 
-    override func fetchRequest(_ gamRequest: AnyObject) {
+    override func fetchRequest(_ gamRequest: AdManagerRequest) {
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             AULogEvent.logDebug(
