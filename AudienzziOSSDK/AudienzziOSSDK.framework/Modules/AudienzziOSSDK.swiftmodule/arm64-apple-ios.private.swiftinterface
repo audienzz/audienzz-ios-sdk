@@ -989,10 +989,10 @@ public typealias Keywords = [Swift.String : Swift.String]
   @objc public func getAppKeywords() -> [Swift.String]
   @objc public func getGlobalOrtbConfig() -> Swift.String?
   @objc public func setGlobalOrtbConfig(ortbConfig: Swift.String)
-  @objc public func addCustomTargeting(key: Swift.String, value: Swift.String)
-  @objc public func addCustomTargeting(key: Swift.String, values: Swift.Set<Swift.String>)
-  @objc public func removeCustomTargeting(key: Swift.String)
-  @objc public func clearCustomTargeting()
+  @objc public func addGlobalTargeting(key: Swift.String, value: Swift.String)
+  @objc public func addGlobalTargeting(key: Swift.String, values: Swift.Set<Swift.String>)
+  @objc public func removeGlobalTargeting(key: Swift.String)
+  @objc public func clearGlobalTargeting()
   @objc override dynamic public init()
   @objc deinit
 }

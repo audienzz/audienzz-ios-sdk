@@ -1372,13 +1372,13 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, strong) AUTargeting * _Nonnull
 - (NSString * _Nullable)getGlobalOrtbConfig SWIFT_WARN_UNUSED_RESULT;
 - (void)setGlobalOrtbConfigWithOrtbConfig:(NSString * _Nonnull)ortbConfig;
 /// Add single key-value targeting
-- (void)addCustomTargetingWithKey:(NSString * _Nonnull)key value:(NSString * _Nonnull)value;
+- (void)addGlobalTargetingWithKey:(NSString * _Nonnull)key value:(NSString * _Nonnull)value;
 /// Add single key - multiple values targeting
-- (void)addCustomTargetingWithKey:(NSString * _Nonnull)key values:(NSSet<NSString *> * _Nonnull)values;
+- (void)addGlobalTargetingWithKey:(NSString * _Nonnull)key values:(NSSet<NSString *> * _Nonnull)values;
 /// Remove targeting for specific key
-- (void)removeCustomTargetingWithKey:(NSString * _Nonnull)key;
+- (void)removeGlobalTargetingWithKey:(NSString * _Nonnull)key;
 /// Clear all targeting
-- (void)clearCustomTargeting;
+- (void)clearGlobalTargeting;
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
 @end
 
