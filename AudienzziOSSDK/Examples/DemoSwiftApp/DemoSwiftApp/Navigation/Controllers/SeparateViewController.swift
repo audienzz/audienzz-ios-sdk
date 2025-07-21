@@ -91,13 +91,12 @@ class SeparateViewController: UIViewController {
     private func setupAdContainer() {
         switch selectedType {
         case .bannerOrigin:
-            //createBannerView_320x50()
+            createBannerView_320x50()
             createbannerView_300x250()
         case .bannerOriginVideo:
-            break
-           // createVideoBannerView()
+            createVideoBannerView()
         case .bannerOriginMulti:
-            //createBannerMultiplatformView()
+            createBannerMultiplatformView()
             createMultiplatformView()
         case .interstitalOrigin:
             break
@@ -126,14 +125,12 @@ class SeparateViewController: UIViewController {
     private func setupALazydContainer() {
         switch selectedType {
         case .bannerOrigin:
-            break
-           // createBannerLazyView_320x50()
-           // createBannerLazyView_320x250()
+            createBannerLazyView_320x50()
+            createBannerLazyView_320x250()
         case .bannerOriginVideo:
-            break
-            //createVideoLazyBannerView()
+            createVideoLazyBannerView()
         case .bannerOriginMulti:
-            //createBannerMultiplatformLazyView()
+            createBannerMultiplatformLazyView()
             createMultiplatformLazyView()
         case .interstitalOrigin:
             createInterstitialView()

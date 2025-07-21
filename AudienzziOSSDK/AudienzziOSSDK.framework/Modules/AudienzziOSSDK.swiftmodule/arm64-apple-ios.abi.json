@@ -77197,8 +77197,8 @@
           },
           {
             "kind": "Function",
-            "name": "addCustomTargeting",
-            "printedName": "addCustomTargeting(key:value:)",
+            "name": "addGlobalTargeting",
+            "printedName": "addGlobalTargeting(key:value:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -77219,8 +77219,8 @@
               }
             ],
             "declKind": "Func",
-            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)addCustomTargetingWithKey:value:",
-            "mangledName": "$s14AudienzziOSSDK11AUTargetingC18addCustomTargeting3key5valueySS_SStF",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)addGlobalTargetingWithKey:value:",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC18addGlobalTargeting3key5valueySS_SStF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -77232,8 +77232,8 @@
           },
           {
             "kind": "Function",
-            "name": "addCustomTargeting",
-            "printedName": "addCustomTargeting(key:values:)",
+            "name": "addGlobalTargeting",
+            "printedName": "addGlobalTargeting(key:values:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -77262,8 +77262,8 @@
               }
             ],
             "declKind": "Func",
-            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)addCustomTargetingWithKey:values:",
-            "mangledName": "$s14AudienzziOSSDK11AUTargetingC18addCustomTargeting3key6valuesySS_ShySSGtF",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)addGlobalTargetingWithKey:values:",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC18addGlobalTargeting3key6valuesySS_ShySSGtF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -77275,8 +77275,8 @@
           },
           {
             "kind": "Function",
-            "name": "removeCustomTargeting",
-            "printedName": "removeCustomTargeting(key:)",
+            "name": "removeGlobalTargeting",
+            "printedName": "removeGlobalTargeting(key:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -77291,8 +77291,8 @@
               }
             ],
             "declKind": "Func",
-            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)removeCustomTargetingWithKey:",
-            "mangledName": "$s14AudienzziOSSDK11AUTargetingC21removeCustomTargeting3keyySS_tF",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)removeGlobalTargetingWithKey:",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC21removeGlobalTargeting3keyySS_tF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [
@@ -77304,8 +77304,8 @@
           },
           {
             "kind": "Function",
-            "name": "clearCustomTargeting",
-            "printedName": "clearCustomTargeting()",
+            "name": "clearGlobalTargeting",
+            "printedName": "clearGlobalTargeting()",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -77314,8 +77314,8 @@
               }
             ],
             "declKind": "Func",
-            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)clearCustomTargeting",
-            "mangledName": "$s14AudienzziOSSDK11AUTargetingC20clearCustomTargetingyyF",
+            "usr": "c:@M@AudienzziOSSDK@objc(cs)AUTargeting(im)clearGlobalTargeting",
+            "mangledName": "$s14AudienzziOSSDK11AUTargetingC20clearGlobalTargetingyyF",
             "moduleName": "AudienzziOSSDK",
             "isOpen": true,
             "declAttributes": [

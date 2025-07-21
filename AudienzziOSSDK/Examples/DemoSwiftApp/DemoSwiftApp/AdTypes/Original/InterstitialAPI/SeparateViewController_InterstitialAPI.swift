@@ -52,6 +52,17 @@ extension SeparateViewController {
         lazyAdContainerView.addSubview(interstitialView)
 
         addDebugLabel(toView: interstitialView, name: "interstitialView")
+        
+        AUTargeting.shared.addGlobalTargeting(key:"TEST",value: "1")
+        
+        interstitialView.setImpOrtbConfig(ortbConfig: """
+        {
+          "banner": {
+            "format": [ {"w": 320, "h": 300}]
+          }
+        }
+        """
+)
 
         interstitialView.createAd(
             with: gamRequest,
