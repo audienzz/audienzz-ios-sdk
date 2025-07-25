@@ -41,6 +41,7 @@ class SeparateViewController: UIViewController {
     internal var bannerLazyMultisizeView: AUBannerView!
     internal var bannerLazyVideoView: AUBannerView!
     internal var bannerLazyMultiplatformView: AUBannerView!
+    internal var bannerUnfilledView: AUBannerView!
 
     // Multiformat
     internal var adMultiLoader: AdLoader!
@@ -92,7 +93,8 @@ class SeparateViewController: UIViewController {
         switch selectedType {
         case .bannerOrigin:
             createBannerView_320x50()
-            createbannerView_300x250()
+            createBannerView_300x250()
+            createBannerUnfilledView()
         case .bannerOriginVideo:
             createVideoBannerView()
         case .bannerOriginMulti:

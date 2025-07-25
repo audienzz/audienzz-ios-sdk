@@ -74,6 +74,7 @@ class AUBannerHandler: NSObject,
         didFailToReceiveAdWithError error: any Error
     ) {
         LogEvent("didFailToReceiveAdWithError")
+        LogEvent(error.localizedDescription)
 
         let event = AUFailedLoadEvent(
             adViewId: auBannerView.configId,

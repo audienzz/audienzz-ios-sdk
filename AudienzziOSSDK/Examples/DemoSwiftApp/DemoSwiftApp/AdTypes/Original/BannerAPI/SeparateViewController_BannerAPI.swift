@@ -70,6 +70,11 @@ private let storedImpsBannerLazy = [
 private let gamAdUnitMultiformatBannerOriginalLazy =
     "/21808260008/prebid-demo-original-banner-multiformat"
 
+// Unfilled
+
+private let storedImpUnfilled = "2"
+private let gamAdUnitUnfilled = "/96628199/testapp_publisher/high_floor"
+
 // MARK: - Banner API
 extension SeparateViewController {
     func createBannerView_320x50() {
@@ -118,7 +123,7 @@ extension SeparateViewController {
         }
     }
 
-    func createbannerView_300x250() {
+    func createBannerView_300x250() {
         let gamBanner = AdManagerBannerView(
             adSize: adSizeFor(cgSize: adVideoSize)
         )
@@ -130,7 +135,7 @@ extension SeparateViewController {
         AUTargeting.shared.addGlobalTargeting(key: "TEST", value: "1")
         AUTargeting.shared.addGlobalTargeting(key: "TEST2", values: ["2", "3"])
         AUTargeting.shared.addGlobalTargeting(key: "TEST3", value: "really")
-        //AUTargeting.shared.removeCustomTargeting(key: "TEST2")
+        AUTargeting.shared.removeGlobalTargeting(key: "TEST2")
         
         bannerView_300x250 = AUBannerView(
             configId: storedImpDisplayBanner_320x250,
@@ -165,6 +170,54 @@ extension SeparateViewController {
             }
             gamBanner.load(request)
         }
+    }
+    
+    func createBannerUnfilledView() {
+        let gamBanner = AdManagerBannerView(
+            adSize: adSizeFor(cgSize: adVideoSize)
+        )
+        gamBanner.adUnitID = gamAdUnitUnfilled
+        gamBanner.rootViewController = self
+        gamBanner.delegate = self
+        
+        let gamRequest = AdManagerRequest()
+        
+        bannerUnfilledView = AUBannerView(
+            configId: storedImpUnfilled,
+            adSize: adVideoSize,
+            adFormats: [.banner],
+            isLazyLoad: false
+        )
+      
+        bannerUnfilledView.frame = CGRect(
+            origin: CGPoint(x: 0, y: getPositionY(adContainerView)),
+            size: CGSize(width: self.view.frame.width, height: 250)
+        )
+        bannerUnfilledView.backgroundColor = .clear
+        adContainerView.addSubview(bannerUnfilledView)
+
+        let handler = AUBannerEventHandler(
+            adUnitId: gamAdUnitUnfilled,
+            gamView: gamBanner
+        )
+
+        addDebugLabel(toView: bannerUnfilledView, name: "Banner unfilled view")
+        
+        bannerUnfilledView.createAd(
+            with: gamRequest,
+            gamBanner: gamBanner,
+            eventHandler: handler
+        )
+
+        bannerUnfilledView.onLoadRequest = { gamRequest in
+            guard let request = gamRequest as? Request else {
+                print("Failed request unwrap")
+                return
+            }
+            gamBanner.load(request)
+        }
+       
+    
     }
 
     func createVideoBannerView() {
@@ -551,6 +604,11 @@ extension SeparateViewController: BannerViewDelegate {
         didFailToReceiveAdWithError error: Error
     ) {
         print("GAM did fail to receive ad with error: \(error)")
-        errorHandling(forView: bannerView, error: error)
+        
+        if (bannerView.adUnitID == gamAdUnitUnfilled){
+            bannerView.removeFromSuperview()
+        } else {
+            errorHandling(forView: bannerView, error: error)
+        }
     }
 }
