@@ -33,6 +33,7 @@ enum AdTypeExample: String {
     case debug = "Ad Debug"
     case cpu = "CPU LOAD DEBUG"
     case adaptive = "Adaptive - 'multi-size GAM'"
+    case targetingTesting = "Targeting Testing Page"
     
     var indexRow: Int {
         switch self {
@@ -54,6 +55,8 @@ enum AdTypeExample: String {
             return 9
         case .cpu:
             return 10
+        case .targetingTesting:
+            return 11
         default: return 0
         }
     }
@@ -73,7 +76,8 @@ class MainNavigationViewController: UIViewController {
         .interstitalOriginVideo,
         .interstitalOriginMulti,
         .rewardedOrigin,
-        .cpu
+        .cpu,
+        .targetingTesting
 //        .bannerRender,
 //        .bannerRenderVideo,
 //        .interstitialRender,
@@ -144,6 +148,9 @@ extension MainNavigationViewController: UITableViewDelegate, UITableViewDataSour
             self.navigationController?.pushViewController(destination, animated: true)
         case .cpu:
             let destination = mainStoryboard.instantiateViewController(withIdentifier: "CPULoaderViewController") as! CPULoaderViewController
+            self.navigationController?.pushViewController(destination, animated: true)
+        case .targetingTesting:
+            let destination = mainStoryboard.instantiateViewController(withIdentifier: "TargetingTestingViewController") as! TargetingTestingViewController
             self.navigationController?.pushViewController(destination, animated: true)
         }
         

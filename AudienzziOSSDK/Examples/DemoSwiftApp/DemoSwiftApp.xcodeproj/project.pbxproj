@@ -43,6 +43,7 @@
 		58C73FAA2B9F0C7200AE52EC /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 58C73FA82B9F0C7200AE52EC /* LaunchScreen.storyboard */; };
 		58C73FB22B9F0EB500AE52EC /* ExamplesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */; };
 		58F6F2A42D47E5A4002283D8 /* CPULoaderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F6F2A32D47E596002283D8 /* CPULoaderViewController.swift */; };
+		91A33C832E37A0DB00229C19 /* TargetingTestingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A33C822E37A0B300229C19 /* TargetingTestingViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -101,6 +102,7 @@
 		58F877AE2BA09E5C0093CD63 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58F877B22BA09F7E0093CD63 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B5BE8EC2178524AE8225FF2 /* Pods_DemoSwiftApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_DemoSwiftApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		91A33C822E37A0B300229C19 /* TargetingTestingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetingTestingViewController.swift; sourceTree = "<group>"; };
 		94882F76005AA6FCB296B94F /* Pods-DemoSwiftApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DemoSwiftApp.release.xcconfig"; path = "Target Support Files/Pods-DemoSwiftApp/Pods-DemoSwiftApp.release.xcconfig"; sourceTree = "<group>"; };
 		E0B4346CBB3DD44E5BABB227 /* Pods-DemoSwiftApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DemoSwiftApp.debug.xcconfig"; path = "Target Support Files/Pods-DemoSwiftApp/Pods-DemoSwiftApp.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -277,6 +279,7 @@
 		589A87592CC67E7700977099 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				91A33C822E37A0B300229C19 /* TargetingTestingViewController.swift */,
 				58F6F2A32D47E596002283D8 /* CPULoaderViewController.swift */,
 				58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */,
 				589A87572CC644F200977099 /* AdDebugViewController.swift */,
@@ -446,9 +449,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DemoSwiftApp/Pods-DemoSwiftApp-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DemoSwiftApp/Pods-DemoSwiftApp-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -463,9 +470,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DemoSwiftApp/Pods-DemoSwiftApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DemoSwiftApp/Pods-DemoSwiftApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -508,6 +519,7 @@
 				5867543A2C4FA3D4005937C2 /* SeparateViewController_RenderingInterstitial.swift in Sources */,
 				586754382C4FA3D4005937C2 /* SeparateViewController_RenderingBanner.swift in Sources */,
 				586754202C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift in Sources */,
+				91A33C832E37A0DB00229C19 /* TargetingTestingViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
