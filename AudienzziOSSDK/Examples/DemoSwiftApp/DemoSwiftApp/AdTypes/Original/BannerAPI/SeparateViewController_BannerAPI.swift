@@ -131,11 +131,6 @@ extension SeparateViewController {
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
-
-        AUTargeting.shared.addGlobalTargeting(key: "TEST", value: "1")
-        AUTargeting.shared.addGlobalTargeting(key: "TEST2", values: ["2", "3"])
-        AUTargeting.shared.addGlobalTargeting(key: "TEST3", value: "really")
-        AUTargeting.shared.removeGlobalTargeting(key: "TEST2")
         
         bannerView_300x250 = AUBannerView(
             configId: storedImpDisplayBanner_320x250,
