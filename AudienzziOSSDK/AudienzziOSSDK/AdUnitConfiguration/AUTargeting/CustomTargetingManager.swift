@@ -57,9 +57,7 @@ class CustomTargetingManager {
     }
 
     /** For GAM requests - apply global targeting  */
-    func applyToGamRequest(
-        request: AdManagerRequest,
-    ) -> AdManagerRequest {
+    func applyToGamRequest(request: AdManagerRequest) -> AdManagerRequest {
         request.customTargeting = targetingMap
         return request
     }
