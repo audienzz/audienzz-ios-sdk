@@ -41,6 +41,7 @@
 		58C73FB22B9F0EB500AE52EC /* ExamplesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */; };
 		58F6F2A42D47E5A4002283D8 /* CPULoaderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F6F2A32D47E596002283D8 /* CPULoaderViewController.swift */; };
 		918202C32E4CAD2F006731D8 /* AudienzziOSSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 918202C22E4CAD2F006731D8 /* AudienzziOSSDK */; };
+		9187089F2E4DE86400745D19 /* AudienzziOSSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 9187089E2E4DE86400745D19 /* AudienzziOSSDK */; };
 		91A33C832E37A0DB00229C19 /* TargetingTestingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A33C822E37A0B300229C19 /* TargetingTestingViewController.swift */; };
 /* End PBXBuildFile section */
 
@@ -94,6 +95,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				918202C32E4CAD2F006731D8 /* AudienzziOSSDK in Frameworks */,
+				9187089F2E4DE86400745D19 /* AudienzziOSSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -360,7 +362,7 @@
 			);
 			mainGroup = 58C73F912B9F0C7000AE52EC;
 			packageReferences = (
-				918202C12E4CAD2F006731D8 /* XCLocalSwiftPackageReference "../../AudienzziOSSDK" */,
+				9187089D2E4DE86400745D19 /* XCLocalSwiftPackageReference "../../../audienzz-ios-sdk" */,
 			);
 			productRefGroup = 58C73F9B2B9F0C7000AE52EC /* Products */;
 			projectDirPath = "";
@@ -656,14 +658,18 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		918202C12E4CAD2F006731D8 /* XCLocalSwiftPackageReference "../../AudienzziOSSDK" */ = {
+		9187089D2E4DE86400745D19 /* XCLocalSwiftPackageReference "../../../audienzz-ios-sdk" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../AudienzziOSSDK;
+			relativePath = "../../../audienzz-ios-sdk";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		918202C22E4CAD2F006731D8 /* AudienzziOSSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AudienzziOSSDK;
+		};
+		9187089E2E4DE86400745D19 /* AudienzziOSSDK */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AudienzziOSSDK;
 		};
