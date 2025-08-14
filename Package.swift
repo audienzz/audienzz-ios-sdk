@@ -27,12 +27,10 @@ let package = Package(
                 .product(name: "GoogleMobileAds", package: "swift-package-manager-google-mobile-ads"),
                 .product(name: "GoogleInteractiveMediaAds", package: "swift-package-manager-google-interactive-media-ads-ios")
             ],
-            path: "Sources",
         ),
         .testTarget(
             name: "AudienzziOSSDKTests",
             dependencies: ["AudienzziOSSDK"],
-            path: "Tests"
         )
     ]
 )

@@ -4,13 +4,11 @@ Audienzz iOS SDK
 A wrapper for [Prebid Mobile SDK](https://github.com/prebid/prebid-mobile-ios) with support of
 ads lazy loading.
 
-Download using CocoaPods
+Download using SPM
 ========
 
-```
-pod "AudienzziOSSDK"
+Open your project in XCode. Go to the file "Add package dependencies" and insert link to the github "https://github.com/audienzz/audienzz-ios-sdk.git"
 
-```
 
 Getting started
 =======
