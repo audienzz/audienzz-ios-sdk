@@ -1,0 +1,9 @@
+# Keep Xcode ignores:
+.DS_Store
+*.xcuserstate
+xcuserdata/
+DerivedData/
+
+# SPM
+.swiftpm/
+.build/
