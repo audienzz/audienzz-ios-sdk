@@ -123,7 +123,7 @@ extension SeparateViewController {
             toView: interstitialVideoView,
             name: "interstitialVideoView"
         )
-
+        
         interstitialVideoView.videoParameters = videoParameters
         interstitialVideoView.createAd(
             with: gamRequest,
