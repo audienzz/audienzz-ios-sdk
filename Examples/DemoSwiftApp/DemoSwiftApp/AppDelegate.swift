@@ -34,6 +34,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Initialize GoogleMobileAds SDK
         MobileAds.shared.start()
         AudienzzGAMUtils.shared.initializeGAM()
+        Audienzz.shared.setSchainObject(schain:  """
+        { "source": { "schain": [{ "asi":"audienzz.ch", "sid":"812net", "hp":1 }] } }
+        """)
         return true
     }
 
