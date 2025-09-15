@@ -14,7 +14,11 @@
  */
 
 import ObjectiveC.runtime
+#if COCOAPODS
+import PrebidMobile
+#else
 @_spi(PBMInternal) import PrebidMobile
+#endif
 import UIKit
 import GoogleMobileAds
 
@@ -68,6 +72,21 @@ extension AUBannerView {
         }
     }
 
+#if COCOAPODS
+    func getPrivateBidRequester(from object: AnyObject)
+        -> PBMBidRequesterProtocol?
+    {
+        let objectClass: AnyClass = object_getClass(object)!
+
+        // Get the instance variable for "bidRequester"
+        if let ivar = class_getInstanceVariable(objectClass, "bidRequester") {
+            // Get the value of the instance variable
+            return object_getIvar(object, ivar) as? PBMBidRequesterProtocol
+        }
+
+        return nil
+    }
+#else
     func getPrivateBidRequester(from object: AnyObject)
         -> BidRequesterProtocol?
     {
@@ -81,7 +100,8 @@ extension AUBannerView {
 
         return nil
     }
-
+#endif
+    
     private func isVisible(view: UIView) -> Bool {
         func isVisible(view: UIView, inView: UIView?) -> Bool {
             guard let inView = inView else { return true }

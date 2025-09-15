@@ -19,12 +19,6 @@ import CoreLocation
 
 @objcMembers
 public class AUTargeting: NSObject {
-
-    let audienzzSchainObjectConfig =
-        """
-        { "source": { "schain": [{ "asi":"audienzz.ch", "sid":"812net", "hp":1 }] } }
-        """
-
     public static var shared = AUTargeting()
 
     internal var customTargetingManager = CustomTargetingManager()
@@ -329,9 +323,15 @@ public class AUTargeting: NSObject {
     public func setGlobalOrtbConfig(ortbConfig: String) {
         let customOrtb = ArbitraryGlobalORTBHelper.init(ortb: ortbConfig)
             .getValidatedORTBDict()
-        let schainOrtb = ArbitraryGlobalORTBHelper.init(
-            ortb: audienzzSchainObjectConfig
-        ).getValidatedORTBDict()
+
+        let schainOrtb: [String: Any]?
+
+        if let schainConfig = Audienzz.shared.audienzzSchainObjectConfig {
+            schainOrtb = ArbitraryGlobalORTBHelper.init(ortb: schainConfig)
+                .getValidatedORTBDict()
+        } else {
+            schainOrtb = nil
+        }
 
         guard let customOrtb = customOrtb else {
             AULogEvent.logDebug(
@@ -340,13 +340,11 @@ public class AUTargeting: NSObject {
             return
         }
 
-        let combinedOrtb = schainOrtb?.deepMerging(with: customOrtb)
-
-        guard let combinedOrtb = combinedOrtb else {
-            AULogEvent.logDebug(
-                "Couldn't combine custom ortb configs"
-            )
-            return
+        let combinedOrtb: [String: Any]
+        if let schainOrtb = schainOrtb {
+            combinedOrtb = schainOrtb.deepMerging(with: customOrtb)
+        } else {
+            combinedOrtb = customOrtb
         }
 
         guard
