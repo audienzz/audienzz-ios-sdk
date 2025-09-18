@@ -19,7 +19,6 @@ import UIKit
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication
@@ -34,9 +33,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Initialize GoogleMobileAds SDK
         MobileAds.shared.start()
         AudienzzGAMUtils.shared.initializeGAM()
-        Audienzz.shared.setSchainObject(schain:  """
-        { "source": { "schain": [{ "asi":"audienzz.ch", "sid":"812net", "hp":1 }] } }
-        """)
+        Audienzz.shared.setSchainObject(schain: """
+                        { "source": 
+                            { "schain": {
+                                "ver": "1.0",
+                                "complete": 1,
+                                "nodes": [
+                                    {
+                                        "asi": "netpoint-media.de",
+                                        "sid": "np-7255",
+                                        "hp": 1
+                                    }
+                                  ]
+                                }
+                            } 
+                        }
+                    """)
         return true
     }
 
@@ -63,5 +75,4 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     }
-
 }
