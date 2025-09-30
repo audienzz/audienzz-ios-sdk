@@ -91,7 +91,7 @@ public class AUBannerView: AUAdView {
             adUnit.bannerParameters = parameters.makeBannerParameters()
         } else {
             let parameters = BannerParameters()
-            parameters.api = [Signals.Api.MRAID_2]
+            parameters.api = [Signals.Api.MRAID_2, Signals.Api.MRAID_3, Signals.Api.OMID_1]
             adUnit.bannerParameters = parameters
         }
         addSubview(gamBanner)
