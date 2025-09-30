@@ -24,7 +24,11 @@ import PrebidMobile
 @objcMembers
 public class AUBannerParameters: NSObject {
     /// List of supported API frameworks for this impression. If an API is not explicitly listed, it is assumed not to be supported.
-    public var api: [AUApi]?
+    public var api: [AUApi]? = [
+        AUApi(apiType: .MRAID_2),
+        AUApi(apiType: .MRAID_3),
+        AUApi(apiType: .OMID_1)
+    ]
 
     public var interstitialMinWidthPerc: Int?
     public var interstitialMinHeightPerc: Int?

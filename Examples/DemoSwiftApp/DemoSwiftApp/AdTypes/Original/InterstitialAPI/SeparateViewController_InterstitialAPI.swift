@@ -53,8 +53,6 @@ extension SeparateViewController {
 
         addDebugLabel(toView: interstitialView, name: "interstitialView")
         
-        AUTargeting.shared.addGlobalTargeting(key:"TEST",value: "1")
-        
         interstitialView.setImpOrtbConfig(ortbConfig: """
         {
           "banner": {
