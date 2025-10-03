@@ -27,7 +27,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Override point for customization after application launch.
         Audienzz.shared.configureSDK(
             companyId: "companyID",
-            gadMobileAdsVersion: nil
+            gadMobileAdsVersion: nil,
+            enablePPID: true
         )
 
         // Initialize GoogleMobileAds SDK

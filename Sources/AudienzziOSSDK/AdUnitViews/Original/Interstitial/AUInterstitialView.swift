@@ -100,6 +100,13 @@ public class AUInterstitialView: AUAdView {
         
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
+        
+        let ppid = PPIDManager.shared.getPPID()
+        
+        if let ppid = ppid {
+            gamRequest.publisherProvidedID = ppid
+        }
+        
         self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
         
         if !self.isLazyLoad {
