@@ -135,7 +135,7 @@ Ad view used for displaying banner and video ads.
 |--------------------|-----------------------------|--------------------------------------------------|
 | `videoParameters`  | `AUVideoParameters?`        | Video ad parameters (optional).                  |
 | `bannerParameters` | `AUBannerParameters?`       | Banner ad parameters (optional).                 |
-| `adUnitConfiguration` | `AUAdUnitConfigurationType!`| Ad unit configuration object.                    |
+| `adUnitConfiguration` | `AUAdUnitConfigurationType!`| Ad unit configuration object.                 |
 | `onLoadRequest`    | `((AnyObject) -> Void)?`    | Callback triggered when a GAM request is ready.  |
 
 **Constructors:**
@@ -260,14 +260,14 @@ This object contains methods to initialize the SDK and configure global settings
 | Name                                     | Type                                    | Description                                                                             |
 |------------------------------------------|-----------------------------------------|-----------------------------------------------------------------------------------------|
 | `shared`                                 | `Audienzz`                                   | Shared instance of the Audienzz SDK.                        |
-| `isSdkInitialized`                       | `Bool`                               | `true` if the SDK is initialized.                                                       |
+| `isSdkInitialized`                       | `Bool`                               | `true` if the SDK is initialized.                                   |
 
 **Methods:**
 
 | Name                                | Parameters                                                                                               | Description                                  |
 |-------------------------------------|----------------------------------------------------------------------------------------------------------|----------------------------------------------|
-| `configureSDK`                     | `companyId: String`, `gadMobileAdsVersion: String? = nil` | Initializes the SDK.                         |
-
+| `configureSDK`                     | `companyId: String`, `gadMobileAdsVersion: String? = nil`, `enablePPID: Bool = false` , | Initializes the SDK. When `enablePPID` is `true` - SDK will automatically generate unique identifier, store it in UserDefaults and add it to all Google Ad Manager requests as a Publisher Provided identifier. On additional methods to work with PPID look at [PPIDManager](#ppidmanager) |
+`setSchainObject` | `schain: String` | Method used to set Schain object for all ad requests. For example on usage refer to [AppDelegate](Examples/DemoSwiftApp/DemoSwiftApp/AppDelegate.swift)|
 ### `AUTargeting`
 
 This object is used to set targeting parameters for ad requests.
@@ -276,15 +276,15 @@ This object is used to set targeting parameters for ad requests.
 
 | Name                    | Type                       | Description                                                         |
 |-------------------------|----------------------------|---------------------------------------------------------------------|
-| `shared`                | `AUTargeting`              | Shared instance of the targeting object.                                  |
-| `subjectToGDPR`         | `Bool?`                    | Whether the user is subject to GDPR.                               |
+| `shared`                | `AUTargeting`              | Shared instance of the targeting object.                            |
+| `subjectToGDPR`         | `Bool?`                    | Whether the user is subject to GDPR.                                |
 | `gdprConsentString`     | `String?`                  | The GDPR consent string.                                            |
 | `subjectToCOPPA`        | `Boolean?`                 | Whether the user is subject to COPPA.                               |
-| `contentUrl`            | `String?`                  | Deep-link URL for the app screen displaying the ad.                                  |
+| `contentUrl`            | `String?`                  | Deep-link URL for the app screen displaying the ad.                 |
 | `publisherName`         | `String?`                  | The name of the publisher.                                          |
-| `location`              | `CLLocation?`              | The user's location.                                              |
-| `eids`                  | `[[String: Any]]?`         | External user identity links.                                           |
-| `userExt`               | `[String: AnyHashable]?`   | User exchange-specific extensions.                                           |
+| `location`              | `CLLocation?`              | The user's location.                                                |
+| `eids`                  | `[[String: Any]]?`         | External user identity links.                                       |
+| `userExt`               | `[String: AnyHashable]?`   | User exchange-specific extensions.                                  |
 
 **Methods:**
 
@@ -314,6 +314,17 @@ This object is used to set targeting parameters for ad requests.
 | `addGlobalTargeting`                | `key: String, values: Set<String>`               | Adds single key with multiple values targeting.            |
 | `removeGlobalTargeting`             | `key: String`                                    | Removes targeting for specific key.            |
 | `clearGlobalTargeting`              |                                                  | Clears all global targeting.            |
+
+### `PPIDManager`
+
+**Methods:**
+
+| Name                                | Parameters                                       | Description                                    |
+|-------------------------------------|--------------------------------------------------|------------------------------------------------|
+| `getAutomaticPpidEnabled`                    | | Used to get current status of automatic PPID usage (if true - PPID is generated and used with all requests, if false - PPID is not used)                           |
+| `setAutomaticPpidEnabled`                   | `_ enabled: Bool`                        | Used to enable or disable automatic PPID usage                  |
+| `getPPID`                 | | Used to obtain current PPID if automaticPpid is enabled |
+
 
 ### Targeting & Advanced Configuration
 
