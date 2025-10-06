@@ -7,8 +7,9 @@
 
 import Foundation
 
-class PPIDManager: AULogEventType {
-    static let shared = PPIDManager()
+@objcMembers
+public class PPIDManager:  NSObject, AULogEventType {
+    public static let shared = PPIDManager()
     
     // MARK: - Constants
 
@@ -21,22 +22,20 @@ class PPIDManager: AULogEventType {
     private var automaticPpidEnabled: Bool = false
     private let userDefaults = UserDefaults.standard
     
-    private init() {}
-    
     // MARK: - Public Methods
     
     /// Check if automatic PPID is enabled
-    func getAutomaticPpidEnabled() -> Bool {
+    public func getAutomaticPpidEnabled() -> Bool {
         return automaticPpidEnabled
     }
     
     /// Used to enable or disable automatic PPID usage
-    func setAutomaticPpidEnabled(_ enabled: Bool) {
+    public func setAutomaticPpidEnabled(_ enabled: Bool) {
         automaticPpidEnabled = enabled
     }
     
     /// Used to obtain PPID if automaticPpid is enabled
-    func getPPID() -> String? {
+    public func getPPID() -> String? {
         if !automaticPpidEnabled {
             LogEvent("Automatic PPID is disabled")
             return nil
@@ -44,7 +43,7 @@ class PPIDManager: AULogEventType {
             LogEvent("Consent missing, cannot get PPID")
             return nil
         } else {
-            var ppid = getPpid()
+            let ppid = getPpid()
             let ppidTimestamp = getPpidTimestamp()
             
             if let ppid = ppid, ppidTimestamp != 0 {
