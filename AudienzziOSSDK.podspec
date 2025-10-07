@@ -6,7 +6,7 @@ Pod::Spec.new do |spec|
     spec.authors  = { 'Audienzz <tech@audienzz.ch>' => 'https://audienzz.ch' }
     spec.summary  = 'iOS implementation of the Audienzz SDK'
     spec.source   = { :git => 'https://github.com/audienzz/audienzz-ios-sdk.git',
-                      :tag => '0.1.1' }
+                      :tag => '0.1.2' }
 
     spec.swift_version         = '5.0'
     spec.ios.deployment_target = '13.0'
