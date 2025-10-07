@@ -162,6 +162,7 @@ class TargetingTestingViewController: UIViewController {
             adFormats: [.banner],
             isLazyLoad: false
         )
+        bannerView.bannerParameters = AUBannerParameters()
         bannerView.frame = CGRect(
             origin: CGPoint(x: 0, y: 0),
             size: CGSize(width: self.view.frame.width, height: 250)

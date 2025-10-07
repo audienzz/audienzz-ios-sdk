@@ -65,6 +65,12 @@ public class AUMultiplatformView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func create(with gamRequest: AdManagerRequest, adUnitID: String) {
+        let ppid = PPIDManager.shared.getPPID()
+        
+        if let ppid = ppid {
+            gamRequest.publisherProvidedID = ppid
+        }
+        
         self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
         self.gadUnitID = adUnitID
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)

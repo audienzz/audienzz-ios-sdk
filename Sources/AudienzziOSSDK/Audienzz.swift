@@ -22,10 +22,10 @@ private let customStatusEndpoint = "https://ib.adnxs.com/status"
 
 @objcMembers
 public class Audienzz: NSObject {
-    
-    internal var audienzzSchainObjectConfig: String?
+    var audienzzSchainObjectConfig: String?
 
     // MARK: - Properties (SDK)
+
     public var timeoutUpdated: Bool {
         get { Prebid.shared.timeoutUpdated }
         set { Prebid.shared.timeoutUpdated = newValue }
@@ -50,15 +50,16 @@ public class Audienzz: NSObject {
 
     public static let shared = Audienzz()
 
-    public func configureSDK(companyId: String) {
+    public func configureSDK(companyId: String, enablePPID: Bool = false) {
         setupPrebid(companyId)
 
         do {
             try Prebid.initializeSDK(serverURL: customPrebidServerURL) {
                 status,
-                error in
-
+                    error in
                 self.handleInitializationResultStatus(status: status)
+
+                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
 
                 if let error = error {
                     AULogEvent.logDebug("Initialization Error: \(error)")
@@ -73,7 +74,8 @@ public class Audienzz: NSObject {
 
     public func configureSDK(
         companyId: String,
-        gadMobileAdsVersion: String? = nil
+        gadMobileAdsVersion: String? = nil,
+        enablePPID: Bool = false
     ) {
         setupPrebid(companyId)
 
@@ -90,6 +92,7 @@ public class Audienzz: NSObject {
                 }
 
                 self.handleInitializationResultStatus(status: status)
+                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
             }
         } catch {
             AULogEvent.logDebug(
@@ -99,9 +102,11 @@ public class Audienzz: NSObject {
     }
 
     // MARK: - Public Init For RN Bridg (Audienzz)
+
     /// Special method used for RN bridging initialization
     public func configureSDK_RN(
         companyId: String,
+        enablePPID: Bool = false,
         _ completion: (() -> Void)? = nil
     ) {
         Task {
@@ -110,14 +115,14 @@ public class Audienzz: NSObject {
             do {
                 try Prebid.initializeSDK(serverURL: customPrebidServerURL) {
                     status,
-                    error in
-
+                        error in
                     self.handleInitializationResultStatus(status: status)
 
                     if let error = error {
                         AULogEvent.logDebug("Initialization Error: \(error)")
                     }
 
+                    PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
                     completion?()
                 }
             } catch {
@@ -134,6 +139,7 @@ public class Audienzz: NSObject {
     public func configureSDK_RN(
         companyId: String,
         gadMobileAdsVersion: String?,
+        enablePPID: Bool = false,
         _ completion: (() -> Void)? = nil
     ) {
         Task {
@@ -152,7 +158,7 @@ public class Audienzz: NSObject {
                     }
 
                     self.handleInitializationResultStatus(status: status)
-
+                    PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
                     completion?()
                 }
             } catch {
@@ -166,6 +172,7 @@ public class Audienzz: NSObject {
     }
 
     // MARK: - Public Properties (Audienzz)
+
     public var timeoutMillis: Int {
         get { Prebid.shared.timeoutMillis }
         set {
@@ -208,10 +215,10 @@ public class Audienzz: NSObject {
     public func clearCustomHeaders() {
         customHeaders.removeAll()
     }
-    
+
     /// Set publisher schain object to use with ad requests
-    public func setSchainObject(schain: String){
-        self.audienzzSchainObjectConfig = schain
+    public func setSchainObject(schain: String) {
+        audienzzSchainObjectConfig = schain
         AUTargeting.shared.setGlobalOrtbConfig(ortbConfig: schain)
     }
 
@@ -219,10 +226,6 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = customStatusEndpoint
-    }
-    
-    private func initializePrebid() {
-        
     }
 
     private func handleInitializationResultStatus(
