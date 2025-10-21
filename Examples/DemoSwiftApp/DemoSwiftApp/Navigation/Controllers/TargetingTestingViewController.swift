@@ -11,6 +11,8 @@ class TargetingTestingViewController: UIViewController {
     private let gamAdUnitId =
     "/96628199/testapp_publisher/medium_rectangle_banner"
 
+    private let testAppStoreUrl = "https://apps.apple.com/app/id0000000000"
+
     // MARK: - IBOutlets
     @IBOutlet weak var scrollView: UIScrollView!
     @IBOutlet weak var contentView: UIView!
@@ -208,12 +210,7 @@ private extension TargetingTestingViewController {
 
 private extension TargetingTestingViewController {
     func appleStoreUrlForTargeting() {
-        guard let appStoreUrl = Bundle.main.object(forInfoDictionaryKey: "APP_STORE_URL") as? String else {
-            print("APP_STORE_URL isn't specified in plist file")
-            return
-        }
-
-        AUTargeting.shared.storeURL = appStoreUrl
+        AUTargeting.shared.storeURL = testAppStoreUrl
     }
 }
 
