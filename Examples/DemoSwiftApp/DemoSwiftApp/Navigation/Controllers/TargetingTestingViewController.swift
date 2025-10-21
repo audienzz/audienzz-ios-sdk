@@ -4,102 +4,61 @@ import GoogleMobileAds
 import UIKit
 
 class TargetingTestingViewController: UIViewController {
-    
+
     internal var bannerView: AUBannerView!
-    
+
     private let prebidAdConfigId = "15624474"
     private let gamAdUnitId =
-        "/96628199/testapp_publisher/medium_rectangle_banner"
-    
+    "/96628199/testapp_publisher/medium_rectangle_banner"
+
     // MARK: - IBOutlets
     @IBOutlet weak var scrollView: UIScrollView!
     @IBOutlet weak var contentView: UIView!
     @IBOutlet weak var stackView: UIStackView!
-    
+
     // Input fields
     @IBOutlet weak var keyTextField: UITextField!
     @IBOutlet weak var valueTextField: UITextField!
     @IBOutlet weak var removeKeyTextField: UITextField!
-    
+
     // Buttons
     @IBOutlet weak var submitButton: UIButton!
     @IBOutlet weak var removeButton: UIButton!
     @IBOutlet weak var clearAllButton: UIButton!
     @IBOutlet weak var requestAdButton: UIButton!
-    
+
     // Ad display
     @IBOutlet weak var adContainerView: UIView!
-    
+
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupKeyboardHandling()
+        appleStoreUrlForTargeting()
     }
-    
-    // MARK: - UI Setup
-       private func setupUI() {
-           title = "Targeting Testing page"
-           
-           // Configure text fields
-           setupTextFields()
-           
-           // Configure buttons
-           setupButtons()
-       }
-       
-       private func setupTextFields() {
-           [keyTextField, valueTextField, removeKeyTextField].forEach { textField in
-               textField?.borderStyle = .roundedRect
-               textField?.delegate = self
-           }
-           
-           keyTextField.placeholder = "Enter key"
-           valueTextField.placeholder = "Enter value"
-           removeKeyTextField.placeholder = "Enter key to remove"
-       }
-       
-       private func setupButtons() {
-           // Submit button
-           submitButton.backgroundColor = .systemBlue
-           submitButton.setTitleColor(.white, for: .normal)
-           submitButton.layer.cornerRadius = 8
-           
-           // Remove button
-           removeButton.backgroundColor = .systemBlue
-           removeButton.setTitleColor(.white, for: .normal)
-           removeButton.layer.cornerRadius = 8
-           
-           // Clear all button
-           clearAllButton.backgroundColor = .systemRed
-           clearAllButton.setTitleColor(.white, for: .normal)
-           clearAllButton.layer.cornerRadius = 8
-           
-           // Request ad button
-           requestAdButton.backgroundColor = .systemGreen
-           requestAdButton.setTitleColor(.white, for: .normal)
-           requestAdButton.layer.cornerRadius = 8
-       }
-    
-    
+
     // MARK: - IBActions
     @IBAction func submitButtonTapped(_ sender: UIButton) {
         view.endEditing(true)
-        
+
         guard let key = keyTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !key.isEmpty else {
+              !key.isEmpty
+        else {
             showAlert(message: "Please enter a key")
             return
         }
-        
+
         guard let value = valueTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !value.isEmpty else {
+              !value.isEmpty
+        else {
             showAlert(message: "Please enter a value")
             return
         }
-        
+
         if value.contains(",") {
-            let valueArray = value
+            let valueArray =
+            value
                 .split(separator: ",")
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .filter { !$0.isEmpty }
@@ -107,47 +66,96 @@ class TargetingTestingViewController: UIViewController {
         } else {
             AUTargeting.shared.addGlobalTargeting(key: key, value: value)
         }
-        
+
         AUTargeting.shared.addGlobalTargeting(key: key, value: value)
-        
+
         keyTextField.text = ""
         valueTextField.text = ""
-        
+
         showToast(message: "Added: \(key) = \(value)")
     }
-    
+
     @IBAction func removeButtonTapped(_ sender: UIButton) {
         view.endEditing(true)
-        
+
         guard let keyToRemove = removeKeyTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !keyToRemove.isEmpty else {
+              !keyToRemove.isEmpty
+        else {
             showAlert(message: "Please enter a key to remove values for")
             return
         }
-        
-            AUTargeting.shared.removeGlobalTargeting(key: keyToRemove)
-            removeKeyTextField.text = ""
-            showToast(message: "Removed key: \(keyToRemove)")
-        
+
+        AUTargeting.shared.removeGlobalTargeting(key: keyToRemove)
+        removeKeyTextField.text = ""
+        showToast(message: "Removed key: \(keyToRemove)")
     }
-    
+
     @IBAction func clearAllButtonTapped(_ sender: UIButton) {
         view.endEditing(true)
         AUTargeting.shared.clearGlobalTargeting()
         showToast(message: "All key-value pairs cleared")
     }
-    
+
     @IBAction func requestAdButtonTapped(_ sender: UIButton) {
         view.endEditing(true)
         requestAd()
     }
-    
-    // MARK: - Ad Management
-    private func requestAd() {
+}
+
+// MARK: - UI Setup
+
+private extension TargetingTestingViewController {
+    func setupUI() {
+        title = "Targeting Testing page"
+
+        // Configure text fields
+        setupTextFields()
+
+        // Configure buttons
+        setupButtons()
+    }
+
+    func setupTextFields() {
+        [keyTextField, valueTextField, removeKeyTextField].forEach { textField in
+            textField?.borderStyle = .roundedRect
+            textField?.delegate = self
+        }
+
+        keyTextField.placeholder = "Enter key"
+        valueTextField.placeholder = "Enter value"
+        removeKeyTextField.placeholder = "Enter key to remove"
+    }
+
+    func setupButtons() {
+        // Submit button
+        submitButton.backgroundColor = .systemBlue
+        submitButton.setTitleColor(.white, for: .normal)
+        submitButton.layer.cornerRadius = 8
+
+        // Remove button
+        removeButton.backgroundColor = .systemBlue
+        removeButton.setTitleColor(.white, for: .normal)
+        removeButton.layer.cornerRadius = 8
+
+        // Clear all button
+        clearAllButton.backgroundColor = .systemRed
+        clearAllButton.setTitleColor(.white, for: .normal)
+        clearAllButton.layer.cornerRadius = 8
+
+        // Request ad button
+        requestAdButton.backgroundColor = .systemGreen
+        requestAdButton.setTitleColor(.white, for: .normal)
+        requestAdButton.layer.cornerRadius = 8
+    }
+}
+
+// MARK: - Ad Management
+
+private extension TargetingTestingViewController {
+    func requestAd() {
         // Clear previous ad
         adContainerView.subviews.forEach { $0.removeFromSuperview() }
-        
-        
+
         let gamBanner = AdManagerBannerView(
             adSize: adSizeFor(cgSize: CGSize(width: 300, height: 250))
         )
@@ -155,7 +163,7 @@ class TargetingTestingViewController: UIViewController {
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
-        
+
         bannerView = AUBannerView(
             configId: prebidAdConfigId,
             adSize: CGSize(width: 300, height: 250),
@@ -191,18 +199,34 @@ class TargetingTestingViewController: UIViewController {
 
         NSLayoutConstraint.activate([
             bannerView.centerXAnchor.constraint(equalTo: adContainerView.centerXAnchor),
-            bannerView.centerYAnchor.constraint(equalTo: adContainerView.centerYAnchor)
+            bannerView.centerYAnchor.constraint(equalTo: adContainerView.centerYAnchor),
         ])
     }
-    
-    // MARK: - Helper Methods
-    private func showAlert(message: String) {
+}
+
+// MARK: - Targeting examples
+
+private extension TargetingTestingViewController {
+    func appleStoreUrlForTargeting() {
+        guard let appStoreUrl = Bundle.main.object(forInfoDictionaryKey: "APP_STORE_URL") as? String else {
+            print("APP_STORE_URL isn't specified in plist file")
+            return
+        }
+
+        AUTargeting.shared.storeURL = appStoreUrl
+    }
+}
+
+// MARK: - Helper Methods
+
+private extension TargetingTestingViewController {
+    func showAlert(message: String) {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
-    
-    private func showToast(message: String) {
+
+    func showToast(message: String) {
         // Simple toast implementation
         let toastLabel = UILabel()
         toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
@@ -213,24 +237,32 @@ class TargetingTestingViewController: UIViewController {
         toastLabel.layer.cornerRadius = 8
         toastLabel.clipsToBounds = true
         toastLabel.numberOfLines = 0
-        
+
         toastLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(toastLabel)
-        
+
         NSLayoutConstraint.activate([
             toastLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             toastLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -50),
             toastLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
             toastLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
-            toastLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 40)
+            toastLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 40),
         ])
-        
-        UIView.animate(withDuration: 0.3, animations: {
-            toastLabel.alpha = 1.0
-        }) { _ in
-            UIView.animate(withDuration: 0.3, delay: 2.0, options: [], animations: {
-                toastLabel.alpha = 0.0
-            }) { _ in
+
+        UIView.animate(
+            withDuration: 0.3,
+            animations: {
+                toastLabel.alpha = 1.0
+            }
+        ) { _ in
+            UIView.animate(
+                withDuration: 0.3,
+                delay: 2.0,
+                options: [],
+                animations: {
+                    toastLabel.alpha = 0.0
+                }
+            ) { _ in
                 toastLabel.removeFromSuperview()
             }
         }
@@ -246,32 +278,33 @@ extension TargetingTestingViewController {
             name: UIResponder.keyboardWillShowNotification,
             object: nil
         )
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(keyboardWillHide),
             name: UIResponder.keyboardWillHideNotification,
             object: nil
         )
-        
+
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
     }
-    
+
     @objc private func keyboardWillShow(notification: NSNotification) {
         if let userInfo = notification.userInfo,
-           let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+            let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
+        {
             let keyboardHeight = keyboardFrame.height
             scrollView.contentInset.bottom = keyboardHeight
             scrollView.verticalScrollIndicatorInsets.bottom = keyboardHeight
         }
     }
-    
+
     @objc private func keyboardWillHide(notification: NSNotification) {
         scrollView.contentInset.bottom = 0
         scrollView.verticalScrollIndicatorInsets.bottom = 0
     }
-    
+
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }
@@ -293,7 +326,7 @@ extension TargetingTestingViewController: UITextFieldDelegate {
     }
 }
 
-extension TargetingTestingViewController : BannerViewDelegate {
+extension TargetingTestingViewController: BannerViewDelegate {
     func bannerViewDidReceiveAd(_ bannerView: BannerView) {
         guard let bannerView = bannerView as? AdManagerBannerView else {
             return
@@ -314,7 +347,7 @@ extension TargetingTestingViewController : BannerViewDelegate {
         didFailToReceiveAdWithError error: Error
     ) {
         print("GAM did fail to receive ad with error: \(error)")
-        
+
         showAlert(message: "Error loading ad: \(error.localizedDescription)")
     }
 }
