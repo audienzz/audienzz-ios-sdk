@@ -37,7 +37,7 @@ class TargetingTestingViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupKeyboardHandling()
-        appleStoreUrlForTargeting()
+        applyStoreUrlForTargeting()
     }
 
     // MARK: - IBActions
@@ -209,7 +209,7 @@ private extension TargetingTestingViewController {
 // MARK: - Targeting examples
 
 private extension TargetingTestingViewController {
-    func appleStoreUrlForTargeting() {
+    func applyStoreUrlForTargeting() {
         AUTargeting.shared.storeURL = testAppStoreUrl
     }
 }
