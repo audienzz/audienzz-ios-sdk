@@ -17,23 +17,23 @@ import AudienzziOSSDK
 import GoogleMobileAds
 import UIKit
 
-private let storedImpVideoRewarded = "prebid-demo-video-rewarded-320-480"
-private let gamAdUnitVideoRewardedRendering =
-    "/21808260008/prebid_oxb_rewarded_video_test"
-
 private var rewardedRenderingView: AURewardedRenderingView!
 private var rewardedRenderingLazyView: AURewardedRenderingView!
 
 private var activityIndicator: UIActivityIndicatorView!
 
 extension SeparateViewController {
+    private enum Constants {
+        static let storedImpVideoRewarded = "prebid-demo-video-rewarded-320-480"
+        static let gamAdUnitVideoRewardedRendering = "/21808260008/prebid_oxb_rewarded_video_test"
+    }
 
     func createRenderingRewardLazyView() {
         let eventHandler = AUGAMRewardedAdEventHandler(
-            adUnitID: gamAdUnitVideoRewardedRendering
+            adUnitID: Constants.gamAdUnitVideoRewardedRendering
         )
         rewardedRenderingLazyView = AURewardedRenderingView(
-            configId: storedImpVideoRewarded,
+            configId: Constants.storedImpVideoRewarded,
             minSizePercentage: nil,
             eventHandler: eventHandler
         )

@@ -55,6 +55,16 @@ Multi-Size Banner Options in Google Mobile Ads SDK for iOS
  */
 
 class AdAdaptiveViewController: UIViewController {
+    private enum Constants {
+        static let testAdUnitId: String = "/96628199/testapp_publisher/banner_test_ad_unit"
+
+        static let storedImpDisplayBanner = ""
+        /// https://github.com/prebid/prebid-mobile-ios/issues/836 - the issue describes the prebid can't support Adaptive banners.
+
+        ///https://developers.google.com/admob/ios/banner/inline-adaptive#limit_inline_adaptive_banner_height  Limit inline adaptive banner height By default, inline adaptive banners instantiated without a maxHeight value have a maxHeight equal to the device height. To limit the inline adaptive banner height, use the GADInlineAdaptiveBannerAdSizeWithWidthAndMaxHeight(CGFloat width, CGFloat maxHeight) method.
+        static let maxHeightAdaptive: CGFloat = 250
+    }
+
     @IBOutlet private var containerView: UIView!
     @IBOutlet private var textField: UITextField!
     @IBOutlet private var applyButton: UIButton!
@@ -63,15 +73,6 @@ class AdAdaptiveViewController: UIViewController {
 
     private var adWidth: CGFloat = 320
     private var selectedSegment: AdTypes = .adaptive
-
-    /// id was used from https://developers.google.com/admob/ios/test-ads
-    private let testAdUnitId: String = "ca-app-pub-3940256099942544/2435281174"
-
-    private let storedImpDisplayBanner = ""
-    /// https://github.com/prebid/prebid-mobile-ios/issues/836 - the issue describes the prebid can't support Adaptive banners.
-
-    ///https://developers.google.com/admob/ios/banner/inline-adaptive#limit_inline_adaptive_banner_height  Limit inline adaptive banner height By default, inline adaptive banners instantiated without a maxHeight value have a maxHeight equal to the device height. To limit the inline adaptive banner height, use the GADInlineAdaptiveBannerAdSizeWithWidthAndMaxHeight(CGFloat width, CGFloat maxHeight) method.
-    private let maxHeightAdaptive: CGFloat = 250
 
     override func viewDidLoad() {
         textField.text = "\(Int(adWidth))"
@@ -125,59 +126,24 @@ class AdAdaptiveViewController: UIViewController {
         /// https://developers.google.com/admob/ios/banner/inline-adaptive#limit_inline_adaptive_banner_height
         let adSize =
             maxHeightEnable.isOn
-            ? inlineAdaptiveBanner(width: adWidth, maxHeight: 250)
+            ? inlineAdaptiveBanner(width: adWidth, maxHeight: Constants.maxHeightAdaptive)
             : currentOrientationInlineAdaptiveBanner(width: adWidth)
 
         // Step 2: Create banner with the inline size and set ad unit ID.
-        let gamBannerView = AdManagerBannerView(adSize: adSize)
-        gamBannerView.adUnitID = testAdUnitId
-        gamBannerView.rootViewController = self
-        gamBannerView.delegate = self
+        let gamBannerView = createManagerBannerView(for: adSize)
         /// Set the adSizeDelegate to respond to dynamically received sizes from Google Ad Manager. You can filter or reject ad sizes that do not fit within your desired range
         //        gamBannerView.adSizeDelegate = self
 
-        let bannerMultisizeView = AUBannerView(
-            configId: storedImpDisplayBanner,
-            adSize: adSize.size,
-            adFormats: [.banner],
-            isLazyLoad: false
-        )
-        bannerMultisizeView.frame = CGRect.zero
-        containerView.addSubview(bannerMultisizeView)
-
-        let request = AdManagerRequest()
-        bannerMultisizeView.createAd(with: request, gamBanner: gamBannerView)
-
-        bannerMultisizeView.onLoadRequest = { gamRequest in
-            guard let request = gamRequest as? Request else { return }
-            gamBannerView.load(request)
-        }
-
-        bannerMultisizeView.translatesAutoresizingMaskIntoConstraints = false
+        let bannerMultisizeView = createBannerView(for: adSize.size)
+        performAdRequest(for: bannerMultisizeView, gamBannerView: gamBannerView)
 
         // Set constraints to pin the child view to all sides of the parent view
-        NSLayoutConstraint.activate([
-            bannerMultisizeView.topAnchor.constraint(
-                equalTo: containerView.topAnchor
-            ),
-            bannerMultisizeView.bottomAnchor.constraint(
-                equalTo: containerView.bottomAnchor
-            ),
-            bannerMultisizeView.leadingAnchor.constraint(
-                equalTo: containerView.leadingAnchor
-            ),
-            bannerMultisizeView.trailingAnchor.constraint(
-                equalTo: containerView.trailingAnchor
-            ),
-        ])
+        configureConstraints(for: bannerMultisizeView)
     }
 
     private func addValideSizesBanner() {
         // Create a banner view
-        let gamBannerView = AdManagerBannerView(adSize: AdSizeBanner)
-        gamBannerView.adUnitID = testAdUnitId
-        gamBannerView.rootViewController = self
-        gamBannerView.delegate = self
+        let gamBannerView = createManagerBannerView(for: AdSizeBanner)
 
         // Define multiple valid ad sizes
         gamBannerView.validAdSizes = [
@@ -186,82 +152,72 @@ class AdAdaptiveViewController: UIViewController {
             nsValue(for: AdSizeMediumRectangle),  // 300x250
         ]
 
-        let bannerMultisizeView = AUBannerView(
-            configId: storedImpDisplayBanner,
-            adSize: AdSizeBanner.size,
-            adFormats: [.banner],
-            isLazyLoad: false
-        )
-        bannerMultisizeView.frame = CGRect.zero
-        containerView.addSubview(bannerMultisizeView)
-
-        let request = AdManagerRequest()
-        bannerMultisizeView.createAd(with: request, gamBanner: gamBannerView)
-
-        bannerMultisizeView.onLoadRequest = { gamRequest in
-            guard let request = gamRequest as? Request else { return }
-            gamBannerView.load(request)
-        }
-
-        bannerMultisizeView.translatesAutoresizingMaskIntoConstraints = false
+        let bannerMultisizeView = createBannerView(for: AdSizeBanner.size)
+        performAdRequest(for: bannerMultisizeView, gamBannerView: gamBannerView)
 
         // Set constraints to pin the child view to all sides of the parent view
-        NSLayoutConstraint.activate([
-            bannerMultisizeView.topAnchor.constraint(
-                equalTo: containerView.topAnchor
-            ),
-            bannerMultisizeView.bottomAnchor.constraint(
-                equalTo: containerView.bottomAnchor
-            ),
-            bannerMultisizeView.leadingAnchor.constraint(
-                equalTo: containerView.leadingAnchor
-            ),
-            bannerMultisizeView.trailingAnchor.constraint(
-                equalTo: containerView.trailingAnchor
-            ),
-        ])
+        configureConstraints(for: bannerMultisizeView)
     }
 
     /// An ad size that spans the full width of its container, with a height dynamically determined by
     /// the ad.
     private func addFluidBanner() {
         // Create a fluid ad size banner
-        let gamBannerView = AdManagerBannerView(adSize: AdSizeFluid)
-        gamBannerView.adUnitID = testAdUnitId
+        let gamBannerView = createManagerBannerView(for: AdSizeFluid)
+        let bannerMultisizeView = createBannerView(for: AdSizeFluid.size)
+        performAdRequest(for: bannerMultisizeView, gamBannerView: gamBannerView)
+
+        // Set constraints to pin the child view to all sides of the parent view
+        configureConstraints(for: bannerMultisizeView)
+    }
+}
+
+// MARK: - Private
+
+private extension AdAdaptiveViewController {
+    func createManagerBannerView(for size: AdSize) -> AdManagerBannerView {
+        let gamBannerView = AdManagerBannerView(adSize: size)
+        gamBannerView.adUnitID = Constants.testAdUnitId
         gamBannerView.rootViewController = self
         gamBannerView.delegate = self
+        return gamBannerView
+    }
 
+    func createBannerView(for size: CGSize) -> AUBannerView {
         let bannerMultisizeView = AUBannerView(
-            configId: storedImpDisplayBanner,
-            adSize: AdSizeFluid.size,
+            configId: Constants.storedImpDisplayBanner,
+            adSize: size,
             adFormats: [.banner],
             isLazyLoad: false
         )
         bannerMultisizeView.frame = CGRect.zero
         containerView.addSubview(bannerMultisizeView)
+        return bannerMultisizeView
+    }
 
+    func performAdRequest(for bannerView: AUBannerView, gamBannerView: AdManagerBannerView) {
         let request = AdManagerRequest()
-        bannerMultisizeView.createAd(with: request, gamBanner: gamBannerView)
-
-        bannerMultisizeView.onLoadRequest = { gamRequest in
+        bannerView.createAd(with: request, gamBanner: gamBannerView)
+        bannerView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? Request else { return }
             gamBannerView.load(request)
         }
+    }
 
-        bannerMultisizeView.translatesAutoresizingMaskIntoConstraints = false
+    func configureConstraints(for bannerView: UIView) {
+        bannerView.translatesAutoresizingMaskIntoConstraints = false
 
-        // Set constraints to pin the child view to all sides of the parent view
         NSLayoutConstraint.activate([
-            bannerMultisizeView.topAnchor.constraint(
+            bannerView.topAnchor.constraint(
                 equalTo: containerView.topAnchor
             ),
-            bannerMultisizeView.bottomAnchor.constraint(
+            bannerView.bottomAnchor.constraint(
                 equalTo: containerView.bottomAnchor
             ),
-            bannerMultisizeView.leadingAnchor.constraint(
+            bannerView.leadingAnchor.constraint(
                 equalTo: containerView.leadingAnchor
             ),
-            bannerMultisizeView.trailingAnchor.constraint(
+            bannerView.trailingAnchor.constraint(
                 equalTo: containerView.trailingAnchor
             ),
         ])
@@ -269,6 +225,7 @@ class AdAdaptiveViewController: UIViewController {
 }
 
 // MARK: - GADBannerViewDelegate
+
 extension AdAdaptiveViewController: BannerViewDelegate {
     func bannerViewDidReceiveAd(_ bannerView: BannerView) {
         guard let bannerView = bannerView as? AdManagerBannerView else {

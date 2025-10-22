@@ -16,14 +16,6 @@ import GoogleMobileAds
  */
 import UIKit
 
-private let storedImpDisplayBanner = "prebid-demo-banner-320-50"
-private let gamAdUnitDisplayBannerRendering =
-    "/21808260008/prebid_oxb_320x50_banner"
-
-private let storedImpVideoBanner = "prebid-demo-video-outstream"
-private let gamAdUnitVideoBannerRendering =
-    "/21808260008/prebid_oxb_300x250_banner"
-
 private var bannerRenderingView: AUBannerRenderingView!
 private var bannerRenderingVideoView: AUBannerRenderingView!
 
@@ -31,13 +23,21 @@ private var bannerRenderingLazyView: AUBannerRenderingView!
 private var bannerRenderingVideoLazyView: AUBannerRenderingView!
 
 extension SeparateViewController {
+    private enum Constants {
+        static let storedImpDisplayBanner = "prebid-demo-banner-320-50"
+        static let gamAdUnitDisplayBannerRendering = "/21808260008/prebid_oxb_320x50_banner"
+
+        static let storedImpVideoBanner = "prebid-demo-video-outstream"
+        static let gamAdUnitVideoBannerRendering = "/21808260008/prebid_oxb_300x250_banner"
+    }
+
     func createRenderingBannerView() {
         let eventHandler = AUGAMBannerEventHandler(
-            adUnitID: gamAdUnitDisplayBannerRendering,
+            adUnitID: Constants.gamAdUnitDisplayBannerRendering,
             validGADAdSizes: [AdSizeBanner].map(nsValue)
         )
         bannerRenderingView = AUBannerRenderingView(
-            configId: storedImpDisplayBanner,
+            configId: Constants.storedImpDisplayBanner,
             adSize: adSize,
             isLazyLoad: false,
             eventHandler: eventHandler
@@ -66,11 +66,11 @@ extension SeparateViewController {
 
     func createRenderingBannerVideoView() {
         let eventHandler = AUGAMBannerEventHandler(
-            adUnitID: gamAdUnitVideoBannerRendering,
+            adUnitID: Constants.gamAdUnitVideoBannerRendering,
             validGADAdSizes: [AdSizeMediumRectangle].map(nsValue)
         )
         bannerRenderingVideoView = AUBannerRenderingView(
-            configId: storedImpVideoBanner,
+            configId: Constants.storedImpVideoBanner,
             adSize: CGSize(width: 300, height: 250),
             format: .video,
             isLazyLoad: false,
@@ -107,11 +107,11 @@ extension SeparateViewController {
 extension SeparateViewController {
     func createRenderingBannerLazyView() {
         let eventHandler = AUGAMBannerEventHandler(
-            adUnitID: gamAdUnitDisplayBannerRendering,
+            adUnitID: Constants.gamAdUnitDisplayBannerRendering,
             validGADAdSizes: [AdSizeBanner].map(nsValue)
         )
         bannerRenderingLazyView = AUBannerRenderingView(
-            configId: storedImpDisplayBanner,
+            configId: Constants.storedImpDisplayBanner,
             adSize: adSize,
             eventHandler: eventHandler
         )
@@ -140,11 +140,11 @@ extension SeparateViewController {
 
     func createRenderingBannerVideoLazyView() {
         let eventHandler = AUGAMBannerEventHandler(
-            adUnitID: gamAdUnitVideoBannerRendering,
+            adUnitID: Constants.gamAdUnitVideoBannerRendering,
             validGADAdSizes: [AdSizeMediumRectangle].map(nsValue)
         )
         bannerRenderingVideoLazyView = AUBannerRenderingView(
-            configId: storedImpVideoBanner,
+            configId: Constants.storedImpVideoBanner,
             adSize: CGSize(width: 300, height: 250),
             format: .video,
             eventHandler: eventHandler
