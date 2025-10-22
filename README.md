@@ -349,6 +349,9 @@ AUTargeting.shared.addAppKeywords(["ios", "swift"])
 AUTargeting.shared.addAppExtData(key: "edition", value: "ch")
 AUTargeting.shared.updateAppExtData(key: "sections", value: ["home", "sports"])
 
+// Configure storeUrl. You should obtain the url from AppStore 
+AUTargeting.shared.storeURL = "https://apps.apple.com/app/id0000000000"
+
 // Location (optional)
 AUTargeting.shared.location = CLLocation(latitude: 47.3769, longitude: 8.5417)
 
