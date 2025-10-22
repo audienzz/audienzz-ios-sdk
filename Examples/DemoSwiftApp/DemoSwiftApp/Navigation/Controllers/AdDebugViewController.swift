@@ -39,14 +39,10 @@ class AdDebugViewController: UIViewController {
         exampleScrollView.backgroundColor = .black
 
         setupAdContainer()
-        setupALazydContainer()
     }
 
     private func setupAdContainer() {
         createBannerView_320x250()
-    }
-
-    private func setupALazydContainer() {
     }
 
     @IBAction private func refreshAdContainerDidTap() {
@@ -82,8 +78,6 @@ class AdDebugViewController: UIViewController {
         for subview in subviews {
             subview.removeFromSuperview()
         }
-
-        setupALazydContainer()
     }
 
     deinit {

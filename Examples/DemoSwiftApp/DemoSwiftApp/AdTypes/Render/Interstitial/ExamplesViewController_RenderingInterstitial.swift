@@ -17,28 +17,25 @@ import AudienzziOSSDK
 import GoogleMobileAds
 import UIKit
 
-private let storedImpDisplayInterstitial =
-    "prebid-demo-display-interstitial-320-480"
-private let gamAdUnitDisplayInterstitialRendering =
-    "/21808260008/prebid_oxb_html_interstitial"
-
-private let storedImpVideoInterstitial =
-    "prebid-demo-video-interstitial-320-480"
-private let gamAdUnitVideoInterstitialRendering =
-    "/21808260008/prebid_oxb_interstitial_video"
-
 private var interstitialRenderingBannerView: AUInterstitialRenderingView!
 private var interstitialRenderingVideoView: AUInterstitialRenderingView!
 
 extension ExamplesViewController {
+    private enum Constants {
+        static let storedImpDisplayInterstitial = "prebid-demo-display-interstitial-320-480"
+        static let gamAdUnitDisplayInterstitialRendering = "/21808260008/prebid_oxb_html_interstitial"
+
+        static let storedImpVideoInterstitial = "prebid-demo-video-interstitial-320-480"
+        static let gamAdUnitVideoInterstitialRendering = "/21808260008/prebid_oxb_interstitial_video"
+    }
 
     func createRenderingIntertitiaBannerView() {
         let eventHandler = AUGAMInterstitialEventHandler(
-            adUnitID: gamAdUnitDisplayInterstitialRendering
+            adUnitID: Constants.gamAdUnitDisplayInterstitialRendering
         )
 
         interstitialRenderingBannerView = AUInterstitialRenderingView(
-            configId: storedImpDisplayInterstitial,
+            configId: Constants.storedImpDisplayInterstitial,
             isLazyLoad: true,
             adFormat: .banner,
             minSizePercentage: nil,
@@ -74,11 +71,11 @@ extension ExamplesViewController {
 
     func createRenderingIntertitiaVideoView() {
         let eventHandler = AUGAMInterstitialEventHandler(
-            adUnitID: gamAdUnitVideoInterstitialRendering
+            adUnitID: Constants.gamAdUnitVideoInterstitialRendering
         )
 
         interstitialRenderingVideoView = AUInterstitialRenderingView(
-            configId: storedImpVideoInterstitial,
+            configId: Constants.storedImpVideoInterstitial,
             isLazyLoad: true,
             adFormat: .video,
             minSizePercentage: nil,
@@ -121,9 +118,9 @@ extension ExamplesViewController: AUInterstitialenderingAdDelegate {
     }
 
     func interstitialDidReceiveAd(with configId: String) {
-        if storedImpDisplayInterstitial == configId {
+        if Constants.storedImpDisplayInterstitial == configId {
             interstitialRenderingBannerView.showAd(self)
-        } else if configId == storedImpVideoInterstitial {
+        } else if configId == Constants.storedImpVideoInterstitial {
             interstitialRenderingVideoView.showAd(self)
         }
     }

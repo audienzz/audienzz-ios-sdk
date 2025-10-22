@@ -17,15 +17,15 @@ import AudienzziOSSDK
 import GoogleMobileAds
 import UIKit
 
-private let nativeRenderingStoredImpression = "prebid-demo-banner-native-styles"
-private let gamRenderingNativeAdUnitId =
-    "/21808260008/apollo_custom_template_native_ad_unit"
-
 extension ExamplesViewController {
+    private enum Constants {
+        static let nativeRenderingStoredImpression = "prebid-demo-banner-native-styles"
+        static let gamRenderingNativeAdUnitId = "/21808260008/apollo_custom_template_native_ad_unit"
+    }
 
     func createRenderingNativeView() {
         nativeRenderingView = AUNativeView(
-            configId: nativeRenderingStoredImpression,
+            configId: Constants.nativeRenderingStoredImpression,
             isLazyLoad: false,
             adType: .rendering
         )
@@ -48,7 +48,7 @@ extension ExamplesViewController {
             )
 
             self.adRenderingLoader = AdLoader(
-                adUnitID: gamRenderingNativeAdUnitId,
+                adUnitID: Constants.gamRenderingNativeAdUnitId,
                 rootViewController: self,
                 adTypes: [AdLoaderAdType.customNative],
                 options: []
@@ -79,7 +79,7 @@ extension ExamplesViewController {
 
     func createRenderingNativeLazyView() {
         nativeLzyRenderingView = AUNativeView(
-            configId: nativeRenderingStoredImpression,
+            configId: Constants.nativeRenderingStoredImpression,
             adType: .rendering
         )
         nativeLzyRenderingView.nativeParameter = nativeConfiguration()
@@ -101,7 +101,7 @@ extension ExamplesViewController {
             )
 
             self.adRenderingLazyLoader = AdLoader(
-                adUnitID: gamRenderingNativeAdUnitId,
+                adUnitID: Constants.gamRenderingNativeAdUnitId,
                 rootViewController: self,
                 adTypes: [AdLoaderAdType.customNative],
                 options: []

@@ -4,33 +4,38 @@ import GoogleMobileAds
 import UIKit
 
 class TargetingTestingViewController: UIViewController {
+    private enum Constants {
+        static let prebidAdConfigId = "15624474"
+
+        static let gamAdUnitId = "/96628199/testapp_publisher/medium_rectangle_banner"
+
+        static let testAppStoreUrl = "https://apps.apple.com/app/id0000000000"
+
+        static let bannerWidth = 300.0
+
+        static let bannerHeight = 250.0
+    }
 
     internal var bannerView: AUBannerView!
 
-    private let prebidAdConfigId = "15624474"
-    private let gamAdUnitId =
-    "/96628199/testapp_publisher/medium_rectangle_banner"
-
-    private let testAppStoreUrl = "https://apps.apple.com/app/id0000000000"
-
     // MARK: - IBOutlets
-    @IBOutlet weak var scrollView: UIScrollView!
-    @IBOutlet weak var contentView: UIView!
-    @IBOutlet weak var stackView: UIStackView!
+    @IBOutlet private weak var scrollView: UIScrollView!
+    @IBOutlet private weak var contentView: UIView!
+    @IBOutlet private weak var stackView: UIStackView!
 
     // Input fields
-    @IBOutlet weak var keyTextField: UITextField!
-    @IBOutlet weak var valueTextField: UITextField!
-    @IBOutlet weak var removeKeyTextField: UITextField!
+    @IBOutlet private weak var keyTextField: UITextField!
+    @IBOutlet private weak var valueTextField: UITextField!
+    @IBOutlet private weak var removeKeyTextField: UITextField!
 
     // Buttons
-    @IBOutlet weak var submitButton: UIButton!
-    @IBOutlet weak var removeButton: UIButton!
-    @IBOutlet weak var clearAllButton: UIButton!
-    @IBOutlet weak var requestAdButton: UIButton!
+    @IBOutlet private weak var submitButton: UIButton!
+    @IBOutlet private weak var removeButton: UIButton!
+    @IBOutlet private weak var clearAllButton: UIButton!
+    @IBOutlet private weak var requestAdButton: UIButton!
 
     // Ad display
-    @IBOutlet weak var adContainerView: UIView!
+    @IBOutlet private weak var adContainerView: UIView!
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -45,15 +50,13 @@ class TargetingTestingViewController: UIViewController {
         view.endEditing(true)
 
         guard let key = keyTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !key.isEmpty
-        else {
+              !key.isEmpty else {
             showAlert(message: "Please enter a key")
             return
         }
 
         guard let value = valueTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !value.isEmpty
-        else {
+              !value.isEmpty else {
             showAlert(message: "Please enter a value")
             return
         }
@@ -81,8 +84,7 @@ class TargetingTestingViewController: UIViewController {
         view.endEditing(true)
 
         guard let keyToRemove = removeKeyTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !keyToRemove.isEmpty
-        else {
+              !keyToRemove.isEmpty else {
             showAlert(message: "Please enter a key to remove values for")
             return
         }
@@ -159,29 +161,29 @@ private extension TargetingTestingViewController {
         adContainerView.subviews.forEach { $0.removeFromSuperview() }
 
         let gamBanner = AdManagerBannerView(
-            adSize: adSizeFor(cgSize: CGSize(width: 300, height: 250))
+            adSize: adSizeFor(cgSize: CGSize(width: Constants.bannerWidth, height: Constants.bannerHeight))
         )
-        gamBanner.adUnitID = gamAdUnitId
+        gamBanner.adUnitID = Constants.gamAdUnitId
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
 
         bannerView = AUBannerView(
-            configId: prebidAdConfigId,
-            adSize: CGSize(width: 300, height: 250),
+            configId: Constants.prebidAdConfigId,
+            adSize: CGSize(width: Constants.bannerWidth, height: Constants.bannerHeight),
             adFormats: [.banner],
             isLazyLoad: false
         )
         bannerView.bannerParameters = AUBannerParameters()
         bannerView.frame = CGRect(
             origin: CGPoint(x: 0, y: 0),
-            size: CGSize(width: self.view.frame.width, height: 250)
+            size: CGSize(width: self.view.frame.width, height: Constants.bannerHeight)
         )
         bannerView.backgroundColor = .clear
         adContainerView.addSubview(bannerView)
 
         let handler = AUBannerEventHandler(
-            adUnitId: gamAdUnitId,
+            adUnitId: Constants.gamAdUnitId,
             gamView: gamBanner
         )
 
@@ -210,7 +212,7 @@ private extension TargetingTestingViewController {
 
 private extension TargetingTestingViewController {
     func applyStoreUrlForTargeting() {
-        AUTargeting.shared.storeURL = testAppStoreUrl
+        AUTargeting.shared.storeURL = Constants.testAppStoreUrl
     }
 }
 
@@ -267,8 +269,9 @@ private extension TargetingTestingViewController {
 }
 
 // MARK: - Keyboard Handling
-extension TargetingTestingViewController {
-    private func setupKeyboardHandling() {
+
+private extension TargetingTestingViewController {
+    func setupKeyboardHandling() {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(keyboardWillShow),
@@ -287,22 +290,21 @@ extension TargetingTestingViewController {
         view.addGestureRecognizer(tapGesture)
     }
 
-    @objc private func keyboardWillShow(notification: NSNotification) {
+    @objc func keyboardWillShow(notification: NSNotification) {
         if let userInfo = notification.userInfo,
-            let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
-        {
+            let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
             let keyboardHeight = keyboardFrame.height
             scrollView.contentInset.bottom = keyboardHeight
             scrollView.verticalScrollIndicatorInsets.bottom = keyboardHeight
         }
     }
 
-    @objc private func keyboardWillHide(notification: NSNotification) {
+    @objc func keyboardWillHide(notification: NSNotification) {
         scrollView.contentInset.bottom = 0
         scrollView.verticalScrollIndicatorInsets.bottom = 0
     }
 
-    @objc private func dismissKeyboard() {
+    @objc func dismissKeyboard() {
         view.endEditing(true)
     }
 }
