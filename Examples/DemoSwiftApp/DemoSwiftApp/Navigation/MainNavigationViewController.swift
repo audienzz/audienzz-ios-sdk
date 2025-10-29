@@ -34,7 +34,8 @@ enum AdTypeExample: String {
     case cpu = "CPU LOAD DEBUG"
     case adaptive = "Adaptive - 'multi-size GAM'"
     case targetingTesting = "Targeting Testing Page"
-    
+    case remoteConfig = "Remote Configuration Testing Page"
+
     var indexRow: Int {
         switch self {
         case .allExample:
@@ -57,6 +58,8 @@ enum AdTypeExample: String {
             return 10
         case .targetingTesting:
             return 11
+        case .remoteConfig:
+            return 12
         default: return 0
         }
     }
@@ -77,7 +80,8 @@ class MainNavigationViewController: UIViewController {
         .interstitalOriginMulti,
         .rewardedOrigin,
         .cpu,
-        .targetingTesting
+        .targetingTesting,
+        .remoteConfig
 //        .bannerRender,
 //        .bannerRenderVideo,
 //        .interstitialRender,
@@ -151,6 +155,11 @@ extension MainNavigationViewController: UITableViewDelegate, UITableViewDataSour
             self.navigationController?.pushViewController(destination, animated: true)
         case .targetingTesting:
             let destination = mainStoryboard.instantiateViewController(withIdentifier: "TargetingTestingViewController") as! TargetingTestingViewController
+            self.navigationController?.pushViewController(destination, animated: true)
+        case .remoteConfig:
+            let destination = mainStoryboard.instantiateViewController(
+                withIdentifier: "RemoteConfigViewController"
+            ) as! RemoteConfigViewController
             self.navigationController?.pushViewController(destination, animated: true)
         }
         

@@ -4,6 +4,8 @@
 <dict>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3384408078236170~9501675642</string>
+	<key>NStra</key>
+	<string></string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
@@ -203,10 +205,6 @@
 			<string>3qcr597p9d.skadnetwork</string>
 		</dict>
 	</array>
-	<key>NStra</key>
-	<string></string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>This app uses your data to personalize ads and improve your experience.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
