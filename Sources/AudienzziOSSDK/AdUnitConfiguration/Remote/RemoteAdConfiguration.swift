@@ -13,6 +13,10 @@ public struct RemoteAdConfiguration: Codable {
         public let refreshTimeSeconds: Int?
     }
 
+    public enum WidthStrategy: String, Codable {
+        case fullWidth = "FULL_WIDTH"
+    }
+
     public struct GamConfig: Codable {
         public let adUnitPath: String
         public let adSizes: [String]
@@ -21,9 +25,9 @@ public struct RemoteAdConfiguration: Codable {
         public struct AdaptiveBannerConfig: Codable {
             public let enabled: Bool
             public let type: String?
-            public let widthStrategy: String?
-            public let customWidth: Int?
-            public let maxHeight: Int?
+            public let widthStrategy: WidthStrategy?
+            public let customWidth: CGFloat?
+            public let maxHeight: CGFloat?
             public let orientationHandling: String?
             public let includeReservationSizes: Bool?
         }

@@ -31,6 +31,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             enablePPID: true
         )
 
+        AudienzzRemoteConfig.shared.configureRemote(
+            remoteUrl: URL(string: "https://dev-api.adnz.co/api/ws-sdk-config/public/v1/")!,
+            publisherId: "81"
+        )
+
+        Task {
+            try await AudienzzRemoteConfig.shared.fetchPublisherConfig()
+        }
+
         // Initialize GoogleMobileAds SDK
         MobileAds.shared.start()
         AudienzzGAMUtils.shared.initializeGAM()
