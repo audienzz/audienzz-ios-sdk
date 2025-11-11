@@ -12,14 +12,8 @@ import UIKit
 
 class RemoteConfigViewController: UIViewController {
     private enum Constants {
-        static let defaultPublisherId = "81"
-
-        static let defaultConfigId = "118"
-
-        static let defaultPublisherRemoteUrl = "https://dev-api.adnz.co/api/ws-sdk-config/public/v1/"
+        static let inlineAdaptiveConfigId = 118
     }
-
-    internal var bannerView: AURemoteConfigBannerView!
 
     // MARK: - IBOutlets
 
@@ -30,12 +24,6 @@ class RemoteConfigViewController: UIViewController {
     // Ad display
     @IBOutlet private weak var adContainerView: UIView!
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        setupDefaultPublisher()
-    }
-
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
@@ -45,20 +33,8 @@ class RemoteConfigViewController: UIViewController {
     func requestAd() {
         adContainerView.subviews.forEach { $0.removeFromSuperview() }
 
-        let bannerView = AURemoteConfigBannerView(adConfigId: Constants.defaultConfigId)
+        let bannerView = AURemoteConfigBannerView(adConfigId: Constants.inlineAdaptiveConfigId)
         bannerView.load(in: adContainerView,
-                        size: AdSizeBanner.size,
                         rootViewController: self)
-    }
-}
-
-// MARK: - Private
-
-private extension RemoteConfigViewController {
-    func setupDefaultPublisher() {
-        RemoteConfigManager.shared.setPublisherId(Constants.defaultPublisherId)
-        RemoteConfigManager.shared.setRemoteUrl(
-            URL(string: Constants.defaultPublisherRemoteUrl)!
-        )
     }
 }
