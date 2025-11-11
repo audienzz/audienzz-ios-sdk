@@ -101,6 +101,48 @@ public class Audienzz: NSObject {
         }
     }
 
+    public func configureWithRemoteSDK(
+        companyId: String,
+        gadMobileAdsVersion: String? = nil,
+        enablePPID: Bool = false
+    ) async throws {
+        try await AudienzzRemoteConfig.shared.fetchPublisherConfig()
+
+        guard let publisherConfig = AudienzzRemoteConfig.shared.publisherConfig else {
+            AULogEvent.logDebug(
+                "Initialization Failed because PrebidUrl is empty"
+            )
+            return
+        }
+
+        setupRemotePrebid(
+            companyId,
+            prebidServerAccountId: publisherConfig.prebidServerAccountId,
+            prebidStatusUrl: publisherConfig.prebidStatusUrl
+        )
+
+        do {
+            try Prebid.initializeSDK(
+                serverURL: publisherConfig.prebidServerUrl,
+                gadMobileAdsVersion: gadMobileAdsVersion
+            ) { status, error in
+                if let error = error {
+                    AULogEvent.logDebug(
+                        "Initialization Error: \(error.localizedDescription)"
+                    )
+                    return
+                }
+
+                self.handleInitializationResultStatus(status: status)
+                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
+            }
+        } catch {
+            AULogEvent.logDebug(
+                "Audienzz SDK initialization failed with error: \(error.localizedDescription)"
+            )
+        }
+    }
+
     // MARK: - Public Init For RN Bridg (Audienzz)
 
     /// Special method used for RN bridging initialization
@@ -226,6 +268,16 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = customStatusEndpoint
+    }
+
+    private func setupRemotePrebid(
+        _ companyId: String,
+        prebidServerAccountId: String,
+        prebidStatusUrl: String
+    ) {
+        AUEventsManager.shared.configure(companyId: companyId)
+        Prebid.shared.prebidServerAccountId = prebidServerAccountId
+        Prebid.shared.customStatusEndpoint = prebidStatusUrl
     }
 
     private func handleInitializationResultStatus(
