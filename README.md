@@ -472,6 +472,93 @@ You can find more examples of practical implementation here:
 
 [Demo App](AudienzziOSSDK/Examples/DemoSwiftApp)
 
+## Remote Configuration Integration
+
+The SDK supports a simplified integration using remote configuration. This allows you to manage ad units (GAM IDs, Prebid Config IDs, sizes, etc.) from the backend, requiring only a simple configuration ID in your app.
+
+### Initialize SDK with Remote Configuration
+
+Before using remote configuration ads, ensure the SDK is properly initialized in your `AppDelegate`:
+
+```swift
+import AudienzziOSSDK
+import GoogleMobileAds
+
+func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    // 1. Configure remote URL and publisher ID
+    AudienzzRemoteConfig.shared.configureRemote(
+        remoteUrl: URL(string: "https://dev-api.adnz.co/api/ws-sdk-config/public/v1/")!, // Audienzz remove config URL
+        publisherId: "YOUR_PUBLISHER_ID" // Will be provided for you
+    )
+
+    Task {
+        // 2. Initialize SDK with remote configuration
+        try await Audienzz.shared.configureWithRemoteSDK(
+            gadMobileAdsVersion: GADGetStringFromVersionNumber(GADMobileAds.sharedInstance().versionNumber),
+            enablePPID: false
+        )
+        
+        // 3. Start Google Mobile Ads
+        GADMobileAds.sharedInstance().start()
+        AudienzzGAMUtils.shared.initializeGAM()
+    }
+    
+    return true
+}
+```
+
+### Banner Ad (Remote Config)
+
+Use `AURemoteConfigBannerView` to load a banner defined by a remote configuration ID.
+
+```swift
+// 1. Initialize the view with the configuration ID
+let bannerView = AURemoteConfigBannerView(adConfigId: "YOUR_CONFIG_ID")
+
+// 2. Load the ad into a container view
+// The SDK handles fetching configuration, setting up Prebid/GAM, and rendering.
+bannerView.load(in: adContainerView, rootViewController: self)
+```
+
+**Fixed Size Banner:**
+To enforce a specific size for a fixed banner (e.g., 320x50), pass the desired size to the `load` method. This will override any adaptive settings from the remote configuration:
+
+```swift
+bannerView.load(in: adContainerView, size: CGSize(width: 320, height: 50), rootViewController: self)
+```
+
+**Adaptive Banner:**
+If the remote configuration has adaptive banners enabled, simply omit the `size` parameter. The SDK will automatically calculate the optimal banner height based on the container view's width and the adaptive strategy defined in the backend configuration (e.g., `fullWidth` or `customWidth`):
+
+```swift
+bannerView.load(in: adContainerView, rootViewController: self)
+```
+
+### Interstitial Ad (Remote Config)
+
+Use `AURemoteConfigInterstitial` to load an interstitial defined by a remote configuration ID.
+
+```swift
+// 1. Initialize with the configuration ID
+let interstitial = AURemoteConfigInterstitial(adConfigId: "YOUR_CONFIG_ID")
+
+// 2. Set the delegate (optional, for lifecycle events)
+interstitial.delegate = self
+
+// 3. Load the ad
+interstitial.load { [weak self] result in
+    switch result {
+    case .success:
+        // 4. Show the ad when ready
+        if let self = self {
+            interstitial.show(from: self)
+        }
+    case .failure(let error):
+        print("Failed to load interstitial: \(error)")
+    }
+}
+```
+
 ## Troubleshooting
 
 ### Unfilled ads
