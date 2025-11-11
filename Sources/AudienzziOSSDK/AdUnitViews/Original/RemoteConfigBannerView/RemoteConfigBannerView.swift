@@ -15,16 +15,14 @@ import GoogleMobileAds
  */
 @objcMembers
 public class AURemoteConfigBannerView: VisibleView {
-    internal var adConfigId: String
-
-    private var remoteConfig: RemoteAdConfiguration?
+    internal var adConfigId: Int
 
     public var bannerParameters: AUBannerParameters?
     public var videoParameters: AUVideoParameters?
 
     // MARK: - Init
 
-    public init(adConfigId: String) {
+    public init(adConfigId: Int) {
         self.adConfigId = adConfigId
         super.init(frame: .zero)
     }
@@ -36,46 +34,37 @@ public class AURemoteConfigBannerView: VisibleView {
     // MARK: - Public API
     /// High-level entry point for SDK users.
     @MainActor
-    public func load(in container: UIView, size: CGSize, rootViewController: UIViewController) {
-        guard let publisherId = RemoteConfigManager.shared.getPublisherId() else {
-            print("[AURemoteConfigBannerView] publisherId isn't configured, Can't load remote ads")
+    public func load(
+        in container: UIView,
+        size: CGSize? = nil,
+        rootViewController: UIViewController,
+        delegate: GoogleMobileAds.BannerViewDelegate? = nil
+    ) {
+        guard let remoteConfig = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
+            AULogEvent.logDebug("[AURemoteConfigBannerView] Remote config is nil")
             return
         }
 
-        Task {
-            do {
-                try await loadRemoteConfiguration(publisherId: publisherId, adConfigId: adConfigId)
-                createRemoteAd(in: container, size: size, rootViewController: rootViewController)
-            } catch {
-                print("[AURemoteConfigBannerView] Failed to load or create remote ad:", error)
+        let gadSize: AdSize
+
+        if let adaptiveBannerConfig = remoteConfig.gamConfig.adaptiveBannerConfig, adaptiveBannerConfig.enabled {
+            let adWidth: CGFloat = switch adaptiveBannerConfig.widthStrategy {
+            case .fullWidth: container.frame.width
+            default: adaptiveBannerConfig.customWidth ?? 0
             }
-        }
-    }
 
-    // MARK: - Internal Logic
-
-    private func loadRemoteConfiguration(publisherId: String, adConfigId: String) async {
-        do {
-            let config = try await RemoteConfigFetcher.shared.fetchBannerConfig(
-                publisherId: publisherId,
-                adConfigId: adConfigId
-            )
-            self.remoteConfig = config
-        } catch {
-            print("[AURemoteConfigBannerView] Failed to fetch remote banner config:", error)
-        }
-    }
-    
-    private func createRemoteAd(in container: UIView,
-                                size: CGSize,
-                                rootViewController: UIViewController?) {
-        guard let remoteConfig else {
-            print("[AURemoteConfigBannerView] Remote config is nil")
-            return
+            if let maxHeight = adaptiveBannerConfig.maxHeight {
+                gadSize = inlineAdaptiveBanner(width: adWidth, maxHeight: maxHeight)
+            } else {
+                gadSize = currentOrientationInlineAdaptiveBanner(width: adWidth)
+            }
+        } else {
+            gadSize = adSizeFor(cgSize: size ?? .zero)
         }
 
-        let gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: size))
+        let gamBanner = AdManagerBannerView(adSize: gadSize)
         gamBanner.rootViewController = rootViewController
+        gamBanner.delegate = delegate
         gamBanner.adUnitID = remoteConfig.gamConfig.adUnitPath
         gamBanner.validAdSizes = remoteConfig.gamConfig.adSizes
             .compactMap { CGSize.from(string: $0) }
@@ -84,7 +73,7 @@ public class AURemoteConfigBannerView: VisibleView {
         let gamRequest = AdManagerRequest()
         let bannerView = AUBannerView(
             configId: remoteConfig.prebidConfig.placementId,
-            adSize: size,
+            adSize: gadSize.size,
             adFormats: [.banner],
             isLazyLoad: false
         )
@@ -92,7 +81,7 @@ public class AURemoteConfigBannerView: VisibleView {
         bannerView.bannerParameters = bannerParameters
         bannerView.frame = CGRect(
             origin: CGPoint(x: 0, y: 0),
-            size: CGSize(width: container.frame.width, height: size.height)
+            size: CGSize(width: container.frame.width, height: size?.height ?? 0)
         )
         bannerView.backgroundColor = .clear
         container.addSubview(bannerView)
