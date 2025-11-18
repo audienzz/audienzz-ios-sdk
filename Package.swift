@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "AudienzziOSSDK",
-    platforms: [.iOS(.v13)],
+    platforms: [.iOS(.v15)],
     products: [
         .library(
             name: "AudienzziOSSDK",
