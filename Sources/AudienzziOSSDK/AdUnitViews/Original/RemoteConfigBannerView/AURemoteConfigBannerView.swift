@@ -1,5 +1,5 @@
 //
-//  RemoteConfigBannerView.swift
+//  AURemoteConfigBannerView.swift
 //  AudienzziOSSDK
 //
 //  Created by Maksym Ovcharuk on 27.10.2025.
@@ -71,6 +71,12 @@ public class AURemoteConfigBannerView: VisibleView {
             .map { nsValue(for: adSizeFor(cgSize: $0)) }
 
         let gamRequest = AdManagerRequest()
+        let ppid = PPIDManager.shared.getPPID()
+
+        if let ppid = ppid {
+            gamRequest.publisherProvidedID = ppid
+        }
+
         let bannerView = AUBannerView(
             configId: remoteConfig.prebidConfig.placementId,
             adSize: gadSize.size,
@@ -78,6 +84,7 @@ public class AURemoteConfigBannerView: VisibleView {
             isLazyLoad: false
         )
 
+        bannerView.videoParameters = videoParameters
         bannerView.bannerParameters = bannerParameters
         bannerView.frame = CGRect(
             origin: CGPoint(x: 0, y: 0),
