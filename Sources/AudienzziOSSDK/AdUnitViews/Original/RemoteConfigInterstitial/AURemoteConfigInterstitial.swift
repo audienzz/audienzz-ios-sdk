@@ -1,0 +1,94 @@
+//
+//  AURemoteConfigInterstitial.swift
+//  AudienzziOSSDK
+//
+//  Created by Maksym Ovcharuk on 20.11.2025.
+//
+
+import UIKit
+import PrebidMobile
+import GoogleMobileAds
+
+/**
+ AURemoteConfigInterstitial.
+ Interstitial ad controller based on the remote configuration.
+ */
+@objcMembers
+public class AURemoteConfigInterstitial: NSObject {
+    private let adConfigId: Int
+    private var interstitialAdUnit: InterstitialAdUnit?
+    private var gamInterstitialAd: AdManagerInterstitialAd?
+    
+    /// Delegate for handling ad presentation events (show, dismiss, fail to show).
+    public weak var delegate: FullScreenContentDelegate?
+
+    public init(adConfigId: Int) {
+        self.adConfigId = adConfigId
+        super.init()
+    }
+    
+    /// Returns true if the ad is loaded and ready to be shown.
+    public var isReady: Bool {
+        return gamInterstitialAd != nil
+    }
+    
+    /// Starts loading the interstitial ad.
+    /// - Parameter completion: A closure to be executed when the ad loading completes. Returns success or failure error.
+    public func load(completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let remoteConfig = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
+            AULogEvent.logDebug("[AURemoteConfigInterstitial] Remote config is nil for id: \(adConfigId)")
+            let error = NSError(domain: "AudienzziOSSDK", code: 404, userInfo: [NSLocalizedDescriptionKey: "Remote config not found"])
+            completion(.failure(error))
+            return
+        }
+        
+        // Setup Prebid
+        interstitialAdUnit = InterstitialAdUnit(configId: remoteConfig.prebidConfig.placementId)
+        // Default to banner and video formats
+        interstitialAdUnit?.adFormats = [.banner, .video]
+        
+        // Setup GAM Request
+        let gamRequest = AdManagerRequest()
+        let ppid = PPIDManager.shared.getPPID()
+        if let ppid = ppid {
+            gamRequest.publisherProvidedID = ppid
+        }
+        
+        // Fetch Demand
+        interstitialAdUnit?.fetchDemand(adObject: gamRequest) { [weak self] result in
+            guard let self = self else { return }
+            
+            // Load GAM Interstitial
+            AdManagerInterstitialAd.load(
+                withAdUnitID: remoteConfig.gamConfig.adUnitPath,
+                request: gamRequest
+            ) { [weak self] ad, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    AULogEvent.logDebug("[AURemoteConfigInterstitial] Failed to load interstitial: \(error)")
+                    completion(.failure(error))
+                    return
+                }
+                
+                self.gamInterstitialAd = ad
+                self.gamInterstitialAd?.fullScreenContentDelegate = self.delegate
+                completion(.success(()))
+            }
+        }
+    }
+    
+    /// Presents the interstitial ad from the specified view controller.
+    /// - Parameter rootViewController: The view controller to present the ad from.
+    public func show(from rootViewController: UIViewController) {
+        guard let ad = gamInterstitialAd else {
+            AULogEvent.logDebug("[AURemoteConfigInterstitial] Ad not ready to show")
+            return
+        }
+        
+        // Ensure delegate is set (in case it was set after load)
+        ad.fullScreenContentDelegate = delegate
+        
+        ad.present(fromRootViewController: rootViewController)
+    }
+}
