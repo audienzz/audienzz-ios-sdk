@@ -9,6 +9,9 @@ import UIKit
 import PrebidMobile
 import GoogleMobileAds
 
+public enum AURemoteConfigInterstitialError: Error {
+    case noRemoteConfig
+}
 /**
  AURemoteConfigInterstitial.
  Interstitial ad controller based on the remote configuration.
@@ -37,30 +40,24 @@ public class AURemoteConfigInterstitial: NSObject {
     public func load(completion: @escaping (Result<Void, Error>) -> Void) {
         guard let remoteConfig = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
             AULogEvent.logDebug("[AURemoteConfigInterstitial] Remote config is nil for id: \(adConfigId)")
-            let error = NSError(domain: "AudienzziOSSDK", code: 404, userInfo: [NSLocalizedDescriptionKey: "Remote config not found"])
-            completion(.failure(error))
+            completion(.failure(AURemoteConfigInterstitialError.noRemoteConfig))
             return
         }
-        
-        // Setup Prebid
+
         interstitialAdUnit = InterstitialAdUnit(configId: remoteConfig.prebidConfig.placementId)
-        // Default to banner and video formats
         interstitialAdUnit?.adFormats = [.banner, .video]
-        
-        // Setup GAM Request
+
         let gamRequest = AdManagerRequest()
         let ppid = PPIDManager.shared.getPPID()
         if let ppid = ppid {
             gamRequest.publisherProvidedID = ppid
         }
-        
-        // Fetch Demand
+
         interstitialAdUnit?.fetchDemand(adObject: gamRequest) { [weak self] result in
             guard let self = self else { return }
-            
-            // Load GAM Interstitial
+
             AdManagerInterstitialAd.load(
-                withAdUnitID: remoteConfig.gamConfig.adUnitPath,
+                with: remoteConfig.gamConfig.adUnitPath,
                 request: gamRequest
             ) { [weak self] ad, error in
                 guard let self = self else { return }
@@ -72,7 +69,6 @@ public class AURemoteConfigInterstitial: NSObject {
                 }
                 
                 self.gamInterstitialAd = ad
-                self.gamInterstitialAd?.fullScreenContentDelegate = self.delegate
                 completion(.success(()))
             }
         }
@@ -85,10 +81,8 @@ public class AURemoteConfigInterstitial: NSObject {
             AULogEvent.logDebug("[AURemoteConfigInterstitial] Ad not ready to show")
             return
         }
-        
-        // Ensure delegate is set (in case it was set after load)
+
         ad.fullScreenContentDelegate = delegate
-        
-        ad.present(fromRootViewController: rootViewController)
+        ad.present(from: rootViewController)
     }
 }

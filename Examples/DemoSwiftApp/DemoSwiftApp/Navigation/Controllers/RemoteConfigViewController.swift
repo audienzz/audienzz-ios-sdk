@@ -12,7 +12,11 @@ import UIKit
 
 class RemoteConfigViewController: UIViewController {
     private enum Constants {
+        static let fixedBannerConfigId = 192
+
         static let inlineAdaptiveConfigId = 118
+
+        static let interstitialConfigId = 267
     }
 
     // MARK: - IBOutlets
@@ -26,41 +30,90 @@ class RemoteConfigViewController: UIViewController {
 
     private var interstitial: AURemoteConfigInterstitial?
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-
-        requestAd()
-        requestInterstitial()
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        setupLayout()
     }
 
-    func requestAd() {
-        adContainerView.subviews.forEach { $0.removeFromSuperview() }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+    }
+    
+    private func setupLayout() {
+        stackView.removeFromSuperview()
+        adContainerView.removeFromSuperview()
 
-        let bannerView = AURemoteConfigBannerView(adConfigId: Constants.inlineAdaptiveConfigId)
+        scrollView.isHidden = true
+        
+        view.addSubview(stackView)
+        view.addSubview(adContainerView)
+        
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        adContainerView.translatesAutoresizingMaskIntoConstraints = false
+
+        stackView.axis = .vertical
+        stackView.distribution = .fill
+        stackView.alignment = .fill
+        stackView.spacing = 10
+
+        stackView.setContentHuggingPriority(.required, for: .vertical)
+        stackView.setContentCompressionResistancePriority(.required, for: .vertical)
+
+        adContainerView.setContentHuggingPriority(.defaultLow, for: .vertical)
+        adContainerView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+
+        adContainerView.backgroundColor = .secondarySystemBackground
+        
+        NSLayoutConstraint.activate([
+            stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+            stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+            
+            adContainerView.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 20),
+            adContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            adContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            adContainerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+    }
+
+    private func setupUI() {
+        let fixedBannerButton = UIButton(type: .system)
+        fixedBannerButton.setTitle("Load Fixed Banner", for: .normal)
+        fixedBannerButton.addTarget(self, action: #selector(loadFixedBannerTapped), for: .touchUpInside)
+        stackView.addArrangedSubview(fixedBannerButton)
+        
+        let adaptiveBannerButton = UIButton(type: .system)
+        adaptiveBannerButton.setTitle("Load Adaptive Banner", for: .normal)
+        adaptiveBannerButton.addTarget(self, action: #selector(loadAdaptiveBannerTapped), for: .touchUpInside)
+        stackView.addArrangedSubview(adaptiveBannerButton)
+        
+        let interstitialButton = UIButton(type: .system)
+        interstitialButton.setTitle("Load Interstitial", for: .normal)
+        interstitialButton.addTarget(self, action: #selector(loadInterstitialTapped), for: .touchUpInside)
+        stackView.addArrangedSubview(interstitialButton)
+    }
+
+    private func loadBanner(configId: Int) {
+        adContainerView.subviews.forEach { $0.removeFromSuperview() }
+        
+        let bannerView = AURemoteConfigBannerView(adConfigId: configId)
         bannerView.load(in: adContainerView,
                         rootViewController: self)
     }
     
-    func requestInterstitial() {
-        // Example config ID for interstitial, assuming one exists or using a placeholder
-        // Since I don't have a specific ID for interstitial in the prompt, I'll use a placeholder or reuse one if appropriate.
-        // However, to be safe and follow the "Prebid settings without knowing implementation details"
-        // I will assume there is an ID for it.
-        // Let's use a hypothetical ID 123 for now, or better, add a button to trigger it.
-        
-        let button = UIButton(type: .system)
-        button.setTitle("Load Interstitial", for: .normal)
-        button.addTarget(self, action: #selector(loadInterstitialTapped), for: .touchUpInside)
-        stackView.addArrangedSubview(button)
+    @objc private func loadFixedBannerTapped() {
+        loadBanner(configId: Constants.fixedBannerConfigId)
+    }
+    
+    @objc private func loadAdaptiveBannerTapped() {
+        loadBanner(configId: Constants.inlineAdaptiveConfigId)
     }
     
     @objc private func loadInterstitialTapped() {
-        // Using a hypothetical config ID for interstitial.
-        // In a real scenario, this would be a valid ID from the backend.
-        let interstitialConfigId = 1337
-        interstitial = AURemoteConfigInterstitial(adConfigId: interstitialConfigId)
+        interstitial = AURemoteConfigInterstitial(adConfigId: Constants.interstitialConfigId)
         interstitial?.delegate = self
-        
+
         print("Loading interstitial...")
         interstitial?.load { [weak self] result in
             guard let self = self else { return }

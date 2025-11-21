@@ -86,10 +86,10 @@ public class AURemoteConfigBannerView: VisibleView {
 
         bannerView.videoParameters = videoParameters
         bannerView.bannerParameters = bannerParameters
-        bannerView.frame = CGRect(
-            origin: CGPoint(x: 0, y: 0),
-            size: CGSize(width: container.frame.width, height: size?.height ?? 0)
-        )
+        bannerView.videoParameters = videoParameters
+        bannerView.bannerParameters = bannerParameters
+
+        bannerView.translatesAutoresizingMaskIntoConstraints = false
         bannerView.backgroundColor = .clear
         container.addSubview(bannerView)
 
@@ -109,7 +109,9 @@ public class AURemoteConfigBannerView: VisibleView {
 
         NSLayoutConstraint.activate([
             bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            bannerView.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+            bannerView.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width),
+            bannerView.heightAnchor.constraint(equalToConstant: gadSize.size.height)
         ])
     }
 }
