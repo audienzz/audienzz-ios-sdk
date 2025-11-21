@@ -87,8 +87,7 @@ public class AURemoteConfigBannerView: VisibleView {
         bannerView.videoParameters = videoParameters
         bannerView.bannerParameters = bannerParameters
         bannerView.videoParameters = videoParameters
-        bannerView.bannerParameters = bannerParameters
-
+        
         bannerView.translatesAutoresizingMaskIntoConstraints = false
         bannerView.backgroundColor = .clear
         container.addSubview(bannerView)
@@ -99,6 +98,9 @@ public class AURemoteConfigBannerView: VisibleView {
         )
 
         bannerView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
+
+        gamBanner.frame = CGRect(origin: .zero, size: gadSize.size)
+
         bannerView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? Request else {
                 print("[AURemoteConfigBannerView] Failed to unwrap GAM request")
@@ -109,7 +111,7 @@ public class AURemoteConfigBannerView: VisibleView {
 
         NSLayoutConstraint.activate([
             bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            bannerView.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            bannerView.topAnchor.constraint(equalTo: container.topAnchor),
             bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width),
             bannerView.heightAnchor.constraint(equalToConstant: gadSize.size.height)
         ])

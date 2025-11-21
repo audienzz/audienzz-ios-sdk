@@ -94,16 +94,17 @@ class RemoteConfigViewController: UIViewController {
         stackView.addArrangedSubview(interstitialButton)
     }
 
-    private func loadBanner(configId: Int) {
+    private func loadBanner(configId: Int, size: CGSize? = nil) {
         adContainerView.subviews.forEach { $0.removeFromSuperview() }
         
         let bannerView = AURemoteConfigBannerView(adConfigId: configId)
         bannerView.load(in: adContainerView,
+                        size: size,
                         rootViewController: self)
     }
     
     @objc private func loadFixedBannerTapped() {
-        loadBanner(configId: Constants.fixedBannerConfigId)
+        loadBanner(configId: Constants.fixedBannerConfigId, size: CGSize(width: 320, height: 480))
     }
     
     @objc private func loadAdaptiveBannerTapped() {
