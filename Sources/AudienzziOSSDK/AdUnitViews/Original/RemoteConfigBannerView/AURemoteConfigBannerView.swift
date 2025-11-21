@@ -1,5 +1,5 @@
 //
-//  RemoteConfigBannerView.swift
+//  AURemoteConfigBannerView.swift
 //  AudienzziOSSDK
 //
 //  Created by Maksym Ovcharuk on 27.10.2025.
@@ -15,16 +15,14 @@ import GoogleMobileAds
  */
 @objcMembers
 public class AURemoteConfigBannerView: VisibleView {
-    internal var adConfigId: String
-
-    private var remoteConfig: RemoteAdConfiguration?
+    internal var adConfigId: Int
 
     public var bannerParameters: AUBannerParameters?
     public var videoParameters: AUVideoParameters?
 
     // MARK: - Init
 
-    public init(adConfigId: String) {
+    public init(adConfigId: Int) {
         self.adConfigId = adConfigId
         super.init(frame: .zero)
     }
@@ -36,64 +34,61 @@ public class AURemoteConfigBannerView: VisibleView {
     // MARK: - Public API
     /// High-level entry point for SDK users.
     @MainActor
-    public func load(in container: UIView, size: CGSize, rootViewController: UIViewController) {
-        guard let publisherId = RemoteConfigManager.shared.getPublisherId() else {
-            print("[AURemoteConfigBannerView] publisherId isn't configured, Can't load remote ads")
+    public func load(
+        in container: UIView,
+        size: CGSize? = nil,
+        rootViewController: UIViewController,
+        delegate: GoogleMobileAds.BannerViewDelegate? = nil
+    ) {
+        guard let remoteConfig = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
+            AULogEvent.logDebug("[AURemoteConfigBannerView] Remote config is nil")
             return
         }
 
-        Task {
-            do {
-                try await loadRemoteConfiguration(publisherId: publisherId, adConfigId: adConfigId)
-                createRemoteAd(in: container, size: size, rootViewController: rootViewController)
-            } catch {
-                print("[AURemoteConfigBannerView] Failed to load or create remote ad:", error)
+        let gadSize: AdSize
+
+        if let adaptiveBannerConfig = remoteConfig.gamConfig.adaptiveBannerConfig, adaptiveBannerConfig.enabled {
+            let adWidth: CGFloat = switch adaptiveBannerConfig.widthStrategy {
+            case .fullWidth: container.frame.width
+            default: adaptiveBannerConfig.customWidth ?? 0
             }
-        }
-    }
 
-    // MARK: - Internal Logic
-
-    private func loadRemoteConfiguration(publisherId: String, adConfigId: String) async {
-        do {
-            let config = try await RemoteConfigFetcher.shared.fetchBannerConfig(
-                publisherId: publisherId,
-                adConfigId: adConfigId
-            )
-            self.remoteConfig = config
-        } catch {
-            print("[AURemoteConfigBannerView] Failed to fetch remote banner config:", error)
-        }
-    }
-    
-    private func createRemoteAd(in container: UIView,
-                                size: CGSize,
-                                rootViewController: UIViewController?) {
-        guard let remoteConfig else {
-            print("[AURemoteConfigBannerView] Remote config is nil")
-            return
+            if let maxHeight = adaptiveBannerConfig.maxHeight {
+                gadSize = inlineAdaptiveBanner(width: adWidth, maxHeight: maxHeight)
+            } else {
+                gadSize = currentOrientationInlineAdaptiveBanner(width: adWidth)
+            }
+        } else {
+            gadSize = adSizeFor(cgSize: size ?? .zero)
         }
 
-        let gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: size))
+        let gamBanner = AdManagerBannerView(adSize: gadSize)
         gamBanner.rootViewController = rootViewController
+        gamBanner.delegate = delegate
         gamBanner.adUnitID = remoteConfig.gamConfig.adUnitPath
         gamBanner.validAdSizes = remoteConfig.gamConfig.adSizes
             .compactMap { CGSize.from(string: $0) }
             .map { nsValue(for: adSizeFor(cgSize: $0)) }
 
         let gamRequest = AdManagerRequest()
+        let ppid = PPIDManager.shared.getPPID()
+
+        if let ppid = ppid {
+            gamRequest.publisherProvidedID = ppid
+        }
+
         let bannerView = AUBannerView(
             configId: remoteConfig.prebidConfig.placementId,
-            adSize: size,
+            adSize: gadSize.size,
             adFormats: [.banner],
             isLazyLoad: false
         )
 
+        bannerView.videoParameters = videoParameters
         bannerView.bannerParameters = bannerParameters
-        bannerView.frame = CGRect(
-            origin: CGPoint(x: 0, y: 0),
-            size: CGSize(width: container.frame.width, height: size.height)
-        )
+        bannerView.videoParameters = videoParameters
+        
+        bannerView.translatesAutoresizingMaskIntoConstraints = false
         bannerView.backgroundColor = .clear
         container.addSubview(bannerView)
 
@@ -103,6 +98,9 @@ public class AURemoteConfigBannerView: VisibleView {
         )
 
         bannerView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
+
+        gamBanner.frame = CGRect(origin: .zero, size: gadSize.size)
+
         bannerView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? Request else {
                 print("[AURemoteConfigBannerView] Failed to unwrap GAM request")
@@ -113,7 +111,9 @@ public class AURemoteConfigBannerView: VisibleView {
 
         NSLayoutConstraint.activate([
             bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            bannerView.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+            bannerView.topAnchor.constraint(equalTo: container.topAnchor),
+            bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width),
+            bannerView.heightAnchor.constraint(equalToConstant: gadSize.size.height)
         ])
     }
 }
