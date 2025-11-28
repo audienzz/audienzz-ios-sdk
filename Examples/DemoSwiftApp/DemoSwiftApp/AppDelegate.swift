@@ -19,17 +19,35 @@ import UIKit
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
+    private let useRemoteConfiguration = true
+
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication
             .LaunchOptionsKey: Any]?
     ) -> Bool {
         // Override point for customization after application launch.
-        Audienzz.shared.configureSDK(
-            companyId: "companyID",
-            gadMobileAdsVersion: nil,
-            enablePPID: true
-        )
+
+        if useRemoteConfiguration {
+            AudienzzRemoteConfig.shared.configureRemote(
+                remoteUrl: URL(string: "https://dev-api.adnz.co/api/ws-sdk-config/public/v1/")!,
+                publisherId: "81"
+            )
+
+            Task {
+                try await Audienzz.shared.configureWithRemoteSDK(
+                    companyId: "companyID",
+                    gadMobileAdsVersion: nil,
+                    enablePPID: true
+                )
+            }
+        } else {
+            Audienzz.shared.configureSDK(
+                companyId: "companyID",
+                gadMobileAdsVersion: nil,
+                enablePPID: true
+            )
+        }
 
         // Initialize GoogleMobileAds SDK
         MobileAds.shared.start()
