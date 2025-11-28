@@ -36,7 +36,10 @@ public class Audienzz: NSObject {
         set { Prebid.shared.prebidServerAccountId = newValue }
     }
 
-    public var pbsDebug = false
+    public var pbsDebug: Bool {
+        get { Prebid.shared.pbsDebug }
+        set { Prebid.shared.pbsDebug = newValue }
+    }
 
     public var customHeaders: [String: String] {
         get { Prebid.shared.customHeaders }
@@ -117,13 +120,35 @@ public class Audienzz: NSObject {
 
         setupRemotePrebid(
             companyId,
-            prebidServerAccountId: publisherConfig.prebidServerAccountId,
-            prebidStatusUrl: publisherConfig.prebidStatusUrl
+            prebidServerAccountId: publisherConfig.prebidServer.accountId,
+            prebidStatusUrl: publisherConfig.prebidServer.statusUrl
         )
+        
+        // Configure schain if present in remote config
+        if let schain = publisherConfig.schain {
+            let schainJson = """
+            {
+                "source": {
+                    "ext": {
+                        "schain": {
+                            "complete": 1,
+                            "nodes": [{
+                                "asi": "\(schain.advertisingSystemDomain)",
+                                "sid": "\(schain.sellerId)",
+                                "hp": 1
+                            }],
+                            "ver": "1.0"
+                        }
+                    }
+                }
+            }
+            """
+            setSchainObject(schain: schainJson)
+        }
 
         do {
             try Prebid.initializeSDK(
-                serverURL: publisherConfig.prebidServerUrl,
+                serverURL: publisherConfig.prebidServer.url,
                 gadMobileAdsVersion: gadMobileAdsVersion
             ) { status, error in
                 if let error = error {

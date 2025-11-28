@@ -78,16 +78,22 @@ public class AURemoteConfigBannerView: VisibleView {
             gamRequest.publisherProvidedID = ppid
         }
 
+        let sortedSizes = remoteConfig.prebidConfig.adSizes
+            .compactMap { CGSize.from(string: $0) }
+            .sorted {
+                ($0.width * $0.height) > ($1.width * $1.height)
+            }
+
         let bannerView = AUBannerView(
             configId: remoteConfig.prebidConfig.placementId,
-            adSize: gadSize.size,
+            adSize: sortedSizes.first ?? .zero,
             adFormats: [.banner],
             isLazyLoad: false
         )
 
+        bannerView.addAdditionalSize(sizes: Array(sortedSizes.dropFirst()))
         bannerView.videoParameters = videoParameters
         bannerView.bannerParameters = bannerParameters
-        bannerView.videoParameters = videoParameters
         
         bannerView.translatesAutoresizingMaskIntoConstraints = false
         bannerView.backgroundColor = .clear
