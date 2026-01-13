@@ -16,125 +16,116 @@
 import Foundation
 import SQLite
 
-protocol AULocalStorageServiceType {
-    var events: [AUEventDB]? { get set }
-    
-    func removeEvents()
-}
-
-final class AULocalStorageService: AULocalStorageServiceType {
-    
-    fileprivate let dataBase: Connection
-    internal var dataBaseTest: Connection?
-    
-    var events: [AUEventDB]? {
-        get { return getEvents() }
-        set {
-            guard let events = newValue, !events.isEmpty else {
-                return
-            }
-            saveEvents(events)
-        }
-    }
-    
-    init() throws {
-        try AUSQLiteConfigurator().configureStorage()
-        let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-        self.dataBase = try Connection("\(path)/\(SQLiteConstants.dbPathComponent)")
-        try dataBase.execute("PRAGMA journal_mode = WAL;")
-    }
-    
-    func removeEvents() {
-        removeAllEvents()
-    }
-}
-
-fileprivate extension AULocalStorageService {
-    func getEvents() -> [AUEventDB] {
-        let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
-        
-        let id = SQLite.Expression<String>("id")
-        let payload = SQLite.Expression<String>("payload")
-        
-        do {
-            let events = Array(try dataBase.prepare(eventsTable))
-            return events.compactMap {
-                do {
-                    return AUEventDB(id: try $0.get(id),
-                                     payload: try $0.get(payload))
-                } catch let error {
-                    AULogEvent.logDebug(error.localizedDescription)
-                    return nil
-                }
-                
-            }
-        } catch let error {
-            AULogEvent.logDebug(error.localizedDescription)
-            return []
-        }
-    }
-    
-    func saveEvents(_ events: [AUEventDB]) {
-        let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
-        
-        let id = SQLite.Expression<String>("id")
-        let payload = SQLite.Expression<String>("payload")
-        
-        do {
-            removeAllEvents()
-            try events.forEach { event in
-                let query = eventsTable.insert(or: .replace,
-                                               id <- event.id,
-                                               payload <- event.payload)
-                _ = try dataBase.run(query)
-            }
-        } catch let error {
-            AULogEvent.logDebug(error.localizedDescription)
-        }
-    }
-    
-    func removeAllEvents() {
-        do {
-            let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
-            try dataBase.run(eventsTable.delete())
-        } catch let error {
-            AULogEvent.logDebug(error.localizedDescription)
-        }
-    }
-    
-    
-    //MARK: - Migration if needed
-    func insertEvents(_ events: [AUEventDB]) {
-        let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
-        
-        let id = Expression<String>(value: "id")
-        let payload = Expression<String>(value: "payload")
-        
-        do {
-            try events.forEach { event in
-                _ = try dataBase.run(eventsTable.insert(or: .replace, id <- event.id,
-                                                        payload <- event.payload))
-            }
-        } catch let error {
-            AULogEvent.logDebug(error.localizedDescription)
-        }
-    }
-    
-    func modifyEvents() {
-        // Simple data will be replace on actual when time has come
-        let dictToModyfy: [String: String] = ["Kia": "KIA", "Ram": "RAM", "FIAT": "Fiat", "MINI": "Mini"]
-        
-        let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
-        let payload = Expression<String>(value: "payload")
-        
-        do {
-            for (oldV, newV) in dictToModyfy {
-                let selectedRows = eventsTable.filter(payload == oldV)
-                try dataBase.run(selectedRows.update(payload <- newV))
-            }
-        } catch let error {
-            AULogEvent.logDebug(error.localizedDescription)
-        }
-    }
+final actor AULocalStorageService {
+	
+	fileprivate let dataBase: Connection
+	internal var dataBaseTest: Connection?
+	
+	init() throws {
+		try AUSQLiteConfigurator().configureStorage()
+		let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+		self.dataBase = try Connection("\(path)/\(SQLiteConstants.dbPathComponent)")
+		try dataBase.execute("PRAGMA journal_mode = WAL;")
+	}
+	
+	func removeEvents() {
+		removeAllEvents()
+	}
+	
+	func setEvents(newValue: [AUEventDB]?) {
+		
+		guard let events = newValue, !events.isEmpty else {
+			return
+		}
+		saveEvents(events)
+	}
+	
+	func getEvents() -> [AUEventDB]? {
+		let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
+		
+		let id = SQLite.Expression<String>("id")
+		let payload = SQLite.Expression<String>("payload")
+		
+		do {
+			let events = Array(try dataBase.prepare(eventsTable))
+			return events.compactMap {
+				do {
+					return AUEventDB(id: try $0.get(id),
+									 payload: try $0.get(payload))
+				} catch let error {
+					AULogEvent.logDebug(error.localizedDescription)
+					return nil
+				}
+				
+			}
+		} catch let error {
+			AULogEvent.logDebug(error.localizedDescription)
+			return []
+		}
+	}
+	
+	func saveEvents(_ events: [AUEventDB]) {
+		
+		let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
+		
+		let id = SQLite.Expression<String>("id")
+		let payload = SQLite.Expression<String>("payload")
+		
+		do {
+			removeAllEvents()
+			try events.forEach { event in
+				let query = eventsTable.insert(or: .replace,
+											   id <- event.id,
+											   payload <- event.payload)
+				_ = try dataBase.run(query)
+			}
+		} catch let error {
+			AULogEvent.logDebug(error.localizedDescription)
+		}
+	}
+	
+	func removeAllEvents() {
+		do {
+			let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
+			try dataBase.run(eventsTable.delete())
+		} catch let error {
+			AULogEvent.logDebug(error.localizedDescription)
+		}
+	}
+	
+	
+	//MARK: - Migration if needed
+	func insertEvents(_ events: [AUEventDB]) {
+		let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
+		
+		let id = Expression<String>(value: "id")
+		let payload = Expression<String>(value: "payload")
+		
+		do {
+			try events.forEach { event in
+				_ = try dataBase.run(eventsTable.insert(or: .replace, id <- event.id,
+														payload <- event.payload))
+			}
+		} catch let error {
+			AULogEvent.logDebug(error.localizedDescription)
+		}
+	}
+	
+	func modifyEvents() {
+		// Simple data will be replace on actual when time has come
+		let dictToModyfy: [String: String] = ["Kia": "KIA", "Ram": "RAM", "FIAT": "Fiat", "MINI": "Mini"]
+		
+		let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
+		let payload = Expression<String>(value: "payload")
+		
+		do {
+			for (oldV, newV) in dictToModyfy {
+				let selectedRows = eventsTable.filter(payload == oldV)
+				try dataBase.run(selectedRows.update(payload <- newV))
+			}
+		} catch let error {
+			AULogEvent.logDebug(error.localizedDescription)
+		}
+	}
 }
 
