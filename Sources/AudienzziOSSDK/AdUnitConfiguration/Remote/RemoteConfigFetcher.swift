@@ -7,21 +7,53 @@
 
 import Foundation
 
-public final class RemoteConfigFetcher {
-    public static let shared = RemoteConfigFetcher()
+enum RemoteConfigError: Error {
+    case missingBaseURL
+    case invalidResponse
+    case decodingFailed(Error)
+}
+
+final class RemoteConfigFetcher {
+    static let shared = RemoteConfigFetcher()
 
     private init() {}
 
-    public func fetchBannerConfig(publisherId: String, adConfigId: String) async throws -> RemoteAdConfiguration {
-        guard let baseURL = RemoteConfigManager.shared.getRemoteUrl() else {
-            throw RemoteConfigError.missingBaseURL
-        }
+    func fetchPublisherConfig(remoteUrl: URL, publisherId: String) async throws -> RemotePublisherConfiguration {
+        try await fetch(
+            remoteUrl: remoteUrl,
+            pathComponents: ["publishers", publisherId],
+            as: RemotePublisherConfiguration.self
+        )
+    }
 
-        let requestURL = baseURL
-            .appendingPathComponent("publishers")
-            .appendingPathComponent("\(publisherId)")
-            .appendingPathComponent("ad-configs")
-            .appendingPathComponent("\(adConfigId)")
+    func fetchAdUnitConfigs(remoteUrl: URL, publisherId: String) async throws -> [RemoteAdConfiguration] {
+        try await fetch(
+            remoteUrl: remoteUrl,
+            pathComponents: ["publishers", publisherId, "ad-configs"],
+            as: [RemoteAdConfiguration].self
+        )
+    }
+
+    func fetchAdUnitConfig(remoteUrl: URL, publisherId: String, adConfigId: String) async throws -> RemoteAdConfiguration {
+        try await fetch(
+            remoteUrl: remoteUrl,
+            pathComponents: ["publishers", publisherId, "ad-configs", adConfigId],
+            as: RemoteAdConfiguration.self
+        )
+    }
+}
+
+// MARK: - Private
+
+private extension RemoteConfigFetcher {
+    func fetch<T: Decodable>(
+        remoteUrl: URL,
+        pathComponents: [String],
+        as type: T.Type
+    ) async throws -> T {
+        let requestURL = pathComponents.reduce(remoteUrl) { url, component in
+            url.appendingPathComponent(component)
+        }
 
         let (data, response) = try await URLSession.shared.data(from: requestURL)
 
@@ -30,15 +62,9 @@ public final class RemoteConfigFetcher {
         }
 
         do {
-            return try JSONDecoder().decode(RemoteAdConfiguration.self, from: data)
+            return try JSONDecoder().decode(T.self, from: data)
         } catch {
             throw RemoteConfigError.decodingFailed(error)
         }
     }
-}
-
-public enum RemoteConfigError: Error {
-    case missingBaseURL
-    case invalidResponse
-    case decodingFailed(Error)
 }
