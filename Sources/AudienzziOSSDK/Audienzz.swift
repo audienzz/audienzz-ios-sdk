@@ -36,7 +36,10 @@ public class Audienzz: NSObject {
         set { Prebid.shared.prebidServerAccountId = newValue }
     }
 
-    public var pbsDebug = false
+    public var pbsDebug: Bool {
+        get { Prebid.shared.pbsDebug }
+        set { Prebid.shared.pbsDebug = newValue }
+    }
 
     public var customHeaders: [String: String] {
         get { Prebid.shared.customHeaders }
@@ -82,6 +85,79 @@ public class Audienzz: NSObject {
         do {
             try Prebid.initializeSDK(
                 serverURL: customPrebidServerURL,
+                gadMobileAdsVersion: gadMobileAdsVersion
+            ) { status, error in
+                if let error = error {
+                    AULogEvent.logDebug(
+                        "Initialization Error: \(error.localizedDescription)"
+                    )
+                    return
+                }
+
+                self.handleInitializationResultStatus(status: status)
+                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
+            }
+        } catch {
+            AULogEvent.logDebug(
+                "Audienzz SDK initialization failed with error: \(error.localizedDescription)"
+            )
+        }
+    }
+
+    public func configureWithRemoteSDK(
+        gadMobileAdsVersion: String? = nil,
+        enablePPID: Bool = false
+    ) async throws {
+        try await AudienzzRemoteConfig.shared.fetchPublisherConfig()
+
+        guard let publisherConfig = AudienzzRemoteConfig.shared.publisherConfig else {
+            AULogEvent.logDebug(
+                "Initialization Failed because PrebidUrl is empty"
+            )
+            return
+        }
+
+        setupRemotePrebid(
+            publisherConfig.ortb?.schain?.sellerId ?? "1",
+            prebidServerAccountId: publisherConfig.prebidServer.accountId,
+            prebidStatusUrl: publisherConfig.prebidServer.statusUrl
+        )
+
+        if let schain = publisherConfig.ortb?.schain {
+            let schainJson = """
+            {
+                "source": {
+                    "ext": {
+                        "schain": {
+                            "complete": 1,
+                            "nodes": [{
+                                "asi": "\(schain.advertisingSystemDomain)",
+                                "sid": "\(schain.sellerId)",
+                                "hp": 1
+                            }],
+                            "ver": "1.0"
+                        }
+                    }
+                }
+            }
+            """
+            setSchainObject(schain: schainJson)
+        }
+
+        if let ortb = publisherConfig.ortb {
+            AUTargeting.shared.publisherName = ortb.publisherName
+            AUTargeting.shared.domain = ortb.domain
+        }
+
+        if let iosOrtb = publisherConfig.ios?.ortb {
+            AUTargeting.shared.storeURL = iosOrtb.storeUrl
+            AUTargeting.shared.sourceapp = iosOrtb.sourceApp
+            AUTargeting.shared.itunesID = iosOrtb.bundleId
+        }
+
+        do {
+            try Prebid.initializeSDK(
+                serverURL: publisherConfig.prebidServer.url,
                 gadMobileAdsVersion: gadMobileAdsVersion
             ) { status, error in
                 if let error = error {
@@ -226,6 +302,16 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = customStatusEndpoint
+    }
+
+    private func setupRemotePrebid(
+        _ companyId: String,
+        prebidServerAccountId: String,
+        prebidStatusUrl: String
+    ) {
+        AUEventsManager.shared.configure(companyId: companyId)
+        Prebid.shared.prebidServerAccountId = prebidServerAccountId
+        Prebid.shared.customStatusEndpoint = prebidStatusUrl
     }
 
     private func handleInitializationResultStatus(

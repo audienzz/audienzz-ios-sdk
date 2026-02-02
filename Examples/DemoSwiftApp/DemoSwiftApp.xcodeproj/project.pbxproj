@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		50131FE32EAFABA4001FDD88 /* RemoteConfigViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50131FE22EAFAB9D001FDD88 /* RemoteConfigViewController.swift */; };
 		58076A172D3AB4D70043DE9A /* AdaptiveViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58076A162D3AB4CD0043DE9A /* AdaptiveViewController.swift */; };
 		586754092C4FA35B005937C2 /* MainNavigationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754062C4FA35B005937C2 /* MainNavigationViewController.swift */; };
 		5867540A2C4FA35B005937C2 /* SeparateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754072C4FA35B005937C2 /* SeparateViewController.swift */; };
@@ -46,6 +47,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		50131FE22EAFAB9D001FDD88 /* RemoteConfigViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigViewController.swift; sourceTree = "<group>"; };
 		58076A162D3AB4CD0043DE9A /* AdaptiveViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveViewController.swift; sourceTree = "<group>"; };
 		586754062C4FA35B005937C2 /* MainNavigationViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainNavigationViewController.swift; sourceTree = "<group>"; };
 		586754072C4FA35B005937C2 /* SeparateViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeparateViewController.swift; sourceTree = "<group>"; };
@@ -261,6 +263,7 @@
 		589A87592CC67E7700977099 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				50131FE22EAFAB9D001FDD88 /* RemoteConfigViewController.swift */,
 				91A33C822E37A0B300229C19 /* TargetingTestingViewController.swift */,
 				58F6F2A32D47E596002283D8 /* CPULoaderViewController.swift */,
 				58C73FB12B9F0EB500AE52EC /* ExamplesViewController.swift */,
@@ -419,6 +422,7 @@
 				5867543C2C4FA3D4005937C2 /* ExamplesViewController_RenderingRewarded.swift in Sources */,
 				586754402C4FA480005937C2 /* UIViewExtension.swift in Sources */,
 				5867543A2C4FA3D4005937C2 /* SeparateViewController_RenderingInterstitial.swift in Sources */,
+				50131FE32EAFABA4001FDD88 /* RemoteConfigViewController.swift in Sources */,
 				586754382C4FA3D4005937C2 /* SeparateViewController_RenderingBanner.swift in Sources */,
 				586754202C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift in Sources */,
 				91A33C832E37A0DB00229C19 /* TargetingTestingViewController.swift in Sources */,
@@ -577,6 +581,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DemoSwiftApp/Info.plist;
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This app uses your data to personalize ads and improve your experience.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -611,6 +616,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DemoSwiftApp/Info.plist;
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This app uses your data to personalize ads and improve your experience.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
