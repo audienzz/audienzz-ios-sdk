@@ -23,6 +23,7 @@ fileprivate let keyVisitorId = "keyVisitorId"
 class AUEventsManager: AULogEventType {
     static let shared = AUEventsManager()
     private var impressionManager = AUScreenImpressionManager()
+    private let storageQueue = DispatchQueue(label: "org.audienzz.events.storage")
     
     private var visitorId: String = "visitorId"
     private var companyId: String = "companyId"
@@ -75,11 +76,12 @@ class AUEventsManager: AULogEventType {
     }
     
     func addEvent(event: AUEventDB) {
-        var events: [AUEventDB] = storage?.events ?? []
-        events.append(event)
-        
-        storage?.events = events
-        updateTimer()
+        storageQueue.async { [weak self] in
+            self?.storage?.addEvent(event)
+            DispatchQueue.main.async {
+                self?.updateTimer()
+            }
+        }
     }
     
     deinit {
@@ -111,12 +113,14 @@ fileprivate extension AUEventsManager {
     }
     
     func checkEventsForBatches() {
-        guard let events = storage?.events else { return }
-        
-        AULogEvent.logDebug("current Network Status: \(networkManager.isConnection)")
-        
-        if !events.isEmpty && networkManager.isConnection {
-            sentEventsToServer(events)
+        storageQueue.async { [weak self] in
+            guard let self = self, let events = self.storage?.events else { return }
+            
+            AULogEvent.logDebug("current Network Status: \(self.networkManager.isConnection)")
+            
+            if !events.isEmpty && self.networkManager.isConnection {
+                self.sentEventsToServer(events)
+            }
         }
     }
     
@@ -208,8 +212,10 @@ fileprivate extension AUEventsManager {
     }
     
     func updateEvents(by oldEvents: [AUEventDB]) {
-        storage?.removeEvents()
-        AULogEvent.logDebug("networkManager events.cont= \(storage?.events?.count ?? 0)")
+        storageQueue.async { [weak self] in
+            self?.storage?.removeEvents()
+            AULogEvent.logDebug("networkManager events.cont= \(self?.storage?.events?.count ?? 0)")
+        }
     }
 }
 

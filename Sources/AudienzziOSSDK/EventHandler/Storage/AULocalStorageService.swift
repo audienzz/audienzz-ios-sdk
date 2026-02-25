@@ -18,6 +18,7 @@ import SQLite
 
 protocol AULocalStorageServiceType {
     var events: [AUEventDB]? { get set }
+    func addEvent(_ event: AUEventDB)
     
     func removeEvents()
 }
@@ -47,6 +48,10 @@ final class AULocalStorageService: AULocalStorageServiceType {
     func removeEvents() {
         removeAllEvents()
     }
+
+    func addEvent(_ event: AUEventDB) {
+        insertEvent(event)
+    }
 }
 
 fileprivate extension AULocalStorageService {
@@ -71,6 +76,22 @@ fileprivate extension AULocalStorageService {
         } catch let error {
             AULogEvent.logDebug(error.localizedDescription)
             return []
+        }
+    }
+    
+    func insertEvent(_ event: AUEventDB) {
+        let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
+        
+        let id = SQLite.Expression<String>("id")
+        let payload = SQLite.Expression<String>("payload")
+        
+        do {
+            let query = eventsTable.insert(or: .replace,
+                                           id <- event.id,
+                                           payload <- event.payload)
+            _ = try dataBase.run(query)
+        } catch let error {
+            AULogEvent.logDebug(error.localizedDescription)
         }
     }
     
@@ -137,4 +158,3 @@ fileprivate extension AULocalStorageService {
         }
     }
 }
-
