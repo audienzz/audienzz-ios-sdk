@@ -55,6 +55,7 @@ public final class AUStickyAdWrapperView: UIView {
     private var topConstraint: NSLayoutConstraint?
     private var childHeightConstraint: NSLayoutConstraint?
     private var heightConstraint: NSLayoutConstraint?
+    private var lastAppliedOffset: CGFloat = .greatestFiniteMagnitude
 
     // MARK: - Init
 
@@ -143,7 +144,7 @@ public final class AUStickyAdWrapperView: UIView {
 
     private func updatePosition() {
         guard isEnabled, let scrollView else {
-            topConstraint?.constant = 0
+            applyChildOffset(0)
             return
         }
 
@@ -157,6 +158,12 @@ public final class AUStickyAdWrapperView: UIView {
         // wrapperTop/Bottom relative to the visible viewport (not content)
         let wrapperTop = frameInScrollView.minY - scrollView.contentOffset.y
         let wrapperBottom = wrapperTop + bounds.height
+
+        // Fast path: skip off-screen wrappers to reduce per-scroll cost.
+        let viewportHeight = scrollView.bounds.height
+        if wrapperBottom < -viewportHeight || wrapperTop > viewportHeight * 2 {
+            return
+        }
 
         let maxTop = max(0, bounds.height - childHeight)
 
@@ -173,8 +180,7 @@ public final class AUStickyAdWrapperView: UIView {
         }
 
         let clamped = min(max(newTop, 0), maxTop)
-        guard abs(clamped - (topConstraint?.constant ?? 0)) > 0.5 else { return }
-        topConstraint?.constant = clamped
+        applyChildOffset(clamped)
     }
 
     private func resolvedChildHeight() -> CGFloat {
@@ -194,5 +200,13 @@ public final class AUStickyAdWrapperView: UIView {
         }
 
         return maxHeight
+    }
+
+    private func applyChildOffset(_ offset: CGFloat) {
+        guard abs(offset - lastAppliedOffset) > 0.5 else { return }
+        lastAppliedOffset = offset
+
+        // Transform avoids layout passes that would happen on each constraint change.
+        childView?.transform = CGAffineTransform(translationX: 0, y: offset)
     }
 }

@@ -105,8 +105,21 @@ final class StickyAdExampleViewController: UIViewController {
         let banner = AUBannerView(configId: kConfigId, adSize: kAdSize, adFormats: [.banner])
         bannerView = banner
 
+        // Full-width host view keeps the wrapper width while centering the fixed-size banner.
+        let centeredBannerHost = UIView()
+        centeredBannerHost.translatesAutoresizingMaskIntoConstraints = false
+        banner.translatesAutoresizingMaskIntoConstraints = false
+        centeredBannerHost.addSubview(banner)
+        NSLayoutConstraint.activate([
+            banner.centerXAnchor.constraint(equalTo: centeredBannerHost.centerXAnchor),
+            banner.topAnchor.constraint(equalTo: centeredBannerHost.topAnchor),
+            banner.bottomAnchor.constraint(equalTo: centeredBannerHost.bottomAnchor),
+            banner.widthAnchor.constraint(equalToConstant: kAdSize.width),
+            banner.heightAnchor.constraint(equalToConstant: kAdSize.height),
+        ])
+
         // Sticky wrapper — attach scroll view after layout pass
-        let wrapper = AUStickyAdWrapperView(adView: banner, maxHeight: kMaxHeight)
+        let wrapper = AUStickyAdWrapperView(adView: centeredBannerHost, maxHeight: kMaxHeight)
         stickyWrapper = wrapper
         contentStack.addArrangedSubview(wrapper)
 
