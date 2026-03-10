@@ -35,6 +35,7 @@ enum AdTypeExample: String {
     case adaptive = "Adaptive - 'multi-size GAM'"
     case targetingTesting = "Targeting Testing Page"
     case remoteConfig = "Remote Configuration Testing Page"
+    case fixedBanner = "Fixed Banner Example"
 
     var indexRow: Int {
         switch self {
@@ -81,7 +82,8 @@ class MainNavigationViewController: UIViewController {
         .rewardedOrigin,
         .cpu,
         .targetingTesting,
-        .remoteConfig
+        .remoteConfig,
+        .fixedBanner
 //        .bannerRender,
 //        .bannerRenderVideo,
 //        .interstitialRender,
@@ -160,6 +162,9 @@ extension MainNavigationViewController: UITableViewDelegate, UITableViewDataSour
             let destination = mainStoryboard.instantiateViewController(
                 withIdentifier: "RemoteConfigViewController"
             ) as! RemoteConfigViewController
+            self.navigationController?.pushViewController(destination, animated: true)
+        case .fixedBanner:
+            let destination = FixedBannerViewController()
             self.navigationController?.pushViewController(destination, animated: true)
         }
         

@@ -31,6 +31,12 @@ public class AUBannerView: AUAdView {
     public var videoParameters: AUVideoParameters?
     public var bannerParameters: AUBannerParameters?
 
+    /// The creative size determined by the last winning Prebid bid.
+    /// Populated from `hb_size` in the GAM request's `customTargeting` after `fetchDemand`
+    /// completes — no WKWebView dependency. `nil` when Prebid did not win or `hb_size` is absent.
+    /// Reliable alternative to `AUAdViewUtils.findCreativeSize` for multisize banner resizing.
+    public internal(set) var lastPrebidCreativeSize: CGSize?
+
     /**
      Initialize banner view
      Lazy load is true by default.
