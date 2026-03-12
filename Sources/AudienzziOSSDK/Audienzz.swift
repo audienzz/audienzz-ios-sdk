@@ -14,6 +14,7 @@
  */
 
 import Foundation
+import GoogleMobileAds
 import PrebidMobile
 
 private let customPrebidServerURL = "https://ib.adnxs.com/openrtb2/prebid"
@@ -302,6 +303,7 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = customStatusEndpoint
+        MobileAds.shared.applicationVolume = 0
     }
 
     private func setupRemotePrebid(
@@ -312,6 +314,7 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = prebidStatusUrl
+        MobileAds.shared.applicationVolume = 0
     }
 
     private func handleInitializationResultStatus(
