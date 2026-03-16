@@ -58,15 +58,28 @@ public struct RemotePublisherConfiguration: Codable {
     public struct IosConfig: Codable {
         public let ortb: AppOrtbConfig?
     }
-    
+
+    /// Google Mobile Ads global configuration, sourced from the backend publisher config.
+    public struct GamConfig: Codable {
+        /// Global app volume for GMA ad audio. Range: 0.0 (muted) – 1.0 (full volume).
+        /// Defaults to 0.0 (muted) if absent.
+        public let appVolume: Float?
+
+        enum CodingKeys: String, CodingKey {
+            case appVolume = "setAppVolume"
+        }
+    }
+
     public let id: Int
     public let prebidServer: PrebidServer
+    public let gamConfig: GamConfig?
     public let ortb: OrtbConfig?
     public let ios: IosConfig?
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case prebidServer
+        case gamConfig
         case ortb
         case ios
     }
