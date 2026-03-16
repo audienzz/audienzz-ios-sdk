@@ -67,6 +67,18 @@ class AUBannerHandler: NSObject,
     // MARK: - GADBannerViewDelegate
     func bannerViewDidReceiveAd(_ bannerView: BannerView) {
         LogEvent("bannerViewDidReceiveAd")
+
+        // Auto-resize the GAM banner to the winning Prebid creative size.
+        // `lastPrebidCreativeSize` is populated from `customTargeting["hb_size"]` after
+        // `fetchDemand` and has no dependency on WKWebView load state — it is always
+        // reliable regardless of CPU load or navigation speed.
+        // Publishers using AUBannerEventHandler no longer need to call
+        // AUAdViewUtils.findCreativeSize manually for the resize.
+        if let gamBannerView = bannerView as? AdManagerBannerView,
+           let creativeSize = auBannerView.lastPrebidCreativeSize {
+            gamBannerView.resize(adSizeFor(cgSize: creativeSize))
+        }
+
         bannerDelegate?.bannerViewDidReceiveAd?(bannerView)
     }
     func bannerView(

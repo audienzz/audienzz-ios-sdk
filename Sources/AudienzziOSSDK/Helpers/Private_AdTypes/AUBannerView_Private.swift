@@ -64,6 +64,25 @@ extension AUBannerView {
                 AUResulrCodeConverter.convertResultCodeName(resultCode)
             )
             self.isInitialAutorefresh = false
+
+            // Cache the winning creative size from Prebid's targeting keywords.
+            // Reading "hb_size" from customTargeting is synchronous and always available
+            // at this point — unlike WebView HTML scraping which can fail when the
+            // WKWebView hasn't loaded yet (rapid navigation, high CPU/memory pressure).
+            // customTargeting arrives as [AnyHashable: Any] at runtime (Prebid rebuilds
+            // the dict internally), so every value access needs an explicit `as? String`.
+            // hb_size can arrive as a plain String ("320x50") or a single-element
+            // Array (["320x50"]) depending on GAM SDK version — both are handled.
+            let rawTargeting = gamRequest.customTargeting as? [AnyHashable: Any] ?? [:]
+            let hbSizeRaw = rawTargeting["hb_size"]
+            if let str = hbSizeRaw as? String {
+                self.lastPrebidCreativeSize = AUAdViewUtils.stringToCGSize(str)
+            } else if let arr = hbSizeRaw as? [String], let first = arr.first {
+                self.lastPrebidCreativeSize = AUAdViewUtils.stringToCGSize(first)
+            } else {
+                self.lastPrebidCreativeSize = nil
+            }
+
             self.onLoadRequest?(gamRequest)
         }
     }

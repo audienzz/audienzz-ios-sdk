@@ -30,6 +30,20 @@ public final class AUAdViewUtils: NSObject {
     @objc
     public static func findCreativeSize(_ adView: UIView, success: @escaping (CGSize) -> Void, failure: @escaping (Error) -> Void) {
 
+        // Fast path: read the winning creative size from the parent AUBannerView's cache.
+        // This size is derived from the GAM request's `customTargeting["hb_size"]` key,
+        // which Prebid populates synchronously inside `fetchDemand`. It is always available
+        // when `bannerViewDidReceiveAd` fires and does NOT depend on the WKWebView having
+        // finished loading. This fixes the race condition that caused failures under rapid
+        // navigation or high CPU/memory pressure.
+        if let auBannerView = findEnclosingAUBannerView(startingAt: adView),
+           let cachedSize = auBannerView.lastPrebidCreativeSize {
+            triggerSuccess(size: cachedSize, success: success)
+            return
+        }
+
+        // Fallback: inspect WKWebView HTML for the `hb_size` keyword.
+        // May fail if the WebView hasn't loaded its content yet.
         let view = self.findView(adView) { (subView) -> Bool in
             return isWKWebView(subView)
         }
@@ -41,6 +55,17 @@ public final class AUAdViewUtils: NSObject {
         } else {
             warnAndTriggerFailure(AUFindSizeErrorFactory.noWKWebView, failure: failure)
         }
+    }
+
+    /// Walks the view hierarchy from `view` upward (including `view` itself) to find
+    /// the nearest enclosing `AUBannerView`. Returns `nil` if none is found.
+    private static func findEnclosingAUBannerView(startingAt view: UIView) -> AUBannerView? {
+        var current: UIView? = view
+        while let v = current {
+            if let auBanner = v as? AUBannerView { return auBanner }
+            current = v.superview
+        }
+        return nil
     }
 
     static func triggerSuccess(size: CGSize, success: @escaping (CGSize) -> Void) {
