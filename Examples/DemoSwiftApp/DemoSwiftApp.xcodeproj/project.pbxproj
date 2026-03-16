@@ -44,6 +44,8 @@
 		918202C32E4CAD2F006731D8 /* AudienzziOSSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 918202C22E4CAD2F006731D8 /* AudienzziOSSDK */; };
 		9187089F2E4DE86400745D19 /* AudienzziOSSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 9187089E2E4DE86400745D19 /* AudienzziOSSDK */; };
 		91A33C832E37A0DB00229C19 /* TargetingTestingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A33C822E37A0B300229C19 /* TargetingTestingViewController.swift */; };
+		A1B2C3052E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3042E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift */; };
+		A1B2C3082E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3072E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -89,6 +91,8 @@
 		58F877AE2BA09E5C0093CD63 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58F877B22BA09F7E0093CD63 /* AudienzziOSSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AudienzziOSSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		91A33C822E37A0B300229C19 /* TargetingTestingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetingTestingViewController.swift; sourceTree = "<group>"; };
+		A1B2C3042E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StickyAdExampleViewController.swift; sourceTree = "<group>"; };
+		A1B2C3072E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongArticleStickyAdsViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -184,8 +188,18 @@
 				586754152C4FA3A1005937C2 /* MultiformatAPI */,
 				5867541A2C4FA3A1005937C2 /* NativeAPI */,
 				5867541D2C4FA3A1005937C2 /* RewardedAPI */,
+				A1B2C3062E5F6A7B00ABCDEF /* StickyAdAPI */,
 			);
 			path = Original;
+			sourceTree = "<group>";
+		};
+		A1B2C3062E5F6A7B00ABCDEF /* StickyAdAPI */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3042E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift */,
+				A1B2C3072E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift */,
+			);
+			path = StickyAdAPI;
 			sourceTree = "<group>";
 		};
 		5867542D2C4FA3D4005937C2 /* BannerAPI */ = {
@@ -426,6 +440,8 @@
 				586754382C4FA3D4005937C2 /* SeparateViewController_RenderingBanner.swift in Sources */,
 				586754202C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift in Sources */,
 				91A33C832E37A0DB00229C19 /* TargetingTestingViewController.swift in Sources */,
+				A1B2C3052E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift in Sources */,
+				A1B2C3082E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

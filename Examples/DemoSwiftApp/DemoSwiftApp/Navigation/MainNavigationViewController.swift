@@ -35,6 +35,8 @@ enum AdTypeExample: String {
     case adaptive = "Adaptive - 'multi-size GAM'"
     case targetingTesting = "Targeting Testing Page"
     case remoteConfig = "Remote Configuration Testing Page"
+    case stickyAdExample = "Sticky Ad Example"
+    case longArticleStickyAds = "Long Article – 5 Sticky Ads"
 
     var indexRow: Int {
         switch self {
@@ -81,7 +83,9 @@ class MainNavigationViewController: UIViewController {
         .rewardedOrigin,
         .cpu,
         .targetingTesting,
-        .remoteConfig
+        .remoteConfig,
+        .stickyAdExample,
+        .longArticleStickyAds
 //        .bannerRender,
 //        .bannerRenderVideo,
 //        .interstitialRender,
@@ -161,8 +165,14 @@ extension MainNavigationViewController: UITableViewDelegate, UITableViewDataSour
                 withIdentifier: "RemoteConfigViewController"
             ) as! RemoteConfigViewController
             self.navigationController?.pushViewController(destination, animated: true)
+        case .stickyAdExample:
+            let destination = StickyAdExampleViewController()
+            self.navigationController?.pushViewController(destination, animated: true)
+        case .longArticleStickyAds:
+            let destination = LongArticleStickyAdsViewController()
+            self.navigationController?.pushViewController(destination, animated: true)
         }
-        
+
         tableView.deselectRow(at: indexPath, animated: false)
     }
 }
