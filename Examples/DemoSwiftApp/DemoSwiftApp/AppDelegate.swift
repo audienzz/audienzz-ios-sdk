@@ -19,37 +19,39 @@ import UIKit
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
+    private let useRemoteConfiguration = true
+
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication
             .LaunchOptionsKey: Any]?
     ) -> Bool {
         // Override point for customization after application launch.
-        Audienzz.shared.configureSDK(
-            companyId: "companyID",
-            gadMobileAdsVersion: nil,
-            enablePPID: true
-        )
 
-        // Initialize GoogleMobileAds SDK
-        MobileAds.shared.start()
-        AudienzzGAMUtils.shared.initializeGAM()
-        Audienzz.shared.setSchainObject(schain: """
-                        { "source": 
-                            { "schain": {
-                                "ver": "1.0",
-                                "complete": 1,
-                                "nodes": [
-                                    {
-                                        "asi": "netpoint-media.de",
-                                        "sid": "np-7255",
-                                        "hp": 1
-                                    }
-                                  ]
-                                }
-                            } 
-                        }
-                    """)
+        if useRemoteConfiguration {
+            AudienzzRemoteConfig.shared.configureRemote(
+                remoteUrl: URL(string: "https://dev-api.adnz.co/api/ws-sdk-config/public/v1/")!,
+                publisherId: "81"
+            )
+
+            Task {
+                try await Audienzz.shared.configureWithRemoteSDK(
+                    enablePPID: true
+                )
+
+                performAdditionalInitialization()
+            }
+        } else {
+            Audienzz.shared.configureSDK(
+                companyId: "companyID",
+                gadMobileAdsVersion: nil,
+                enablePPID: true
+            )
+
+            performAdditionalInitialization()
+            performLocalSchainInitialization()
+        }
+
         return true
     }
 
@@ -75,5 +77,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the user discards a scene session.
         // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
+    }
+}
+
+// MARK: - Private
+
+private extension AppDelegate {
+    func performAdditionalInitialization() {
+        // Initialize GoogleMobileAds SDK
+        MobileAds.shared.start()
+        AudienzzGAMUtils.shared.initializeGAM()
+        Audienzz.shared.pbsDebug = true
+        AUTargeting.shared.addGlobalTargeting(key: "test", value: "1")
+    }
+
+    func performLocalSchainInitialization() {
+        Audienzz.shared.setSchainObject(schain: """
+                        { "source": 
+                            { "schain": {
+                                "ver": "1.0",
+                                "complete": 1,
+                                "nodes": [
+                                    {
+                                        "asi": "netpoint-media.de",
+                                        "sid": "np-7255",
+                                        "hp": 1
+                                    }
+                                  ]
+                                }
+                            } 
+                        }
+                    """)
     }
 }

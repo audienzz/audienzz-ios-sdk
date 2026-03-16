@@ -34,7 +34,10 @@ enum AdTypeExample: String {
     case cpu = "CPU LOAD DEBUG"
     case adaptive = "Adaptive - 'multi-size GAM'"
     case targetingTesting = "Targeting Testing Page"
-    
+    case remoteConfig = "Remote Configuration Testing Page"
+    case stickyAdExample = "Sticky Ad Example"
+    case longArticleStickyAds = "Long Article – 5 Sticky Ads"
+
     var indexRow: Int {
         switch self {
         case .allExample:
@@ -57,6 +60,8 @@ enum AdTypeExample: String {
             return 10
         case .targetingTesting:
             return 11
+        case .remoteConfig:
+            return 12
         default: return 0
         }
     }
@@ -77,7 +82,10 @@ class MainNavigationViewController: UIViewController {
         .interstitalOriginMulti,
         .rewardedOrigin,
         .cpu,
-        .targetingTesting
+        .targetingTesting,
+        .remoteConfig,
+        .stickyAdExample,
+        .longArticleStickyAds
 //        .bannerRender,
 //        .bannerRenderVideo,
 //        .interstitialRender,
@@ -152,8 +160,19 @@ extension MainNavigationViewController: UITableViewDelegate, UITableViewDataSour
         case .targetingTesting:
             let destination = mainStoryboard.instantiateViewController(withIdentifier: "TargetingTestingViewController") as! TargetingTestingViewController
             self.navigationController?.pushViewController(destination, animated: true)
+        case .remoteConfig:
+            let destination = mainStoryboard.instantiateViewController(
+                withIdentifier: "RemoteConfigViewController"
+            ) as! RemoteConfigViewController
+            self.navigationController?.pushViewController(destination, animated: true)
+        case .stickyAdExample:
+            let destination = StickyAdExampleViewController()
+            self.navigationController?.pushViewController(destination, animated: true)
+        case .longArticleStickyAds:
+            let destination = LongArticleStickyAdsViewController()
+            self.navigationController?.pushViewController(destination, animated: true)
         }
-        
+
         tableView.deselectRow(at: indexPath, animated: false)
     }
 }

@@ -8,7 +8,7 @@
 import Foundation
 
 @objcMembers
-public class PPIDManager:  NSObject, AULogEventType {
+public class PPIDManager: NSObject, AULogEventType {
     public static let shared = PPIDManager()
     
     // MARK: - Constants

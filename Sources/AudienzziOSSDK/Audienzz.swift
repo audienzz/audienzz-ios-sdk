@@ -14,6 +14,7 @@
  */
 
 import Foundation
+import GoogleMobileAds
 import PrebidMobile
 
 private let customPrebidServerURL = "https://ib.adnxs.com/openrtb2/prebid"
@@ -36,7 +37,10 @@ public class Audienzz: NSObject {
         set { Prebid.shared.prebidServerAccountId = newValue }
     }
 
-    public var pbsDebug = false
+    public var pbsDebug: Bool {
+        get { Prebid.shared.pbsDebug }
+        set { Prebid.shared.pbsDebug = newValue }
+    }
 
     public var customHeaders: [String: String] {
         get { Prebid.shared.customHeaders }
@@ -50,8 +54,8 @@ public class Audienzz: NSObject {
 
     public static let shared = Audienzz()
 
-    public func configureSDK(companyId: String, enablePPID: Bool = false) {
-        setupPrebid(companyId)
+    public func configureSDK(companyId: String, appVolume: Float = 0, enablePPID: Bool = false) {
+        setupPrebid(companyId, appVolume: appVolume)
 
         do {
             try Prebid.initializeSDK(serverURL: customPrebidServerURL) {
@@ -75,13 +79,93 @@ public class Audienzz: NSObject {
     public func configureSDK(
         companyId: String,
         gadMobileAdsVersion: String? = nil,
+        appVolume: Float = 0,
         enablePPID: Bool = false
     ) {
-        setupPrebid(companyId)
+        setupPrebid(companyId, appVolume: appVolume)
 
         do {
             try Prebid.initializeSDK(
                 serverURL: customPrebidServerURL,
+                gadMobileAdsVersion: gadMobileAdsVersion
+            ) { status, error in
+                if let error = error {
+                    AULogEvent.logDebug(
+                        "Initialization Error: \(error.localizedDescription)"
+                    )
+                    return
+                }
+
+                self.handleInitializationResultStatus(status: status)
+                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
+            }
+        } catch {
+            AULogEvent.logDebug(
+                "Audienzz SDK initialization failed with error: \(error.localizedDescription)"
+            )
+        }
+    }
+
+    public func configureWithRemoteSDK(
+        gadMobileAdsVersion: String? = nil,
+        enablePPID: Bool = false
+    ) async throws {
+        // Apply muted default immediately so ads are always muted even if remote
+        // config is unavailable (network error, backend not ready, nil response).
+        // The value will be overridden below once the remote config is fetched.
+        applyGamAppVolume(0)
+
+        try await AudienzzRemoteConfig.shared.fetchPublisherConfig()
+
+        guard let publisherConfig = AudienzzRemoteConfig.shared.publisherConfig else {
+            AULogEvent.logDebug(
+                "Initialization Failed because PrebidUrl is empty"
+            )
+            return
+        }
+
+        setupRemotePrebid(
+            publisherConfig.ortb?.schain?.sellerId ?? "1",
+            prebidServerAccountId: publisherConfig.prebidServer.accountId,
+            prebidStatusUrl: publisherConfig.prebidServer.statusUrl,
+            appVolume: publisherConfig.gamConfig?.appVolume ?? 0
+        )
+
+        if let schain = publisherConfig.ortb?.schain {
+            let schainJson = """
+            {
+                "source": {
+                    "ext": {
+                        "schain": {
+                            "complete": 1,
+                            "nodes": [{
+                                "asi": "\(schain.advertisingSystemDomain)",
+                                "sid": "\(schain.sellerId)",
+                                "hp": 1
+                            }],
+                            "ver": "1.0"
+                        }
+                    }
+                }
+            }
+            """
+            setSchainObject(schain: schainJson)
+        }
+
+        if let ortb = publisherConfig.ortb {
+            AUTargeting.shared.publisherName = ortb.publisherName
+            AUTargeting.shared.domain = ortb.domain
+        }
+
+        if let iosOrtb = publisherConfig.ios?.ortb {
+            AUTargeting.shared.storeURL = iosOrtb.storeUrl
+            AUTargeting.shared.sourceapp = iosOrtb.sourceApp
+            AUTargeting.shared.itunesID = iosOrtb.bundleId
+        }
+
+        do {
+            try Prebid.initializeSDK(
+                serverURL: publisherConfig.prebidServer.url,
                 gadMobileAdsVersion: gadMobileAdsVersion
             ) { status, error in
                 if let error = error {
@@ -106,11 +190,12 @@ public class Audienzz: NSObject {
     /// Special method used for RN bridging initialization
     public func configureSDK_RN(
         companyId: String,
+        appVolume: Float = 0,
         enablePPID: Bool = false,
         _ completion: (() -> Void)? = nil
     ) {
         Task {
-            setupPrebid(companyId)
+            setupPrebid(companyId, appVolume: appVolume)
 
             do {
                 try Prebid.initializeSDK(serverURL: customPrebidServerURL) {
@@ -139,11 +224,12 @@ public class Audienzz: NSObject {
     public func configureSDK_RN(
         companyId: String,
         gadMobileAdsVersion: String?,
+        appVolume: Float = 0,
         enablePPID: Bool = false,
         _ completion: (() -> Void)? = nil
     ) {
         Task {
-            setupPrebid(companyId)
+            setupPrebid(companyId, appVolume: appVolume)
 
             do {
                 try Prebid.initializeSDK(
@@ -172,6 +258,23 @@ public class Audienzz: NSObject {
     }
 
     // MARK: - Public Properties (Audienzz)
+
+    /// Sets the global GMA ad audio volume.
+    ///
+    /// Can be called at any time after initialization to update the volume mid-session.
+    /// The value set here takes precedence over the backend `gamConfig.setAppVolume` for the
+    /// remainder of the session.
+    ///
+    /// - Parameter volume: Audio level in range [0.0, 1.0]. 0.0 = muted, 1.0 = full device volume.
+    ///                     Values outside the range are clamped automatically.
+    public func setAppVolume(_ volume: Float) {
+        let clamped = min(max(volume, 0), 1)
+        if clamped != volume {
+            AULogEvent.logDebug("setAppVolume: \(volume) is out of [0.0, 1.0], clamped to \(clamped)")
+        }
+        MobileAds.shared.applicationVolume = clamped
+        AULogEvent.logDebug("GMA app volume updated to \(clamped)")
+    }
 
     public var timeoutMillis: Int {
         get { Prebid.shared.timeoutMillis }
@@ -222,10 +325,29 @@ public class Audienzz: NSObject {
         AUTargeting.shared.setGlobalOrtbConfig(ortbConfig: schain)
     }
 
-    private func setupPrebid(_ companyId: String) {
+    private func setupPrebid(_ companyId: String, appVolume: Float = 0) {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = customStatusEndpoint
+        applyGamAppVolume(appVolume)
+    }
+
+    private func setupRemotePrebid(
+        _ companyId: String,
+        prebidServerAccountId: String,
+        prebidStatusUrl: String,
+        appVolume: Float = 0
+    ) {
+        AUEventsManager.shared.configure(companyId: companyId)
+        Prebid.shared.prebidServerAccountId = prebidServerAccountId
+        Prebid.shared.customStatusEndpoint = prebidStatusUrl
+        applyGamAppVolume(appVolume)
+    }
+
+    private func applyGamAppVolume(_ volume: Float) {
+        let clamped = min(max(volume, 0), 1)
+        MobileAds.shared.applicationVolume = clamped
+        AULogEvent.logDebug("GMA app volume set to \(clamped)")
     }
 
     private func handleInitializationResultStatus(
