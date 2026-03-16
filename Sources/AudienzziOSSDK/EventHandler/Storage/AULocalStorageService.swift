@@ -16,26 +16,10 @@
 import Foundation
 import SQLite
 
-protocol AULocalStorageServiceType {
-    var events: [AUEventDB]? { get set }
-    
-    func removeEvents()
-}
-
-final class AULocalStorageService: AULocalStorageServiceType {
+final actor AULocalStorageService {
     
     fileprivate let dataBase: Connection
     internal var dataBaseTest: Connection?
-    
-    var events: [AUEventDB]? {
-        get { return getEvents() }
-        set {
-            guard let events = newValue, !events.isEmpty else {
-                return
-            }
-            saveEvents(events)
-        }
-    }
     
     init() throws {
         try AUSQLiteConfigurator().configureStorage()
@@ -47,34 +31,42 @@ final class AULocalStorageService: AULocalStorageServiceType {
     func removeEvents() {
         removeAllEvents()
     }
+	
+	func setEvents(newValue: [AUEventDB]?) {
+		
+		guard let events = newValue, !events.isEmpty else { return }
+		
+		saveEvents(events)
+	}
+	
+	func getEvents() -> [AUEventDB] {
+		let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
+		
+		let id = SQLite.Expression<String>("id")
+		let payload = SQLite.Expression<String>("payload")
+		
+		do {
+			let events = Array(try dataBase.prepare(eventsTable))
+			return events.compactMap {
+				do {
+					return AUEventDB(id: try $0.get(id),
+									 payload: try $0.get(payload))
+				} catch let error {
+					AULogEvent.logDebug(error.localizedDescription)
+					return nil
+				}
+				
+			}
+		} catch let error {
+			AULogEvent.logDebug(error.localizedDescription)
+			return []
+		}
+	}
 }
 
 fileprivate extension AULocalStorageService {
-    func getEvents() -> [AUEventDB] {
-        let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
-        
-        let id = SQLite.Expression<String>("id")
-        let payload = SQLite.Expression<String>("payload")
-        
-        do {
-            let events = Array(try dataBase.prepare(eventsTable))
-            return events.compactMap {
-                do {
-                    return AUEventDB(id: try $0.get(id),
-                                     payload: try $0.get(payload))
-                } catch let error {
-                    AULogEvent.logDebug(error.localizedDescription)
-                    return nil
-                }
-                
-            }
-        } catch let error {
-            AULogEvent.logDebug(error.localizedDescription)
-            return []
-        }
-    }
     
-    func saveEvents(_ events: [AUEventDB]) {
+    private func saveEvents(_ events: [AUEventDB]) {
         let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
         
         let id = SQLite.Expression<String>("id")
@@ -93,7 +85,7 @@ fileprivate extension AULocalStorageService {
         }
     }
     
-    func removeAllEvents() {
+    private func removeAllEvents() {
         do {
             let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
             try dataBase.run(eventsTable.delete())
@@ -104,7 +96,7 @@ fileprivate extension AULocalStorageService {
     
     
     //MARK: - Migration if needed
-    func insertEvents(_ events: [AUEventDB]) {
+    private func insertEvents(_ events: [AUEventDB]) {
         let eventsTable = Table(SQLiteConstants.DataBaseTables.events)
         
         let id = Expression<String>(value: "id")
@@ -120,7 +112,7 @@ fileprivate extension AULocalStorageService {
         }
     }
     
-    func modifyEvents() {
+    private func modifyEvents() {
         // Simple data will be replace on actual when time has come
         let dictToModyfy: [String: String] = ["Kia": "KIA", "Ram": "RAM", "FIAT": "Fiat", "MINI": "Mini"]
         
