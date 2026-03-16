@@ -43,9 +43,9 @@ class AUEventsManager: AULogEventType {
     private var networkManager: AUEventsNetworkManager<AUBatchResultModel>!
     
     // MARK: - Local Storage
-    private var storage: AULocalStorageServiceType?
+    private var storage: AULocalStorageService?
     
-    private func makeLocalStorage() -> AULocalStorageServiceType? {
+    private func makeLocalStorage() -> AULocalStorageService? {
         do {
             AULogEvent.logDebug("I crate local storage")
             return try AULocalStorageService()
@@ -75,11 +75,13 @@ class AUEventsManager: AULogEventType {
     }
     
     func addEvent(event: AUEventDB) {
-        var events: [AUEventDB] = storage?.events ?? []
-        events.append(event)
-        
-        storage?.events = events
-        updateTimer()
+		Task {
+			var events = await storage?.getEvents() ?? []
+			events.append(event)
+			
+			await storage?.setEvents(newValue: events)
+			updateTimer()
+		}
     }
     
     deinit {
@@ -110,8 +112,8 @@ fileprivate extension AUEventsManager {
         startTimer()
     }
     
-    func checkEventsForBatches() {
-        guard let events = storage?.events else { return }
+    func checkEventsForBatches() async {
+        guard let events = await storage?.getEvents() else { return }
         
         AULogEvent.logDebug("current Network Status: \(networkManager.isConnection)")
         
@@ -208,8 +210,10 @@ fileprivate extension AUEventsManager {
     }
     
     func updateEvents(by oldEvents: [AUEventDB]) {
-        storage?.removeEvents()
-        AULogEvent.logDebug("networkManager events.cont= \(storage?.events?.count ?? 0)")
+		Task {
+			await storage?.removeEvents()
+			AULogEvent.logDebug("networkManager events.cont= \(await storage?.getEvents().count ?? 0)")
+		}
     }
 }
 
@@ -231,7 +235,9 @@ fileprivate extension AUEventsManager {
      }
      
      func timerFired() {
-         checkEventsForBatches()
+		 Task {
+			await checkEventsForBatches()
+		 }
      }
      
      func stopTimer() {
