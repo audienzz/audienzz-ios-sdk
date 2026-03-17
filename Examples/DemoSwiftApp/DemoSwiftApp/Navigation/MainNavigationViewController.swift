@@ -86,7 +86,7 @@ class MainNavigationViewController: UIViewController {
         .targetingTesting,
         .remoteConfig,
         .stickyAdExample,
-        .longArticleStickyAds
+        .longArticleStickyAds,
         .fixedBanner
 //        .bannerRender,
 //        .bannerRenderVideo,
