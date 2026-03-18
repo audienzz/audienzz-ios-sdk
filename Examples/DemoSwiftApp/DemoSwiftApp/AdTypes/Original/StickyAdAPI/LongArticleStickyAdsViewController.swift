@@ -17,10 +17,14 @@ import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
 
-private let kConfigId  = "37116627"
-private let kAdUnitId  = "/21775744923/example/fixed-size-banner"
-private let kAdSize    = CGSize(width: 300, height: 250)
+private let kBannerAdConfigId = "46"
 private let kMaxHeight: CGFloat = 450
+
+private func parseAdSize(_ s: String) -> CGSize? {
+    let p = s.split(separator: "x")
+    guard p.count == 2, let w = Double(p[0]), let h = Double(p[1]) else { return nil }
+    return CGSize(width: w, height: h)
+}
 
 /// Demonstrates five ``AUStickyAdWrapperView`` instances embedded inside a
 /// long article-style scroll view. Each 300×250 banner stays pinned to the
@@ -129,13 +133,24 @@ final class LongArticleStickyAdsViewController: UIViewController {
     // MARK: - Sticky Ad Factory
 
     private func addStickyAd(number: Int) {
+        guard let rc = AudienzzRemoteConfig.shared.remoteConfig(for: kBannerAdConfigId) else {
+            print("[LongArticleStickyAdsViewController] Remote ad config '\(kBannerAdConfigId)' not yet available.")
+            return
+        }
+        let configId = rc.prebidConfig.placementId
+        let gamUnitId = rc.gamConfig.adUnitPath
+        let adSize = rc.gamConfig.adSizes
+            .compactMap { parseAdSize($0) }
+            .sorted { $0.width * $0.height > $1.width * $1.height }
+            .first ?? CGSize(width: 300, height: 250)
+
         // GAM banner
-        let gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: kAdSize))
-        gamBanner.adUnitID = kAdUnitId
+        let gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: adSize))
+        gamBanner.adUnitID = gamUnitId
         gamBanner.rootViewController = self
 
         // Audienzz banner
-        let banner = AUBannerView(configId: kConfigId, adSize: kAdSize, adFormats: [.banner])
+        let banner = AUBannerView(configId: configId, adSize: adSize, adFormats: [.banner])
         bannerViews.append(banner)
 
         // Center the fixed-size banner inside a full-width host view so the
@@ -148,8 +163,8 @@ final class LongArticleStickyAdsViewController: UIViewController {
             banner.centerXAnchor.constraint(equalTo: host.centerXAnchor),
             banner.topAnchor.constraint(equalTo: host.topAnchor),
             banner.bottomAnchor.constraint(equalTo: host.bottomAnchor),
-            banner.widthAnchor.constraint(equalToConstant: kAdSize.width),
-            banner.heightAnchor.constraint(equalToConstant: kAdSize.height),
+            banner.widthAnchor.constraint(equalToConstant: adSize.width),
+            banner.heightAnchor.constraint(equalToConstant: adSize.height),
         ])
 
         // Wrap in a sticky container

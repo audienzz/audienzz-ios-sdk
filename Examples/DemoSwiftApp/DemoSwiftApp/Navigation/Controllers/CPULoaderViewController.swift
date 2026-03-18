@@ -17,17 +17,9 @@ import GoogleInteractiveMediaAds
 import GoogleMobileAds
 import UIKit
 
-// 300x250
-private let storedImpDisplayBanner_320x250 = "33994718"
-private let gamAdUnitDisplayBannerOriginal_320x250 =
-    "/21775744923/example/fixed-size-banner"
+private let kBannerAdConfigId = "46"
 
-// 320x50
-private let storedImpDisplayBanner = "37116627"
-private let gamAdUnitDisplayBannerOriginal =
-    "/21775744923/example/fixed-size-banner"
-
-private let adSizeSmall = CGSize(width: 320, height: 50)
+private let adSizeSmall  = CGSize(width: 320, height: 50)
 private let adSizeMiddle = CGSize(width: 300, height: 250)
 
 /*
@@ -66,7 +58,12 @@ private let adSizeMiddle = CGSize(width: 300, height: 250)
 class CPULoaderViewController: UIViewController {
     @IBOutlet private weak var tableview: UITableView!
 
-    fileprivate var gams: [String] = []
+    /// One entry per row: the ad size to display (alternates small/middle).
+    fileprivate var sizes: [CGSize] = []
+
+    /// Resolved at viewDidLoad from remote config "46".
+    fileprivate var resolvedConfigId: String = ""
+    fileprivate var resolvedGamUnit: String = ""
 
     ///create loaca reuse banners
     fileprivate var gamBannerOne: AdManagerBannerView = AdManagerBannerView(
@@ -91,17 +88,17 @@ class CPULoaderViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        var index = 0
+        // Resolve ad unit values from remote config.
+        if let rc = AudienzzRemoteConfig.shared.remoteConfig(for: kBannerAdConfigId) {
+            resolvedConfigId = rc.prebidConfig.placementId
+            resolvedGamUnit  = rc.gamConfig.adUnitPath
+        } else {
+            print("[CPULoaderViewController] Remote ad config '\(kBannerAdConfigId)' not yet available — ads will not load.")
+        }
 
-        /// just add 1000 adunit ids for example and setup for working example
-        while index < 1000 {
-            if index % 2 == 0 {
-                gams.append(gamAdUnitDisplayBannerOriginal)
-            } else {
-                gams.append(gamAdUnitDisplayBannerOriginal_320x250)
-            }
-
-            index += 1
+        // Build the row list: 1 000 rows alternating 320×50 and 300×250.
+        for index in 0..<1000 {
+            sizes.append(index % 2 == 0 ? adSizeSmall : adSizeMiddle)
         }
 
         let gamBanners: [AdManagerBannerView] = [
@@ -134,7 +131,7 @@ extension CPULoaderViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int)
         -> Int
     {
-        gams.count
+        sizes.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
@@ -146,22 +143,12 @@ extension CPULoaderViewController: UITableViewDataSource, UITableViewDelegate {
             ) as? CPUTableCell
         else { fatalError() }
 
-        /// prepare setting for setup cell
+        let adSize = sizes[indexPath.row]
         let selectIndex: Int = indexPath.row % 6
-        var adSize = CGSize.zero
-        let gamID = gams[indexPath.row]
-
-        if gamID == gamAdUnitDisplayBannerOriginal {
-            adSize = adSizeSmall
-        } else {
-            adSize = adSizeMiddle
-        }
 
         let gamRequest = AdManagerRequest()
         var localGAMBanner: AdManagerBannerView!
-        /// prepare reuse  banner
 
-        /// setup current reusable banner
         switch selectIndex {
         case 0:
             localGAMBanner = gamBannerOne
@@ -179,11 +166,11 @@ extension CPULoaderViewController: UITableViewDataSource, UITableViewDelegate {
             break
         }
 
-        ///setup local banner settings and setup cell
         localGAMBanner.resize(adSizeFor(cgSize: adSize))
-        localGAMBanner.adUnitID = gamID
+        localGAMBanner.adUnitID = resolvedGamUnit
         cell.setupViews(
-            by: gamID,
+            configId: resolvedConfigId,
+            adSize: adSize,
             gamBanner: localGAMBanner,
             gamRequest: gamRequest
         )
@@ -198,13 +185,7 @@ extension CPULoaderViewController: UITableViewDataSource, UITableViewDelegate {
         _ tableView: UITableView,
         heightForRowAt indexPath: IndexPath
     ) -> CGFloat {
-        let gamID = gams[indexPath.row]
-
-        if gamID == gamAdUnitDisplayBannerOriginal {
-            return adSizeSmall.height
-        } else {
-            return adSizeMiddle.height
-        }
+        sizes[indexPath.row].height
     }
 
     func tableView(
@@ -243,23 +224,13 @@ class CPUTableCell: UITableViewCell {
     }
 
     func setupViews(
-        by gamID: String,
+        configId: String,
+        adSize: CGSize,
         gamBanner: AdManagerBannerView,
         gamRequest: AdManagerRequest
     ) {
-        var adSize = CGSize.zero
-        var configID: String!
-
-        if gamID == gamAdUnitDisplayBannerOriginal {
-            adSize = adSizeSmall
-            configID = storedImpDisplayBanner
-        } else {
-            adSize = adSizeMiddle
-            configID = storedImpDisplayBanner_320x250
-        }
-
         bannerView = AUBannerView(
-            configId: configID,
+            configId: configId,
             adSize: adSize,
             adFormats: [.banner],
             isLazyLoad: true
@@ -271,7 +242,7 @@ class CPUTableCell: UITableViewCell {
         bannerView.adUnitConfiguration.stopAutoRefresh()
         /// if autorefresh is nessesary please stop it.
 
-        let handler = AUBannerEventHandler(adUnitId: gamID, gamView: gamBanner)
+        let handler = AUBannerEventHandler(adUnitId: gamBanner.adUnitID ?? "", gamView: gamBanner)
 
         bannerView.createAd(
             with: gamRequest,
