@@ -14,6 +14,8 @@
 		5867541F2C4FA3A1005937C2 /* ExamplesViewController_BannerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5867540B2C4FA3A1005937C2 /* ExamplesViewController_BannerAPI.swift */; };
 		586754202C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5867540C2C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift */; };
 		AA000001AABBCCDD00112233 /* FixedBannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002AABBCCDD00112233 /* FixedBannerViewController.swift */; };
+		BB000001AABBCCDD00112233 /* WrongBannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000002AABBCCDD00112233 /* WrongBannerViewController.swift */; };
+		CC000001AABBCCDD00112233 /* CorrectBannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000002AABBCCDD00112233 /* CorrectBannerViewController.swift */; };
 		586754212C4FA3A1005937C2 /* ExamplesViewController_InstreamAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5867540E2C4FA3A1005937C2 /* ExamplesViewController_InstreamAPI.swift */; };
 		586754222C4FA3A1005937C2 /* ExamplesViewController_InterstitialAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754102C4FA3A1005937C2 /* ExamplesViewController_InterstitialAPI.swift */; };
 		586754232C4FA3A1005937C2 /* SeparateViewController_InterstitialAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754112C4FA3A1005937C2 /* SeparateViewController_InterstitialAPI.swift */; };
@@ -57,6 +59,8 @@
 		5867540B2C4FA3A1005937C2 /* ExamplesViewController_BannerAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_BannerAPI.swift; sourceTree = "<group>"; };
 		5867540C2C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeparateViewController_BannerAPI.swift; sourceTree = "<group>"; };
 		AA000002AABBCCDD00112233 /* FixedBannerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedBannerViewController.swift; sourceTree = "<group>"; };
+		BB000002AABBCCDD00112233 /* WrongBannerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WrongBannerViewController.swift; sourceTree = "<group>"; };
+		CC000002AABBCCDD00112233 /* CorrectBannerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CorrectBannerViewController.swift; sourceTree = "<group>"; };
 		5867540E2C4FA3A1005937C2 /* ExamplesViewController_InstreamAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_InstreamAPI.swift; sourceTree = "<group>"; };
 		586754102C4FA3A1005937C2 /* ExamplesViewController_InterstitialAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_InterstitialAPI.swift; sourceTree = "<group>"; };
 		586754112C4FA3A1005937C2 /* SeparateViewController_InterstitialAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeparateViewController_InterstitialAPI.swift; sourceTree = "<group>"; };
@@ -125,6 +129,8 @@
 				5867540B2C4FA3A1005937C2 /* ExamplesViewController_BannerAPI.swift */,
 				5867540C2C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift */,
 				AA000002AABBCCDD00112233 /* FixedBannerViewController.swift */,
+				BB000002AABBCCDD00112233 /* WrongBannerViewController.swift */,
+				CC000002AABBCCDD00112233 /* CorrectBannerViewController.swift */,
 			);
 			path = BannerAPI;
 			sourceTree = "<group>";
@@ -443,6 +449,8 @@
 				586754382C4FA3D4005937C2 /* SeparateViewController_RenderingBanner.swift in Sources */,
 				586754202C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift in Sources */,
 				AA000001AABBCCDD00112233 /* FixedBannerViewController.swift in Sources */,
+				BB000001AABBCCDD00112233 /* WrongBannerViewController.swift in Sources */,
+				CC000001AABBCCDD00112233 /* CorrectBannerViewController.swift in Sources */,
 				91A33C832E37A0DB00229C19 /* TargetingTestingViewController.swift in Sources */,
 				A1B2C3052E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift in Sources */,
 				A1B2C3082E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift in Sources */,
