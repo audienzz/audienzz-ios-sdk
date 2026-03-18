@@ -17,35 +17,53 @@ import GoogleInteractiveMediaAds
 import GoogleMobileAds
 import UIKit
 
-// 320x250
-private let storedImpDisplayBanner_320x250 = "33994718"
-private let gamAdUnitDisplayBannerOriginal_320x250 =
-    "/21775744923/example/fixed-size-banner"
+private let kBannerAdConfigId = "46"
 
-// 320x50
-private let storedImpDisplayBanner = "prebid-demo-banner-320-50"
-private let gamAdUnitDisplayBannerOriginal =
-    "ca-app-pub-3940256099942544/2934735716"
-
-private let adSizeSmall = CGSize(width: 320, height: 50)
+private let adSizeSmall  = CGSize(width: 320, height: 50)
 private let adSizeMiddle = CGSize(width: 300, height: 250)
 
 /*
- * How to Reduce CPU Usage of GAMBannerView *
-
- In this example, we reuse existing GAMBannerView instances instead of creating new ones for every UITableViewCell. This significantly reduces CPU load, as frequent creation and destruction of banner views cause unnecessary resource usage, ad reloading, and rendering overhead.
-
- Additionally, CPU usage can be affected by animations and UI elements inside the WebView, which are embedded within GAM banners. If the banners contain rich media elements, such as videos, interactive ads, or animated content, they require additional rendering and processing power, increasing CPU load.
-
- The main reason CPU load in GAM -  Each native/banner ad has a WKWebView and many WKWebViews take CPU resources -
- https://stackoverflow.com/a/69893642
-
+ * CPU Load Debug — Banner View Reuse *
+ *
+ * This screen demonstrates how to significantly reduce CPU usage in a
+ * high-frequency banner feed (1 000 rows, alternating 320×50 and 300×250).
+ *
+ * THE PROBLEM
+ * ───────────
+ * Each GAM/Prebid banner embeds a WKWebView. Creating and destroying a
+ * WKWebView for every UITableViewCell that scrolls on/off screen is
+ * expensive: the WebView must be initialised, load the ad creative, run
+ * JavaScript, and tear itself down — over and over. On long feeds this
+ * causes measurable CPU spikes and jank.
+ * Reference: https://stackoverflow.com/a/69893642
+ *
+ * Additionally, rich-media creatives (video, animated/interactive content)
+ * keep the GPU busy for rendering, compounding the load even further.
+ *
+ * THE SOLUTION — BANNER REUSE
+ * ───────────────────────────
+ * Instead of creating a new AdManagerBannerView per cell, we pre-allocate
+ * a small, fixed pool of banner views (6 in this example) and rotate them
+ * across all rows using modular index arithmetic. The WKWebView is kept
+ * alive and simply reassigned to whichever cell is currently visible.
+ *
+ * Additional tips shown here:
+ *   • stopAutoRefresh() — disables the built-in GAM refresh timer while
+ *     the banner is being reused; avoids spurious reload requests when the
+ *     cell is not on screen.
+ *   • isLazyLoad: true — defers the Prebid bid request until the banner
+ *     actually enters the viewport, reducing wasted bid calls.
 */
 
 class CPULoaderViewController: UIViewController {
     @IBOutlet private weak var tableview: UITableView!
 
-    fileprivate var gams: [String] = []
+    /// One entry per row: the ad size to display (alternates small/middle).
+    fileprivate var sizes: [CGSize] = []
+
+    /// Resolved at viewDidLoad from remote config "46".
+    fileprivate var resolvedConfigId: String = ""
+    fileprivate var resolvedGamUnit: String = ""
 
     ///create loaca reuse banners
     fileprivate var gamBannerOne: AdManagerBannerView = AdManagerBannerView(
@@ -70,17 +88,17 @@ class CPULoaderViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        var index = 0
+        // Resolve ad unit values from remote config.
+        if let rc = AudienzzRemoteConfig.shared.remoteConfig(for: kBannerAdConfigId) {
+            resolvedConfigId = rc.prebidConfig.placementId
+            resolvedGamUnit  = rc.gamConfig.adUnitPath
+        } else {
+            print("[CPULoaderViewController] Remote ad config '\(kBannerAdConfigId)' not yet available — ads will not load.")
+        }
 
-        /// just add 1000 adunit ids for example and setup for working example
-        while index < 1000 {
-            if index % 2 == 0 {
-                gams.append(gamAdUnitDisplayBannerOriginal)
-            } else {
-                gams.append(gamAdUnitDisplayBannerOriginal_320x250)
-            }
-
-            index += 1
+        // Build the row list: 1 000 rows alternating 320×50 and 300×250.
+        for index in 0..<1000 {
+            sizes.append(index % 2 == 0 ? adSizeSmall : adSizeMiddle)
         }
 
         let gamBanners: [AdManagerBannerView] = [
@@ -113,7 +131,7 @@ extension CPULoaderViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int)
         -> Int
     {
-        gams.count
+        sizes.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
@@ -125,22 +143,12 @@ extension CPULoaderViewController: UITableViewDataSource, UITableViewDelegate {
             ) as? CPUTableCell
         else { fatalError() }
 
-        /// prepare setting for setup cell
+        let adSize = sizes[indexPath.row]
         let selectIndex: Int = indexPath.row % 6
-        var adSize = CGSize.zero
-        let gamID = gams[indexPath.row]
-
-        if gamID == gamAdUnitDisplayBannerOriginal {
-            adSize = adSizeSmall
-        } else {
-            adSize = adSizeMiddle
-        }
 
         let gamRequest = AdManagerRequest()
         var localGAMBanner: AdManagerBannerView!
-        /// prepare reuse  banner
 
-        /// setup current reusable banner
         switch selectIndex {
         case 0:
             localGAMBanner = gamBannerOne
@@ -158,11 +166,11 @@ extension CPULoaderViewController: UITableViewDataSource, UITableViewDelegate {
             break
         }
 
-        ///setup local banner settings and setup cell
         localGAMBanner.resize(adSizeFor(cgSize: adSize))
-        localGAMBanner.adUnitID = gamID
+        localGAMBanner.adUnitID = resolvedGamUnit
         cell.setupViews(
-            by: gamID,
+            configId: resolvedConfigId,
+            adSize: adSize,
             gamBanner: localGAMBanner,
             gamRequest: gamRequest
         )
@@ -177,13 +185,7 @@ extension CPULoaderViewController: UITableViewDataSource, UITableViewDelegate {
         _ tableView: UITableView,
         heightForRowAt indexPath: IndexPath
     ) -> CGFloat {
-        let gamID = gams[indexPath.row]
-
-        if gamID == gamAdUnitDisplayBannerOriginal {
-            return adSizeSmall.height
-        } else {
-            return adSizeMiddle.height
-        }
+        sizes[indexPath.row].height
     }
 
     func tableView(
@@ -222,23 +224,13 @@ class CPUTableCell: UITableViewCell {
     }
 
     func setupViews(
-        by gamID: String,
+        configId: String,
+        adSize: CGSize,
         gamBanner: AdManagerBannerView,
         gamRequest: AdManagerRequest
     ) {
-        var adSize = CGSize.zero
-        var configID: String!
-
-        if gamID == gamAdUnitDisplayBannerOriginal {
-            adSize = adSizeSmall
-            configID = storedImpDisplayBanner
-        } else {
-            adSize = adSizeMiddle
-            configID = storedImpDisplayBanner_320x250
-        }
-
         bannerView = AUBannerView(
-            configId: configID,
+            configId: configId,
             adSize: adSize,
             adFormats: [.banner],
             isLazyLoad: true
@@ -250,7 +242,7 @@ class CPUTableCell: UITableViewCell {
         bannerView.adUnitConfiguration.stopAutoRefresh()
         /// if autorefresh is nessesary please stop it.
 
-        let handler = AUBannerEventHandler(adUnitId: gamID, gamView: gamBanner)
+        let handler = AUBannerEventHandler(adUnitId: gamBanner.adUnitID ?? "", gamView: gamBanner)
 
         bannerView.createAd(
             with: gamRequest,

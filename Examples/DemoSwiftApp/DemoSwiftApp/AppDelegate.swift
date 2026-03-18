@@ -30,8 +30,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         if useRemoteConfiguration {
             AudienzzRemoteConfig.shared.configureRemote(
-                remoteUrl: URL(string: "https://dev-api.adnz.co/api/ws-sdk-config/public/v1/")!,
-                publisherId: "81"
+                remoteUrl: URL(string: "https://api.adnz.co/api/ws-sdk-config/public/v1/")!,
+                publisherId: "35"
             )
 
             Task {
