@@ -17,29 +17,50 @@ import GoogleInteractiveMediaAds
 import GoogleMobileAds
 import UIKit
 
-// 320x250
+// 300x250
 private let storedImpDisplayBanner_320x250 = "33994718"
 private let gamAdUnitDisplayBannerOriginal_320x250 =
     "/21775744923/example/fixed-size-banner"
 
 // 320x50
-private let storedImpDisplayBanner = "prebid-demo-banner-320-50"
+private let storedImpDisplayBanner = "37116627"
 private let gamAdUnitDisplayBannerOriginal =
-    "ca-app-pub-3940256099942544/2934735716"
+    "/21775744923/example/fixed-size-banner"
 
 private let adSizeSmall = CGSize(width: 320, height: 50)
 private let adSizeMiddle = CGSize(width: 300, height: 250)
 
 /*
- * How to Reduce CPU Usage of GAMBannerView *
-
- In this example, we reuse existing GAMBannerView instances instead of creating new ones for every UITableViewCell. This significantly reduces CPU load, as frequent creation and destruction of banner views cause unnecessary resource usage, ad reloading, and rendering overhead.
-
- Additionally, CPU usage can be affected by animations and UI elements inside the WebView, which are embedded within GAM banners. If the banners contain rich media elements, such as videos, interactive ads, or animated content, they require additional rendering and processing power, increasing CPU load.
-
- The main reason CPU load in GAM -  Each native/banner ad has a WKWebView and many WKWebViews take CPU resources -
- https://stackoverflow.com/a/69893642
-
+ * CPU Load Debug — Banner View Reuse *
+ *
+ * This screen demonstrates how to significantly reduce CPU usage in a
+ * high-frequency banner feed (1 000 rows, alternating 320×50 and 300×250).
+ *
+ * THE PROBLEM
+ * ───────────
+ * Each GAM/Prebid banner embeds a WKWebView. Creating and destroying a
+ * WKWebView for every UITableViewCell that scrolls on/off screen is
+ * expensive: the WebView must be initialised, load the ad creative, run
+ * JavaScript, and tear itself down — over and over. On long feeds this
+ * causes measurable CPU spikes and jank.
+ * Reference: https://stackoverflow.com/a/69893642
+ *
+ * Additionally, rich-media creatives (video, animated/interactive content)
+ * keep the GPU busy for rendering, compounding the load even further.
+ *
+ * THE SOLUTION — BANNER REUSE
+ * ───────────────────────────
+ * Instead of creating a new AdManagerBannerView per cell, we pre-allocate
+ * a small, fixed pool of banner views (6 in this example) and rotate them
+ * across all rows using modular index arithmetic. The WKWebView is kept
+ * alive and simply reassigned to whichever cell is currently visible.
+ *
+ * Additional tips shown here:
+ *   • stopAutoRefresh() — disables the built-in GAM refresh timer while
+ *     the banner is being reused; avoids spurious reload requests when the
+ *     cell is not on screen.
+ *   • isLazyLoad: true — defers the Prebid bid request until the banner
+ *     actually enters the viewport, reducing wasted bid calls.
 */
 
 class CPULoaderViewController: UIViewController {

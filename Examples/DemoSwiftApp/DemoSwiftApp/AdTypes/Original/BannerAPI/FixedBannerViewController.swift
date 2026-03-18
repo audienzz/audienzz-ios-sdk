@@ -20,12 +20,15 @@ import GoogleMobileAds
 // =============================================================================
 // FixedBannerViewController
 //
-// This file demonstrates how to use FIXED (non-adaptive) banner sizes with
-// the Audienzz SDK. It shows three common scenarios:
+// This screen shows how to integrate FIXED (non-adaptive) banner sizes with
+// the Audienzz SDK and Google Ad Manager. It covers three common scenarios
+// that developers encounter when placing standard IAB banner units inside a
+// scrollable app layout:
 //
-//   1. Single fixed size — 320x50
-//   2. Single fixed size — 300x250
-//   3. Multi-size banner — 320x50 primary + 300x250 secondary
+//   1. Single fixed size — 320×50  (leaderboard / top-of-screen)
+//   2. Single fixed size — 300×250 (medium rectangle / mid-article)
+//   3. Multi-size banner — one ad slot that accepts either 320×50 or 300×250,
+//      letting the auction pick the size with the highest bid
 //
 // ─── THE ROOT CAUSE OF "validAdSizes is ignored" ─────────────────────────────
 //
@@ -65,19 +68,19 @@ import GoogleMobileAds
 private enum AdConfig {
 
     // ── Scenario 1: Single 320x50 banner ──────────────────────────────────────
-    static let configId_320x50    = "prebid-demo-banner-320-50"            // ← replace
-    static let gamAdUnitId_320x50 = "/96628199/your-ad-unit-320x50"        // ← replace
+    static let configId_320x50    = "37116627"
+    static let gamAdUnitId_320x50 = "/21775744923/example/fixed-size-banner"
 
     // ── Scenario 2: Single 300x250 banner ─────────────────────────────────────
-    static let configId_300x250    = "prebid-demo-banner-300-250"          // ← replace
-    static let gamAdUnitId_300x250 = "/96628199/your-ad-unit-300x250"      // ← replace
+    static let configId_300x250    = "37116627"
+    static let gamAdUnitId_300x250 = "/21775744923/example/fixed-size-banner"
 
     // ── Scenario 3: Multi-size banner (320x50 + 300x250 from ONE ad unit) ─────
     //
     // Use this when your GAM ad unit and Prebid config accept multiple sizes.
     // If you have separate GAM ad units per size, use scenarios 1 and 2 instead.
-    static let configId_multisize    = "prebid-demo-banner-300-250"        // ← replace
-    static let gamAdUnitId_multisize = "/96628199/your-ad-unit-multisize"  // ← replace
+    static let configId_multisize    = "37116627"
+    static let gamAdUnitId_multisize = "/21775744923/example/fixed-size-banner"
 }
 
 

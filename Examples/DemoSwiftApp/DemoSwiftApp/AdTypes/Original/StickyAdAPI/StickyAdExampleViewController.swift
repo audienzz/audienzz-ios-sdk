@@ -16,8 +16,8 @@ import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
 
-private let kConfigId = "prebid-demo-banner-300-250"
-private let kAdUnitId = "ca-app-pub-3940256099942544/6300978111"
+private let kConfigId = "37116627"
+private let kAdUnitId = "/21775744923/example/fixed-size-banner"
 private let kAdSize = CGSize(width: 300, height: 250)
 private let kMaxHeight: CGFloat = 450
 
