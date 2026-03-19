@@ -124,7 +124,7 @@ class CorrectBannerViewController: UIViewController {
         adContainer.clipsToBounds     = true
 
         // ✅ Container starts at primary size — resizes to exact creative size on load
-        containerHeightConstraint = adContainer.heightAnchor.constraint(equalToConstant: 600)
+        containerHeightConstraint = adContainer.heightAnchor.constraint(equalToConstant: 50)
         containerHeightConstraint.isActive = true
         stackView.addArrangedSubview(adContainer)
 
@@ -132,7 +132,7 @@ class CorrectBannerViewController: UIViewController {
         note.numberOfLines = 0
         note.font = .systemFont(ofSize: 12)
         note.textColor = .systemGreen
-        note.text = "⬆ Green border = ad container (300×600)\n"
+        note.text = "⬆ Green border = ad container (320×50 + 300×600 requested)\n"
                   + "Sized to the exact creative. No wasted space."
         stackView.addArrangedSubview(note)
     }
@@ -140,8 +140,9 @@ class CorrectBannerViewController: UIViewController {
     // MARK: - Ad load (correct)
 
     private func loadAd() {
-        // Primary = large size. validAdSizes is set CORRECTLY so GAM honours it.
-        let primarySize = CGSize(width: 300, height: 600)
+        // Multi-size: 320×50 primary + 300×600 additional
+        let primarySize    = CGSize(width: 320, height: 50)
+        let secondarySize  = CGSize(width: 300, height: 600)
 
         gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: primarySize))
         gamBanner?.adUnitID           = kCorrectGamUnit
@@ -149,9 +150,12 @@ class CorrectBannerViewController: UIViewController {
         gamBanner?.delegate           = self
         // No adSizeDelegate — willChangeAdSizeTo is not needed
 
-        // ✅ Fix 1: nsValue(for: adSizeFor(cgSize:)) — properly typed GADAdSize NSValue.
-        // GAM can now decode the list and will accept 300×600.
-        gamBanner?.validAdSizes = [nsValue(for: adSizeFor(cgSize: primarySize))]
+        // ✅ Fix 1: nsValue(for: adSizeFor(cgSize:)) — properly typed GADAdSize NSValues.
+        // GAM can now decode the list and will accept both 320×50 and 300×600.
+        gamBanner?.validAdSizes = [
+            nsValue(for: adSizeFor(cgSize: primarySize)),
+            nsValue(for: adSizeFor(cgSize: secondarySize))
+        ]
 
         // ✅ Fix 2: create adView and add it to adContainer RIGHT NOW — at setup time.
         // The hierarchy (adContainer → adView → gamBanner) will never be broken.
@@ -161,6 +165,7 @@ class CorrectBannerViewController: UIViewController {
             adFormats: [.banner],
             isLazyLoad: false
         )
+        adView?.addAdditionalSize(sizes: [secondarySize])
 
         guard let adView, let gamBanner else { return }
 
