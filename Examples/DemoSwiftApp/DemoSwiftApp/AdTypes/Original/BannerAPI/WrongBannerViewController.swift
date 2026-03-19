@@ -32,11 +32,11 @@ private let kWrongGamUnit   = "ca-app-pub-3940256099942544/6300978111"
 //             GAM receives a CGSize-typed NSValue, not a GADAdSize-typed NSValue.
 //             GAM cannot decode the size list and silently ignores validAdSizes.
 //             Only the primary size (320×50) is accepted — but Prebid still bids
-//             300×250, so the two layers disagree.
+//             300×600, so the two layers disagree.
 //
 //  ❌ Bug 2 — adView (AUBannerView) is NOT added to the hierarchy at setup.
 //             It is added later inside willChangeAdSizeTo, which fires before the
-//             real creative is ready. The container jumps to 300×250 prematurely.
+//             real creative is ready. The container jumps to 300×600 prematurely.
 //
 //  ❌ Bug 3 — bannerViewDidReceiveAd removes adView from the hierarchy and places
 //             gamBanner directly inside adContainer.
@@ -129,7 +129,7 @@ class WrongBannerViewController: UIViewController {
         adContainer.clipsToBounds      = true
 
         // ❌ Container initialized to the LARGE size — this never shrinks correctly
-        containerHeightConstraint = adContainer.heightAnchor.constraint(equalToConstant: 250)
+        containerHeightConstraint = adContainer.heightAnchor.constraint(equalToConstant: 600)
         containerHeightConstraint.isActive = true
         stackView.addArrangedSubview(adContainer)
 
@@ -137,19 +137,17 @@ class WrongBannerViewController: UIViewController {
         note.numberOfLines = 0
         note.font = .systemFont(ofSize: 12)
         note.textColor = .systemRed
-        note.text = "⬆ Red border = ad container (fixed 250 px)\n"
-                  + "The ad inside is ~50 px — the rest is blank space."
+        note.text = "⬆ Red border = ad container (fixed 600 px)\n"
+                  + "The ad inside is ~50 px — 550 px of blank space."
         stackView.addArrangedSubview(note)
     }
 
     // MARK: - Ad load (intentionally wrong)
 
     private func loadAd() {
-        let primarySize = CGSize(width: 320, height: 50)
-        let allSizes: [CGSize] = [
-            CGSize(width: 320, height: 50),
-            CGSize(width: 300, height: 250),
-        ]
+        // Primary = large size. validAdSizes is set WRONG (NSValue(cgSize:))
+        // so GAM silently ignores the list — the banner will fail to resize correctly.
+        let primarySize = CGSize(width: 300, height: 600)
 
         gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: primarySize))
         gamBanner?.adUnitID       = kWrongGamUnit
@@ -159,7 +157,7 @@ class WrongBannerViewController: UIViewController {
 
         // ❌ Bug 1: NSValue(cgSize:) — CGSize wrapper, NOT a GADAdSize wrapper.
         // GAM silently ignores the whole validAdSizes list.
-        gamBanner?.validAdSizes = allSizes.map { NSValue(cgSize: $0) }
+        gamBanner?.validAdSizes = [NSValue(cgSize: primarySize)]
 
         let gamRequest = AdManagerRequest()
 
@@ -171,7 +169,6 @@ class WrongBannerViewController: UIViewController {
             adFormats: [.banner],
             isLazyLoad: false
         )
-        adView?.addAdditionalSize(sizes: [CGSize(width: 300, height: 250)])
 
         guard let adView, let gamBanner else { return }
 

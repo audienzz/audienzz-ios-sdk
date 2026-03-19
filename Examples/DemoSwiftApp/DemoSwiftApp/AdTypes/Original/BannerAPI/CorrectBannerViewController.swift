@@ -17,9 +17,9 @@ import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
 
-// Same Prebid demo IDs as WrongBannerViewController for a fair comparison
-private let kCorrectConfigId = "prebid-demo-banner-300-250"
-private let kCorrectGamUnit  = "ca-app-pub-3940256099942544/6300978111"
+// Customer reproduction: 50px banner config that returns 300×600 from Prebid
+private let kCorrectConfigId = "37116627"
+private let kCorrectGamUnit  = "/96628199/de_audienzz.ch_v2/multi-size"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CorrectBannerViewController
@@ -28,7 +28,7 @@ private let kCorrectGamUnit  = "ca-app-pub-3940256099942544/6300978111"
 //
 //  ✅ Fix 1 — nsValue(for: adSizeFor(cgSize:))
 //             GAM receives a properly typed GADAdSize NSValue.
-//             validAdSizes is honoured → GAM accepts both 320×50 and 300×250.
+//             validAdSizes is honoured → GAM accepts both 320×50 and 300×600.
 //
 //  ✅ Fix 2 — adView is added to the view hierarchy ONCE, at setup time.
 //             The hierarchy self → adContainer → adView → gamBanner stays
@@ -123,8 +123,8 @@ class CorrectBannerViewController: UIViewController {
         adContainer.backgroundColor   = UIColor.systemGreen.withAlphaComponent(0.04)
         adContainer.clipsToBounds     = true
 
-        // ✅ Container starts at primary (small) size — grows to creative size on load
-        containerHeightConstraint = adContainer.heightAnchor.constraint(equalToConstant: 50)
+        // ✅ Container starts at primary size — resizes to exact creative size on load
+        containerHeightConstraint = adContainer.heightAnchor.constraint(equalToConstant: 600)
         containerHeightConstraint.isActive = true
         stackView.addArrangedSubview(adContainer)
 
@@ -132,19 +132,16 @@ class CorrectBannerViewController: UIViewController {
         note.numberOfLines = 0
         note.font = .systemFont(ofSize: 12)
         note.textColor = .systemGreen
-        note.text = "⬆ Green border = ad container\n"
-                  + "Expands to the exact winning creative size. Zero wasted space."
+        note.text = "⬆ Green border = ad container (300×600)\n"
+                  + "Sized to the exact creative. No wasted space."
         stackView.addArrangedSubview(note)
     }
 
     // MARK: - Ad load (correct)
 
     private func loadAd() {
-        let primarySize = CGSize(width: 320, height: 50)
-        let allSizes: [CGSize] = [
-            CGSize(width: 320, height: 50),
-            CGSize(width: 300, height: 250),
-        ]
+        // Primary = large size. validAdSizes is set CORRECTLY so GAM honours it.
+        let primarySize = CGSize(width: 300, height: 600)
 
         gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: primarySize))
         gamBanner?.adUnitID           = kCorrectGamUnit
@@ -153,8 +150,8 @@ class CorrectBannerViewController: UIViewController {
         // No adSizeDelegate — willChangeAdSizeTo is not needed
 
         // ✅ Fix 1: nsValue(for: adSizeFor(cgSize:)) — properly typed GADAdSize NSValue.
-        // GAM can now decode the list and will accept both 320×50 and 300×250.
-        gamBanner?.validAdSizes = allSizes.map { nsValue(for: adSizeFor(cgSize: $0)) }
+        // GAM can now decode the list and will accept 300×600.
+        gamBanner?.validAdSizes = [nsValue(for: adSizeFor(cgSize: primarySize))]
 
         // ✅ Fix 2: create adView and add it to adContainer RIGHT NOW — at setup time.
         // The hierarchy (adContainer → adView → gamBanner) will never be broken.
@@ -164,7 +161,6 @@ class CorrectBannerViewController: UIViewController {
             adFormats: [.banner],
             isLazyLoad: false
         )
-        adView?.addAdditionalSize(sizes: [CGSize(width: 300, height: 250)])
 
         guard let adView, let gamBanner else { return }
 
