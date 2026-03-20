@@ -61,6 +61,7 @@ class CorrectBannerViewController: UIViewController {
 
     // Container height starts at the primary size and updates after each load
     private var containerHeightConstraint: NSLayoutConstraint!
+    private var adViewWidthConstraint: NSLayoutConstraint!
 
     // MARK: - Lifecycle
 
@@ -169,10 +170,16 @@ class CorrectBannerViewController: UIViewController {
 
         guard let adView, let gamBanner else { return }
 
-        // Add adView once — it lives here for the ad's entire lifecycle
-        adView.frame = adContainer.bounds
-        adView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        adContainer.addSubview(adView)   // ← permanent, never moved in delegates
+        // Add adView once — centered horizontally, never moved in delegates
+        adView.translatesAutoresizingMaskIntoConstraints = false
+        adContainer.addSubview(adView)
+        adViewWidthConstraint = adView.widthAnchor.constraint(equalToConstant: primarySize.width)
+        NSLayoutConstraint.activate([
+            adView.centerXAnchor.constraint(equalTo: adContainer.centerXAnchor),
+            adView.topAnchor.constraint(equalTo: adContainer.topAnchor),
+            adViewWidthConstraint,
+            adView.heightAnchor.constraint(equalTo: adContainer.heightAnchor),
+        ])
 
         let gamRequest = AdManagerRequest()
         adView.createAd(
@@ -280,8 +287,9 @@ extension CorrectBannerViewController: BannerViewDelegate {
                 guard let self else { return }
                 DispatchQueue.main.async {
                     // gamBanner has already been resized by AUBannerHandler (v0.1.7).
-                    // We only need to update the container constraint.
+                    // Update container height and adView width to match the winning creative.
                     self.containerHeightConstraint.constant = size.height
+                    self.adViewWidthConstraint.constant = size.width
                     UIView.animate(withDuration: 0.25) {
                         self.view.layoutIfNeeded()
                     }
