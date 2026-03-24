@@ -18,12 +18,10 @@ import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
 
-fileprivate let storedPrebidImpression = "prebid-demo-banner-native-styles"
-fileprivate let gamNativeAdUnitId = "/21808260008/apollo_custom_template_native_ad_unit"
-internal let gamNativeBannerAdUnitId = "/21808260008/prebid-demo-original-native-styles"
-
-fileprivate let nativeRenderingStoredImpression = "prebid-demo-banner-native-styles"
-fileprivate let gamRenderingNativeAdUnitId = "/21808260008/apollo_custom_template_native_ad_unit"
+// gamNativeBannerAdUnitId is accessed cross-file; resolved from remote config at call sites
+internal var gamNativeBannerAdUnitId: String {
+    AudienzzRemoteConfig.shared.remoteConfig(for: "46")?.gamConfig.adUnitPath ?? "/96628199/de_audienzz.ch_v2/multi-size"
+}
 
 fileprivate var nativeBannerView:AUNativeBannerView!
 fileprivate var nativeLzyView: AUNativeView!
@@ -33,20 +31,27 @@ fileprivate var nativeRenderingView: AUNativeView!
 // MARK: - Native Banner API
 extension ExamplesViewController {
     func createNativeView() {
-        nativeView = AUNativeView(configId: storedPrebidImpression, isLazyLoad: false)
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createNativeView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
+        nativeView = AUNativeView(configId: placementId, isLazyLoad: false)
         nativeView.nativeParameter = nativeConfiguration()
 
         let gamRequest = GAMRequest()
         nativeView.createAd(with: gamRequest)
-        
+
         nativeView.onLoadRequest = { [weak self] request in
             guard let self = self else { return }
             guard let request = request as? GADRequest else {
                 print("Faild request unwrap")
                 return
             }
-            
-            self.adLoader = GADAdLoader(adUnitID: "/96628199/de_audienzz.ch_v2/multi-size", rootViewController: self,
+
+            self.adLoader = GADAdLoader(adUnitID: gamAdUnitPath, rootViewController: self,
                                         adTypes: [GADAdLoaderAdType.native], options: [])
             self.adLoader.delegate = self
             self.adLoader.load(request)
@@ -62,22 +67,29 @@ extension ExamplesViewController {
     }
     
     func createRenderingNativeView() {
-        nativeRenderingView = AUNativeView(configId: storedPrebidImpression, adType: .rendering)
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createRenderingNativeView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
+        nativeRenderingView = AUNativeView(configId: placementId, adType: .rendering)
         nativeRenderingView.nativeParameter = nativeConfiguration()
 
         let gamRequest = GAMRequest()
         nativeRenderingView.createAd(with: gamRequest)
-        
+
         nativeRenderingView.onNativeLoadRequest = { [weak self] request, keywords in
             guard let self = self else { return }
             guard let request = request as? GAMRequest else {
                 print("Faild request unwrap")
                 return
             }
-            
+
             AudienzzGAMUtils.shared.prepareRequest(request, bidTargeting: keywords)
-            
-            self.adRenderingLoader = GADAdLoader(adUnitID: gamRenderingNativeAdUnitId, rootViewController: self,
+
+            self.adRenderingLoader = GADAdLoader(adUnitID: gamAdUnitPath, rootViewController: self,
                                         adTypes: [GADAdLoaderAdType.customNative], options: [])
             self.adRenderingLoader.delegate = self
             self.adRenderingLoader.load(request)
@@ -95,15 +107,22 @@ extension ExamplesViewController {
     }
     
     func createNativeBannerView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createNativeBannerView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamRequest = GAMRequest()
         let gamBannerView = GAMBannerView(adSize: GADAdSizeFluid)
-        gamBannerView.adUnitID = gamNativeBannerAdUnitId
+        gamBannerView.adUnitID = gamAdUnitPath
         gamBannerView.rootViewController = self
         gamBannerView.delegate = self
-        
+
         let configuration = nativeConfiguration()
-        
-        nativeBannerView = AUNativeBannerView(configId: storedPrebidImpression, configuration: configuration, isLazyLoad: false)
+
+        nativeBannerView = AUNativeBannerView(configId: placementId, configuration: configuration, isLazyLoad: false)
         nativeBannerView.frame = CGRect(x: 0, y: getPositionY(adContainerView), width: self.view.frame.width, height: 250)
         nativeBannerView.backgroundColor = .lightGray
         adContainerView.addSubview(nativeBannerView)
@@ -150,20 +169,27 @@ extension ExamplesViewController {
 // MARK: - Native API Lazy load
 extension ExamplesViewController {
     func createLazyNativeView() {
-        nativeLzyView = AUNativeView(configId: storedPrebidImpression)
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createLazyNativeView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
+        nativeLzyView = AUNativeView(configId: placementId)
         nativeLzyView.nativeParameter = nativeConfiguration()
 
         let gamRequest = GAMRequest()
         nativeLzyView.createAd(with: gamRequest)
-        
+
         nativeLzyView.onLoadRequest = { [weak self] request in
             guard let self = self else { return }
             guard let request = request as? GADRequest else {
                 print("Faild request unwrap")
                 return
             }
-            
-            self.adLazyLoader = GADAdLoader(adUnitID: gamRenderingNativeAdUnitId, rootViewController: self,
+
+            self.adLazyLoader = GADAdLoader(adUnitID: gamAdUnitPath, rootViewController: self,
                                         adTypes: [GADAdLoaderAdType.customNative], options: [])
             self.adLazyLoader.delegate = self
             self.adLazyLoader.load(request)
@@ -181,15 +207,22 @@ extension ExamplesViewController {
     }
 
     func createLazyNativeBannerView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createLazyNativeBannerView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamRequest = GAMRequest()
         let gamBannerView = GAMBannerView(adSize: GADAdSizeFluid)
-        gamBannerView.adUnitID = "/21808260008/prebid-demo-original-native-styles"
+        gamBannerView.adUnitID = gamAdUnitPath
         gamBannerView.rootViewController = self
         gamBannerView.delegate = self
-        
+
         let configuration = nativeConfiguration()
-        
-        nativeLazyBannerView = AUNativeBannerView(configId: storedPrebidImpression, configuration: configuration)
+
+        nativeLazyBannerView = AUNativeBannerView(configId: placementId, configuration: configuration)
         nativeLazyBannerView.frame = CGRect(x: 0, y: getPositionY(lazyAdContainerView), width: self.view.frame.width, height: 200)
         lazyAdContainerView.addSubview(nativeLazyBannerView)
         

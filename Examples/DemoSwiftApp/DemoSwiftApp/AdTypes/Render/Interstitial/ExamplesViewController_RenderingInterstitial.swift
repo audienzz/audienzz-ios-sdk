@@ -21,21 +21,20 @@ private var interstitialRenderingBannerView: AUInterstitialRenderingView!
 private var interstitialRenderingVideoView: AUInterstitialRenderingView!
 
 extension ExamplesViewController {
-    private enum Constants {
-        static let storedImpDisplayInterstitial = "prebid-demo-display-interstitial-320-480"
-        static let gamAdUnitDisplayInterstitialRendering = "/21808260008/prebid_oxb_html_interstitial"
-
-        static let storedImpVideoInterstitial = "prebid-demo-video-interstitial-320-480"
-        static let gamAdUnitVideoInterstitialRendering = "/21808260008/prebid_oxb_interstitial_video"
-    }
-
     func createRenderingIntertitiaBannerView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "47") else {
+            print("Warning: Remote config '47' not available for createRenderingIntertitiaBannerView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let eventHandler = AUGAMInterstitialEventHandler(
-            adUnitID: Constants.gamAdUnitDisplayInterstitialRendering
+            adUnitID: gamAdUnitPath
         )
 
         interstitialRenderingBannerView = AUInterstitialRenderingView(
-            configId: Constants.storedImpDisplayInterstitial,
+            configId: placementId,
             isLazyLoad: true,
             adFormat: .banner,
             minSizePercentage: nil,
@@ -70,12 +69,19 @@ extension ExamplesViewController {
     }
 
     func createRenderingIntertitiaVideoView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "47") else {
+            print("Warning: Remote config '47' not available for createRenderingIntertitiaVideoView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let eventHandler = AUGAMInterstitialEventHandler(
-            adUnitID: Constants.gamAdUnitVideoInterstitialRendering
+            adUnitID: gamAdUnitPath
         )
 
         interstitialRenderingVideoView = AUInterstitialRenderingView(
-            configId: Constants.storedImpVideoInterstitial,
+            configId: placementId,
             isLazyLoad: true,
             adFormat: .video,
             minSizePercentage: nil,
@@ -118,10 +124,13 @@ extension ExamplesViewController: AUInterstitialenderingAdDelegate {
     }
 
     func interstitialDidReceiveAd(with configId: String) {
-        if Constants.storedImpDisplayInterstitial == configId {
-            interstitialRenderingBannerView.showAd(self)
-        } else if configId == Constants.storedImpVideoInterstitial {
-            interstitialRenderingVideoView.showAd(self)
+        let interstitialPlacementId = AudienzzRemoteConfig.shared.remoteConfig(for: "47")?.prebidConfig.placementId
+        if interstitialPlacementId == configId {
+            if interstitialRenderingBannerView != nil {
+                interstitialRenderingBannerView.showAd(self)
+            } else if interstitialRenderingVideoView != nil {
+                interstitialRenderingVideoView.showAd(self)
+            }
         }
     }
 

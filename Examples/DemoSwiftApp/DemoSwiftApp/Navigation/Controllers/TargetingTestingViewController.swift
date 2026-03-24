@@ -5,14 +5,8 @@ import UIKit
 
 class TargetingTestingViewController: UIViewController {
     private enum Constants {
-        static let prebidAdConfigId = "15624474"
-
-        static let gamAdUnitId = "/96628199/testapp_publisher/medium_rectangle_banner"
-
         static let testAppStoreUrl = "https://apps.apple.com/app/id0000000000"
-
         static let bannerWidth = 300.0
-
         static let bannerHeight = 250.0
     }
 
@@ -157,19 +151,26 @@ private extension TargetingTestingViewController {
 
 private extension TargetingTestingViewController {
     func requestAd() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for requestAd")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         // Clear previous ad
         adContainerView.subviews.forEach { $0.removeFromSuperview() }
 
         let gamBanner = AdManagerBannerView(
             adSize: adSizeFor(cgSize: CGSize(width: Constants.bannerWidth, height: Constants.bannerHeight))
         )
-        gamBanner.adUnitID = Constants.gamAdUnitId
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
 
         bannerView = AUBannerView(
-            configId: Constants.prebidAdConfigId,
+            configId: placementId,
             adSize: CGSize(width: Constants.bannerWidth, height: Constants.bannerHeight),
             adFormats: [.banner],
             isLazyLoad: false
@@ -183,7 +184,7 @@ private extension TargetingTestingViewController {
         adContainerView.addSubview(bannerView)
 
         let handler = AUBannerEventHandler(
-            adUnitId: Constants.gamAdUnitId,
+            adUnitId: gamAdUnitPath,
             gamView: gamBanner
         )
 

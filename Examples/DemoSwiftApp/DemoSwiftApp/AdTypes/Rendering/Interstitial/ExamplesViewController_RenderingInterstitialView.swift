@@ -16,8 +16,8 @@ import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
 
-fileprivate let storedImpVideoInterstitial = "prebid-demo-video-interstitial-320-480"
-fileprivate let gamAdUnitVideoInterstitialRendering = "/21808260008/prebid_oxb_interstitial_video"
+fileprivate let storedImpVideoInterstitial = "37116627"
+fileprivate let gamAdUnitVideoInterstitialRendering = "/96628199/de_audienzz.ch_v2/multi-size"
 
 fileprivate var interstitialRenderingView: AUInterstitialRenderingView!
 

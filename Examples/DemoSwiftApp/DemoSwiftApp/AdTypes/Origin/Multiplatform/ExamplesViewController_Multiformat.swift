@@ -18,8 +18,8 @@ import AudienzziOSSDK
 import GoogleMobileAds
 
 // MARK: - Multiplatform
-fileprivate let storedPrebidImpressions = ["prebid-demo-banner-300-250", "prebid-demo-banner-native-styles"]
-fileprivate let gamRenderingMultiformatAdUnitId = "/21808260008/prebid-demo-multiformat-native-styles"
+fileprivate let storedPrebidImpressions = ["37116627"]
+fileprivate let gamRenderingMultiformatAdUnitId = "/96628199/de_audienzz.ch_v2/multi-size"
 
 extension ExamplesViewController {
     func createMultiplatformView() {

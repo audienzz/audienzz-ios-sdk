@@ -16,70 +16,24 @@ import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
 
-// 320x50
-private let storedImpDisplayBanner = "prebid-demo-banner-320-50"
-private let gamAdUnitDisplayBannerOriginal =
-    "/96628199/de_audienzz.ch_v2/multi-size"
-// 320x250
-private let storedImpDisplayBanner_320x250 = "prebid-demo-banner-300-250"
-private let gamAdUnitDisplayBannerOriginal_320x250 =
-    "/96628199/de_audienzz.ch_v2/multi-size"
-
-// adaptive
-private let gamAdUnitDisplayAdaptiveBanner =
-    "/96628199/de_audienzz.ch_v2/multi-size"
-
-// Video outstream
-private let storedImpVideoBanner = "prebid-demo-video-outstream-original-api"
-private let gamAdUnitVideoBannerOriginal =
-    "/21808260008/prebid-demo-original-api-video-banner"
-
-//  Multiformat video + HTML banner
-private let storedImpsBanner = [
-    "prebid-demo-banner-300-250", "prebid-demo-video-outstream-original-api",
-]
-private let gamAdUnitMultiformatBannerOriginal =
-    "/21808260008/prebid-demo-original-banner-multiformat"
-
-//  ========== Lazy ==========
-// 320x50
-private let storedImpDisplayBannerLazy = "prebid-demo-banner-320-50"
-private let gamAdUnitDisplayBannerOriginalLazy =
-    "/96628199/de_audienzz.ch_v2/multi-size"
-
-//320x250
-private let storedImpDisplayBanner_300x250_Lazy = "prebid-demo-banner-300-250"
-private let gamAdUnitDisplayBannerOriginal_300x250_Lazy =
-    "/96628199/de_audienzz.ch_v2/multi-size"
-
-// multisize
-private let gamAdUnitDisplayAdaptiveBannerLazy =
-    "/96628199/de_audienzz.ch_v2/multi-size"
-
-// Video outstream
-private let storedImpVideoBannerLazy =
-    "prebid-demo-video-outstream-original-api"
-private let gamAdUnitVideoBannerOriginalLazy =
-    "/21808260008/prebid-demo-original-api-video-banner"
-
-//  Multiformat video + HTML banner
-private let storedImpsBannerLazy = [
-    "prebid-demo-banner-300-250", "prebid-demo-video-outstream-original-api",
-]
-private let gamAdUnitMultiformatBannerOriginalLazy =
-    "/21808260008/prebid-demo-original-banner-multiformat"
-
 // MARK: - Banner API
 extension ExamplesViewController {
     func createBannerView_320x50() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createBannerView_320x50")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: adSize))
-        gamBanner.adUnitID = gamAdUnitDisplayBannerOriginal
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
 
         bannerView_320x50 = AUBannerView(
-            configId: storedImpDisplayBanner,
+            configId: placementId,
             adSize: adSize,
             adFormats: [.banner],
             isLazyLoad: false
@@ -102,7 +56,7 @@ extension ExamplesViewController {
             with: gamRequest,
             gamBanner: gamBanner,
             eventHandler: AUBannerEventHandler(
-                adUnitId: gamAdUnitDisplayBannerOriginal,
+                adUnitId: gamAdUnitPath,
                 gamView: gamBanner
             )
         )
@@ -117,16 +71,23 @@ extension ExamplesViewController {
     }
 
     func createbannerView_300x250() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createbannerView_300x250")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = AdManagerBannerView(
             adSize: adSizeFor(cgSize: adVideoSize)
         )
-        gamBanner.adUnitID = gamAdUnitDisplayBannerOriginal_320x250
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
 
         bannerView_300x250 = AUBannerView(
-            configId: storedImpDisplayBanner_320x250,
+            configId: placementId,
             adSize: adVideoSize,
             adFormats: [.banner],
             isLazyLoad: false
@@ -152,18 +113,25 @@ extension ExamplesViewController {
     }
 
     func createMultisizeBanner() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createMultisizeBanner")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let viewWidth = view.frame.inset(by: view.safeAreaInsets).width
         adaptiveSize = currentOrientationAnchoredAdaptiveBanner(
             width: viewWidth
         )
         let gamBanner = AdManagerBannerView(adSize: adaptiveSize)
-        gamBanner.adUnitID = gamAdUnitDisplayAdaptiveBanner
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
 
         bannerMultisizeView = AUBannerView(
-            configId: storedImpDisplayBanner,
+            configId: placementId,
             adSize: adaptiveSize.size,
             adFormats: [.banner],
             isLazyLoad: false
@@ -180,7 +148,7 @@ extension ExamplesViewController {
             with: gamRequest,
             gamBanner: gamBanner,
             eventHandler: AUBannerEventHandler(
-                adUnitId: gamAdUnitDisplayAdaptiveBanner,
+                adUnitId: gamAdUnitPath,
                 gamView: gamBanner
             )
         )
@@ -195,10 +163,17 @@ extension ExamplesViewController {
     }
 
     func createVideoBannerView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createVideoBannerView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = AdManagerBannerView(
             adSize: adSizeFor(cgSize: adSizeMult)
         )
-        gamBanner.adUnitID = gamAdUnitVideoBannerOriginal
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
@@ -211,7 +186,7 @@ extension ExamplesViewController {
         videoParameters.placement = AUPlacement.InBanner
 
         bannerVideoView = AUBannerView(
-            configId: storedImpVideoBanner,
+            configId: placementId,
             adSize: adSizeMult,
             adFormats: [.video],
             isLazyLoad: false
@@ -230,7 +205,7 @@ extension ExamplesViewController {
             with: gamRequest,
             gamBanner: gamBanner,
             eventHandler: AUBannerEventHandler(
-                adUnitId: gamAdUnitVideoBannerOriginal,
+                adUnitId: gamAdUnitPath,
                 gamView: gamBanner
             )
         )
@@ -245,10 +220,17 @@ extension ExamplesViewController {
     }
 
     func createBannerMultiplatformView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createBannerMultiplatformView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = AdManagerBannerView(
             adSize: adSizeFor(cgSize: adSizeMult)
         )
-        gamBanner.adUnitID = gamAdUnitMultiformatBannerOriginal
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
 
@@ -265,7 +247,7 @@ extension ExamplesViewController {
         videoParameters.placement = AUPlacement.InBanner
 
         bannerMultiplatformView = AUBannerView(
-            configId: storedImpsBanner.randomElement()!,
+            configId: placementId,
             adSize: adSizeMult,
             adFormats: [.banner, .video],
             isLazyLoad: false
@@ -291,7 +273,7 @@ extension ExamplesViewController {
             with: gamRequest,
             gamBanner: gamBanner,
             eventHandler: AUBannerEventHandler(
-                adUnitId: gamAdUnitMultiformatBannerOriginal,
+                adUnitId: gamAdUnitPath,
                 gamView: gamBanner
             )
         )
@@ -308,15 +290,22 @@ extension ExamplesViewController {
 // MARK: - Banner API Lazy Load
 extension ExamplesViewController {
     func createBannerLazyView_320x50() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createBannerLazyView_320x50")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: adSize))
-        gamBanner.adUnitID = gamAdUnitDisplayBannerOriginalLazy
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
 
         let gamRequest = AdManagerRequest()
 
         bannerLazyView_320x50 = AUBannerView(
-            configId: storedImpDisplayBannerLazy,
+            configId: placementId,
             adSize: adSize,
             adFormats: [.banner],
             isLazyLoad: true
@@ -337,7 +326,7 @@ extension ExamplesViewController {
             with: gamRequest,
             gamBanner: gamBanner,
             eventHandler: AUBannerEventHandler(
-                adUnitId: gamAdUnitDisplayBannerOriginalLazy,
+                adUnitId: gamAdUnitPath,
                 gamView: gamBanner
             )
         )
@@ -352,17 +341,24 @@ extension ExamplesViewController {
     }
 
     func createBannerLazyView_320x250() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createBannerLazyView_320x250")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = AdManagerBannerView(
             adSize: adSizeFor(cgSize: adVideoSize)
         )
-        gamBanner.adUnitID = gamAdUnitDisplayBannerOriginal_320x250
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
 
         let gamRequest = AdManagerRequest()
 
         bannerLazyView_300x250 = AUBannerView(
-            configId: storedImpDisplayBanner_300x250_Lazy,
+            configId: placementId,
             adSize: adSize,
             adFormats: [.banner],
             isLazyLoad: true
@@ -383,7 +379,7 @@ extension ExamplesViewController {
             with: gamRequest,
             gamBanner: gamBanner,
             eventHandler: AUBannerEventHandler(
-                adUnitId: gamAdUnitDisplayBannerOriginal_320x250,
+                adUnitId: gamAdUnitPath,
                 gamView: gamBanner
             )
         )
@@ -398,18 +394,25 @@ extension ExamplesViewController {
     }
 
     func createMultisizeBannerLazyView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createMultisizeBannerLazyView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let viewWidth = view.frame.inset(by: view.safeAreaInsets).width
         adaptiveSize = currentOrientationAnchoredAdaptiveBanner(
             width: viewWidth
         )
         let gamBanner = AdManagerBannerView(adSize: adaptiveSize)
-        gamBanner.adUnitID = gamAdUnitDisplayAdaptiveBannerLazy
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
 
         bannerLazyMultisizeView = AUBannerView(
-            configId: storedImpDisplayBannerLazy,
+            configId: placementId,
             adSize: adaptiveSize.size,
             adFormats: [.banner],
             isLazyLoad: true
@@ -430,7 +433,7 @@ extension ExamplesViewController {
             with: gamRequest,
             gamBanner: gamBanner,
             eventHandler: AUBannerEventHandler(
-                adUnitId: gamAdUnitDisplayAdaptiveBannerLazy,
+                adUnitId: gamAdUnitPath,
                 gamView: gamBanner
             )
         )
@@ -445,10 +448,17 @@ extension ExamplesViewController {
     }
 
     func createVideoLazyBannerView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createVideoLazyBannerView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = AdManagerBannerView(
             adSize: adSizeFor(cgSize: adSizeMult)
         )
-        gamBanner.adUnitID = gamAdUnitVideoBannerOriginalLazy
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
@@ -461,7 +471,7 @@ extension ExamplesViewController {
         videoParameters.placement = AUPlacement.InBanner
 
         bannerLazyVideoView = AUBannerView(
-            configId: storedImpVideoBannerLazy,
+            configId: placementId,
             adSize: adSizeMult,
             adFormats: [.video],
             isLazyLoad: true
@@ -480,7 +490,7 @@ extension ExamplesViewController {
             with: gamRequest,
             gamBanner: gamBanner,
             eventHandler: AUBannerEventHandler(
-                adUnitId: gamAdUnitVideoBannerOriginalLazy,
+                adUnitId: gamAdUnitPath,
                 gamView: gamBanner
             )
         )
@@ -495,10 +505,17 @@ extension ExamplesViewController {
     }
 
     func createBannerMultiplatformLazyView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createBannerMultiplatformLazyView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = AdManagerBannerView(
             adSize: adSizeFor(cgSize: adSizeMult)
         )
-        gamBanner.adUnitID = gamAdUnitMultiformatBannerOriginalLazy
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
 
@@ -515,7 +532,7 @@ extension ExamplesViewController {
         videoParameters.placement = AUPlacement.InBanner
 
         bannerLazyMultiplatformView = AUBannerView(
-            configId: storedImpsBannerLazy.randomElement()!,
+            configId: placementId,
             adSize: adSizeMult,
             adFormats: [.banner, .video],
             isLazyLoad: true
@@ -538,7 +555,7 @@ extension ExamplesViewController {
             with: gamRequest,
             gamBanner: gamBanner,
             eventHandler: AUBannerEventHandler(
-                adUnitId: gamAdUnitMultiformatBannerOriginalLazy,
+                adUnitId: gamAdUnitPath,
                 gamView: gamBanner
             )
         )

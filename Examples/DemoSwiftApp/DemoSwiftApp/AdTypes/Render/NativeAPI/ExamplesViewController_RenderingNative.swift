@@ -19,8 +19,8 @@ import UIKit
 
 extension ExamplesViewController {
     private enum Constants {
-        static let nativeRenderingStoredImpression = "prebid-demo-banner-native-styles"
-        static let gamRenderingNativeAdUnitId = "/21808260008/apollo_custom_template_native_ad_unit"
+        static let nativeRenderingStoredImpression = "37116627"
+        static let gamRenderingNativeAdUnitId = "/96628199/de_audienzz.ch_v2/multi-size"
     }
 
     func createRenderingNativeView() {

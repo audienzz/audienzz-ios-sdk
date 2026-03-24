@@ -16,11 +16,11 @@ import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
 
-fileprivate let storedImpDisplayBanner = "prebid-demo-banner-320-50"
-fileprivate let gamAdUnitDisplayBannerRendering = "/21808260008/prebid_oxb_320x50_banner"
+fileprivate let storedImpDisplayBanner = "37116627"
+fileprivate let gamAdUnitDisplayBannerRendering = "/96628199/de_audienzz.ch_v2/multi-size"
 
-fileprivate let storedImpVideoBanner = "prebid-demo-video-outstream"
-fileprivate let gamAdUnitVideoBannerRendering = "/21808260008/prebid_oxb_300x250_banner"
+fileprivate let storedImpVideoBanner = "37116627"
+fileprivate let gamAdUnitVideoBannerRendering = "/96628199/de_audienzz.ch_v2/multi-size"
 
 fileprivate var bannerRenderingView: AUBannerRenderingView!
 fileprivate var bannerRenderingLazyView: AUBannerRenderingView!

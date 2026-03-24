@@ -16,8 +16,8 @@ import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
 
-fileprivate let storedImpVideoRewarded = "prebid-demo-video-rewarded-320-480"
-fileprivate let gamAdUnitVideoRewardedRendering = "/21808260008/prebid_oxb_rewarded_video_test"
+fileprivate let storedImpVideoRewarded = "37116627"
+fileprivate let gamAdUnitVideoRewardedRendering = "/96628199/de_audienzz.ch_v2/multi-size"
 
 fileprivate var rewardedRenderingView: AURewardedRenderingView!
 fileprivate var rewardedRenderingLazyView: AURewardedRenderingView!

@@ -23,17 +23,19 @@ private var rewardedRenderingLazyView: AURewardedRenderingView!
 private var activityIndicator: UIActivityIndicatorView!
 
 extension SeparateViewController {
-    private enum Constants {
-        static let storedImpVideoRewarded = "prebid-demo-video-rewarded-320-480"
-        static let gamAdUnitVideoRewardedRendering = "/21808260008/prebid_oxb_rewarded_video_test"
-    }
-
     func createRenderingRewardLazyView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "47") else {
+            print("Warning: Remote config '47' not available for createRenderingRewardLazyView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let eventHandler = AUGAMRewardedAdEventHandler(
-            adUnitID: Constants.gamAdUnitVideoRewardedRendering
+            adUnitID: gamAdUnitPath
         )
         rewardedRenderingLazyView = AURewardedRenderingView(
-            configId: Constants.storedImpVideoRewarded,
+            configId: placementId,
             minSizePercentage: nil,
             eventHandler: eventHandler
         )

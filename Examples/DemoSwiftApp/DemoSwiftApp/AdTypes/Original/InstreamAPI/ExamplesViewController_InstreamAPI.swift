@@ -22,8 +22,8 @@ import UIKit
 private let videoContentURL =
     "https://storage.googleapis.com/gvabox/media/samples/stock.mp4"
 private let storedImpVideo =
-    "prebid-demo-video-interstitial-320-480-original-api"
-private let gamAdUnitVideo = "/21808260008/prebid_demo_app_instream"
+    "37116627"
+private let gamAdUnitVideo = "/96628199/de_audienzz.ch_v2/multi-size"
 
 extension ExamplesViewController {
     func createInstreamView() {

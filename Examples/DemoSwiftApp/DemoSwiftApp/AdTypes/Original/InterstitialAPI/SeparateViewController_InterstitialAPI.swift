@@ -19,28 +19,19 @@ import UIKit
 
 // MARK: - Interstitial API
 
-private let storedImpDisplayInterstitial =
-    "prebid-demo-display-interstitial-320-480"
-private let gamAdUnitDisplayInterstitialOriginal =
-    "/96628199/de_audienzz.ch_v2/multi-size"
-private let storedImpVideoInterstitial =
-    "prebid-demo-video-interstitial-320-480-original-api"
-private let gamAdUnitVideoInterstitialOriginal =
-    "/96628199/de_audienzz.ch_v2/multi-size"
-
-private let storedImpsInterstitial = [
-    "prebid-demo-display-interstitial-320-480",
-    "prebid-demo-video-interstitial-320-480-original-api",
-]
-private let gamAdUnitMultiformatInterstitialOriginal =
-    "/96628199/de_audienzz.ch_v2/de_audienzz.ch_320_adnz_wideboard_1"
-
 extension SeparateViewController {
     func createInterstitialView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "47") else {
+            print("Warning: Remote config '47' not available for createInterstitialView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamRequest = AdManagerRequest()
 
         interstitialView = AUInterstitialView(
-            configId: storedImpDisplayInterstitial,
+            configId: placementId,
             adFormats: [.banner],
             isLazyLoad: true
         )
@@ -64,7 +55,7 @@ extension SeparateViewController {
 
         interstitialView.createAd(
             with: gamRequest,
-            adUnitID: gamAdUnitDisplayInterstitialOriginal
+            adUnitID: gamAdUnitPath
         )
 
         interstitialView.onLoadRequest = { [weak self] gamRequest in
@@ -74,7 +65,7 @@ extension SeparateViewController {
             }
             self?.stopScroll()
             AdManagerInterstitialAd.load(
-                with: gamAdUnitDisplayInterstitialOriginal,
+                with: gamAdUnitPath,
                 request: request
             ) { ad, error in
                 guard let self = self else { return }
@@ -94,6 +85,13 @@ extension SeparateViewController {
     }
 
     func createInterstitialVideoView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "47") else {
+            print("Warning: Remote config '47' not available for createInterstitialVideoView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamRequest = AdManagerRequest()
 
         let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
@@ -104,7 +102,7 @@ extension SeparateViewController {
         videoParameters.placement = AUPlacement.InBanner
 
         interstitialVideoView = AUInterstitialView(
-            configId: storedImpVideoInterstitial,
+            configId: placementId,
             adFormats: [.video],
             isLazyLoad: true,
             minWidthPerc: 60,
@@ -125,7 +123,7 @@ extension SeparateViewController {
         interstitialVideoView.videoParameters = videoParameters
         interstitialVideoView.createAd(
             with: gamRequest,
-            adUnitID: gamAdUnitVideoInterstitialOriginal
+            adUnitID: gamAdUnitPath
         )
 
         interstitialVideoView.onLoadRequest = { [weak self] gamRequest in
@@ -135,7 +133,7 @@ extension SeparateViewController {
             }
             self?.stopScroll()
             AdManagerInterstitialAd.load(
-                with: gamAdUnitVideoInterstitialOriginal,
+                with: gamAdUnitPath,
                 request: request
             ) { ad, error in
                 guard let self = self else { return }
@@ -155,6 +153,13 @@ extension SeparateViewController {
     }
 
     func createInterstitialMultiplatformView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "47") else {
+            print("Warning: Remote config '47' not available for createInterstitialMultiplatformView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamRequest = AdManagerRequest()
 
         let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
@@ -164,7 +169,7 @@ extension SeparateViewController {
         ]
 
         interstitialMultiplatformView = AUInterstitialView(
-            configId: storedImpsInterstitial.randomElement()!,
+            configId: placementId,
             adFormats: [.banner, .video],
             isLazyLoad: true,
             minWidthPerc: 60,
@@ -185,7 +190,7 @@ extension SeparateViewController {
         interstitialMultiplatformView.videoParameters = videoParameters
         interstitialMultiplatformView.createAd(
             with: gamRequest,
-            adUnitID: gamAdUnitMultiformatInterstitialOriginal
+            adUnitID: gamAdUnitPath
         )
 
         interstitialMultiplatformView.onLoadRequest = {
@@ -196,7 +201,7 @@ extension SeparateViewController {
             }
             self?.stopScroll()
             AdManagerInterstitialAd.load(
-                with: gamAdUnitMultiformatInterstitialOriginal,
+                with: gamAdUnitPath,
                 request: request
             ) { ad, error in
                 guard let self = self else { return }

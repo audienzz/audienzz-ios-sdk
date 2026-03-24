@@ -55,11 +55,7 @@ Multi-Size Banner Options in Google Mobile Ads SDK for iOS
 
 class AdAdaptiveViewController: UIViewController {
     private enum Constants {
-        static let testAdUnitId: String = "/96628199/testapp_publisher/banner_test_ad_unit"
-
-        static let storedImpDisplayBanner = ""
         /// https://github.com/prebid/prebid-mobile-ios/issues/836 - the issue describes the prebid can't support Adaptive banners.
-
         /// Limit inline adaptive banner height. By default, inline adaptive banners have a maxHeight equal to the device height. To limit it, use GADInlineAdaptiveBannerAdSizeWithWidthAndMaxHeight(CGFloat width, CGFloat maxHeight).
         static let maxHeightAdaptive: CGFloat = 250
     }
@@ -176,7 +172,7 @@ class AdAdaptiveViewController: UIViewController {
 private extension AdAdaptiveViewController {
     func createManagerBannerView(for size: AdSize) -> AdManagerBannerView {
         let gamBannerView = AdManagerBannerView(adSize: size)
-        gamBannerView.adUnitID = Constants.testAdUnitId
+        gamBannerView.adUnitID = AudienzzRemoteConfig.shared.remoteConfig(for: "46")?.gamConfig.adUnitPath ?? ""
         gamBannerView.rootViewController = self
         gamBannerView.delegate = self
         return gamBannerView
@@ -184,7 +180,7 @@ private extension AdAdaptiveViewController {
 
     func createBannerView(for size: CGSize) -> AUBannerView {
         let bannerMultisizeView = AUBannerView(
-            configId: Constants.storedImpDisplayBanner,
+            configId: AudienzzRemoteConfig.shared.remoteConfig(for: "46")?.prebidConfig.placementId ?? "",
             adSize: size,
             adFormats: [.banner],
             isLazyLoad: false

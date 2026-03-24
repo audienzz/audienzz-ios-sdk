@@ -18,13 +18,15 @@ import GoogleMobileAds
 import UIKit
 
 // MARK: - Rewarded
-private let storedImpVideoRewarded =
-    "prebid-demo-video-rewarded-320-480-original-api"
-private let gamAdUnitVideoRewardedOriginal =
-    "/96628199/de_audienzz.ch_v2/multi-size"
-
 extension ExamplesViewController {
     func createRewardedView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "47") else {
+            print("Warning: Remote config '47' not available for createRewardedView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamRequest = AdManagerRequest()
 
         let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
@@ -33,7 +35,7 @@ extension ExamplesViewController {
             AUVideoPlaybackMethod(type: .AutoPlaySoundOff)
         ]
 
-        rewardedView = AURewardedView(configId: storedImpVideoRewarded)
+        rewardedView = AURewardedView(configId: placementId)
         rewardedView.frame = CGRect(
             origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
             size: CGSize(width: view.frame.size.width, height: 300)
@@ -44,7 +46,7 @@ extension ExamplesViewController {
         lazyAdContainerView.addSubview(rewardedView)
         rewardedView.createAd(
             with: gamRequest,
-            adUnitID: gamAdUnitVideoRewardedOriginal
+            adUnitID: gamAdUnitPath
         )
         rewardedView.onLoadRequest = { [weak self] gamRequest in
             guard let request = gamRequest as? AdManagerRequest else {
@@ -53,7 +55,7 @@ extension ExamplesViewController {
             }
             self?.stopScroll()
             RewardedAd.load(
-                with: gamAdUnitVideoRewardedOriginal,
+                with: gamAdUnitPath,
                 request: request
             ) { [weak self] ad, error in
                 guard let self = self else { return }

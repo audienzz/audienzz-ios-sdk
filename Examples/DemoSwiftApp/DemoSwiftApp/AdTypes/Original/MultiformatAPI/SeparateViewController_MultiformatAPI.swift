@@ -19,10 +19,10 @@ import UIKit
 
 // MARK: - Multiplatform
 private let storedPrebidImpressions = [
-    "prebid-demo-banner-300-250", "prebid-demo-banner-native-styles",
+    "37116627",
 ]
 private let gamRenderingMultiformatAdUnitId =
-    "/21808260008/prebid-demo-multiformat-native-styles"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 
 extension SeparateViewController {
     func createMultiplatformView() {

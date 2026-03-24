@@ -23,21 +23,20 @@ private var bannerRenderingLazyView: AUBannerRenderingView!
 private var bannerRenderingVideoLazyView: AUBannerRenderingView!
 
 extension SeparateViewController {
-    private enum Constants {
-        static let storedImpDisplayBanner = "prebid-demo-banner-320-50"
-        static let gamAdUnitDisplayBannerRendering = "/21808260008/prebid_oxb_320x50_banner"
-
-        static let storedImpVideoBanner = "prebid-demo-video-outstream"
-        static let gamAdUnitVideoBannerRendering = "/21808260008/prebid_oxb_300x250_banner"
-    }
-
     func createRenderingBannerView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createRenderingBannerView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let eventHandler = AUGAMBannerEventHandler(
-            adUnitID: Constants.gamAdUnitDisplayBannerRendering,
+            adUnitID: gamAdUnitPath,
             validGADAdSizes: [AdSizeBanner].map(nsValue)
         )
         bannerRenderingView = AUBannerRenderingView(
-            configId: Constants.storedImpDisplayBanner,
+            configId: placementId,
             adSize: adSize,
             isLazyLoad: false,
             eventHandler: eventHandler
@@ -65,12 +64,19 @@ extension SeparateViewController {
     }
 
     func createRenderingBannerVideoView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createRenderingBannerVideoView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let eventHandler = AUGAMBannerEventHandler(
-            adUnitID: Constants.gamAdUnitVideoBannerRendering,
+            adUnitID: gamAdUnitPath,
             validGADAdSizes: [AdSizeMediumRectangle].map(nsValue)
         )
         bannerRenderingVideoView = AUBannerRenderingView(
-            configId: Constants.storedImpVideoBanner,
+            configId: placementId,
             adSize: CGSize(width: 300, height: 250),
             format: .video,
             isLazyLoad: false,
@@ -106,12 +112,19 @@ extension SeparateViewController {
 // MARK: - Lazy
 extension SeparateViewController {
     func createRenderingBannerLazyView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createRenderingBannerLazyView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let eventHandler = AUGAMBannerEventHandler(
-            adUnitID: Constants.gamAdUnitDisplayBannerRendering,
+            adUnitID: gamAdUnitPath,
             validGADAdSizes: [AdSizeBanner].map(nsValue)
         )
         bannerRenderingLazyView = AUBannerRenderingView(
-            configId: Constants.storedImpDisplayBanner,
+            configId: placementId,
             adSize: adSize,
             eventHandler: eventHandler
         )
@@ -139,12 +152,19 @@ extension SeparateViewController {
     }
 
     func createRenderingBannerVideoLazyView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createRenderingBannerVideoLazyView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let eventHandler = AUGAMBannerEventHandler(
-            adUnitID: Constants.gamAdUnitVideoBannerRendering,
+            adUnitID: gamAdUnitPath,
             validGADAdSizes: [AdSizeMediumRectangle].map(nsValue)
         )
         bannerRenderingVideoLazyView = AUBannerRenderingView(
-            configId: Constants.storedImpVideoBanner,
+            configId: placementId,
             adSize: CGSize(width: 300, height: 250),
             format: .video,
             eventHandler: eventHandler

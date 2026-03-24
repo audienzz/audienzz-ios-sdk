@@ -17,11 +17,6 @@ import GoogleInteractiveMediaAds
 import GoogleMobileAds
 import UIKit
 
-// 320x250
-private let storedImpDisplayBanner_320x250 = "33994718"
-private let gamAdUnitDisplayBannerOriginal_320x250 =
-    "/96628199/de_audienzz.ch_v2/de_audienzz.ch_320_adnz_wideboard_1"
-
 class AdDebugViewController: UIViewController {
     @IBOutlet private weak var exampleScrollView: UIScrollView!
     @IBOutlet internal weak var adContainerView: UIView!
@@ -85,16 +80,23 @@ class AdDebugViewController: UIViewController {
     }
 
     private func createBannerView_320x250() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createBannerView_320x250")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = AdManagerBannerView(
             adSize: adSizeFor(cgSize: adVideoSize)
         )
-        gamBanner.adUnitID = gamAdUnitDisplayBannerOriginal_320x250
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = AdManagerRequest()
 
         bannerView_300x250 = AUBannerView(
-            configId: storedImpDisplayBanner_320x250,
+            configId: placementId,
             adSize: adSizeMult,
             adFormats: [.banner],
             isLazyLoad: false
@@ -107,7 +109,7 @@ class AdDebugViewController: UIViewController {
         adContainerView.addSubview(bannerView_300x250)
 
         let handler = AUBannerEventHandler(
-            adUnitId: gamAdUnitDisplayBannerOriginal_320x250,
+            adUnitId: gamAdUnitPath,
             gamView: gamBanner
         )
 

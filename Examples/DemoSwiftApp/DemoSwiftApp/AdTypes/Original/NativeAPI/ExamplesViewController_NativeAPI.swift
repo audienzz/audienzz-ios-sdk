@@ -19,11 +19,11 @@ import UIKit
 
 // MARK: - Native Banner API
 
-private let storedPrebidImpression = "prebid-demo-banner-native-styles"
+private let storedPrebidImpression = "37116627"
 private let gamRenderingNativeAdUnitId =
-    "/21808260008/apollo_custom_template_native_ad_unit"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 internal let gamNativeBannerAdUnitId =
-    "/21808260008/prebid-demo-original-native-styles"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 
 extension ExamplesViewController {
     func createNativeView() {

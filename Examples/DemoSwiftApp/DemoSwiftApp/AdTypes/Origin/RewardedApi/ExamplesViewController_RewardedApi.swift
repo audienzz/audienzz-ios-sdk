@@ -18,19 +18,23 @@ import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
 
-fileprivate let storedImpVideoRewarded = "prebid-demo-video-rewarded-320-480-original-api"
-fileprivate let gamAdUnitVideoRewardedOriginal = "/96628199/de_audienzz.ch_v2/multi-size"
-
 // MARK: - Rewarded
 extension ExamplesViewController {
     func createRewardedView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "47") else {
+            print("Warning: Remote config '47' not available for createRewardedView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamRequest = GAMRequest()
-        
+
         let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
         videoParameters.protocols = [AUVideoProtocols(type: .VAST_2_0)]
         videoParameters.playbackMethod = [AUVideoPlaybackMethod(type: .AutoPlaySoundOff)]
-        
-        rewardedView = AURewardedView(configId: storedImpVideoRewarded)
+
+        rewardedView = AURewardedView(configId: placementId)
         rewardedView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
                                     size: CGSize(width: view.frame.size.width, height: 300))
         rewardedView.backgroundColor = .magenta
@@ -43,7 +47,7 @@ extension ExamplesViewController {
                 print("Faild request unwrap")
                 return
             }
-            GADRewardedAd.load(withAdUnitID: gamAdUnitVideoRewardedOriginal, request: request) { [weak self] ad, error in
+            GADRewardedAd.load(withAdUnitID: gamAdUnitPath, request: request) { [weak self] ad, error in
                 guard let self = self else { return }
                 if let error = error {
                     print("Failed to load rewarded ad with error: \(error.localizedDescription)")

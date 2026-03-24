@@ -17,25 +17,23 @@ import UIKit
 import AudienzziOSSDK
 import GoogleMobileAds
 
-fileprivate let storedImpDisplayBanner = "prebid-demo-banner-320-50"
-fileprivate let gamAdUnitDisplayBannerOriginal = "/21808260008/prebid_demo_app_original_api_banner"
-
-fileprivate let storedImpVideoBanner = "prebid-demo-video-outstream-original-api"
-fileprivate let gamAdUnitVideoBannerOriginal = "/21808260008/prebid-demo-original-api-video-banner"
-
-fileprivate let storedImpsBanner = ["prebid-demo-banner-300-250", "prebid-demo-video-outstream-original-api"]
-fileprivate let gamAdUnitMultiformatBannerOriginal = "/21808260008/prebid-demo-original-banner-multiformat"
-
 // MARK: - Banner API
 extension ExamplesViewController {
     func createBannerView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createBannerView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = GAMBannerView(adSize: GADAdSizeFromCGSize(adSize))
-        gamBanner.adUnitID = gamAdUnitDisplayBannerOriginal
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = GAMRequest()
-        
-        bannerView = AUBannerView(configId: storedImpDisplayBanner, adSize: adSize, adFormats: [.banner], isLazyLoad: false)
+
+        bannerView = AUBannerView(configId: placementId, adSize: adSize, adFormats: [.banner], isLazyLoad: false)
         bannerView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: adSize)
         bannerView.backgroundColor = .clear
         adContainerView.addSubview(bannerView)
@@ -45,7 +43,7 @@ extension ExamplesViewController {
         
         bannerView.createAd(with: gamRequest,
                             gamBanner: gamBanner,
-                            eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitDisplayBannerOriginal, gamView: gamBanner))
+                            eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitPath, gamView: gamBanner))
         
         bannerView.onLoadRequest = { gamRequest in
             guard let request = gamRequest as? GADRequest else {
@@ -57,14 +55,21 @@ extension ExamplesViewController {
     }
     
     func createBannerMultiplatformView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createBannerMultiplatformView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = GAMBannerView(adSize: GADAdSizeFromCGSize(adSize))
-        gamBanner.adUnitID = gamAdUnitMultiformatBannerOriginal
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
 
         let gamRequest = GAMRequest()
-        
-        bannerMultiplatformView = AUBannerView(configId: storedImpsBanner.first!, adSize: adSize, adFormats: [.banner, .video], isLazyLoad: false)
+
+        bannerMultiplatformView = AUBannerView(configId: placementId, adSize: adSize, adFormats: [.banner, .video], isLazyLoad: false)
         bannerMultiplatformView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)), size: adVideoSize)
         bannerMultiplatformView.backgroundColor = .clear
         adContainerView.addSubview(bannerMultiplatformView)
@@ -80,18 +85,25 @@ extension ExamplesViewController {
     }
     
     func createVideoBannerView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createVideoBannerView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = GAMBannerView(adSize: GADAdSizeFromCGSize(adVideoSize))
-        gamBanner.adUnitID = gamAdUnitVideoBannerOriginal
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
         let gamRequest = GAMRequest()
-        
+
         let videoParameters = AUVideoParameters(mimes: ["video/mp4"])
         videoParameters.protocols = [AUVideoProtocols(type: .VAST_2_0)]
         videoParameters.playbackMethod = [AUVideoPlaybackMethod(type: .AutoPlaySoundOff)]
         videoParameters.placement = AUPlacement.InBanner
-        
-        bannerVideoView = AUBannerView(configId: storedImpVideoBanner, adSize: adVideoSize, adFormats: [.video], isLazyLoad: false)
+
+        bannerVideoView = AUBannerView(configId: placementId, adSize: adVideoSize, adFormats: [.video], isLazyLoad: false)
         bannerVideoView.parameters = videoParameters
         bannerVideoView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(adContainerView)),size: adVideoSize)
         bannerVideoView.backgroundColor = .clear
@@ -112,14 +124,21 @@ extension ExamplesViewController {
 // MARK: - Banner API Lazy Load
 extension ExamplesViewController {
     func createBannerLazyView() {
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: "46") else {
+            print("Warning: Remote config '46' not available for createBannerLazyView")
+            return
+        }
+        let placementId = config.prebidConfig.placementId
+        let gamAdUnitPath = config.gamConfig.adUnitPath
+
         let gamBanner = GAMBannerView(adSize: GADAdSizeFromCGSize(adSize))
-        gamBanner.adUnitID = gamAdUnitDisplayBannerOriginal
+        gamBanner.adUnitID = gamAdUnitPath
         gamBanner.rootViewController = self
         gamBanner.delegate = self
 
         let gamRequest = GAMRequest()
-        
-        bannerLazyView = AUBannerView(configId: storedImpDisplayBanner, adSize: adSize, adFormats: [.banner])
+
+        bannerLazyView = AUBannerView(configId: placementId, adSize: adSize, adFormats: [.banner])
         bannerLazyView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)), size: adSize)
         bannerLazyView.backgroundColor = .green
         lazyAdContainerView.addSubview(bannerLazyView)
@@ -157,14 +176,11 @@ extension ExamplesViewController: GADBannerViewDelegate {
     }
     
     private func helperForSize(bannerView: GAMBannerView) {
-        if bannerView.adUnitID == gamAdUnitDisplayBannerOriginal {
-            bannerView.resize(GADAdSizeFromCGSize(adVideoSize))
-        } else if bannerView.adUnitID == gamAdUnitVideoBannerOriginal {
+        let remoteAdUnitPath = AudienzzRemoteConfig.shared.remoteConfig(for: "46")?.gamConfig.adUnitPath
+        if bannerView.adUnitID == remoteAdUnitPath {
             bannerView.resize(GADAdSizeFromCGSize(adVideoSize))
         } else if bannerView.adUnitID == gamNativeBannerAdUnitId {
             bannerView.resize(GADAdSizeFromCGSize(adVideoSize))
-        } else if bannerView.adUnitID == gamAdUnitMultiformatBannerOriginal {
-            bannerView.resize(GADAdSizeFromCGSize(adSizeMult))
         }
     }
 }
