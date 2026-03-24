@@ -20,12 +20,15 @@ import GoogleMobileAds
 // =============================================================================
 // FixedBannerViewController
 //
-// This file demonstrates how to use FIXED (non-adaptive) banner sizes with
-// the Audienzz SDK. It shows three common scenarios:
+// This screen shows how to integrate FIXED (non-adaptive) banner sizes with
+// the Audienzz SDK and Google Ad Manager. It covers three common scenarios
+// that developers encounter when placing standard IAB banner units inside a
+// scrollable app layout:
 //
-//   1. Single fixed size — 320x50
-//   2. Single fixed size — 300x250
-//   3. Multi-size banner — 320x50 primary + 300x250 secondary
+//   1. Single fixed size — 320×50  (leaderboard / top-of-screen)
+//   2. Single fixed size — 300×250 (medium rectangle / mid-article)
+//   3. Multi-size banner — one ad slot that accepts either 320×50 or 300×250,
+//      letting the auction pick the size with the highest bid
 //
 // ─── THE ROOT CAUSE OF "validAdSizes is ignored" ─────────────────────────────
 //
@@ -60,24 +63,16 @@ import GoogleMobileAds
 // =============================================================================
 
 
-// MARK: - Your ad unit configuration (replace with your real values)
+// MARK: - Remote ad config
 
-private enum AdConfig {
+// All three scenarios draw from the same banner ad config.
+// The SDK fetches configId, GAM ad unit path, and available sizes from the backend.
+private let kBannerAdConfigId = "46"
 
-    // ── Scenario 1: Single 320x50 banner ──────────────────────────────────────
-    static let configId_320x50    = "prebid-demo-banner-320-50"            // ← replace
-    static let gamAdUnitId_320x50 = "/96628199/your-ad-unit-320x50"        // ← replace
-
-    // ── Scenario 2: Single 300x250 banner ─────────────────────────────────────
-    static let configId_300x250    = "prebid-demo-banner-300-250"          // ← replace
-    static let gamAdUnitId_300x250 = "/96628199/your-ad-unit-300x250"      // ← replace
-
-    // ── Scenario 3: Multi-size banner (320x50 + 300x250 from ONE ad unit) ─────
-    //
-    // Use this when your GAM ad unit and Prebid config accept multiple sizes.
-    // If you have separate GAM ad units per size, use scenarios 1 and 2 instead.
-    static let configId_multisize    = "prebid-demo-banner-300-250"        // ← replace
-    static let gamAdUnitId_multisize = "/96628199/your-ad-unit-multisize"  // ← replace
+private func parseAdSize(_ s: String) -> CGSize? {
+    let p = s.split(separator: "x")
+    guard p.count == 2, let w = Double(p[0]), let h = Double(p[1]) else { return nil }
+    return CGSize(width: w, height: h)
 }
 
 
@@ -171,17 +166,26 @@ class FixedBannerViewController: UIViewController {
     // AUBannerView bids only for 320x50 in Prebid.
 
     private func setupBanner_320x50() {
-        let size = CGSize(width: 320, height: 50)
+        guard let rc = AudienzzRemoteConfig.shared.remoteConfig(for: kBannerAdConfigId) else {
+            print("[FixedBannerViewController] Remote ad config not available for scenario 1.")
+            return
+        }
+        // Pick the smallest size from the config (320×50).
+        let size = rc.gamConfig.adSizes
+            .compactMap { parseAdSize($0) }
+            .sorted { $0.width * $0.height < $1.width * $1.height }
+            .first ?? CGSize(width: 320, height: 50)
+
         let (container, _) = makeContainer(label: "Scenario 1 — Fixed 320×50", height: size.height)
 
         // ✅ Fixed adSize — NOT inlineAdaptiveBanner(withAdWidth:)
         gamBanner_320x50 = AdManagerBannerView(adSize: adSizeFor(cgSize: size))
-        gamBanner_320x50.adUnitID = AdConfig.gamAdUnitId_320x50
+        gamBanner_320x50.adUnitID = rc.gamConfig.adUnitPath
         gamBanner_320x50.rootViewController = self
         gamBanner_320x50.delegate = self
 
         banner_320x50 = AUBannerView(
-            configId: AdConfig.configId_320x50,
+            configId: rc.prebidConfig.placementId,
             adSize: size,
             adFormats: [.banner],
             isLazyLoad: false    // set to true if this slot is below the fold
@@ -190,15 +194,16 @@ class FixedBannerViewController: UIViewController {
         banner_320x50.backgroundColor = .clear
         container.addSubview(banner_320x50)
 
-        // Optional: enable auto-refresh every 30 s
-        banner_320x50.adUnitConfiguration.setAutoRefreshMillis(time: 30_000)
+        if let refreshMs = rc.config.refreshTimeSeconds {
+            banner_320x50.adUnitConfiguration.setAutoRefreshMillis(time: Double(refreshMs * 1000))
+        }
 
         let gamRequest = AdManagerRequest()
         banner_320x50.createAd(
             with: gamRequest,
             gamBanner: gamBanner_320x50,
             eventHandler: AUBannerEventHandler(
-                adUnitId: AdConfig.gamAdUnitId_320x50,
+                adUnitId: rc.gamConfig.adUnitPath,
                 gamView: gamBanner_320x50
             )
         )
@@ -215,17 +220,26 @@ class FixedBannerViewController: UIViewController {
     // MARK: ── Scenario 2: Single fixed 300×250 ─────────────────────────────────
 
     private func setupBanner_300x250() {
-        let size = CGSize(width: 300, height: 250)
+        guard let rc = AudienzzRemoteConfig.shared.remoteConfig(for: kBannerAdConfigId) else {
+            print("[FixedBannerViewController] Remote ad config not available for scenario 2.")
+            return
+        }
+        // Pick the largest size from the config (300×250).
+        let size = rc.gamConfig.adSizes
+            .compactMap { parseAdSize($0) }
+            .sorted { $0.width * $0.height > $1.width * $1.height }
+            .first ?? CGSize(width: 300, height: 250)
+
         let (container, _) = makeContainer(label: "Scenario 2 — Fixed 300×250", height: size.height)
 
         // ✅ Fixed adSize
         gamBanner_300x250 = AdManagerBannerView(adSize: adSizeFor(cgSize: size))
-        gamBanner_300x250.adUnitID = AdConfig.gamAdUnitId_300x250
+        gamBanner_300x250.adUnitID = rc.gamConfig.adUnitPath
         gamBanner_300x250.rootViewController = self
         gamBanner_300x250.delegate = self
 
         banner_300x250 = AUBannerView(
-            configId: AdConfig.configId_300x250,
+            configId: rc.prebidConfig.placementId,
             adSize: size,
             adFormats: [.banner],
             isLazyLoad: false
@@ -239,7 +253,7 @@ class FixedBannerViewController: UIViewController {
             with: gamRequest,
             gamBanner: gamBanner_300x250,
             eventHandler: AUBannerEventHandler(
-                adUnitId: AdConfig.gamAdUnitId_300x250,
+                adUnitId: rc.gamConfig.adUnitPath,
                 gamView: gamBanner_300x250
             )
         )
@@ -270,33 +284,38 @@ class FixedBannerViewController: UIViewController {
     // so the GAM view snaps to the exact winning size.
 
     private func setupBanner_multisize() {
-        let primarySize   = CGSize(width: 320, height: 50)
-        let secondarySize = CGSize(width: 300, height: 250)
+        guard let rc = AudienzzRemoteConfig.shared.remoteConfig(for: kBannerAdConfigId) else {
+            print("[FixedBannerViewController] Remote ad config not available for scenario 3.")
+            return
+        }
+        // All sizes from the config, sorted largest first so primary = biggest area.
+        let allSizes = rc.gamConfig.adSizes
+            .compactMap { parseAdSize($0) }
+            .sorted { $0.width * $0.height > $1.width * $1.height }
 
-        // The container starts at the primary (smaller) height.
+        let primarySize   = allSizes.first  ?? CGSize(width: 300, height: 250)
+        let additionalSizes = Array(allSizes.dropFirst())
+
+        // The container starts at the primary (larger) height.
         // We store the height constraint to update it in the delegate if a
-        // 300x250 creative wins.
+        // smaller creative wins.
         let (container, heightConstraint) = makeContainer(
-            label: "Scenario 3 — Multi-size (320×50 + 300×250)",
+            label: "Scenario 3 — Multi-size (\(rc.gamConfig.adSizes.joined(separator: " + ")))",
             height: primarySize.height
         )
         multisizeContainerHeight = heightConstraint
 
         // ✅ Start with a FIXED primary adSize — not adaptive
         gamBanner_multisize = AdManagerBannerView(adSize: adSizeFor(cgSize: primarySize))
-        gamBanner_multisize.adUnitID = AdConfig.gamAdUnitId_multisize
+        gamBanner_multisize.adUnitID = rc.gamConfig.adUnitPath
         gamBanner_multisize.rootViewController = self
         gamBanner_multisize.delegate = self
 
-        // ✅ CRITICAL — let GAM accept both sizes.
-        //    Without this, GAM only accepts ads that exactly match primarySize.
-        gamBanner_multisize.validAdSizes = [
-            nsValue(for: adSizeFor(cgSize: primarySize)),
-            nsValue(for: adSizeFor(cgSize: secondarySize)),
-        ]
+        // ✅ CRITICAL — let GAM accept all sizes from the config.
+        gamBanner_multisize.validAdSizes = allSizes.map { nsValue(for: adSizeFor(cgSize: $0)) }
 
         banner_multisize = AUBannerView(
-            configId: AdConfig.configId_multisize,
+            configId: rc.prebidConfig.placementId,
             adSize: primarySize,
             adFormats: [.banner],
             isLazyLoad: false
@@ -308,16 +327,15 @@ class FixedBannerViewController: UIViewController {
         banner_multisize.backgroundColor = .clear
         container.addSubview(banner_multisize)
 
-        // ✅ CRITICAL — tell Prebid to bid for the secondary size too.
-        //    Without this, Prebid only sends a bid request for primarySize.
-        banner_multisize.addAdditionalSize(sizes: [secondarySize])
+        // ✅ CRITICAL — tell Prebid to bid for all additional sizes too.
+        banner_multisize.addAdditionalSize(sizes: additionalSizes)
 
         let gamRequest = AdManagerRequest()
         banner_multisize.createAd(
             with: gamRequest,
             gamBanner: gamBanner_multisize,
             eventHandler: AUBannerEventHandler(
-                adUnitId: AdConfig.gamAdUnitId_multisize,
+                adUnitId: rc.gamConfig.adUnitPath,
                 gamView: gamBanner_multisize
             )
         )
