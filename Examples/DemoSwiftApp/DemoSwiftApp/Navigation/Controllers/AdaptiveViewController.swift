@@ -23,12 +23,12 @@ Multi-Size Banner Options in Google Mobile Ads SDK for iOS
 
  - Adaptive Banner:
    - Description: Automatically adjusts the height based on the screen width.
-   - Supported By: AdMob, Google Ad Manager.
+   - Supported By: Google Ad Manager.
    - Use Case: Best for dynamically resizing banners across devices and orientations.
    - Example:
      ```
      let adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(UIScreen.main.bounds.width)
-     let bannerView = GADBannerView(adSize: adSize)
+     let bannerView = GAMBannerView(adSize: adSize)
      ```
 
  - Multi-Size Banner (`validAdSizes`):
@@ -45,12 +45,11 @@ Multi-Size Banner Options in Google Mobile Ads SDK for iOS
    - Supported By: Google Ad Manager.
    - Use Case: Best for responsive layouts where the ad size adapts to fit content.
    - Example:
-     ```x
+     ```
      let bannerView = GAMBannerView(adSize: GADAdSizeFluid)
      ```
 
  Notes:
- - Adaptive banners are recommended for AdMob as they offer a simple, responsive solution.
  - Use `validAdSizes` or fluid ads when working with Google Ad Manager for more flexibility in ad sizing.
  */
 
@@ -61,7 +60,7 @@ class AdAdaptiveViewController: UIViewController {
         static let storedImpDisplayBanner = ""
         /// https://github.com/prebid/prebid-mobile-ios/issues/836 - the issue describes the prebid can't support Adaptive banners.
 
-        ///https://developers.google.com/admob/ios/banner/inline-adaptive#limit_inline_adaptive_banner_height  Limit inline adaptive banner height By default, inline adaptive banners instantiated without a maxHeight value have a maxHeight equal to the device height. To limit the inline adaptive banner height, use the GADInlineAdaptiveBannerAdSizeWithWidthAndMaxHeight(CGFloat width, CGFloat maxHeight) method.
+        /// Limit inline adaptive banner height. By default, inline adaptive banners have a maxHeight equal to the device height. To limit it, use GADInlineAdaptiveBannerAdSizeWithWidthAndMaxHeight(CGFloat width, CGFloat maxHeight).
         static let maxHeightAdaptive: CGFloat = 250
     }
 

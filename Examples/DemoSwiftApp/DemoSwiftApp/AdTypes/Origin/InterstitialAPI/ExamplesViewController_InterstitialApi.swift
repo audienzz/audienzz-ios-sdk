@@ -81,7 +81,7 @@ extension ExamplesViewController {
                 print("Faild request unwrap")
                 return
             }
-            GAMInterstitialAd.load(withAdManagerAdUnitID: "ca-app-pub-3940256099942544/5135589807", request: request) { ad, error in
+            GAMInterstitialAd.load(withAdManagerAdUnitID: "/96628199/de_audienzz.ch_v2/multi-size", request: request) { ad, error in
                 guard let self = self else { return }
                 if let error = error {
                     print("Failed to load interstitial ad with error: \(error.localizedDescription)")

@@ -19,7 +19,7 @@ import AudienzziOSSDK
 import GoogleMobileAds
 
 fileprivate let storedImpVideoRewarded = "prebid-demo-video-rewarded-320-480-original-api"
-fileprivate let gamAdUnitVideoRewardedOriginal = "ca-app-pub-3940256099942544/1712485313"
+fileprivate let gamAdUnitVideoRewardedOriginal = "/96628199/de_audienzz.ch_v2/multi-size"
 
 // MARK: - Rewarded
 extension ExamplesViewController {

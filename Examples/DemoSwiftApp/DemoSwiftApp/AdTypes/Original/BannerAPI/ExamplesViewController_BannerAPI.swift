@@ -19,15 +19,15 @@ import GoogleMobileAds
 // 320x50
 private let storedImpDisplayBanner = "prebid-demo-banner-320-50"
 private let gamAdUnitDisplayBannerOriginal =
-    "ca-app-pub-3940256099942544/2934735716"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 // 320x250
 private let storedImpDisplayBanner_320x250 = "prebid-demo-banner-300-250"
 private let gamAdUnitDisplayBannerOriginal_320x250 =
-    "ca-app-pub-3940256099942544/6300978111"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 
 // adaptive
 private let gamAdUnitDisplayAdaptiveBanner =
-    "ca-app-pub-3940256099942544/2435281174"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 
 // Video outstream
 private let storedImpVideoBanner = "prebid-demo-video-outstream-original-api"
@@ -45,16 +45,16 @@ private let gamAdUnitMultiformatBannerOriginal =
 // 320x50
 private let storedImpDisplayBannerLazy = "prebid-demo-banner-320-50"
 private let gamAdUnitDisplayBannerOriginalLazy =
-    "ca-app-pub-3940256099942544/2934735716"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 
 //320x250
 private let storedImpDisplayBanner_300x250_Lazy = "prebid-demo-banner-300-250"
 private let gamAdUnitDisplayBannerOriginal_300x250_Lazy =
-    "ca-app-pub-6632294249825318/7709196874"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 
 // multisize
 private let gamAdUnitDisplayAdaptiveBannerLazy =
-    "ca-app-pub-3940256099942544/2435281174"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 
 // Video outstream
 private let storedImpVideoBannerLazy =

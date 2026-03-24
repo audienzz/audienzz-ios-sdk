@@ -123,7 +123,6 @@ class CPULoaderViewController: UIViewController {
 
         /// GAM banners auto-refresh frequently, increasing CPU usage.
         /// Set longer refresh intervals. Use static banners (no refresh) if possible.
-        //        GADMobileAds.sharedInstance().requestConfiguration.maxAdContentRating = GADMaxAdContentRating.general
     }
 }
 

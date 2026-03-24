@@ -46,7 +46,7 @@ extension ExamplesViewController {
                 return
             }
             
-            self.adLoader = GADAdLoader(adUnitID: "ca-app-pub-6632294249825318/1327733692", rootViewController: self,
+            self.adLoader = GADAdLoader(adUnitID: "/96628199/de_audienzz.ch_v2/multi-size", rootViewController: self,
                                         adTypes: [GADAdLoaderAdType.native], options: [])
             self.adLoader.delegate = self
             self.adLoader.load(request)

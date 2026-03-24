@@ -22,11 +22,11 @@ import UIKit
 private let storedImpDisplayInterstitial =
     "prebid-demo-display-interstitial-320-480"
 private let gamAdUnitDisplayInterstitialOriginal =
-    "ca-app-pub-3940256099942544/4411468910"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 private let storedImpVideoInterstitial =
     "prebid-demo-video-interstitial-320-480-original-api"
 private let gamAdUnitVideoInterstitialOriginal =
-    "ca-app-pub-3940256099942544/5135589807"
+    "/96628199/de_audienzz.ch_v2/multi-size"
 
 private let storedImpsInterstitial = [
     "prebid-demo-display-interstitial-320-480",
