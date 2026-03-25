@@ -16,7 +16,7 @@ public enum AudienzzRemoteConfigError: Error {
 public class AudienzzRemoteConfig: NSObject {
     public static let shared = AudienzzRemoteConfig()
 
-    private let remoteConfigCache = RemoteConfigCache()
+    private let remoteConfigCache: RemoteConfigCache
 
     // MARK: - Properties
 
@@ -25,6 +25,16 @@ public class AudienzzRemoteConfig: NSObject {
 
     private(set) var publisherConfig: RemotePublisherConfiguration?
     private(set) var adUnitConfigs: [RemoteAdConfiguration]?
+
+    private override init() {
+        // Load cached configs synchronously so remoteConfig(for:) returns values
+        // immediately on subsequent launches, before the async fetch completes.
+        let cache = RemoteConfigCache()
+        self.remoteConfigCache = cache
+        self.adUnitConfigs = cache.load()
+        self.publisherConfig = cache.load()
+        super.init()
+    }
 
     public func configureRemote(remoteUrl: URL, publisherId: String) {
         self.remoteUrl = remoteUrl

@@ -12,11 +12,11 @@ import UIKit
 
 final class RemoteConfigViewController: UIViewController {
     private enum Constants {
-        static let fixedBannerConfigId = "192"
+        static let fixedBannerConfigId = "46"
 
-        static let inlineAdaptiveConfigId = "118"
+        static let inlineAdaptiveConfigId = "46"
 
-        static let interstitialConfigId = "267"
+        static let interstitialConfigId = "47"
 
         static let horizontalInset: CGFloat = 16
     }
@@ -130,8 +130,8 @@ final class RemoteConfigViewController: UIViewController {
 
         banner.load(
             in: fixedBannerContainer,
-            size: CGSize(width: 300, height: 600),
-            rootViewController: self
+            rootViewController: self,
+            delegate: self
         )
     }
 
