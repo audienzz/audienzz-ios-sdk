@@ -39,6 +39,7 @@ extension UIView {
 public class VisibleView: UIView {
 
     private var contentOffsetObservations = [NSKeyValueObservation]()
+    private var isCurrentlyVisible: Bool = false
 
     public override func didMoveToWindow() {
         super.didMoveToWindow()
@@ -46,6 +47,10 @@ public class VisibleView: UIView {
         if self.window != nil {
             observeSuperviewsOnOffsetChange()
         } else {
+            if isCurrentlyVisible {
+                isCurrentlyVisible = false
+                onBecameHidden()
+            }
             removeAsSuperviewObserver()
         }
     }
@@ -54,7 +59,17 @@ public class VisibleView: UIView {
         // Implement your visibility detection logic here
     }
 
+    internal dynamic func onBecameVisible() {
+        detectVisible()
+    }
+
+    internal dynamic func onBecameHidden() {}
+
     public override func removeFromSuperview() {
+        if isCurrentlyVisible {
+            isCurrentlyVisible = false
+            onBecameHidden()
+        }
         removeAsSuperviewObserver()
         super.removeFromSuperview()
     }
@@ -84,17 +99,22 @@ public class VisibleView: UIView {
     }
 
     private func checkIfFrameIsVisible() {
-        guard let myWindow = self.window else { return }
-        let myFrameToWindow = myWindow.convert(self.frame, from: self)
-        let myPointToWindow = myWindow.convert(self.frame.origin, from: self.superview)
+        guard let window = self.window else { return }
 
-        // Check if the frame is valid and visible in the window
-        if myFrameToWindow.size.width == 0 && myFrameToWindow.size.height == 0 {
+        let frameInWindow = window.convert(self.frame, from: self.superview)
+
+        if frameInWindow.size.width == 0 && frameInWindow.size.height == 0 {
             return
         }
 
-        if myWindow.frame.contains(myPointToWindow) {
-            detectVisible()
+        let visible = frameInWindow.intersects(window.bounds)
+
+        if visible && !isCurrentlyVisible {
+            isCurrentlyVisible = true
+            onBecameVisible()
+        } else if !visible && isCurrentlyVisible {
+            isCurrentlyVisible = false
+            onBecameHidden()
         }
     }
 }

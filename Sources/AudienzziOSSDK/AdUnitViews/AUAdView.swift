@@ -68,6 +68,15 @@ public class AUAdView: VisibleView {
     
     internal dynamic func fetchRequest(_ gamRequest: GAMRequest) {}
     internal var isInitialAutorefresh: Bool = true
+
+    /// Pause auto-refresh when the ad scrolls off-screen and resume when it returns.
+    /// Defaults to `false`. When `true`, pairs with the refresh interval to avoid refreshing
+    /// stale off-screen creatives.
+    public var smartRefresh: Bool = false
+
+    // MARK: - Smart refresh internals
+    internal var lastRefreshTime: Date?
+    internal var pendingSmartRefreshWorkItem: DispatchWorkItem?
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in

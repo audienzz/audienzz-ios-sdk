@@ -27,7 +27,6 @@ extension AUBannerView {
         guard isLazyLoad, !isLazyLoaded, let request = gamRequest as? AdManagerRequest else {
             return
         }
-        
 
         #if DEBUG
             AULogEvent.logDebug("[AUBannerView] became visible")
@@ -36,11 +35,52 @@ extension AUBannerView {
         isLazyLoaded = true
     }
 
+    override func onBecameVisible() {
+        super.onBecameVisible() // triggers lazy load via detectVisible()
+
+        guard smartRefresh, isLazyLoaded || !isLazyLoad,
+              let request = gamRequest as? AdManagerRequest else { return }
+
+        pendingSmartRefreshWorkItem?.cancel()
+        pendingSmartRefreshWorkItem = nil
+
+        let refreshInterval = (adUnitConfiguration as? AUAdUnitConfigurationEventProtocol)?
+            .autorefreshEventModel.autorefreshTime ?? 0
+        guard refreshInterval > 0 else {
+            adUnitConfiguration?.resumeAutoRefresh()
+            return
+        }
+
+        let elapsed = lastRefreshTime.map { Date().timeIntervalSince($0) } ?? refreshInterval
+        let remaining = max(0, refreshInterval - elapsed)
+
+        if remaining == 0 {
+            fetchRequest(request)
+            adUnitConfiguration?.resumeAutoRefresh()
+        } else {
+            let workItem = DispatchWorkItem { [weak self] in
+                guard let self, let req = self.gamRequest as? AdManagerRequest else { return }
+                self.fetchRequest(req)
+                self.adUnitConfiguration?.resumeAutoRefresh()
+            }
+            pendingSmartRefreshWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + remaining, execute: workItem)
+        }
+    }
+
+    override func onBecameHidden() {
+        guard smartRefresh else { return }
+        pendingSmartRefreshWorkItem?.cancel()
+        pendingSmartRefreshWorkItem = nil
+        adUnitConfiguration?.stopAutoRefresh()
+    }
+
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
+            self.lastRefreshTime = Date()
 
             /*
              use for debug more deep events
