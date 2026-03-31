@@ -107,6 +107,28 @@ When `lazyLoading` is enabled, the SDK intelligently delays this process until t
 optimizing resource usage and improving performance. 
 It is done with view visibility detection which triggers ad loading when the view becomes visible.
 
+## Smart Refresh
+
+Smart Refresh makes banner auto-refresh viewport-aware: refresh is paused while the ad is off-screen, and resumes intelligently when it returns.
+
+When the ad scrolls back into view the SDK checks how long it was hidden:
+- **Stale** (hidden ≥ refresh interval) → a new ad is fetched immediately, then normal auto-refresh resumes.
+- **Not stale** (hidden < refresh interval) → the remaining time is waited before the next fetch, then normal auto-refresh resumes.
+
+Enable it by setting `smartRefresh = true` on any `AUBannerView`:
+
+```swift
+let bannerView = AUBannerView(
+    configId: PREBID_CONFIG_ID,
+    adSize: CGSize(width: 320, height: 50),
+    adFormats: [.banner],
+    isLazyLoad: true
+)
+bannerView.smartRefresh = true
+```
+
+> **Note:** `smartRefresh` has no effect if `autorefreshTime` is not set on the ad unit configuration (i.e. no auto-refresh interval is defined).
+
 ## API Reference
 
 This section provides a detailed reference for the public API of the Audienzz SDK.
@@ -137,6 +159,7 @@ Ad view used for displaying banner and video ads.
 | `bannerParameters` | `AUBannerParameters?`       | Banner ad parameters (optional).                 |
 | `adUnitConfiguration` | `AUAdUnitConfigurationType!`| Ad unit configuration object.                 |
 | `onLoadRequest`    | `((AnyObject) -> Void)?`    | Callback triggered when a GAM request is ready.  |
+| `smartRefresh`     | `Bool`                      | When `true`, pauses auto-refresh while the ad is off-screen and force-refreshes when it returns to viewport if the refresh interval has elapsed. **Default:** `false`. |
 
 **Constructors:**
 
