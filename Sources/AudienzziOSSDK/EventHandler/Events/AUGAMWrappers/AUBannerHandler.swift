@@ -81,29 +81,13 @@ class AUBannerHandler: NSObject,
 
         bannerDelegate?.bannerViewDidReceiveAd?(bannerView)
     }
+
     func bannerView(
         _ bannerView: BannerView,
         didFailToReceiveAdWithError error: any Error
     ) {
         LogEvent("didFailToReceiveAdWithError")
         LogEvent(error.localizedDescription)
-
-        let event = AUFailedLoadEvent(
-            adViewId: auBannerView.configId,
-            adUnitID: adUnitID ?? "",
-            errorMessage: error.localizedDescription,
-            errorCode: error.errorCode ?? -1
-        )
-
-        guard let payload = event.convertToJSONString() else {
-            bannerDelegate?.bannerView?(
-                bannerView,
-                didFailToReceiveAdWithError: error
-            )
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
         bannerDelegate?.bannerView?(
             bannerView,
             didFailToReceiveAdWithError: error
@@ -113,6 +97,16 @@ class AUBannerHandler: NSObject,
     /// Tells the delegate that an impression has been recorded for an ad.
     func bannerViewDidRecordImpression(_ bannerView: BannerView) {
         LogEvent("bannerViewDidRecordImpression")
+
+        let event = AUAdImpressionEvent(
+            adViewId: auBannerView.configId,
+            adUnitID: adUnitID ?? "",
+            adType: "BANNER",
+            adSubType: auBannerView.adEventSubType,
+            apiType: "ORIGINAL"
+        )
+        AUEventsManager.shared.sendEvent(event)
+
         bannerDelegate?.bannerViewDidRecordImpression?(bannerView)
     }
 
@@ -124,13 +118,7 @@ class AUBannerHandler: NSObject,
             adViewId: auBannerView.configId,
             adUnitID: adUnitID ?? ""
         )
-
-        guard let payload = event.convertToJSONString() else {
-            bannerDelegate?.bannerViewDidRecordClick?(bannerView)
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.sendEvent(event)
 
         bannerDelegate?.bannerViewDidRecordClick?(bannerView)
     }

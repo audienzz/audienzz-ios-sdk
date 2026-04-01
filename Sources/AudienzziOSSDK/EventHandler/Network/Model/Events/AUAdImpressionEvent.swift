@@ -15,23 +15,29 @@
 
 import Foundation
 
-struct AUAdClickEvent: AUEventHandlerType {
+struct AUAdImpressionEvent: AUEventHandlerType {
     let adViewId: String
     let adUnitID: String
-    let type: AUAdEventType = .AD_CLICK
+    let adType: String
+    let adSubType: String
+    let apiType: String
+    let type: AUAdEventType = .AD_IMPRESSION
 
     var visitorId: String = ""
     var companyId: String = ""
     var sessionId: String = ""
     var deviceId: String = ""
 
-    init(adViewId: String, adUnitID: String) {
+    init(adViewId: String, adUnitID: String, adType: String, adSubType: String, apiType: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
+        self.adType = adType
+        self.adSubType = adSubType
+        self.apiType = apiType
     }
 }
 
-extension AUAdClickEvent: BodyObjectEncodable {
+extension AUAdImpressionEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
         var result = JSONObject()
         result["source"] = "mobile-sdk"
@@ -46,6 +52,9 @@ extension AUAdClickEvent: BodyObjectEncodable {
         data["companyId"] = companyId
         data["sessionId"] = sessionId
         data["deviceId"] = deviceId
+        data["adType"] = adType
+        data["adSubtype"] = adSubType
+        data["apiType"] = apiType
 
         result["data"] = data
         result["time"] = Date().currentTimeStmp

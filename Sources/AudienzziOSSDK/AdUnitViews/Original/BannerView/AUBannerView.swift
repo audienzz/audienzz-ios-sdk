@@ -118,7 +118,7 @@ public class AUBannerView: AUAdView {
 
         AUEventsManager.shared.checkImpression(self, adUnitID: self.eventHandler?.adUnitID)
 
-        makeCreationEvent()
+        makeHeaderLoadedEvent()
 
         if !self.isLazyLoad {
             fetchRequest(gamRequest)

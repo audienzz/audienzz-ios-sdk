@@ -116,7 +116,7 @@ public class AUInterstitialView: AUAdView {
     
     public func connectHandler(_ eventHandler: AUInterstitialEventHandler) {
         self.eventHandler = AUInterstitialHandler(handler: eventHandler, adView: self)
-        makeCreationEvent()
+        makeHeaderLoadedEvent()
     }
     
  }

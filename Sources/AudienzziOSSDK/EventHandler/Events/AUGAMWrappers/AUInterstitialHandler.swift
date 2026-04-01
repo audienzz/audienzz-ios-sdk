@@ -57,6 +57,16 @@ class AUInterstitialHandler: NSObject,
 
     func adDidRecordImpression(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordImpression")
+
+        let event = AUAdImpressionEvent(
+            adViewId: adView.configId,
+            adUnitID: adUnitID,
+            adType: "INTERSTITIAL",
+            adSubType: "",
+            apiType: "ORIGINAL"
+        )
+        AUEventsManager.shared.sendEvent(event)
+
         fullScreentDelegate?.adDidRecordImpression?(ad)
     }
 
@@ -67,13 +77,7 @@ class AUInterstitialHandler: NSObject,
             adViewId: adView.configId,
             adUnitID: adUnitID
         )
-
-        guard let payload = event.convertToJSONString() else {
-            fullScreentDelegate?.adDidRecordClick?(ad)
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.sendEvent(event)
 
         fullScreentDelegate?.adDidRecordClick?(ad)
     }
@@ -83,24 +87,6 @@ class AUInterstitialHandler: NSObject,
         didFailToPresentFullScreenContentWithError error: any Error
     ) {
         LogEvent("didFailToPresentFullScreenContentWithError")
-
-        let event = AUFailedLoadEvent(
-            adViewId: adView.configId,
-            adUnitID: adUnitID,
-            errorMessage: error.localizedDescription,
-            errorCode: error.errorCode ?? -1
-        )
-
-        guard let payload = event.convertToJSONString() else {
-            fullScreentDelegate?.ad?(
-                ad,
-                didFailToPresentFullScreenContentWithError: error
-            )
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-
         fullScreentDelegate?.ad?(
             ad,
             didFailToPresentFullScreenContentWithError: error
@@ -119,18 +105,6 @@ class AUInterstitialHandler: NSObject,
 
     func adDidDismissFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidDismissFullScreenContent")
-
-        let event = AUCloseAdEvent(
-            adViewId: adView.configId,
-            adUnitID: adUnitID
-        )
-        guard let payload = event.convertToJSONString() else {
-            fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-
         fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
     }
 }

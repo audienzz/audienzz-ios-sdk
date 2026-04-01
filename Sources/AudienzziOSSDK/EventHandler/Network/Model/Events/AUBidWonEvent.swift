@@ -15,23 +15,41 @@
 
 import Foundation
 
-struct AUAdClickEvent: AUEventHandlerType {
+struct AUBidWonEvent: AUEventHandlerType {
     let adViewId: String
     let adUnitID: String
-    let type: AUAdEventType = .AD_CLICK
+    let targetKeywords: [String: String]
+    let size: String?
+    let isAutorefresh: Bool
+    let autorefreshTime: Int
+    let initialRefresh: Bool?
+    let adType: String
+    let adSubType: String
+    let apiType: String
+    let type: AUAdEventType = .BID_WON
 
     var visitorId: String = ""
     var companyId: String = ""
     var sessionId: String = ""
     var deviceId: String = ""
 
-    init(adViewId: String, adUnitID: String) {
+    init(adViewId: String, adUnitID: String, targetKeywords: [String: String], size: String?,
+         isAutorefresh: Bool, autorefreshTime: Int, initialRefresh: Bool?,
+         adType: String, adSubType: String, apiType: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
+        self.targetKeywords = targetKeywords
+        self.size = size
+        self.isAutorefresh = isAutorefresh
+        self.autorefreshTime = autorefreshTime
+        self.initialRefresh = initialRefresh
+        self.adType = adType
+        self.adSubType = adSubType
+        self.apiType = apiType
     }
 }
 
-extension AUAdClickEvent: BodyObjectEncodable {
+extension AUBidWonEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
         var result = JSONObject()
         result["source"] = "mobile-sdk"
@@ -46,6 +64,14 @@ extension AUAdClickEvent: BodyObjectEncodable {
         data["companyId"] = companyId
         data["sessionId"] = sessionId
         data["deviceId"] = deviceId
+        if size != AUUniqHelper.sizeUndefined { data["sizes"] = size }
+        data["adType"] = adType
+        data["adSubtype"] = adSubType
+        data["apiType"] = apiType
+        data["autorefresh"] = isAutorefresh
+        data["autorefreshTime"] = autorefreshTime
+        data["refresh"] = initialRefresh
+        data["targetKeywords"] = targetKeywords.compactMap { $0.value }
 
         result["data"] = data
         result["time"] = Date().currentTimeStmp

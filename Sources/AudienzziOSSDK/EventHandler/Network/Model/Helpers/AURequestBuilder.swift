@@ -20,9 +20,8 @@ fileprivate let baseUrl: String = "https://dev-api.adnz.co/api/ws-event-ingester
 
 enum APIRoute<T: JSONObjectDecodable> {
     case visitorId
-    case batchEvents([JSONObject])
     case submit(JSONObject)
-    
+
     var parser: (JSONObject) -> T? {
       return T.init
     }
@@ -48,15 +47,6 @@ final class APIGateway<T: APIResult>: APIMethodBuilderType {
                                                   headers: ["": ""],
                                                   body: nil),
                              resultParser: route.parser)
-        case .batchEvents(let models):
-            let jsonData = try? encodeJSON(json: models )
-            return APIMethod(request: HTTPRequest(method: HTTPMethodType.POST,
-                                                  url: URL(string: "\(baseUrl)/submit/batch")!,
-                                                  headers: ["Content-Type": "application/cloudevents-batch+json"],
-                                                  body: jsonData),
-                             resultParser: route.parser)
-            
-            
         case .submit(let model):
             let jsonData = try? encodeJSON(json: model)
             return APIMethod(request: HTTPRequest(method: HTTPMethodType.POST,

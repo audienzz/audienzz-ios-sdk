@@ -83,7 +83,7 @@ public class AUInterstitialRenderingView: AUAdView {
                                                   minSizePercentage: minSizePerc ?? .zero,
                                                   eventHandler: interstitialEventHandler)
         
-        makeCreationEvent(adFormat, eventHandler: eventHandler)
+        makeHeaderLoadedEvent(adFormat, eventHandler: eventHandler)
     }
     
     required init?(coder: NSCoder) {
@@ -132,16 +132,13 @@ public class AUInterstitialRenderingView: AUAdView {
 }
 
 fileprivate extension AUInterstitialRenderingView {
-    func makeCreationEvent(_ format: AURenderingInsterstitialAdFormat, eventHandler: AUGAMInterstitialEventHandler) {
-        let event = AUAdCreationEvent(adViewId: configId,
-                                      adUnitID: eventHandler.adUnitID,
-                                      size: AUUniqHelper.sizeMaker(adSize),
-                                      adType: adTypeString,
-                                      adSubType: format == .banner ? "HTML" : "VIDEO",
-                                      apiType: apiTypeString)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    func makeHeaderLoadedEvent(_ format: AURenderingInsterstitialAdFormat, eventHandler: AUGAMInterstitialEventHandler) {
+        let event = AUHeaderLoadedEvent(adViewId: configId,
+                                        adUnitID: eventHandler.adUnitID,
+                                        size: AUUniqHelper.sizeMaker(adSize),
+                                        adType: adTypeString,
+                                        adSubType: format == .banner ? "HTML" : "VIDEO",
+                                        apiType: apiTypeString)
+        AUEventsManager.shared.sendEvent(event)
     }
 }

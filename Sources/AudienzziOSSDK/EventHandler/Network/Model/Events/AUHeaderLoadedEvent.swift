@@ -15,23 +15,31 @@
 
 import Foundation
 
-struct AUAdClickEvent: AUEventHandlerType {
+struct AUHeaderLoadedEvent: AUEventHandlerType {
     let adViewId: String
     let adUnitID: String
-    let type: AUAdEventType = .AD_CLICK
+    let size: String?
+    let adType: String
+    let adSubType: String
+    let apiType: String
+    let type: AUAdEventType = .HEADER_LOADED
 
     var visitorId: String = ""
     var companyId: String = ""
     var sessionId: String = ""
     var deviceId: String = ""
 
-    init(adViewId: String, adUnitID: String) {
+    init(adViewId: String, adUnitID: String, size: String?, adType: String, adSubType: String, apiType: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
+        self.size = size
+        self.adType = adType
+        self.adSubType = adSubType
+        self.apiType = apiType
     }
 }
 
-extension AUAdClickEvent: BodyObjectEncodable {
+extension AUHeaderLoadedEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
         var result = JSONObject()
         result["source"] = "mobile-sdk"
@@ -46,6 +54,10 @@ extension AUAdClickEvent: BodyObjectEncodable {
         data["companyId"] = companyId
         data["sessionId"] = sessionId
         data["deviceId"] = deviceId
+        if size != AUUniqHelper.sizeUndefined { data["sizes"] = size }
+        data["adType"] = adType
+        data["adSubtype"] = adSubType
+        data["apiType"] = apiType
 
         result["data"] = data
         result["time"] = Date().currentTimeStmp

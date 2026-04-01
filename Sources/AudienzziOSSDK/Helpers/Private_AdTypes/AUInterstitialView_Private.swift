@@ -35,20 +35,24 @@ extension AUInterstitialView {
     }
 
     internal override func fetchRequest(_ gamRequest: AdManagerRequest) {
-        makeRequestEvent()
+        makeBidRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             AULogEvent.logDebug(
                 "Audienzz demand fetch for GAM \(resultCode.name())"
             )
             guard let self = self else { return }
-            self.makeWinnerEvent(
-                AUResulrCodeConverter.convertResultCodeName(resultCode)
-            )
+            let resultCodeStr = AUResulrCodeConverter.convertResultCodeName(resultCode)
+            self.makeBidResponseEvent(resultCodeStr)
+            if resultCode == .prebidDemandFetchSuccess {
+                self.makeBidWonEvent()
+            } else {
+                self.makeNoBidEvent(resultCodeStr)
+            }
             self.onLoadRequest?(gamRequest)
         }
     }
 
-    private func makeRequestEvent() {
+    private func makeBidRequestEvent() {
         guard let adUnitID = gadUnitID else { return }
 
         let event = AUBidRequestEvent(
@@ -56,38 +60,67 @@ extension AUInterstitialView {
             adUnitID: adUnitID,
             size: AUUniqHelper.sizeMaker(adSize),
             isAutorefresh: false,
-            autorefreshTime: Int(0),
+            autorefreshTime: 0,
             initialRefresh: false,
             adType: adTypeString,
             adSubType: makeAdSubType(),
             apiType: apiTypeString
         )
-
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.sendEvent(event)
     }
 
-    private func makeWinnerEvent(_ resultCode: String) {
+    private func makeBidResponseEvent(_ resultCode: String) {
         guard let adUnitID = gadUnitID else { return }
 
-        let event = AUBidWinnerEvent(
-            resultCode: resultCode,
-            adUnitID: adUnitID,
-            targetKeywords: [:],
-            isAutorefresh: false,
-            autorefreshTime: Int(0),
-            initialRefresh: false,
+        let event = AUBidResponseEvent(
             adViewId: configId,
+            adUnitID: adUnitID,
+            resultCode: resultCode,
             size: AUUniqHelper.sizeMaker(adSize),
+            isAutorefresh: false,
+            autorefreshTime: 0,
+            initialRefresh: false,
             adType: adTypeString,
             adSubType: makeAdSubType(),
             apiType: apiTypeString
         )
+        AUEventsManager.shared.sendEvent(event)
+    }
 
-        guard let payload = event.convertToJSONString() else { return }
+    private func makeBidWonEvent() {
+        guard let adUnitID = gadUnitID else { return }
 
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        let event = AUBidWonEvent(
+            adViewId: configId,
+            adUnitID: adUnitID,
+            targetKeywords: [:],
+            size: AUUniqHelper.sizeMaker(adSize),
+            isAutorefresh: false,
+            autorefreshTime: 0,
+            initialRefresh: false,
+            adType: adTypeString,
+            adSubType: makeAdSubType(),
+            apiType: apiTypeString
+        )
+        AUEventsManager.shared.sendEvent(event)
+    }
+
+    private func makeNoBidEvent(_ resultCode: String) {
+        guard let adUnitID = gadUnitID else { return }
+
+        let event = AUNoBidEvent(
+            adViewId: configId,
+            adUnitID: adUnitID,
+            resultCode: resultCode,
+            size: AUUniqHelper.sizeMaker(adSize),
+            isAutorefresh: false,
+            autorefreshTime: 0,
+            initialRefresh: false,
+            adType: adTypeString,
+            adSubType: makeAdSubType(),
+            apiType: apiTypeString
+        )
+        AUEventsManager.shared.sendEvent(event)
     }
 
     private func makeAdSubType() -> String {
@@ -106,8 +139,8 @@ extension AUInterstitialView {
         return ""
     }
 
-    internal func makeCreationEvent() {
-        let event = AUAdCreationEvent(
+    internal func makeHeaderLoadedEvent() {
+        let event = AUHeaderLoadedEvent(
             adViewId: configId,
             adUnitID: eventHandler?.adUnitID ?? "",
             size: AUUniqHelper.sizeMaker(adSize),
@@ -115,9 +148,6 @@ extension AUInterstitialView {
             adSubType: makeAdSubType(),
             apiType: apiTypeString
         )
-
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.sendEvent(event)
     }
 }

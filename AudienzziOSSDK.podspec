@@ -19,7 +19,6 @@ Pod::Spec.new do |spec|
 
     spec.dependency 'PrebidMobile', '~> 3.0'
     spec.dependency 'PrebidMobileGAMEventHandlers', '~> 3.0'
-    spec.dependency 'SQLite.swift', '~> 0.14'
     spec.dependency 'Google-Mobile-Ads-SDK', '~> 12.0'
     spec.dependency 'GoogleAds-IMA-iOS-SDK', '~> 3.26'
 end
