@@ -23,13 +23,30 @@ private let apiTypeString = "ORIGINAL"
 
 @objc
 extension AUBannerView {
+
+    /// Primary lazy-load trigger: fires `prefetchMarginPoints` pt before the view enters the
+    /// viewport so the Prebid demand fetch completes by the time the ad is visible.
+    override func onEnteredPrefetchZone() {
+        guard isLazyLoad, !isLazyLoaded, let request = gamRequest as? AdManagerRequest else {
+            return
+        }
+        #if DEBUG
+        AULogEvent.logDebug("[AUBannerView] entered prefetch zone (\(Int(prefetchMarginPoints))pt margin), starting fetchDemand")
+        #endif
+        fetchRequest(request)
+        isLazyLoaded = true
+    }
+
+    /// Safety fallback: fires when the view is exactly on screen.
+    /// In normal operation `isLazyLoaded` is already `true` at this point (set by
+    /// `onEnteredPrefetchZone`), so this is a no-op. It only triggers a load if the prefetch
+    /// zone somehow never fired (e.g. `prefetchMarginPoints = 0` with no scroll event).
     override func detectVisible() {
         guard isLazyLoad, !isLazyLoaded, let request = gamRequest as? AdManagerRequest else {
             return
         }
-
         #if DEBUG
-            AULogEvent.logDebug("[AUBannerView] became visible")
+        AULogEvent.logDebug("[AUBannerView] became visible (prefetch zone not reached), starting fetchDemand")
         #endif
         fetchRequest(request)
         isLazyLoaded = true
