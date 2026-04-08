@@ -98,9 +98,10 @@ public class AURemoteConfigBannerView: VisibleView {
             isLazyLoad: false
         )
 
-        if let refreshTimeSeconds = remoteConfig.config.refreshTimeSeconds {
-            bannerView.adUnit.setAutoRefreshMillis(time: Double(refreshTimeSeconds * 1000))
-        }
+        bannerView.adUnit.setAutoRefreshMillis(
+            time: Double((remoteConfig.config.refreshTimeSeconds ?? Self.defaultRefreshSeconds) * 1000)
+        )
+        bannerView.smartRefresh = true
 
         bannerView.addAdditionalSize(sizes: Array(sortedSizes.dropFirst()))
         bannerView.videoParameters = videoParameters
@@ -148,4 +149,7 @@ public class AURemoteConfigBannerView: VisibleView {
         load(in: container, size: size, rootViewController: rootViewController, delegate: delegate)
     }
 
+    // MARK: - Private
+
+    private static let defaultRefreshSeconds = 30
 }

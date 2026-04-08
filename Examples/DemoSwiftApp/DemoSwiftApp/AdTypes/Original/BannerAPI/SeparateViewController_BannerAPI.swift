@@ -52,7 +52,10 @@ extension SeparateViewController {
 
         addDebugLabel(toView: bannerView_320x50, name: "bannerView_320x50")
 
-        bannerView_320x50.adUnitConfiguration.setAutoRefreshMillis(time: 30000)
+        bannerView_320x50.adUnitConfiguration.setAutoRefreshMillis(
+            time: Double((config.config.refreshTimeSeconds ?? 30) * 1000)
+        )
+        bannerView_320x50.smartRefresh = true
         bannerView_320x50.addAdditionalSize(sizes: [
             CGSize(width: 500, height: 600)
         ])
@@ -331,8 +334,9 @@ extension SeparateViewController {
         lazyAdContainerView.addSubview(bannerLazyView_320x50)
 
         bannerLazyView_320x50.adUnitConfiguration.setAutoRefreshMillis(
-            time: 30000
+            time: Double((config.config.refreshTimeSeconds ?? 30) * 1000)
         )
+        bannerLazyView_320x50.smartRefresh = true
 
         addDebugLabel(
             toView: bannerLazyView_320x50,
