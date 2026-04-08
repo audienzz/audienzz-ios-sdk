@@ -95,7 +95,7 @@ public class AURemoteConfigBannerView: VisibleView {
             configId: remoteConfig.prebidConfig.placementId,
             adSize: sortedSizes.first ?? .zero,
             adFormats: [.banner],
-            isLazyLoad: false
+            isLazyLoad: true
         )
 
         bannerView.adUnit.setAutoRefreshMillis(
