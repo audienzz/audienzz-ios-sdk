@@ -102,6 +102,7 @@ public class AURemoteConfigBannerView: VisibleView {
             time: Double((remoteConfig.config.refreshTimeSeconds ?? Self.defaultRefreshSeconds) * 1000)
         )
         bannerView.smartRefresh = true
+        bannerView.prefetchMarginPoints = CGFloat(remoteConfig.config.prefetchDistancePt ?? Self.defaultPrefetchDistancePt)
 
         bannerView.addAdditionalSize(sizes: Array(sortedSizes.dropFirst()))
         bannerView.videoParameters = videoParameters
@@ -152,4 +153,5 @@ public class AURemoteConfigBannerView: VisibleView {
     // MARK: - Private
 
     private static let defaultRefreshSeconds = 30
+    private static let defaultPrefetchDistancePt = 200
 }
