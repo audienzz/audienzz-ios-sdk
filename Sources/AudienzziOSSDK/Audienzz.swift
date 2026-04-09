@@ -187,6 +187,16 @@ public class Audienzz: NSObject {
 
     // MARK: - Public Init For RN Bridg (Audienzz)
 
+    /// Stable Obj-C selector for RN bridge: `configureSDK_RNWithCompanyId:enablePPID:completion:`
+    @objc(configureSDK_RNWithCompanyId:enablePPID:completion:)
+    public func configureSDK_RN(
+        companyId: String,
+        enablePPID: Bool,
+        completion: (() -> Void)?
+    ) {
+        configureSDK_RN(companyId: companyId, appVolume: 0, enablePPID: enablePPID, completion)
+    }
+
     /// Special method used for RN bridging initialization
     public func configureSDK_RN(
         companyId: String,
