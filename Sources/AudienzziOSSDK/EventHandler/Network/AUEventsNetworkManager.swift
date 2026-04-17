@@ -60,18 +60,20 @@ fileprivate extension AUEventsNetworkManager {
     }
     
     func handleResult(responce: HTTPResponse, method: APIMethod<T>, handler: @escaping (Result<T, AUAPIError>) -> Void) {
-        
-        if responce.statusCode == 200 {
+        AULogEvent.logDebug("Analytics response status: \(responce.statusCode)")
+
+        if responce.statusCode == 200 || responce.statusCode == 204 {
             var jObject = JSONObject()
             jObject["code"] = responce.statusCode
             handler(extractAPIResponce(jsonObject: jObject, parser: method.resultParser))
-        }
-        
-        guard let data = responce.body, let json = try? decodeJSON(data), let jsonObject = json as? JSONObject else {
             return
         }
-        
-        handler(extractAPIResponce(jsonObject: jsonObject, parser: method.resultParser))
+
+        if let data = responce.body, let bodyString = String(data: data, encoding: .utf8) {
+            AULogEvent.logDebug("Analytics response body: \(bodyString)")
+        }
+
+        handler(.failure(.couldNotParseResponse))
     }
     
     func extractAPIResponce(jsonObject: JSONObject, parser: (JSONObject) -> T?) -> Result<T, AUAPIError> {

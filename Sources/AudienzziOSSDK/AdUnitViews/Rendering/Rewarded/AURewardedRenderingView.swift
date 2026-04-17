@@ -60,7 +60,7 @@ public class AURewardedRenderingView: AUAdView {
         self.rewardedAdUnit = RewardedAdUnit(configID: configId, minSizePercentage: minSizePerc?.cgSizeValue ?? .zero, eventHandler: rewardedEventHandler)
         self.adUnitConfiguration = AURewardedRenderingConfiguration(adUnit: rewardedAdUnit)
         
-        makeCreationEvent(eventHandler: eventHandler)
+        makeHeaderLoadedEvent(eventHandler: eventHandler)
     }
     
     required init?(coder: NSCoder) {
@@ -100,16 +100,13 @@ public class AURewardedRenderingView: AUAdView {
 }
 
 fileprivate extension AURewardedRenderingView {
-    func makeCreationEvent(eventHandler: AUGAMRewardedAdEventHandler) {
-        let event = AUAdCreationEvent(adViewId: configId,
-                                      adUnitID: eventHandler.adUnitID,
-                                      size: AUUniqHelper.sizeMaker(adSize),
-                                      adType: adTypeString,
-                                      adSubType: "VIDEO",
-                                      apiType: apiTypeString)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    func makeHeaderLoadedEvent(eventHandler: AUGAMRewardedAdEventHandler) {
+        let event = AUHeaderLoadedEvent(adViewId: configId,
+                                        adUnitID: eventHandler.adUnitID,
+                                        size: AUUniqHelper.sizeMaker(adSize),
+                                        adType: adTypeString,
+                                        adSubType: "VIDEO",
+                                        apiType: apiTypeString)
+        AUEventsManager.shared.sendEvent(event)
     }
 }

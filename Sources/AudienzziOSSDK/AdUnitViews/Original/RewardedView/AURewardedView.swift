@@ -94,6 +94,6 @@ public class AURewardedView: AUAdView {
     
     public func connectHandler(_ eventHandler: AURewardedEventHandler) {
         self.eventHandler = AURewardedHandler(handler: eventHandler, adView: self)
-        makeCreationEvent()
+        makeHeaderLoadedEvent()
     }
 }

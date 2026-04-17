@@ -15,17 +15,11 @@
 
 import Foundation
 
-struct AUBidRequestEvent: AUEventHandlerType {
+struct AUPageImpressionEvent: AUEventHandlerType {
     let adViewId: String
     let adUnitID: String
-    let size: String?
-    let isAutorefresh: Bool
-    let autorefreshTime: Int
-    let initialRefresh: Bool?
-    let adType: String
-    let adSubType: String
-    let apiType: String
-    let type: AUAdEventType = .BID_REQUEST
+    let screenName: String
+    let type: AUAdEventType = .PAGE_IMPRESSION
 
     var visitorId: String = ""
     var companyId: String = ""
@@ -38,33 +32,18 @@ struct AUBidRequestEvent: AUEventHandlerType {
     var locale: String = ""
     var zoneOffsetSeconds: Int = 0
 
-    init(adViewId: String, adUnitID: String, size: String?,
-         isAutorefresh: Bool, autorefreshTime: Int, initialRefresh: Bool?,
-         adType: String, adSubType: String, apiType: String) {
+    init(adViewId: String, adUnitID: String, screenName: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
-        self.size = size
-        self.isAutorefresh = isAutorefresh
-        self.autorefreshTime = autorefreshTime
-        self.initialRefresh = initialRefresh
-        self.adType = adType
-        self.adSubType = adSubType
-        self.apiType = apiType
+        self.screenName = screenName
     }
 }
 
-extension AUBidRequestEvent: BodyObjectEncodable {
+extension AUPageImpressionEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
         var attrs = JSONObject()
         attrs["device_id"] = deviceId
         attrs["ad_unit_id"] = adUnitID
-        attrs["ad_type"] = adType
-        attrs["ad_subtype"] = adSubType
-        attrs["api_type"] = apiType
-        attrs["autorefresh"] = isAutorefresh
-        attrs["autorefresh_time"] = autorefreshTime
-        if let refresh = initialRefresh { attrs["refresh"] = refresh }
-        if size != AUUniqHelper.sizeUndefined { attrs["sizes"] = size }
-        return buildFlatPayload(attributes: attrs)
+        return buildFlatPayload(pageUrl: screenName, attributes: attrs)
     }
 }

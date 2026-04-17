@@ -112,7 +112,7 @@ public class AUBannerRenderingView: AUAdView {
         
         bannerView.adFormat = format == .video ? .video : .banner
         
-        self.makeCreationEvent(format, eventHandler: eventHandler)
+        self.makeHeaderLoadedEvent(format, eventHandler: eventHandler)
     }
     
     required init?(coder: NSCoder) {
@@ -168,7 +168,6 @@ internal class AUBannerRenderingDelegateType: NSObject, BannerViewDelegate {
 
     public func bannerView(_ bannerView: BannerView, didFailToReceiveAdWith error: Error) {
         guard let parent = parent else { return }
-        makeErrorEvent(parent: parent, error)
         parent.delegate?.bannerView?(parent, didFailToReceiveAdWith: error)
     }
 
@@ -186,50 +185,24 @@ internal class AUBannerRenderingDelegateType: NSObject, BannerViewDelegate {
 
     public func bannerViewDidDismissModal(_ bannerView: BannerView) {
         guard let parent = parent else { return }
-        makeCloseEvent(parent)
         parent.delegate?.bannerViewDidDismissModal?(parent)
     }
-    
-    private func makeCloseEvent(_ parent: AUBannerRenderingView) {
-        let event = AUCloseAdEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
-    
+
     private func makeClickEvent(_ parent: AUBannerRenderingView) {
         let event = AUAdClickEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
-    
-    private func makeErrorEvent(parent: AUBannerRenderingView, _ error: Error) {
-        let event = AUFailedLoadEvent(adViewId: parent.configId,
-                                      adUnitID: parent.eventHandler?.adUnitID ?? "",
-                                      errorMessage: error.localizedDescription,
-                                      errorCode: error.errorCode ?? -1)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.sendEvent(event)
     }
 }
 
 fileprivate extension AUBannerRenderingView {
-    func makeCreationEvent(_ format: AUAdFormat, eventHandler: AUGAMBannerEventHandler) {
-        let event = AUAdCreationEvent(adViewId: configId,
-                                      adUnitID: eventHandler.adUnitID,
-                                      size: AUUniqHelper.sizeMaker(adSize),
-                                      adType: adTypeString,
-                                      adSubType: "MULTIFORMAT",
-                                      apiType: apiTypeString)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    func makeHeaderLoadedEvent(_ format: AUAdFormat, eventHandler: AUGAMBannerEventHandler) {
+        let event = AUHeaderLoadedEvent(adViewId: configId,
+                                        adUnitID: eventHandler.adUnitID,
+                                        size: AUUniqHelper.sizeMaker(adSize),
+                                        adType: adTypeString,
+                                        adSubType: "MULTIFORMAT",
+                                        apiType: apiTypeString)
+        AUEventsManager.shared.sendEvent(event)
     }
     
     func setupVideoParameters(_ videoParameters: AUVideoParameters) {

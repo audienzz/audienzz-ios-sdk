@@ -15,9 +15,10 @@
 
 import Foundation
 
-struct AUBidRequestEvent: AUEventHandlerType {
+struct AUNoBidEvent: AUEventHandlerType {
     let adViewId: String
     let adUnitID: String
+    let resultCode: String
     let size: String?
     let isAutorefresh: Bool
     let autorefreshTime: Int
@@ -25,7 +26,7 @@ struct AUBidRequestEvent: AUEventHandlerType {
     let adType: String
     let adSubType: String
     let apiType: String
-    let type: AUAdEventType = .BID_REQUEST
+    let type: AUAdEventType = .NO_BID
 
     var visitorId: String = ""
     var companyId: String = ""
@@ -38,11 +39,12 @@ struct AUBidRequestEvent: AUEventHandlerType {
     var locale: String = ""
     var zoneOffsetSeconds: Int = 0
 
-    init(adViewId: String, adUnitID: String, size: String?,
+    init(adViewId: String, adUnitID: String, resultCode: String, size: String?,
          isAutorefresh: Bool, autorefreshTime: Int, initialRefresh: Bool?,
          adType: String, adSubType: String, apiType: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
+        self.resultCode = resultCode
         self.size = size
         self.isAutorefresh = isAutorefresh
         self.autorefreshTime = autorefreshTime
@@ -53,11 +55,12 @@ struct AUBidRequestEvent: AUEventHandlerType {
     }
 }
 
-extension AUBidRequestEvent: BodyObjectEncodable {
+extension AUNoBidEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
         var attrs = JSONObject()
         attrs["device_id"] = deviceId
         attrs["ad_unit_id"] = adUnitID
+        attrs["result_code"] = resultCode
         attrs["ad_type"] = adType
         attrs["ad_subtype"] = adSubType
         attrs["api_type"] = apiType
