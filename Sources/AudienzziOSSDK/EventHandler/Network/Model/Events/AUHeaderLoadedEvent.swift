@@ -27,7 +27,13 @@ struct AUHeaderLoadedEvent: AUEventHandlerType {
     var visitorId: String = ""
     var companyId: String = ""
     var sessionId: String = ""
+    var sessionStartTimestamp: Int = 0
     var deviceId: String = ""
+    var pageImpressionId: String? = nil
+    var screenWidth: Int = 0
+    var screenHeight: Int = 0
+    var locale: String = ""
+    var zoneOffsetSeconds: Int = 0
 
     init(adViewId: String, adUnitID: String, size: String?, adType: String, adSubType: String, apiType: String) {
         self.adViewId = adViewId
@@ -41,26 +47,13 @@ struct AUHeaderLoadedEvent: AUEventHandlerType {
 
 extension AUHeaderLoadedEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
-        var result = JSONObject()
-        result["source"] = "mobile-sdk"
-        result["type"] = type.rawValue
-        result["datacontenttype"] = "application/json"
-        result["specversion"] = "1.0"
-        result["id"] = AUUniqHelper.makeUniqID()
-
-        var data = JSONObject()
-        data["adUnitId"] = adUnitID
-        data["visitorId"] = visitorId
-        data["companyId"] = companyId
-        data["sessionId"] = sessionId
-        data["deviceId"] = deviceId
-        if size != AUUniqHelper.sizeUndefined { data["sizes"] = size }
-        data["adType"] = adType
-        data["adSubtype"] = adSubType
-        data["apiType"] = apiType
-
-        result["data"] = data
-        result["time"] = Date().currentTimeStmp
-        return result
+        var attrs = JSONObject()
+        attrs["device_id"] = deviceId
+        attrs["ad_unit_id"] = adUnitID
+        attrs["ad_type"] = adType
+        attrs["ad_subtype"] = adSubType
+        attrs["api_type"] = apiType
+        if size != AUUniqHelper.sizeUndefined { attrs["sizes"] = size }
+        return buildFlatPayload(attributes: attrs)
     }
 }

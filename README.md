@@ -264,10 +264,17 @@ This object contains methods to initialize the SDK and configure global settings
 
 **Methods:**
 
-| Name                                | Parameters                                                                                               | Description                                  |
-|-------------------------------------|----------------------------------------------------------------------------------------------------------|----------------------------------------------|
-| `configureSDK`                     | `companyId: String`, `gadMobileAdsVersion: String? = nil`, `enablePPID: Bool = false` , | Initializes the SDK. When `enablePPID` is `true` - SDK will automatically generate unique identifier, store it in UserDefaults and add it to all Google Ad Manager requests as a Publisher Provided identifier. On additional methods to work with PPID look at [PPIDManager](#ppidmanager) |
-`setSchainObject` | `schain: String` | Method used to set Schain object for all ad requests. For example on usage refer to [AppDelegate](Examples/DemoSwiftApp/DemoSwiftApp/AppDelegate.swift)|
+| Name                       | Parameters                                                                                              | Description                                                                                                                                                                                                                                                                                          |
+|----------------------------|---------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `configureSDK`             | `companyId: String`, `gadMobileAdsVersion: String? = nil`, `appVolume: Float = 0`, `enablePPID: Bool = false` | Initializes the SDK. When `enablePPID` is `true` the SDK generates a unique identifier, stores it in UserDefaults, and adds it to all Google Ad Manager requests as a Publisher Provided Identifier. See [PPIDManager](#ppidmanager) for additional PPID controls.                               |
+| `configureWithRemoteSDK`   | `gadMobileAdsVersion: String? = nil`, `enablePPID: Bool = false`                                        | `async throws`. Initializes the SDK with remote configuration support, fetching ad unit configs from the Audienzz backend.                                                                                                                                                                           |
+| `onScreenResumed`          | `_ viewController: UIViewController`                                                                    | Call in every view controller's `viewDidAppear` to track screen impressions and associate all ad events on that screen with a shared `page_impression_id`. Fires a `pageImpression` analytics event immediately. See [Analytics & Screen Tracking](#analytics--screen-tracking).                    |
+| `setAppVolume`             | `_ volume: Float`                                                                                       | Sets the global GMA ad audio volume in range [0.0, 1.0]. Can be called at any time after initialization.                                                                                                                                                                                            |
+| `setSchainObject`          | `schain: String`                                                                                        | Sets the publisher Schain object for all ad requests. See [AppDelegate](Examples/DemoSwiftApp/DemoSwiftApp/AppDelegate.swift) for usage.                                                                                                                                                            |
+| `addStoredBidResponse`     | `bidder: String`, `responseId: String`                                                                  | Adds a stored bid response.                                                                                                                                                                                                                                                                          |
+| `clearStoredBidResponses`  |                                                                                                         | Clears all stored bid responses.                                                                                                                                                                                                                                                                     |
+| `addCustomHeader`          | `name: String`, `value: String`                                                                         | Adds a custom HTTP header to all Prebid requests.                                                                                                                                                                                                                                                    |
+| `clearCustomHeaders`       |                                                                                                         | Clears all custom HTTP headers.                                                                                                                                                                                                                                                                      |
 ### `AUTargeting`
 
 This object is used to set targeting parameters for ad requests.
@@ -487,7 +494,7 @@ import GoogleMobileAds
 func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // 1. Configure remote URL and publisher ID
     AudienzzRemoteConfig.shared.configureRemote(
-        remoteUrl: URL(string: "https://dev-api.adnz.co/api/ws-sdk-config/public/v1/")!, // Audienzz remove config URL
+        remoteUrl: URL(string: "https://api.adnz.co/api/ws-sdk-config/public/v1/")!, // Audienzz remote config URL
         publisherId: "YOUR_PUBLISHER_ID" // Will be provided for you
     )
 
@@ -555,6 +562,35 @@ interstitial.load { [weak self] result in
         }
     case .failure(let error):
         print("Failed to load interstitial: \(error)")
+    }
+}
+```
+
+## Analytics & Screen Tracking
+
+The SDK automatically collects ad performance analytics (bid requests, bid responses, impressions, clicks, etc.) and sends them to the Audienzz analytics backend. No additional setup is required for ad-level events.
+
+### Screen Impression Tracking
+
+To associate ad events with a specific screen visit and enable `pageImpression` tracking, call `onScreenResumed` in every view controller that shows ads:
+
+```swift
+override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    Audienzz.shared.onScreenResumed(self)
+}
+```
+
+Each call to `onScreenResumed` fires a `pageImpression` event and generates a fresh `page_impression_id`. All ad events fired after that call (on the same screen visit) are automatically tagged with that ID, allowing the backend to correlate them.
+
+Call this **after** the SDK has been initialized. If you use `configureWithRemoteSDK`, call it once initialization completes:
+
+```swift
+Task {
+    try await Audienzz.shared.configureWithRemoteSDK(...)
+    // Signal the initial screen impression after SDK is ready
+    await MainActor.run {
+        Audienzz.shared.onScreenResumed(self)
     }
 }
 ```

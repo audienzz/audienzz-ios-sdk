@@ -23,7 +23,13 @@ struct AUAdClickEvent: AUEventHandlerType {
     var visitorId: String = ""
     var companyId: String = ""
     var sessionId: String = ""
+    var sessionStartTimestamp: Int = 0
     var deviceId: String = ""
+    var pageImpressionId: String? = nil
+    var screenWidth: Int = 0
+    var screenHeight: Int = 0
+    var locale: String = ""
+    var zoneOffsetSeconds: Int = 0
 
     init(adViewId: String, adUnitID: String) {
         self.adViewId = adViewId
@@ -33,22 +39,9 @@ struct AUAdClickEvent: AUEventHandlerType {
 
 extension AUAdClickEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
-        var result = JSONObject()
-        result["source"] = "mobile-sdk"
-        result["type"] = type.rawValue
-        result["datacontenttype"] = "application/json"
-        result["specversion"] = "1.0"
-        result["id"] = AUUniqHelper.makeUniqID()
-
-        var data = JSONObject()
-        data["adUnitId"] = adUnitID
-        data["visitorId"] = visitorId
-        data["companyId"] = companyId
-        data["sessionId"] = sessionId
-        data["deviceId"] = deviceId
-
-        result["data"] = data
-        result["time"] = Date().currentTimeStmp
-        return result
+        var attrs = JSONObject()
+        attrs["device_id"] = deviceId
+        attrs["ad_unit_id"] = adUnitID
+        return buildFlatPayload(attributes: attrs)
     }
 }

@@ -30,7 +30,13 @@ struct AUBidRequestEvent: AUEventHandlerType {
     var visitorId: String = ""
     var companyId: String = ""
     var sessionId: String = ""
+    var sessionStartTimestamp: Int = 0
     var deviceId: String = ""
+    var pageImpressionId: String? = nil
+    var screenWidth: Int = 0
+    var screenHeight: Int = 0
+    var locale: String = ""
+    var zoneOffsetSeconds: Int = 0
 
     init(adViewId: String, adUnitID: String, size: String?,
          isAutorefresh: Bool, autorefreshTime: Int, initialRefresh: Bool?,
@@ -49,29 +55,16 @@ struct AUBidRequestEvent: AUEventHandlerType {
 
 extension AUBidRequestEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
-        var result = JSONObject()
-        result["source"] = "mobile-sdk"
-        result["type"] = type.rawValue
-        result["datacontenttype"] = "application/json"
-        result["specversion"] = "1.0"
-        result["id"] = AUUniqHelper.makeUniqID()
-
-        var data = JSONObject()
-        data["adUnitId"] = adUnitID
-        data["visitorId"] = visitorId
-        data["companyId"] = companyId
-        data["sessionId"] = sessionId
-        data["deviceId"] = deviceId
-        if size != AUUniqHelper.sizeUndefined { data["sizes"] = size }
-        data["adType"] = adType
-        data["adSubtype"] = adSubType
-        data["apiType"] = apiType
-        data["autorefresh"] = isAutorefresh
-        data["autorefreshTime"] = autorefreshTime
-        data["refresh"] = initialRefresh
-
-        result["data"] = data
-        result["time"] = Date().currentTimeStmp
-        return result
+        var attrs = JSONObject()
+        attrs["device_id"] = deviceId
+        attrs["ad_unit_id"] = adUnitID
+        attrs["ad_type"] = adType
+        attrs["ad_subtype"] = adSubType
+        attrs["api_type"] = apiType
+        attrs["autorefresh"] = isAutorefresh
+        attrs["autorefresh_time"] = autorefreshTime
+        if let refresh = initialRefresh { attrs["refresh"] = refresh }
+        if size != AUUniqHelper.sizeUndefined { attrs["sizes"] = size }
+        return buildFlatPayload(attributes: attrs)
     }
 }

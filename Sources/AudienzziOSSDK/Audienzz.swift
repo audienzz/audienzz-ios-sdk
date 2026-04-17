@@ -14,6 +14,7 @@
  */
 
 import Foundation
+import UIKit
 import GoogleMobileAds
 import PrebidMobile
 
@@ -317,6 +318,16 @@ public class Audienzz: NSObject {
 
     public func clearCustomHeaders() {
         customHeaders.removeAll()
+    }
+
+    /// Call in every UIViewController's `viewDidAppear` (or `viewWillAppear`) to track
+    /// screen impressions and associate all ad events on that screen with a shared
+    /// `page_impression_id`. Fires a `pageImpression` analytics event immediately.
+    ///
+    /// - Parameter viewController: The view controller that just appeared.
+    public func onScreenResumed(_ viewController: UIViewController) {
+        let screenName = String(describing: type(of: viewController))
+        AUEventsManager.shared.onScreenResumed(screenName: screenName)
     }
 
     /// Set publisher schain object to use with ad requests

@@ -14,6 +14,7 @@
  */
 
 import Foundation
+import UIKit
 import AppTrackingTransparency
 import AdSupport
 
@@ -26,7 +27,15 @@ class AUEventsManager: AULogEventType {
     private var visitorId: String = "visitorId"
     private var companyId: String = "companyId"
     private var sessionId: String = AUUniqHelper.makeUniqID()
+    private var sessionStartTimestamp: Int = Int(Date().timeIntervalSince1970 * 1000)
     private var deviceId: String = ""
+    private var currentPageImpressionId: String? = nil
+
+    // Device / locale info — computed once on configure() (main thread)
+    private var screenWidth: Int = 0
+    private var screenHeight: Int = 0
+    private var locale: String = ""
+    private var zoneOffsetSeconds: Int = 0
 
     // MARK: - Network
     private var networkManager: AUEventsNetworkManager<AUBatchResultModel>?
@@ -35,6 +44,22 @@ class AUEventsManager: AULogEventType {
         networkManager = AUEventsNetworkManager<AUBatchResultModel>()
         visitorId = makeVisitorId()
         self.companyId = companyId
+
+        let bounds = UIScreen.main.bounds
+        screenWidth = Int(bounds.width)
+        screenHeight = Int(bounds.height)
+        locale = Locale.current.identifier
+        zoneOffsetSeconds = TimeZone.current.secondsFromGMT()
+    }
+
+    func onScreenResumed(screenName: String) {
+        currentPageImpressionId = AUUniqHelper.makeUniqID()
+        let event = AUPageImpressionEvent(
+            adViewId: "",
+            adUnitID: "",
+            screenName: screenName
+        )
+        sendEvent(event)
     }
 
     func checkImpression(_ view: AUAdView, adUnitID: String?) {
@@ -42,12 +67,7 @@ class AUEventsManager: AULogEventType {
         AULogEvent.logDebug("isModelExist shouldAdd: \(shouldAdd)")
 
         if shouldAdd, let name = screenName {
-            let event = AUPageImpressionEvent(
-                adViewId: view.configId,
-                adUnitID: adUnitID ?? view.configId,
-                screenName: name
-            )
-            sendEvent(event)
+            onScreenResumed(screenName: name)
         }
     }
 
@@ -61,7 +81,13 @@ class AUEventsManager: AULogEventType {
         mutableEvent.visitorId = visitorId
         mutableEvent.companyId = companyId
         mutableEvent.sessionId = sessionId
+        mutableEvent.sessionStartTimestamp = sessionStartTimestamp
         mutableEvent.deviceId = deviceId
+        mutableEvent.pageImpressionId = currentPageImpressionId
+        mutableEvent.screenWidth = screenWidth
+        mutableEvent.screenHeight = screenHeight
+        mutableEvent.locale = locale
+        mutableEvent.zoneOffsetSeconds = zoneOffsetSeconds
 
         let encoded = mutableEvent.encode()
         networkManager.request(.submit(encoded)) { result in

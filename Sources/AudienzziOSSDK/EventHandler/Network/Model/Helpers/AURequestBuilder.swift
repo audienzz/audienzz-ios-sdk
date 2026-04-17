@@ -15,8 +15,7 @@
 
 import Foundation
 
-fileprivate let baseUrl: String = "https://dev-api.adnz.co/api/ws-event-ingester"
-//fileprivate let baseUrl: String = "https://api.adnz.co/api/ws-event-ingester"
+fileprivate let baseUrl: String = "https://api.adnz.co/api/ws-clickstream-collector"
 
 enum APIRoute<T: JSONObjectDecodable> {
     case visitorId
@@ -48,10 +47,10 @@ final class APIGateway<T: APIResult>: APIMethodBuilderType {
                                                   body: nil),
                              resultParser: route.parser)
         case .submit(let model):
-            let jsonData = try? encodeJSON(json: model)
+            let jsonData = try? encodeJSON(json: [model])
             return APIMethod(request: HTTPRequest(method: HTTPMethodType.POST,
-                                                  url: URL(string: "\(baseUrl)/submit")!,
-                                                  headers: ["Content-Type": "application/cloudevents+json"],
+                                                  url: URL(string: "\(baseUrl)/submit/batch")!,
+                                                  headers: ["Content-Type": "application/json"],
                                                   body: jsonData),
                              resultParser: route.parser)
         }
