@@ -177,7 +177,11 @@ public class VisibleView: UIView {
         }
 
         // Actual visibility — drives smart refresh and the legacy detectVisible() path.
-        let visible = frameInWindow.intersects(window.bounds)
+        // We consider the ad "visible" only when its top edge is within the viewport.
+        // This prevents triggering a refresh when just a pixel-sliver at the bottom of
+        // the screen is in view (ad entering from below) or the ad has nearly fully
+        // scrolled off the top.
+        let visible = frameInWindow.minY >= window.bounds.minY && frameInWindow.minY < window.bounds.maxY
 
         if visible && !isCurrentlyVisible {
             isCurrentlyVisible = true
