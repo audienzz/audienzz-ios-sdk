@@ -33,6 +33,18 @@ extension UIView {
         superviews.append(contentsOf: subViews)
         return superviews
     }
+
+    /// Returns the nearest `UITableView` or `UICollectionView` ancestor, or `nil` if none.
+    func findTableOrCollectionViewAncestor() -> UIScrollView? {
+        var view: UIView? = superview
+        while let current = view {
+            if current is UITableView || current is UICollectionView {
+                return current as? UIScrollView
+            }
+            view = current.superview
+        }
+        return nil
+    }
 }
 
 @objcMembers
@@ -41,10 +53,40 @@ public class VisibleView: UIView {
     private var contentOffsetObservations = [NSKeyValueObservation]()
     private var isCurrentlyVisible: Bool = false
 
+    // MARK: - Prefetch margin
+
+    /// Distance in points before the view enters the viewport that triggers
+    /// ``onEnteredPrefetchZone()``, which starts the Prebid demand fetch early so the ad is
+    /// ready the moment the view scrolls into view.
+    ///
+    /// Defaults to **200 pt**. Set to `0` to load only when the view is exactly on screen.
+    ///
+    /// - Note: Has no practical effect inside `UITableView` or `UICollectionView`. Those
+    ///   containers dequeue cells just before they appear, so the view is already within the
+    ///   margin by the time it is added to the hierarchy. For table/collection views, set
+    ///   `isLazyLoad = false` and rely on the table/collection prefetch mechanism instead
+    ///   (`UITableView.prefetchDataSource` / `UICollectionView.isPrefetchingEnabled`).
+    public var prefetchMarginPoints: CGFloat = 200
+
+    /// Tracks whether `onEnteredPrefetchZone()` has already fired. One-shot per view lifetime.
+    private var hasFiredPrefetchZone: Bool = false
+
+    // MARK: - Lifecycle
+
     public override func didMoveToWindow() {
         super.didMoveToWindow()
 
         if self.window != nil {
+            #if DEBUG
+            if prefetchMarginPoints > 0, findTableOrCollectionViewAncestor() != nil {
+                AULogEvent.logDebug(
+                    "[VisibleView] ⚠️ prefetchMarginPoints=\(Int(prefetchMarginPoints)) has no effect " +
+                    "inside a UITableView/UICollectionView. Cells are dequeued just before they appear, " +
+                    "so the view is already within the margin when added to the hierarchy. " +
+                    "Use isLazyLoad = false and rely on the table/collection prefetch APIs instead."
+                )
+            }
+            #endif
             observeSuperviewsOnOffsetChange()
         } else {
             if isCurrentlyVisible {
@@ -55,9 +97,16 @@ public class VisibleView: UIView {
         }
     }
 
+    // MARK: - Overridable hooks
+
     internal dynamic func detectVisible() {
         // Implement your visibility detection logic here
     }
+
+    /// Called once when the view enters the prefetch zone — i.e. when it comes within
+    /// `prefetchMarginPoints` pt of the visible viewport. Fires before `onBecameVisible()`.
+    /// Override to start demand fetch early. One-shot per view lifetime.
+    internal dynamic func onEnteredPrefetchZone() {}
 
     internal dynamic func onBecameVisible() {
         detectVisible()
@@ -78,13 +127,14 @@ public class VisibleView: UIView {
         removeAsSuperviewObserver()
     }
 
+    // MARK: - Scroll observation
+
     private func observeSuperviewsOnOffsetChange() {
         guard let superviews = self.getAllSuperviews() else { return }
 
-        // Observe contentOffset of UIScrollView superviews
         for superview in superviews {
             if let scrollView = superview as? UIScrollView {
-                let observation = scrollView.observe(\.contentOffset, options: [.new]) { [weak self] scrollView, _ in
+                let observation = scrollView.observe(\.contentOffset, options: [.new]) { [weak self] _, _ in
                     self?.checkIfFrameIsVisible()
                 }
                 contentOffsetObservations.append(observation)
@@ -93,10 +143,11 @@ public class VisibleView: UIView {
     }
 
     private func removeAsSuperviewObserver() {
-        // Invalidate all observations
         contentOffsetObservations.forEach { $0.invalidate() }
         contentOffsetObservations.removeAll()
     }
+
+    // MARK: - Visibility check
 
     private func checkIfFrameIsVisible() {
         guard let window = self.window else { return }
@@ -107,7 +158,30 @@ public class VisibleView: UIView {
             return
         }
 
-        let visible = frameInWindow.intersects(window.bounds)
+        // Prefetch zone — fires once when the view is within prefetchMarginPoints of the viewport.
+        if !hasFiredPrefetchZone {
+            let expandedBounds = window.bounds.insetBy(
+                dx: -prefetchMarginPoints,
+                dy: -prefetchMarginPoints
+            )
+            let withinPrefetchZone = prefetchMarginPoints > 0
+                ? frameInWindow.intersects(expandedBounds)
+                : frameInWindow.intersects(window.bounds)
+            if withinPrefetchZone {
+                hasFiredPrefetchZone = true
+                #if DEBUG
+                AULogEvent.logDebug("[VisibleView] entered prefetch zone (margin=\(Int(prefetchMarginPoints))pt)")
+                #endif
+                onEnteredPrefetchZone()
+            }
+        }
+
+        // Actual visibility — drives smart refresh and the legacy detectVisible() path.
+        // We consider the ad "visible" only when its top edge is within the viewport.
+        // This prevents triggering a refresh when just a pixel-sliver at the bottom of
+        // the screen is in view (ad entering from below) or the ad has nearly fully
+        // scrolled off the top.
+        let visible = frameInWindow.minY >= window.bounds.minY && frameInWindow.minY < window.bounds.maxY
 
         if visible && !isCurrentlyVisible {
             isCurrentlyVisible = true

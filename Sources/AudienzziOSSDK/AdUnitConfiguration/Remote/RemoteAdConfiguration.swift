@@ -10,7 +10,19 @@ import Foundation
 public struct RemoteAdConfiguration: Codable {
     public struct Config: Codable {
         public let adType: String
+        /// Seconds between auto-refresh cycles. `nil` when absent or null in the remote payload.
         public let refreshTimeSeconds: Int?
+        /// Prefetch margin in points. `nil` when absent or null in the remote payload.
+        public let prefetchDistancePt: Int?
+
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            adType = try container.decode(String.self, forKey: .adType)
+            // decodeIfPresent returns nil for both absent keys and JSON null,
+            // so callers apply a default via the nil-coalescing operator.
+            refreshTimeSeconds = try container.decodeIfPresent(Int.self, forKey: .refreshTimeSeconds)
+            prefetchDistancePt = try container.decodeIfPresent(Int.self, forKey: .prefetchDistancePt)
+        }
     }
 
     public enum WidthStrategy: String, Codable {

@@ -51,6 +51,7 @@ extension ExamplesViewController {
             time: Double((config.config.refreshTimeSeconds ?? 30) * 1000)
         )
         bannerView_320x50.smartRefresh = true
+        bannerView_320x50.prefetchMarginPoints = CGFloat(config.config.prefetchDistancePt ?? 200)
         bannerView_320x50.addAdditionalSize(sizes: [
             CGSize(width: 500, height: 600)
         ])
