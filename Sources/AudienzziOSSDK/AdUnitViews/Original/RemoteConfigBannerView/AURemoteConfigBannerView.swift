@@ -150,7 +150,9 @@ public class AURemoteConfigBannerView: VisibleView {
             bannerHeightConstraint.constant = newSize.height
             containerWidthConstraint.constant = newSize.width
             containerHeightConstraint.constant = newSize.height
-            container?.layoutIfNeeded()
+            // layoutIfNeeded on the superview ensures constraints attached to `container`
+            // itself (not just inside it) are also resolved in the same layout pass.
+            container?.superview?.layoutIfNeeded()
         }
     }
     

@@ -40,6 +40,12 @@ class AUBannerHandler: NSObject,
     weak var eventDelegate: AppEventDelegate?
     weak var sizeDelegate: AdSizeDelegate?
 
+    /// The actual ad size GAM will render, captured from `willChangeAdSizeTo` which fires
+    /// synchronously before `bannerViewDidReceiveAd`. At that point `gamView.adSize` is not
+    /// yet updated — the delegate parameter is the only reliable source of the chosen size.
+    /// Consumed and cleared in `bannerViewDidReceiveAd`.
+    private var pendingGAMSize: CGSize?
+
     init(auBannerView: AUBannerView, gamView: AdManagerBannerView) {
         self.auBannerView = auBannerView
         self.gamView = gamView
@@ -68,17 +74,28 @@ class AUBannerHandler: NSObject,
     func bannerViewDidReceiveAd(_ bannerView: BannerView) {
         LogEvent("bannerViewDidReceiveAd")
 
-        // By the time this callback fires, `gamBannerView.adSize` already reflects the
-        // actual ad size GAM decided to serve (chosen from `validAdSizes`). This is more
-        // reliable than `willChangeAdSizeTo`, which only fires when the size differs from
-        // the primary declared `adSize` and is not guaranteed on every GAM SDK version.
-        // We resize the banner to that actual size and notify the owning view so it can
-        // update its own layout constraints accordingly.
         if let gamBannerView = bannerView as? AdManagerBannerView {
-            let actualSize = gamBannerView.adSize.size
-            gamBannerView.resize(adSizeFor(cgSize: actualSize))
-            auBannerView.onAdSizeChanged?(actualSize)
+            // Determine the actual rendered size using a three-level priority:
+            // 1. pendingGAMSize — set by willChangeAdSizeTo, which fires synchronously
+            //    before this callback. gamView.adSize is NOT yet updated at that point,
+            //    so the delegate parameter is the only reliable source. This covers GAM
+            //    serving any non-primary size from validAdSizes (e.g. 300×600 when the
+            //    primary was 320×50) — and is also why adSize.size alone caused 50px banners.
+            // 2. lastPrebidCreativeSize — hb_size from Prebid targeting after fetchDemand.
+            //    Covers Prebid wins where the creative size matches the primary declared
+            //    adSize (willChangeAdSizeTo doesn't fire in that case).
+            // 3. gamBannerView.adSize.size — final fallback for when GAM serves exactly
+            //    the primary declared adSize and Prebid did not participate.
+            let actualSize = pendingGAMSize
+                ?? auBannerView.lastPrebidCreativeSize
+                ?? gamBannerView.adSize.size
+
+            if actualSize != .zero {
+                gamBannerView.resize(adSizeFor(cgSize: actualSize))
+                auBannerView.onAdSizeChanged?(actualSize)
+            }
         }
+        pendingGAMSize = nil
 
         bannerDelegate?.bannerViewDidReceiveAd?(bannerView)
     }
@@ -166,6 +183,9 @@ class AUBannerHandler: NSObject,
     // MARK: - GADAdSizeDelegate
     func adView(_ bannerView: BannerView, willChangeAdSizeTo size: AdSize) {
         LogEvent("willChangeAdSizeTo")
+        // Capture GAM's chosen size before bannerViewDidReceiveAd fires.
+        // gamView.adSize is not yet updated here — size.size is the correct value.
+        pendingGAMSize = size.size
         sizeDelegate?.adView(bannerView, willChangeAdSizeTo: size)
     }
 }
