@@ -23,17 +23,73 @@ private let apiTypeString = "ORIGINAL"
 
 @objc
 extension AUBannerView {
+
+    /// Primary lazy-load trigger: fires `prefetchMarginPoints` pt before the view enters the
+    /// viewport so the Prebid demand fetch completes by the time the ad is visible.
+    override func onEnteredPrefetchZone() {
+        guard isLazyLoad, !isLazyLoaded, let request = gamRequest as? AdManagerRequest else {
+            return
+        }
+        #if DEBUG
+        AULogEvent.logDebug("[AUBannerView] entered prefetch zone (\(Int(prefetchMarginPoints))pt margin), starting fetchDemand")
+        #endif
+        fetchRequest(request)
+        isLazyLoaded = true
+    }
+
+    /// Safety fallback: fires when the view is exactly on screen.
+    /// In normal operation `isLazyLoaded` is already `true` at this point (set by
+    /// `onEnteredPrefetchZone`), so this is a no-op. It only triggers a load if the prefetch
+    /// zone somehow never fired (e.g. `prefetchMarginPoints = 0` with no scroll event).
     override func detectVisible() {
         guard isLazyLoad, !isLazyLoaded, let request = gamRequest as? AdManagerRequest else {
             return
         }
-        
-
         #if DEBUG
-            AULogEvent.logDebug("[AUBannerView] became visible")
+        AULogEvent.logDebug("[AUBannerView] became visible (prefetch zone not reached), starting fetchDemand")
         #endif
         fetchRequest(request)
         isLazyLoaded = true
+    }
+
+    override func onBecameVisible() {
+        super.onBecameVisible() // triggers lazy load via detectVisible()
+
+        guard smartRefresh, isLazyLoaded || !isLazyLoad,
+              let request = gamRequest as? AdManagerRequest else { return }
+
+        pendingSmartRefreshWorkItem?.cancel()
+        pendingSmartRefreshWorkItem = nil
+
+        let refreshInterval = (adUnitConfiguration as? AUAdUnitConfigurationEventProtocol)?
+            .autorefreshEventModel.autorefreshTime ?? 0
+        guard refreshInterval > 0 else {
+            adUnitConfiguration?.resumeAutoRefresh()
+            return
+        }
+
+        let elapsed = lastRefreshTime.map { Date().timeIntervalSince($0) } ?? refreshInterval
+        let remaining = max(0, refreshInterval - elapsed)
+
+        if remaining == 0 {
+            fetchRequest(request)
+            adUnitConfiguration?.resumeAutoRefresh()
+        } else {
+            let workItem = DispatchWorkItem { [weak self] in
+                guard let self, let req = self.gamRequest as? AdManagerRequest else { return }
+                self.fetchRequest(req)
+                self.adUnitConfiguration?.resumeAutoRefresh()
+            }
+            pendingSmartRefreshWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + remaining, execute: workItem)
+        }
+    }
+
+    override func onBecameHidden() {
+        guard smartRefresh else { return }
+        pendingSmartRefreshWorkItem?.cancel()
+        pendingSmartRefreshWorkItem = nil
+        adUnitConfiguration?.stopAutoRefresh()
     }
 
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
@@ -41,6 +97,7 @@ extension AUBannerView {
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
+            self.lastRefreshTime = Date()
 
             /*
              use for debug more deep events

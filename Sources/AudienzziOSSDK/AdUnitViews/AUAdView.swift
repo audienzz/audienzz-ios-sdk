@@ -68,6 +68,20 @@ public class AUAdView: VisibleView {
     
     internal dynamic func fetchRequest(_ gamRequest: GAMRequest) {}
     internal var isInitialAutorefresh: Bool = true
+
+    // prefetchMarginPoints is declared and implemented in VisibleView.
+    // See VisibleView.prefetchMarginPoints for the full KDoc.
+    // Defaults to 200 pt. Set to 0 for exact-visibility loading.
+    // Not effective in UITableView / UICollectionView — use isLazyLoad = false there.
+
+    /// Pause auto-refresh when the ad scrolls off-screen and resume when it returns.
+    /// Defaults to `false`. When `true`, pairs with the refresh interval to avoid refreshing
+    /// stale off-screen creatives.
+    public var smartRefresh: Bool = false
+
+    // MARK: - Smart refresh internals
+    internal var lastRefreshTime: Date?
+    internal var pendingSmartRefreshWorkItem: DispatchWorkItem?
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in

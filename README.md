@@ -104,8 +104,80 @@ In this way the `createAd()` or `fetchDemand()` will be postponed until the view
 
 The `createAd()` method, available on classes like `AUBannerView` and `AUInterstitialView`, initiates the ad loading process.
 When `lazyLoading` is enabled, the SDK intelligently delays this process until the ad view is about to become visible to the user,
-optimizing resource usage and improving performance. 
+optimizing resource usage and improving performance.
 It is done with view visibility detection which triggers ad loading when the view becomes visible.
+
+### Prefetch Margin
+
+The correct prefetch mechanism depends on the scroll container your ad lives in:
+
+| Container | Prefetch mechanism | How to configure |
+|---|---|---|
+| `UIScrollView` / `UITableView` (non-cell) | Distance-based (pt) | `prefetchMarginPoints` on the ad view |
+| `UITableView` / `UICollectionView` cells | Item-count-based | `UITableView.prefetchDataSource` / `UICollectionView.isPrefetchingEnabled` |
+
+**Why they differ:** In a plain `UIScrollView` all views are laid out in the hierarchy upfront. The SDK observes `contentOffset` via KVO and can detect "this view is now within N pt of the visible area" at exactly the right scroll position.
+
+In a `UITableView` or `UICollectionView`, cells are created and laid out on-demand — just before they scroll into view. By the time `createAd()` is called from `cellForRow(at:)`, the cell is already within ~a row height of the viewport regardless of `prefetchMarginPoints`.
+
+By default, lazy loading starts **200 pt before** the view enters the viewport. You can customise this with `prefetchMarginPoints`:
+
+```swift
+let bannerView = AUBannerView(
+    configId: PREBID_CONFIG_ID,
+    adSize: CGSize(width: 320, height: 50),
+    adFormats: [.banner],
+    isLazyLoad: true
+)
+
+// Default — start loading 200 pt before the view enters the viewport
+// bannerView.prefetchMarginPoints = 200
+
+// Custom margin — start loading 600 pt ahead
+bannerView.prefetchMarginPoints = 600
+
+// Exact visibility — load only when the view is actually on screen
+bannerView.prefetchMarginPoints = 0
+```
+
+#### UITableView / UICollectionView cells
+
+Use `isLazyLoad = false` to load immediately when the cell is created, and control how many cells ahead are pre-created with the table/collection prefetch APIs:
+
+```swift
+// In cellForRow(at:) — load immediately on cell creation
+let bannerView = AUBannerView(
+    configId: PREBID_CONFIG_ID,
+    adSize: CGSize(width: 320, height: 50),
+    adFormats: [.banner],
+    isLazyLoad: false  // Load immediately — prefetchMarginPoints has no effect in cells
+)
+
+// UICollectionView: enable prefetching so cells are created further ahead of the viewport
+collectionView.isPrefetchingEnabled = true
+```
+
+## Smart Refresh
+
+Smart Refresh makes banner auto-refresh viewport-aware: refresh is paused while the ad is off-screen, and resumes intelligently when it returns.
+
+When the ad scrolls back into view the SDK checks how long it was hidden:
+- **Stale** (hidden ≥ refresh interval) → a new ad is fetched immediately, then normal auto-refresh resumes.
+- **Not stale** (hidden < refresh interval) → the remaining time is waited before the next fetch, then normal auto-refresh resumes.
+
+Enable it by setting `smartRefresh = true` on any `AUBannerView`:
+
+```swift
+let bannerView = AUBannerView(
+    configId: PREBID_CONFIG_ID,
+    adSize: CGSize(width: 320, height: 50),
+    adFormats: [.banner],
+    isLazyLoad: true
+)
+bannerView.smartRefresh = true
+```
+
+> **Note:** `smartRefresh` has no effect if `autorefreshTime` is not set on the ad unit configuration (i.e. no auto-refresh interval is defined).
 
 ## API Reference
 
@@ -137,6 +209,8 @@ Ad view used for displaying banner and video ads.
 | `bannerParameters` | `AUBannerParameters?`       | Banner ad parameters (optional).                 |
 | `adUnitConfiguration` | `AUAdUnitConfigurationType!`| Ad unit configuration object.                 |
 | `onLoadRequest`    | `((AnyObject) -> Void)?`    | Callback triggered when a GAM request is ready.  |
+| `prefetchMarginPoints` | `CGFloat`              | Distance in points before the view enters the viewport that starts the Prebid demand fetch. Only effective when `isLazyLoad = true`. **Default:** `200`. No effect inside `UITableView`/`UICollectionView` cells — use `isLazyLoad = false` there. |
+| `smartRefresh`     | `Bool`                      | When `true`, pauses auto-refresh while the ad is off-screen and force-refreshes when it returns to viewport if the refresh interval has elapsed. **Default:** `false`. |
 
 **Constructors:**
 
