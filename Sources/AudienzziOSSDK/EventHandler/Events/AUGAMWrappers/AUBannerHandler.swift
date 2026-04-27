@@ -75,20 +75,21 @@ class AUBannerHandler: NSObject,
         LogEvent("bannerViewDidReceiveAd")
 
         if let gamBannerView = bannerView as? AdManagerBannerView {
-            // Determine the actual rendered size using a three-level priority:
+            // Determine the actual rendered size using two sources:
             // 1. pendingGAMSize — set by willChangeAdSizeTo, which fires synchronously
-            //    before this callback. gamView.adSize is NOT yet updated at that point,
-            //    so the delegate parameter is the only reliable source. This covers GAM
-            //    serving any non-primary size from validAdSizes (e.g. 300×600 when the
-            //    primary was 320×50) — and is also why adSize.size alone caused 50px banners.
-            // 2. lastPrebidCreativeSize — hb_size from Prebid targeting after fetchDemand.
-            //    Covers Prebid wins where the creative size matches the primary declared
-            //    adSize (willChangeAdSizeTo doesn't fire in that case).
-            // 3. gamBannerView.adSize.size — final fallback for when GAM serves exactly
-            //    the primary declared adSize and Prebid did not participate.
-            let actualSize = pendingGAMSize
-                ?? auBannerView.lastPrebidCreativeSize
-                ?? gamBannerView.adSize.size
+            //    before this callback whenever GAM renders at a size different from the
+            //    primary declared adSize (whether a Prebid creative or GAM's own ad).
+            //    gamView.adSize is NOT yet updated at that point, so the delegate parameter
+            //    is the only reliable source.
+            // 2. gamBannerView.adSize.size — used when willChangeAdSizeTo did not fire,
+            //    meaning GAM served exactly the primary declared adSize. In that case
+            //    adSize is still the original primary value and is correct.
+            // Note: lastPrebidCreativeSize (hb_size from Prebid targeting) is intentionally
+            // excluded. When Prebid wins at a non-primary size willChangeAdSizeTo fires and
+            // pendingGAMSize covers it. When Prebid wins at the primary size adSize.size is
+            // correct. Using lastPrebidCreativeSize as a fallback caused all banners to be
+            // sized to the Prebid bid size even when GAM served its own ad at the primary size.
+            let actualSize = pendingGAMSize ?? gamBannerView.adSize.size
 
             if actualSize != .zero {
                 gamBannerView.resize(adSizeFor(cgSize: actualSize))
