@@ -101,7 +101,7 @@ public class AUBannerView: AUAdView {
     /// ])
     /// ```
     public static func validAdSizes(for sizes: [CGSize]) -> [NSValue] {
-        sizes.map { NSValue(cgAdSize: adSizeFor(cgSize: $0)) }
+        sizes.map { nsValue(for: adSizeFor(cgSize: $0)) }
     }
 
     deinit {
