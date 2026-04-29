@@ -58,15 +58,27 @@ extension AUBannerView {
         guard smartRefresh, isLazyLoaded || !isLazyLoad,
               let request = gamRequest as? AdManagerRequest else { return }
 
+        // Don't trigger smart refresh until the first demand fetch has completed.
+        // Without this guard, lastRefreshTime is nil → elapsed defaults to refreshInterval
+        // → remaining = 0 → immediate fetchRequest, duplicating the prefetch fetch.
+        // Mirrors Android's: if (lastRefreshTime == 0L) return
+        guard lastRefreshTime != nil else {
+            AULogEvent.logDebug("[AUBannerView] smartRefresh — became visible before first load, skipping")
+            return
+        }
+
         pendingSmartRefreshWorkItem?.cancel()
         pendingSmartRefreshWorkItem = nil
 
-        let refreshInterval = (adUnitConfiguration as? AUAdUnitConfigurationEventProtocol)?
+        // autorefreshTime is stored in milliseconds (set via setAutoRefreshMillis).
+        // Convert to seconds for comparison with Date().timeIntervalSince() which returns seconds.
+        let refreshIntervalMs = (adUnitConfiguration as? AUAdUnitConfigurationEventProtocol)?
             .autorefreshEventModel.autorefreshTime ?? 0
-        guard refreshInterval > 0 else {
+        guard refreshIntervalMs > 0 else {
             adUnitConfiguration?.resumeAutoRefresh()
             return
         }
+        let refreshInterval = refreshIntervalMs / 1000.0
 
         let elapsed = lastRefreshTime.map { Date().timeIntervalSince($0) } ?? refreshInterval
         let remaining = max(0, refreshInterval - elapsed)

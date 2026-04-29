@@ -88,6 +88,12 @@ public class VisibleView: UIView {
             }
             #endif
             observeSuperviewsOnOffsetChange()
+            // Perform an immediate visibility check on the next run loop tick so that ads
+            // already in the viewport when the screen opens are detected without requiring
+            // a scroll event to trigger the KVO-based contentOffset observation.
+            DispatchQueue.main.async { [weak self] in
+                self?.checkIfFrameIsVisible()
+            }
         } else {
             if isCurrentlyVisible {
                 isCurrentlyVisible = false
@@ -177,11 +183,11 @@ public class VisibleView: UIView {
         }
 
         // Actual visibility — drives smart refresh and the legacy detectVisible() path.
-        // We consider the ad "visible" only when its top edge is within the viewport.
-        // This prevents triggering a refresh when just a pixel-sliver at the bottom of
-        // the screen is in view (ad entering from below) or the ad has nearly fully
-        // scrolled off the top.
-        let visible = frameInWindow.minY >= window.bounds.minY && frameInWindow.minY < window.bounds.maxY
+        // We consider the ad "visible" only when at least 20% of its height intersects
+        // the viewport, matching the Android implementation (visibleHeightFraction >= 0.2).
+        let intersection = frameInWindow.intersection(window.bounds)
+        let visibleFraction = frameInWindow.height > 0 ? intersection.height / frameInWindow.height : 0
+        let visible = visibleFraction >= 0.2
 
         if visible && !isCurrentlyVisible {
             isCurrentlyVisible = true
