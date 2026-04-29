@@ -85,6 +85,25 @@ public class AUBannerView: AUAdView {
         return adUnit.getImpORTBConfig()
     }
 
+    /// Returns a correctly-encoded `NSValue` array ready to assign to
+    /// `AdManagerBannerView.validAdSizes`.
+    ///
+    /// Use this instead of `NSValue(cgSize:)`, which wraps a plain `CGSize` and
+    /// causes GAM to silently ignore all additional sizes — resulting in only the
+    /// primary declared `adSize` ever being served (and multi-size banners being
+    /// clipped to the primary height).
+    ///
+    /// Example usage:
+    /// ```swift
+    /// gamBanner.validAdSizes = AUBannerView.validAdSizes(for: [
+    ///     CGSize(width: 320, height: 50),
+    ///     CGSize(width: 300, height: 250)
+    /// ])
+    /// ```
+    public static func validAdSizes(for sizes: [CGSize]) -> [NSValue] {
+        sizes.map { NSValue(cgAdSize: adSizeFor(cgSize: $0)) }
+    }
+
     deinit {
         self.eventHandler = nil
     }
