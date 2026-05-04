@@ -129,14 +129,33 @@ public class AURemoteConfigBannerView: VisibleView {
             gamBanner.load(request)
         }
 
+        let bannerWidthConstraint = bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width)
+        let bannerHeightConstraint = bannerView.heightAnchor.constraint(equalToConstant: gadSize.size.height)
+        let containerWidthConstraint = container.widthAnchor.constraint(equalToConstant: gadSize.size.width)
+        let containerHeightConstraint = container.heightAnchor.constraint(equalToConstant: gadSize.size.height)
+
         NSLayoutConstraint.activate([
             bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             bannerView.topAnchor.constraint(equalTo: container.topAnchor),
-            bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width),
-            bannerView.heightAnchor.constraint(equalToConstant: gadSize.size.height),
-            container.widthAnchor.constraint(equalToConstant: gadSize.size.width),
-            container.heightAnchor.constraint(equalToConstant: gadSize.size.height)
+            bannerWidthConstraint,
+            bannerHeightConstraint,
+            containerWidthConstraint,
+            containerHeightConstraint
         ])
+
+        // When GAM serves an ad at a different size than the initially declared slot
+        // (e.g. a 300×600 direct campaign against a 300×250 Prebid bid), update the
+        // bannerView and container constraints to match the actual rendered size so
+        // the ad is neither clipped nor surrounded by blank space.
+        bannerView.onAdSizeChanged = { [weak container] newSize in
+            bannerWidthConstraint.constant = newSize.width
+            bannerHeightConstraint.constant = newSize.height
+            containerWidthConstraint.constant = newSize.width
+            containerHeightConstraint.constant = newSize.height
+            // layoutIfNeeded on the superview ensures constraints attached to `container`
+            // itself (not just inside it) are also resolved in the same layout pass.
+            container?.superview?.layoutIfNeeded()
+        }
     }
     
     @objc public func load(
