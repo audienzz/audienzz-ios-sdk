@@ -108,6 +108,7 @@ public class AUAdView: VisibleView {
     
     internal func defaultVideoParameters() -> VideoParameters {
         let videoParameters = VideoParameters(mimes: ["video/mp4"])
+        videoParameters.api = [Signals.Api.MRAID_1, Signals.Api.MRAID_2, Signals.Api.MRAID_3, Signals.Api.OMID_1]
         videoParameters.protocols = [Signals.Protocols.VAST_2_0]
         videoParameters.playbackMethod = [Signals.PlaybackMethod.AutoPlaySoundOff]
         videoParameters.placement = Signals.Placement.InBanner

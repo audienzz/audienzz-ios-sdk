@@ -13,7 +13,6 @@
 		5867540A2C4FA35B005937C2 /* SeparateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754072C4FA35B005937C2 /* SeparateViewController.swift */; };
 		5867541F2C4FA3A1005937C2 /* ExamplesViewController_BannerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5867540B2C4FA3A1005937C2 /* ExamplesViewController_BannerAPI.swift */; };
 		586754202C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5867540C2C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift */; };
-		AA000001AABBCCDD00112233 /* FixedBannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002AABBCCDD00112233 /* FixedBannerViewController.swift */; };
 		586754212C4FA3A1005937C2 /* ExamplesViewController_InstreamAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5867540E2C4FA3A1005937C2 /* ExamplesViewController_InstreamAPI.swift */; };
 		586754222C4FA3A1005937C2 /* ExamplesViewController_InterstitialAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754102C4FA3A1005937C2 /* ExamplesViewController_InterstitialAPI.swift */; };
 		586754232C4FA3A1005937C2 /* SeparateViewController_InterstitialAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754112C4FA3A1005937C2 /* SeparateViewController_InterstitialAPI.swift */; };
@@ -47,6 +46,7 @@
 		91A33C832E37A0DB00229C19 /* TargetingTestingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A33C822E37A0B300229C19 /* TargetingTestingViewController.swift */; };
 		A1B2C3052E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3042E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift */; };
 		A1B2C3082E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3072E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift */; };
+		AA000001AABBCCDD00112233 /* FixedBannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002AABBCCDD00112233 /* FixedBannerViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,7 +56,6 @@
 		586754072C4FA35B005937C2 /* SeparateViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeparateViewController.swift; sourceTree = "<group>"; };
 		5867540B2C4FA3A1005937C2 /* ExamplesViewController_BannerAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_BannerAPI.swift; sourceTree = "<group>"; };
 		5867540C2C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeparateViewController_BannerAPI.swift; sourceTree = "<group>"; };
-		AA000002AABBCCDD00112233 /* FixedBannerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedBannerViewController.swift; sourceTree = "<group>"; };
 		5867540E2C4FA3A1005937C2 /* ExamplesViewController_InstreamAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_InstreamAPI.swift; sourceTree = "<group>"; };
 		586754102C4FA3A1005937C2 /* ExamplesViewController_InterstitialAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExamplesViewController_InterstitialAPI.swift; sourceTree = "<group>"; };
 		586754112C4FA3A1005937C2 /* SeparateViewController_InterstitialAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeparateViewController_InterstitialAPI.swift; sourceTree = "<group>"; };
@@ -95,6 +94,7 @@
 		91A33C822E37A0B300229C19 /* TargetingTestingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetingTestingViewController.swift; sourceTree = "<group>"; };
 		A1B2C3042E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StickyAdExampleViewController.swift; sourceTree = "<group>"; };
 		A1B2C3072E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongArticleStickyAdsViewController.swift; sourceTree = "<group>"; };
+		AA000002AABBCCDD00112233 /* FixedBannerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedBannerViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -194,15 +194,6 @@
 				A1B2C3062E5F6A7B00ABCDEF /* StickyAdAPI */,
 			);
 			path = Original;
-			sourceTree = "<group>";
-		};
-		A1B2C3062E5F6A7B00ABCDEF /* StickyAdAPI */ = {
-			isa = PBXGroup;
-			children = (
-				A1B2C3042E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift */,
-				A1B2C3072E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift */,
-			);
-			path = StickyAdAPI;
 			sourceTree = "<group>";
 		};
 		5867542D2C4FA3D4005937C2 /* BannerAPI */ = {
@@ -335,6 +326,15 @@
 				58C73FB42B9F0F8C00AE52EC /* AudienzziOSSDK.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A1B2C3062E5F6A7B00ABCDEF /* StickyAdAPI */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3042E5F6A7B00ABCDEF /* StickyAdExampleViewController.swift */,
+				A1B2C3072E5F6A7B00ABCDEF /* LongArticleStickyAdsViewController.swift */,
+			);
+			path = StickyAdAPI;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -595,9 +595,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = YQ63ZZYZV7;
+				DEVELOPMENT_TEAM = LJ843P4W2P;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DemoSwiftApp/Info.plist;
@@ -614,8 +615,9 @@
 				);
 				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = "-ObjC";
-				PRODUCT_BUNDLE_IDENTIFIER = ch.audienzzios.DemoSwiftApp;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.audienzzios.DemoSwiftApp1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -632,7 +634,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = YQ63ZZYZV7;
+				DEVELOPMENT_TEAM = LJ843P4W2P;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DemoSwiftApp/Info.plist;
