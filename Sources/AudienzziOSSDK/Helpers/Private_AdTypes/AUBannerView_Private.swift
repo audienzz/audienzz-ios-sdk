@@ -104,6 +104,71 @@ extension AUBannerView {
         adUnitConfiguration?.stopAutoRefresh()
     }
 
+    // MARK: - Public smart-refresh API (Flutter / external callers)
+
+    /// Stale-aware smart-refresh resume.
+    ///
+    /// Intended for external view-layers (e.g. Flutter) that perform their own
+    /// viewport detection and cannot rely on the UIScrollView-based KVO in
+    /// ``VisibleView``.  Unlike the raw ``adUnitConfiguration?.resumeAutoRefresh()``
+    /// call (which always resets the full refresh interval to zero), this method:
+    ///
+    /// - Does nothing if the first demand fetch has not completed yet
+    ///   (``lastRefreshTime`` is nil — avoids a duplicate load on first visibility).
+    /// - Fires a new ``fetchRequest`` **immediately** when the ad is stale (elapsed
+    ///   time ≥ configured refresh interval).
+    /// - Schedules a delayed ``fetchRequest`` for the exact **remaining** time when
+    ///   the ad is not yet stale, then resumes Prebid's auto-refresh timer.
+    ///
+    /// Mirrors Android's `AudienzzAdViewHandler.resumeSmartRefresh()`.
+    public func resumeSmartRefresh() {
+        guard isLazyLoaded || !isLazyLoad,
+              let request = gamRequest as? GAMRequest else { return }
+        guard let lastTime = lastRefreshTime else {
+            AULogEvent.logDebug("[AUBannerView] resumeSmartRefresh — first load not yet complete, skipping")
+            return
+        }
+
+        pendingSmartRefreshWorkItem?.cancel()
+        pendingSmartRefreshWorkItem = nil
+
+        let refreshIntervalMs = (adUnitConfiguration as? AUAdUnitConfigurationEventProtocol)?
+            .autorefreshEventModel.autorefreshTime ?? 0
+        guard refreshIntervalMs > 0 else {
+            adUnitConfiguration?.resumeAutoRefresh()
+            return
+        }
+        let refreshInterval = refreshIntervalMs / 1000.0
+        let elapsed = Date().timeIntervalSince(lastTime)
+        let remaining = max(0, refreshInterval - elapsed)
+
+        if remaining == 0 {
+            // Ad is stale — fetch demand immediately, then restart the periodic timer.
+            fetchRequest(request)
+            adUnitConfiguration?.resumeAutoRefresh()
+        } else {
+            // Not yet stale — schedule the fetch for when the interval actually expires.
+            let workItem = DispatchWorkItem { [weak self] in
+                guard let self, let req = self.gamRequest as? GAMRequest else { return }
+                self.fetchRequest(req)
+                self.adUnitConfiguration?.resumeAutoRefresh()
+            }
+            pendingSmartRefreshWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + remaining, execute: workItem)
+        }
+    }
+
+    /// Pause smart refresh: cancels any pending stale-aware work item and stops
+    /// the Prebid auto-refresh timer.
+    ///
+    /// Call this when the ad view leaves the viewport.
+    /// Mirrors Android's `AudienzzAdViewHandler.pauseSmartRefresh()`.
+    public func pauseSmartRefresh() {
+        pendingSmartRefreshWorkItem?.cancel()
+        pendingSmartRefreshWorkItem = nil
+        adUnitConfiguration?.stopAutoRefresh()
+    }
+
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
