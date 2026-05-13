@@ -67,6 +67,7 @@ class AUBannerHandler: NSObject,
     // MARK: - GADBannerViewDelegate
     func bannerViewDidReceiveAd(_ bannerView: BannerView) {
         LogEvent("bannerViewDidReceiveAd")
+        auBannerView.adUnit.activatePrebidImpressionTracker(adView: gamView)
 
         // Auto-resize the GAM banner to the winning Prebid creative size.
         // `lastPrebidCreativeSize` is populated from `customTargeting["hb_size"]` after

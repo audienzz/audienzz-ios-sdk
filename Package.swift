@@ -12,9 +12,9 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/prebid/prebid-mobile-ios.git", from: "3.0.0"),
-        .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.14.1"),
-        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", from: "12.3.0"),
+        .package(url: "https://github.com/prebid/prebid-mobile-ios.git", from: "3.3.1"),
+        .package(url: "https://github.com/stephencelis/SQLite.swift.git", "0.14.1"..<"0.16.0"),
+        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", from: "13.0.0"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-interactive-media-ads-ios.git", from: "3.18.4"),
     ],
     targets: [

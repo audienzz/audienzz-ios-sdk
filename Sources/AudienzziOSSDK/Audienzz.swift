@@ -339,6 +339,9 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = customStatusEndpoint
+        Targeting.shared.omidPartnerName = "Google"
+        let v = MobileAds.shared.versionNumber
+        Targeting.shared.omidPartnerVersion = "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
         applyGamAppVolume(appVolume)
     }
 
@@ -351,6 +354,9 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = prebidStatusUrl
+        Targeting.shared.omidPartnerName = "Google"
+        let v = MobileAds.shared.versionNumber
+        Targeting.shared.omidPartnerVersion = "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
         applyGamAppVolume(appVolume)
     }
 
