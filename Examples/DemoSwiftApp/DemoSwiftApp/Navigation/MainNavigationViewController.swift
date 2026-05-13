@@ -38,6 +38,7 @@ enum AdTypeExample: String {
     case stickyAdExample = "Sticky Ad Example"
     case longArticleStickyAds = "Long Article – 5 Sticky Ads"
     case fixedBanner = "Fixed Banner Example"
+    case legacyBanner = "Legacy Banner (v0.1.8)"
 
     var indexRow: Int {
         switch self {
@@ -87,7 +88,8 @@ class MainNavigationViewController: UIViewController {
         .remoteConfig,
         .stickyAdExample,
         .longArticleStickyAds,
-        .fixedBanner
+        .fixedBanner,
+        .legacyBanner
 //        .bannerRender,
 //        .bannerRenderVideo,
 //        .interstitialRender,
@@ -175,6 +177,9 @@ extension MainNavigationViewController: UITableViewDelegate, UITableViewDataSour
             self.navigationController?.pushViewController(destination, animated: true)
         case .fixedBanner:
             let destination = FixedBannerViewController()
+            self.navigationController?.pushViewController(destination, animated: true)
+        case .legacyBanner:
+            let destination = LegacyBannerViewController_v0_1_8()
             self.navigationController?.pushViewController(destination, animated: true)
         }
 

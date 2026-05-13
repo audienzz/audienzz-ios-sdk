@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0EB8E6632FB363BB008C4147 /* LegacyBannerViewController_v0_1_8.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EB8E6622FB363BB008C4147 /* LegacyBannerViewController_v0_1_8.swift */; };
 		50131FE32EAFABA4001FDD88 /* RemoteConfigViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50131FE22EAFAB9D001FDD88 /* RemoteConfigViewController.swift */; };
 		58076A172D3AB4D70043DE9A /* AdaptiveViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58076A162D3AB4CD0043DE9A /* AdaptiveViewController.swift */; };
 		586754092C4FA35B005937C2 /* MainNavigationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586754062C4FA35B005937C2 /* MainNavigationViewController.swift */; };
@@ -50,6 +51,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0EB8E6622FB363BB008C4147 /* LegacyBannerViewController_v0_1_8.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyBannerViewController_v0_1_8.swift; sourceTree = "<group>"; };
 		50131FE22EAFAB9D001FDD88 /* RemoteConfigViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigViewController.swift; sourceTree = "<group>"; };
 		58076A162D3AB4CD0043DE9A /* AdaptiveViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveViewController.swift; sourceTree = "<group>"; };
 		586754062C4FA35B005937C2 /* MainNavigationViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainNavigationViewController.swift; sourceTree = "<group>"; };
@@ -122,6 +124,7 @@
 		5867540D2C4FA3A1005937C2 /* BannerAPI */ = {
 			isa = PBXGroup;
 			children = (
+				0EB8E6622FB363BB008C4147 /* LegacyBannerViewController_v0_1_8.swift */,
 				5867540B2C4FA3A1005937C2 /* ExamplesViewController_BannerAPI.swift */,
 				5867540C2C4FA3A1005937C2 /* SeparateViewController_BannerAPI.swift */,
 				AA000002AABBCCDD00112233 /* FixedBannerViewController.swift */,
@@ -424,6 +427,7 @@
 				586754232C4FA3A1005937C2 /* SeparateViewController_InterstitialAPI.swift in Sources */,
 				58C73FB22B9F0EB500AE52EC /* ExamplesViewController.swift in Sources */,
 				58C73F9E2B9F0C7000AE52EC /* AppDelegate.swift in Sources */,
+				0EB8E6632FB363BB008C4147 /* LegacyBannerViewController_v0_1_8.swift in Sources */,
 				586754262C4FA3A1005937C2 /* ExampleNativeView.swift in Sources */,
 				586754282C4FA3A1005937C2 /* ExamplesViewController_NativeAPI.swift in Sources */,
 				586754252C4FA3A1005937C2 /* SeparateViewController_MultiformatAPI.swift in Sources */,
