@@ -683,6 +683,112 @@ interstitial.load { [weak self] result in
 }
 ```
 
+## Sticky Ads
+
+`AUStickyAdWrapperView` reserves a fixed area in your layout and keeps the ad view visible as the user scrolls past it. The child ad slides within that reserved area — sticking to the top of the viewport — then scrolls off once the reserved space has fully passed the viewport.
+
+This is useful for billboard-height placements (e.g. 300×600) inside a scrollable page, where you want the ad to remain in view for as long as possible without overlapping other content.
+
+### How it works
+
+- You reserve `maxHeight` points in your layout by adding `AUStickyAdWrapperView` as a normal subview with Auto Layout constraints. Its intrinsic height is `maxHeight` — no height constraint required.
+- The wrapper observes `UIScrollView.contentOffset` via KVO and repositions the child ad using `CGAffineTransform`, avoiding layout passes on every scroll tick.
+- When the wrapper is fully above or below the visible viewport, the child snaps to its natural position. When the wrapper is partially in view, the child slides to stay on screen.
+
+### Basic usage (manual banner)
+
+```swift
+// 1. Create your ad view as usual
+let audienzzBannerView = AUBannerView(
+    configId: "YOUR_PREBID_CONFIG_ID",
+    adSize: CGSize(width: 300, height: 600),
+    adFormats: [.banner]
+)
+
+let gamBannerView = AdManagerBannerView(adSize: GADAdSizeMediumRectangle)
+gamBannerView.adUnitID = "YOUR_GAM_AD_UNIT_ID"
+gamBannerView.rootViewController = self
+
+audienzzBannerView.bannerParameters = AUBannerParameters()
+audienzzBannerView.createAd(
+    with: AdManagerRequest(),
+    gamBanner: gamBannerView,
+    eventHandler: AUBannerEventHandler(adUnitId: "YOUR_GAM_AD_UNIT_ID", gamView: gamBannerView)
+)
+audienzzBannerView.onLoadRequest = { request in
+    guard let r = request as? Request else { return }
+    gamBannerView.load(r)
+}
+
+// 2. Wrap the ad view
+let stickyWrapper = AUStickyAdWrapperView(
+    adView: audienzzBannerView,
+    maxHeight: 600,         // Reserve 600 pt in the layout
+    scrollView: scrollView  // The UIScrollView driving the page
+)
+
+// 3. Add to your layout — treat it like any other UIView
+contentStackView.addArrangedSubview(stickyWrapper)
+// or with manual constraints:
+// view.addSubview(stickyWrapper)
+// NSLayoutConstraint.activate([
+//     stickyWrapper.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+//     stickyWrapper.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+//     stickyWrapper.topAnchor.constraint(equalTo: previousView.bottomAnchor),
+// ])
+```
+
+### Usage with remote config banner
+
+`AURemoteConfigBannerView` works as the child view without any changes — pass it directly to `AUStickyAdWrapperView`:
+
+```swift
+let remoteBanner = AURemoteConfigBannerView(adConfigId: "YOUR_CONFIG_ID")
+
+let stickyWrapper = AUStickyAdWrapperView(
+    adView: remoteBanner,
+    maxHeight: 600,
+    scrollView: scrollView
+)
+contentStackView.addArrangedSubview(stickyWrapper)
+
+// Load the remote banner after the wrapper is in the view hierarchy
+remoteBanner.load(in: stickyWrapper, rootViewController: self)
+```
+
+### Attaching to the scroll view later
+
+If the `UIScrollView` is not available at initialisation time (for example, when building the layout inside `viewDidLoad` before the scroll view's frame is set), pass `nil` and call `attachToScrollView(_:)` later:
+
+```swift
+let stickyWrapper = AUStickyAdWrapperView(adView: audienzzBannerView, maxHeight: 600)
+// ...add to hierarchy...
+
+override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    stickyWrapper.attachToScrollView(scrollView)
+}
+```
+
+### Cleanup
+
+`AUStickyAdWrapperView` invalidates its KVO observation automatically in `deinit`. If you remove the wrapper from the view hierarchy before it is deallocated — for example, when reusing a container — call `detachFromScrollView()` explicitly:
+
+```swift
+stickyWrapper.detachFromScrollView()
+stickyWrapper.removeFromSuperview()
+```
+
+### Configuration reference
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `maxHeight` | `CGFloat` | `600` | Total height reserved in the layout. The child ad slides within this space. |
+| `stickyTopOffset` | `CGFloat?` | `nil` | Y offset from the top of the scroll viewport where the ad sticks. `nil` uses the scroll view's top safe-area inset. |
+| `isEnabled` | `Bool` | `true` | Toggle sticky behaviour. When `false`, the child stays at its natural position (offset 0). |
+
+---
+
 ## Troubleshooting
 
 ### Unfilled ads
