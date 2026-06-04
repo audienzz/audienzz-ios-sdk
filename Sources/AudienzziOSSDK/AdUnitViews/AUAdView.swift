@@ -29,6 +29,11 @@ public class AUAdView: VisibleView {
     
     public var adUnitConfiguration: AUAdUnitConfigurationType!
     public var onLoadRequest: ((AnyObject) -> Void)?
+    /// Fired after every ad load with the actual rendered size GAM chose to serve.
+    /// Use this to update your container constraints when the served size differs
+    /// from the initially declared slot size (e.g. GAM picks a 300×600 direct ad
+    /// against a slot that Prebid bid at 300×250).
+    public var onAdSizeChanged: ((CGSize) -> Void)?
     
     public override func awakeFromNib() {
         super.awakeFromNib()
