@@ -21,7 +21,10 @@ import CoreLocation
 public class AUTargeting: NSObject {
     public static var shared = AUTargeting()
 
-    internal var customTargetingManager = CustomTargetingManager()
+    internal var customTargetingManager = CustomTargetingManager(
+        sdkPlatform: "ios",
+        sdkVersion: AUSDKVersion
+    )
 
     // MARK: - OMID Partner
 
@@ -340,12 +343,16 @@ public class AUTargeting: NSObject {
             return
         }
 
-        let combinedOrtb: [String: Any]
+        var combinedOrtb: [String: Any]
         if let schainOrtb = schainOrtb {
             combinedOrtb = schainOrtb.deepMerging(with: customOrtb)
         } else {
             combinedOrtb = customOrtb
         }
+
+        // Always embed Audienzz SDK metadata in app.ext.audienzz so every
+        // Prebid request carries the SDK identifier and version.
+        combinedOrtb = combinedOrtb.deepMerging(with: AUTargeting.sdkMetaOrtb)
 
         guard
             let combinedOrtbString = try? AUTargetingUtils.toString(
@@ -360,6 +367,17 @@ public class AUTargeting: NSObject {
 
         Targeting.shared.setGlobalORTBConfig(combinedOrtbString)
     }
+
+    private static let sdkMetaOrtb: [String: Any] = [
+        "app": [
+            "ext": [
+                "audienzz": [
+                    "sdk": "ios",
+                    "v": AUSDKVersion
+                ]
+            ]
+        ]
+    ]
 
     /** Add single key-value targeting */
     public func addGlobalTargeting(key: String, value: String) {

@@ -2,7 +2,14 @@ import GoogleMobileAds
 
 class CustomTargetingManager {
 
+    private let sdkPlatform: String
+    private let sdkVersion: String
     private var targetingMap: [String: String] = [:]
+
+    init(sdkPlatform: String = "ios", sdkVersion: String = "") {
+        self.sdkPlatform = sdkPlatform
+        self.sdkVersion = sdkVersion
+    }
 
     /** Add single key-value targeting */
     func addCustomTargeting(key: String, value: String) {
@@ -58,7 +65,18 @@ class CustomTargetingManager {
 
     /** For GAM requests - apply global targeting  */
     func applyToGamRequest(request: AdManagerRequest) -> AdManagerRequest {
-        request.customTargeting = targetingMap
+        var targeting = targetingMap
+        targeting["au_sdk"] = sdkPlatform
+        if !sdkVersion.isEmpty {
+            targeting["au_v"] = sdkVersion
+        }
+        request.customTargeting = targeting
+
+        AULogEvent.logDebug("GAM custom targeting applied:")
+        AULogEvent.logDebug("  au_sdk = \(sdkPlatform)")
+        if !sdkVersion.isEmpty { AULogEvent.logDebug("  au_v   = \(sdkVersion)") }
+        targetingMap.forEach { AULogEvent.logDebug("  \($0.key) = \($0.value)") }
+
         return request
     }
 }
