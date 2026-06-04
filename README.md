@@ -492,6 +492,56 @@ audienzzBannerView.onLoadRequest = { gamRequest in
 }
 ```
 
+### Multi-Size Banner
+
+GAM can serve ads at any of the sizes you declare on the `AdManagerBannerView`. When the winning creative — whether from Prebid or a GAM direct campaign — renders at a size different from the primary declared size, the SDK automatically resizes the banner. There are two requirements on the client side.
+
+#### 1. Declare additional sizes correctly
+
+Use `AUBannerView.validAdSizes(for:)` instead of `NSValue(cgSize:)` when assigning `validAdSizes`. The raw `NSValue(cgSize:)` initializer wraps a plain `CGSize` rather than an `AdSize` struct, which causes GAM to silently ignore all additional sizes and only ever serve the primary size.
+
+```swift
+// ❌ Wrong — additional sizes are silently ignored by GAM
+gamBannerAdView.validAdSizes = [
+    NSValue(cgSize: CGSize(width: 300, height: 250)),
+    NSValue(cgSize: CGSize(width: 300, height: 600)),
+]
+
+// ✅ Correct — properly encoded AdSize values
+gamBannerAdView.validAdSizes = AUBannerView.validAdSizes(for: [
+    CGSize(width: 300, height: 250),
+    CGSize(width: 300, height: 600),
+])
+```
+
+#### 2. Update container constraints when the size changes
+
+When GAM serves at a size different from the primary `adSize`, the SDK calls `onAdSizeChanged` with the actual rendered dimensions. Use this callback to update your container constraints so the ad is neither clipped nor surrounded by blank space.
+
+```swift
+// Keep references to the constraints you want to update
+var bannerHeightConstraint: NSLayoutConstraint!
+
+// Set up your layout
+bannerHeightConstraint = adContainerView.heightAnchor.constraint(equalToConstant: 250)
+NSLayoutConstraint.activate([
+    adContainerView.widthAnchor.constraint(equalToConstant: 300),
+    bannerHeightConstraint,
+])
+
+// React to the actual rendered size
+audienzzBannerView.onAdSizeChanged = { [weak self] newSize in
+    self?.bannerHeightConstraint.constant = newSize.height
+    UIView.animate(withDuration: 0.2) {
+        self?.view.layoutIfNeeded()
+    }
+}
+```
+
+> **Note:** `AURemoteConfigBannerView` handles constraint updates automatically — no `onAdSizeChanged` wiring is needed when using remote configuration.
+
+---
+
 ### Interstitial Ad
 Here is minimum example of configuring and loading interstitial ad:
 
@@ -638,6 +688,29 @@ interstitial.load { [weak self] result in
 ### Unfilled ads
 In order to handle unfilled ads it is advised to build your logic around `onAdFailedToLoad()` method.
 There you receive `LoadAdError` object, which contains details about the error. When it has code:1 and message "No ad to show" - it is an unfilled ad.
+
+### Banner is clipped or shows at the wrong height
+
+**Symptom:** A multi-size banner is clipped to the primary declared height, or shows blank space when a smaller size is served. The ad is otherwise functional (impression and click tracking work correctly).
+
+**Cause — incorrect `validAdSizes` encoding.** Setting `validAdSizes` using the plain `NSValue(cgSize:)` initializer causes GAM to silently discard all additional sizes and only serve the primary `adSize`. As a result, creatives that require a taller slot are clipped by the container.
+
+```swift
+// ❌ This looks correct but silently breaks multi-size serving
+gamBannerAdView.validAdSizes = [NSValue(cgSize: CGSize(width: 300, height: 600))]
+```
+
+**Fix:** Use `AUBannerView.validAdSizes(for:)`, which encodes sizes as proper `AdSize` values that GAM understands:
+
+```swift
+// ✅ Correct
+gamBannerAdView.validAdSizes = AUBannerView.validAdSizes(for: [
+    CGSize(width: 300, height: 250),
+    CGSize(width: 300, height: 600),
+])
+```
+
+**Cause — container constraints not updated on size change.** Even after fixing the encoding, if your container has a fixed-height constraint sized to the primary ad slot, a taller creative will still be clipped. Wire up `onAdSizeChanged` on the `AUBannerView` to update the constraint whenever GAM serves at a different size (see the **Multi-Size Banner** example above).
 
 ## Glossary / Terminology
 
