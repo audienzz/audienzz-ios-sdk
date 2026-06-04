@@ -421,7 +421,7 @@ extension UserUniqueID {
 
         let ext = json["ext"] as? [String: Any]
 
-        return UserUniqueID(id: id, aType: aType, ext: ext)
+        return UserUniqueID(uniqueId: id, aType: aType, ext: ext)
     }
 }
 
