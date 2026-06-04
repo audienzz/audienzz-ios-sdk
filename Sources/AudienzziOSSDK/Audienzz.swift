@@ -21,7 +21,7 @@ private let customPrebidServerURL = "https://ib.adnxs.com/openrtb2/prebid"
 private let prebidServerAccountId = "3927"
 private let customStatusEndpoint = "https://ib.adnxs.com/status"
 
-internal let AUSDKVersion = "0.2.1"
+internal let AUSDKVersion = "0.2.2"
 
 @objcMembers
 public class Audienzz: NSObject {
