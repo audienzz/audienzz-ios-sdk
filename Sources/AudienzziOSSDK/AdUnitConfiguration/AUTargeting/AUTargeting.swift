@@ -352,7 +352,7 @@ public class AUTargeting: NSObject {
 
         // Always embed Audienzz SDK metadata in app.ext.audienzz so every
         // Prebid request carries the SDK identifier and version.
-        combinedOrtb = combinedOrtb.deepMerging(with: AUTargeting.sdkMetaOrtb)
+        combinedOrtb = combinedOrtb.deepMerging(with: sdkMetaOrtb)
 
         guard
             let combinedOrtbString = try? AUTargetingUtils.toString(
@@ -368,16 +368,19 @@ public class AUTargeting: NSObject {
         Targeting.shared.setGlobalORTBConfig(combinedOrtbString)
     }
 
-    private static let sdkMetaOrtb: [String: Any] = [
-        "app": [
-            "ext": [
-                "audienzz": [
-                    "sdk": "ios",
-                    "v": AUSDKVersion
-                ]
-            ]
+    /// Extra fields contributed by a bridge SDK (e.g. "rn_v": "0.4.1").
+    private var bridgeOrtbFields: [String: String] = [:]
+
+    /// Always-present ORTB metadata — includes native SDK identity and any
+    /// bridge version set via setBridgeTargeting. Never overridable by publishers.
+    private var sdkMetaOrtb: [String: Any] {
+        var audienzz: [String: Any] = [
+            "sdk": "ios",
+            "v": AUSDKVersion
         ]
-    ]
+        bridgeOrtbFields.forEach { audienzz[$0.key] = $0.value }
+        return ["app": ["ext": ["audienzz": audienzz]]]
+    }
 
     /** Add single key-value targeting */
     public func addGlobalTargeting(key: String, value: String) {
@@ -414,14 +417,34 @@ public class AUTargeting: NSObject {
         setGlobalOrtbConfig(ortbConfig: customTargetingJsonString)
     }
 
-    /** Remove targeting for specific key */
+    /**
+     * Set a bridge-layer SDK identity key (e.g. "au_rn_v", "au_flutter_v").
+     *
+     * The key is stored as a reserved GAM targeting entry (wins over any
+     * publisher-set value with the same name and cannot be removed via
+     * removeGlobalTargeting / clearGlobalTargeting) and is also embedded in
+     * app.ext.audienzz in every Prebid bid request.
+     *
+     * The ORTB sub-key is derived by stripping the "au_" prefix:
+     *   "au_rn_v" → ext.audienzz.rn_v
+     */
+    @objc(setBridgeTargetingWithKey:value:)
+    public func setBridgeTargeting(key: String, value: String) {
+        customTargetingManager.setReservedTargeting(key: key, value: value)
+        let ortbKey = key.hasPrefix("au_") ? String(key.dropFirst(3)) : key
+        bridgeOrtbFields[ortbKey] = value
+        applyTargeting()
+    }
+
+    /** Remove targeting for specific key — silently skips SDK-reserved keys. */
     public func removeGlobalTargeting(key: String) {
+        // customTargetingManager.removeCustomTargeting already skips reserved keys
         customTargetingManager.removeCustomTargeting(key: key)
 
         applyTargeting()
     }
 
-    /** Clear all targeting */
+    /** Clear all publisher targeting — SDK-reserved keys are preserved. */
     public func clearGlobalTargeting() {
         customTargetingManager.clearCustomTargeting()
 

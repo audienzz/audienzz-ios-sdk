@@ -6,6 +6,10 @@ class CustomTargetingManager {
     private let sdkVersion: String
     private var targetingMap: [String: String] = [:]
 
+    /// Keys set by SDK/bridge init — invisible to publishers.
+    /// Cannot be removed via removeCustomTargeting / clearCustomTargeting.
+    private var reservedTargetingMap: [String: String] = [:]
+
     init(sdkPlatform: String = "ios", sdkVersion: String = "") {
         self.sdkPlatform = sdkPlatform
         self.sdkVersion = sdkVersion
@@ -21,12 +25,23 @@ class CustomTargetingManager {
         targetingMap[key] = values.joined(separator: ",")
     }
 
-    /** Remove targeting for specific key */
+    /** Store a reserved (SDK-internal) key-value. Never cleared by publisher calls. */
+    func setReservedTargeting(key: String, value: String) {
+        reservedTargetingMap[key] = value
+    }
+
+    /** Returns true if the key is in the reserved map. */
+    func isReserved(key: String) -> Bool {
+        reservedTargetingMap[key] != nil
+    }
+
+    /** Remove targeting for specific key — silently skips reserved keys. */
     func removeCustomTargeting(key: String) {
+        guard !isReserved(key: key) else { return }
         targetingMap.removeValue(forKey: key)
     }
 
-    /** Clear all targeting */
+    /** Clear all targeting — preserves reserved keys. */
     func clearCustomTargeting() {
         targetingMap.removeAll()
     }
@@ -65,16 +80,20 @@ class CustomTargetingManager {
 
     /** For GAM requests - apply global targeting  */
     func applyToGamRequest(request: AdManagerRequest) -> AdManagerRequest {
+        // Start with publisher keys, then overlay SDK-reserved keys so they
+        // always win — publisher can never overwrite them.
         var targeting = targetingMap
         targeting["au_sdk"] = sdkPlatform
         if !sdkVersion.isEmpty {
             targeting["au_v"] = sdkVersion
         }
+        reservedTargetingMap.forEach { targeting[$0.key] = $0.value }
         request.customTargeting = targeting
 
         AULogEvent.logDebug("GAM custom targeting applied:")
         AULogEvent.logDebug("  au_sdk = \(sdkPlatform)")
         if !sdkVersion.isEmpty { AULogEvent.logDebug("  au_v   = \(sdkVersion)") }
+        reservedTargetingMap.forEach { AULogEvent.logDebug("  \($0.key) = \($0.value) [reserved]") }
         targetingMap.forEach { AULogEvent.logDebug("  \($0.key) = \($0.value)") }
 
         return request
