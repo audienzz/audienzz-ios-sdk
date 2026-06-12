@@ -75,6 +75,9 @@ public struct RemotePublisherConfiguration: Codable {
     public let gamConfig: GamConfig?
     public let ortb: OrtbConfig?
     public let ios: IosConfig?
+    /// Backend-controlled PPID enable flag. `nil` when absent or null in the remote payload.
+    /// Priority: client override (via `setAutomaticPpidEnabled`) > this value > SDK default (true).
+    public let ppidEnabled: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -82,5 +85,6 @@ public struct RemotePublisherConfiguration: Codable {
         case gamConfig
         case ortb
         case ios
+        case ppidEnabled
     }
 }

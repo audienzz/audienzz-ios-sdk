@@ -56,7 +56,7 @@ public class Audienzz: NSObject {
 
     public static let shared = Audienzz()
 
-    public func configureSDK(companyId: String, appVolume: Float = 0, enablePPID: Bool = false) {
+    public func configureSDK(companyId: String, appVolume: Float = 0, enablePPID: Bool? = nil) {
         setupPrebid(companyId, appVolume: appVolume)
 
         do {
@@ -65,7 +65,9 @@ public class Audienzz: NSObject {
                     error in
                 self.handleInitializationResultStatus(status: status)
 
-                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
+                if let override = enablePPID {
+                    PPIDManager.shared.setAutomaticPpidEnabled(override)
+                }
 
                 if let error = error {
                     AULogEvent.logDebug("Initialization Error: \(error)")
@@ -82,7 +84,7 @@ public class Audienzz: NSObject {
         companyId: String,
         gadMobileAdsVersion: String? = nil,
         appVolume: Float = 0,
-        enablePPID: Bool = false
+        enablePPID: Bool? = nil
     ) {
         setupPrebid(companyId, appVolume: appVolume)
 
@@ -99,7 +101,9 @@ public class Audienzz: NSObject {
                 }
 
                 self.handleInitializationResultStatus(status: status)
-                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
+                if let override = enablePPID {
+                    PPIDManager.shared.setAutomaticPpidEnabled(override)
+                }
             }
         } catch {
             AULogEvent.logDebug(
@@ -110,7 +114,7 @@ public class Audienzz: NSObject {
 
     public func configureWithRemoteSDK(
         gadMobileAdsVersion: String? = nil,
-        enablePPID: Bool = false
+        enablePPID: Bool? = nil
     ) async throws {
         // Apply muted default immediately so ads are always muted even if remote
         // config is unavailable (network error, backend not ready, nil response).
@@ -178,7 +182,11 @@ public class Audienzz: NSObject {
                 }
 
                 self.handleInitializationResultStatus(status: status)
-                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
+                // Apply backend-controlled PPID setting first, then client override if provided.
+                PPIDManager.shared.setBackendPpidEnabled(publisherConfig.ppidEnabled)
+                if let override = enablePPID {
+                    PPIDManager.shared.setAutomaticPpidEnabled(override)
+                }
             }
         } catch {
             AULogEvent.logDebug(
@@ -190,20 +198,21 @@ public class Audienzz: NSObject {
     // MARK: - Public Init For RN Bridg (Audienzz)
 
     /// Stable Obj-C selector for RN bridge: `configureSDK_RNWithCompanyId:enablePPID:completion:`
+    /// `enablePPID` is `NSNumber?` so the bridge can pass `nil` to mean "no override, use backend or default".
     @objc(configureSDK_RNWithCompanyId:enablePPID:completion:)
     public func configureSDK_RN(
         companyId: String,
-        enablePPID: Bool,
+        enablePPID: NSNumber?,
         completion: (() -> Void)?
     ) {
-        configureSDK_RN(companyId: companyId, appVolume: 0, enablePPID: enablePPID, completion)
+        configureSDK_RN(companyId: companyId, appVolume: 0, enablePPID: enablePPID?.boolValue, completion)
     }
 
     /// Special method used for RN bridging initialization
     public func configureSDK_RN(
         companyId: String,
         appVolume: Float = 0,
-        enablePPID: Bool = false,
+        enablePPID: Bool? = nil,
         _ completion: (() -> Void)? = nil
     ) {
         Task {
@@ -219,7 +228,9 @@ public class Audienzz: NSObject {
                         AULogEvent.logDebug("Initialization Error: \(error)")
                     }
 
-                    PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
+                    if let override = enablePPID {
+                        PPIDManager.shared.setAutomaticPpidEnabled(override)
+                    }
                     completion?()
                 }
             } catch {
@@ -237,7 +248,7 @@ public class Audienzz: NSObject {
         companyId: String,
         gadMobileAdsVersion: String?,
         appVolume: Float = 0,
-        enablePPID: Bool = false,
+        enablePPID: Bool? = nil,
         _ completion: (() -> Void)? = nil
     ) {
         Task {
@@ -256,7 +267,9 @@ public class Audienzz: NSObject {
                     }
 
                     self.handleInitializationResultStatus(status: status)
-                    PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
+                    if let override = enablePPID {
+                        PPIDManager.shared.setAutomaticPpidEnabled(override)
+                    }
                     completion?()
                 }
             } catch {
