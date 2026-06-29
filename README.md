@@ -611,7 +611,7 @@ import GoogleMobileAds
 func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // 1. Configure remote URL and publisher ID
     AudienzzRemoteConfig.shared.configureRemote(
-        remoteUrl: URL(string: "https://dev-api.adnz.co/api/ws-sdk-config/public/v1/")!, // Audienzz remove config URL
+        remoteUrl: URL(string: "https://api.adnz.co/api/ws-sdk-config/public/v1/")!, // Audienzz remove config URL
         publisherId: "YOUR_PUBLISHER_ID" // Will be provided for you
     )
 
