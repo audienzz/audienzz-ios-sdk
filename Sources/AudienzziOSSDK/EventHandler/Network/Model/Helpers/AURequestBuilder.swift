@@ -15,7 +15,7 @@
 
 import Foundation
 
-fileprivate let baseUrl: String = "https://dev-api.adnz.co/api/ws-event-ingester"
+fileprivate let baseUrl: String = "https://api.adnz.co/api/ws-event-ingester"
 //fileprivate let baseUrl: String = "https://api.adnz.co/api/ws-event-ingester"
 
 enum APIRoute<T: JSONObjectDecodable> {
