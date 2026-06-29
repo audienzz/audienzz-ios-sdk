@@ -395,6 +395,14 @@ public class AUTargeting: NSObject {
 
     }
 
+    /** Replace the value set for an existing key */
+    public func updateGlobalTargeting(key: String, values: Set<String>) {
+        customTargetingManager.removeCustomTargeting(key: key)
+        customTargetingManager.addCustomTargeting(key: key, values: values)
+
+        applyTargeting()
+    }
+
     private func applyTargeting() {
         let customTargetingDictionary =
             customTargetingManager.buildOrtbCustomTargeting()
