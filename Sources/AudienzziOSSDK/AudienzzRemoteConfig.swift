@@ -90,4 +90,22 @@ public class AudienzzRemoteConfig: NSObject {
     public func remoteConfig(for adConfigId: String) -> RemoteAdConfiguration? {
         adUnitConfigs?.first(where: { $0.id == adConfigId })
     }
+
+    // MARK: - Sticky Wrapper Helpers (ObjC-visible)
+
+    /// Returns the backend-configured sticky max-height for an ad config, or 600 if absent.
+    /// Exposed to ObjC for use by the React Native bridge.
+    @objc(stickyMaxHeightForAdConfigId:)
+    public func stickyMaxHeight(for adConfigId: String) -> CGFloat {
+        let remote = remoteConfig(for: adConfigId)?.config.stickyMaxHeight
+        return remote.map { CGFloat($0) } ?? 600
+    }
+
+    /// Returns the backend-configured sticky top offset for an ad config, or 0 if absent.
+    /// Exposed to ObjC for use by the React Native bridge.
+    @objc(stickyTopOffsetForAdConfigId:)
+    public func stickyTopOffset(for adConfigId: String) -> CGFloat {
+        let remote = remoteConfig(for: adConfigId)?.config.stickyTopOffset
+        return remote.map { CGFloat($0) } ?? 0
+    }
 }
