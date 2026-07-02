@@ -53,7 +53,7 @@ public class AURemoteConfigInterstitial: NSObject {
             gamRequest.publisherProvidedID = ppid
         }
 
-        interstitialAdUnit?.fetchDemand(adObject: gamRequest) { [weak self] result in
+        interstitialAdUnit?.fetchDemand(adObject: gamRequest) { [weak self] (result: ResultCode) in
             guard let self = self else { return }
 
             AdManagerInterstitialAd.load(

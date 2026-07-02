@@ -5,17 +5,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AppLovin/AppLovin-MAX-Swift-Package.git",
       "state" : {
-        "revision" : "d829feb5b7de8755e9a1834c2e1e0b95c9126424",
-        "version" : "13.6.2"
+        "revision" : "ab755a46ff19a9a578e709aeee49653a9239f225",
+        "version" : "13.6.3"
       }
     },
     {
-      "identity" : "prebid-mobile-ios",
+      "identity" : "audienzz-ios-prebid-sdk-fork",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/prebid/prebid-mobile-ios.git",
+      "location" : "https://github.com/audienzz/audienzz-ios-prebid-sdk-fork.git",
       "state" : {
-        "revision" : "4f96890f9f8b38db6abd92044a928a709d5458d2",
-        "version" : "3.3.1"
+        "revision" : "f4bd087dde0e14920f29f62246c16d08e46e493f",
+        "version" : "3.3.1-audienzz.1"
       }
     },
     {

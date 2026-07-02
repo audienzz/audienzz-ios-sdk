@@ -175,26 +175,12 @@ extension AUBannerView {
         prebidWinningBidder = nil
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
-        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
+        adUnit.fetchDemand(adObject: gamRequest) { [weak self] bidInfo in
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
+            let resultCode = bidInfo.resultCode
             self.lastRefreshTime = Date()
             let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
-
-            /*
-             use for debug more deep events
-            
-            if let bidRequester = getPrivateBidRequester(from: adUnit) {
-                print("Got bidRequester: \(bidRequester)")
-            
-                bidRequester.requestBids { bidResponse, error in
-                    guard let bidResponse else { return }
-                    print(bidResponse)
-                }
-            } else {
-                print("Failed to access bidRequester")
-            }
-            */
 
             AULogEvent.logDebug(
                 "Audienz demand fetch for GAM \(resultCode.name())"
@@ -221,7 +207,8 @@ extension AUBannerView {
                 hbBidder: hbBidder,
                 priceBucket: hbPb,
                 hbSize: hbSize,
-                hbFormat: hbFormat
+                hbFormat: hbFormat,
+                bidInfo: bidInfo
             )
             self.isInitialAutorefresh = false
 
@@ -286,7 +273,8 @@ extension AUBannerView {
     /// or noBid otherwise. Mirrors the Android win-gate that avoids spurious wins on empty SUCCESS.
     private func makeResultEvents(resultCode: ResultCode, timeToRespond: Int64,
                                   hbBidder: String?, priceBucket: String?,
-                                  hbSize: String?, hbFormat: String?) {
+                                  hbSize: String?, hbFormat: String?,
+                                  bidInfo: BidInfo) {
         guard
             let autorefreshM = adUnitConfiguration
                 as? AUAdUnitConfigurationEventProtocol,
@@ -313,7 +301,9 @@ extension AUBannerView {
                 adUnitId: adUnitID, adViewId: configId, sizes: sizes,
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-                priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat
+                priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
+                cpm: bidInfo.cpm, currency: bidInfo.currency, creativeId: bidInfo.creativeId,
+                auctionId: bidInfo.auctionId, adId: bidInfo.adId
             )
         } else {
             self.prebidWinningBidder = nil

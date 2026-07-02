@@ -38,7 +38,8 @@ extension AURewardedView {
         prebidWinningBidder = nil
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
-        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
+        adUnit.fetchDemand(adObject: gamRequest) { [weak self] bidInfo in
+            let resultCode = bidInfo.resultCode
             AULogEvent.logDebug(
                 "Audienz demand fetch for GAM \(resultCode.name())"
             )
@@ -51,7 +52,8 @@ extension AURewardedView {
                 hbBidder: AUBannerView.keyword("hb_bidder", in: rawTargeting),
                 priceBucket: AUBannerView.keyword("hb_pb", in: rawTargeting),
                 hbSize: AUBannerView.keyword("hb_size", in: rawTargeting),
-                hbFormat: AUBannerView.keyword("hb_format", in: rawTargeting)
+                hbFormat: AUBannerView.keyword("hb_format", in: rawTargeting),
+                bidInfo: bidInfo
             )
             self.onLoadRequest?(gamRequest)
         }
@@ -68,7 +70,8 @@ extension AURewardedView {
 
     private func makeResultEvents(resultCode: ResultCode, timeToRespond: Int64,
                                   hbBidder: String?, priceBucket: String?,
-                                  hbSize: String?, hbFormat: String?) {
+                                  hbSize: String?, hbFormat: String?,
+                                  bidInfo: BidInfo) {
         guard let adUnitID = gadUnitID else { return }
         let codeName = AUResulrCodeConverter.convertResultCodeName(resultCode)
 
@@ -85,7 +88,9 @@ extension AURewardedView {
                 adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
                 adType: adTypeString, adSubtype: AUAdSubtype.video, apiType: apiTypeString,
                 isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-                priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat
+                priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
+                cpm: bidInfo.cpm, currency: bidInfo.currency, creativeId: bidInfo.creativeId,
+                auctionId: bidInfo.auctionId, adId: bidInfo.adId
             )
         } else {
             self.prebidWinningBidder = nil

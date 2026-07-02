@@ -63,8 +63,8 @@ extension AUEventsManager {
         logEvent(e)
     }
 
-    // Economics params (cpm/currency/creativeId/auctionId/adId) are accepted for schema parity but
-    // are left nil on iOS today — Prebid iOS does not expose the winning BidResponse.
+    // Economics params (cpm/currency/creativeId/auctionId/adId) are populated from the winning bid
+    // via the patched Prebid fork (BidInfo now surfaces them on the original/GAM API).
     func bidWon(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                 adType: String, adSubtype: String, apiType: String,
                 isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
