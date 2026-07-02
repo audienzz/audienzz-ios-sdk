@@ -74,15 +74,27 @@ final class AUEventsManager: AULogEventType {
 
         let network = mapper.toNetwork(enriched)
         guard let json = Self.jsonObject(from: network) else {
-            AULogEvent.logDebug("Failed to encode analytics event")
+            AULogEvent.logDebug("[AUAnalytics] ✗ failed to encode analytics event")
             return
         }
+        // Verification logging: one tagged block per event with the exact flat payload that is
+        // POSTed (includes cpm/currency/creative_id/auction_id/ad_id, bidder_code, session_seq,
+        // viewability events). Filter the Xcode console by "AUAnalytics" to copy the run.
+        #if DEBUG
+        if let pretty = try? JSONSerialization.data(
+                withJSONObject: json, options: [.prettyPrinted, .sortedKeys]),
+           let str = String(data: pretty, encoding: .utf8) {
+            print("[AUAnalytics] ▶︎ \(network.eventType) seq=\(network.sessionSeq)\n\(str)")
+        }
+        #endif
         networkManager.request(.batchEvents([json])) { result in
             switch result {
             case .success:
-                AULogEvent.logDebug("logEvent sent: \(network.eventType) seq=\(network.sessionSeq)")
+                AULogEvent.logDebug(
+                    "[AUAnalytics] ✓ sent \(network.eventType) seq=\(network.sessionSeq)")
             case .failure(let error):
-                AULogEvent.logDebug("Failed to send event: \(error.localizedDescription)")
+                AULogEvent.logDebug(
+                    "[AUAnalytics] ✗ FAILED \(network.eventType) seq=\(network.sessionSeq): \(error.localizedDescription)")
             }
         }
     }
