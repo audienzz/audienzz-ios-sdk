@@ -17,6 +17,14 @@ Pod::Spec.new do |spec|
     spec.source_files          = 'Sources/**/*.swift'
     spec.exclude_files         = 'Tests', 'Examples'
 
+    # NOTE (CocoaPods only): these pull stock PrebidMobile from the CocoaPods trunk. Unlike the
+    # SPM build (Package.swift), CocoaPods integrations do NOT use our patched Prebid fork
+    # (github.com/audienzz/audienzz-ios-prebid-sdk-fork, tag 3.3.1-audienzz.1), because a pod
+    # dependency cannot override the source of a transitive pod — only the app's Podfile can, via
+    # `pod 'PrebidMobile', :git => '...fork...'`. Consequence for CocoaPods users: analytics still
+    # works, but the exact bid economics (cpm/currency/creative_id/auction_id/ad_id) stay empty
+    # (only the hb_* keyword subset is available). SPM users get the full economics.
+    # Long-term fix: upstream a PR exposing the winning bid on Prebid's BidInfo, then drop the fork.
     spec.dependency 'PrebidMobile', '~> 3.0'
     spec.dependency 'PrebidMobileGAMEventHandlers', '~> 3.0'
     spec.dependency 'SQLite.swift', '~> 0.14'
