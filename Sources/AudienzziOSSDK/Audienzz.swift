@@ -21,7 +21,7 @@ private let customPrebidServerURL = "https://ib.adnxs.com/openrtb2/prebid"
 private let prebidServerAccountId = "3927"
 private let customStatusEndpoint = "https://ib.adnxs.com/status"
 
-internal let AUSDKVersion = "0.2.4"
+internal let AUSDKVersion = "0.2.5"
 
 @objcMembers
 public class Audienzz: NSObject {
@@ -335,6 +335,16 @@ public class Audienzz: NSObject {
     public func setSchainObject(schain: String) {
         audienzzSchainObjectConfig = schain
         AUTargeting.shared.setGlobalOrtbConfig(ortbConfig: schain)
+    }
+
+    /// Call from `viewDidAppear` of every screen (UIViewController) that shows ads. Fires a
+    /// `pageImpression` and generates a fresh page-impression id that ties all subsequent ad events
+    /// on that screen visit together (the iOS analogue of the Android `onScreenResumed`).
+    /// Screens without ads don't need to call it.
+    public func onScreenResumed(_ viewController: UIViewController) {
+        AUEventsManager.shared.onScreenResumed(
+            screenName: String(describing: type(of: viewController))
+        )
     }
 
     private func setupPrebid(_ companyId: String, appVolume: Float = 0) {

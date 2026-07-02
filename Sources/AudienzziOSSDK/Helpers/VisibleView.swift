@@ -197,4 +197,14 @@ public class VisibleView: UIView {
             onBecameHidden()
         }
     }
+
+    /// Fraction (0...1) of the view's height currently intersecting the window — used by the
+    /// viewability tracker for the MRC-style ≥50% check. Returns 0 when off-screen / not in a window.
+    internal func currentVisibleHeightFraction() -> CGFloat {
+        guard let window = self.window else { return 0 }
+        let frameInWindow = window.convert(self.frame, from: self.superview)
+        guard frameInWindow.height > 0 else { return 0 }
+        let intersection = frameInWindow.intersection(window.bounds)
+        return max(0, intersection.height / frameInWindow.height)
+    }
 }

@@ -28,7 +28,12 @@ public class AUInterstitialView: AUAdView {
     internal var gamRequest: AnyObject?
     internal var eventHandler: AUInterstitialHandler?
     internal var gadUnitID: String?
-    
+
+    /// Prebid auction winner (hb_bidder), captured on bid success and reported on adImpression.
+    internal var prebidWinningBidder: String?
+    /// Full-screen viewability driver (start on present, success after 1s, cancel on dismiss).
+    internal var fullScreenViewabilityTimer: AUFullScreenViewabilityTimer?
+
     public var videoParameters: AUVideoParameters?
     public var bannerParameters = AUBannerParameters()
     
@@ -97,8 +102,7 @@ public class AUInterstitialView: AUAdView {
         adUnit.bannerParameters = bannerParameters.makeBannerParameters()
         
         adUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters()
-        
-        AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
+
         self.gadUnitID = adUnitID
         
         let ppid = PPIDManager.shared.getPPID()
@@ -116,7 +120,6 @@ public class AUInterstitialView: AUAdView {
     
     public func connectHandler(_ eventHandler: AUInterstitialEventHandler) {
         self.eventHandler = AUInterstitialHandler(handler: eventHandler, adView: self)
-        makeCreationEvent()
     }
     
  }

@@ -54,31 +54,11 @@ internal class AUInterstitialRenderingDelegateType: NSObject, InterstitialAdUnit
         parent.delegate?.interstitialDidClickAd?()
     }
     
-    private func makeCloseEvent(_ parent: AUInterstitialRenderingView) {
-        let event = AUCloseAdEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
-    
+    private func makeCloseEvent(_ parent: AUInterstitialRenderingView) {}
+
     private func makeClickEvent(_ parent: AUInterstitialRenderingView) {
-        let event = AUAdClickEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.adClick(adUnitId: parent.eventHandler?.adUnitID ?? "")
     }
-    
-    private func makeErrorEvent(parent: AUInterstitialRenderingView, _ error: Error?) {
-        guard let error = error else { return }
-        let event = AUFailedLoadEvent(adViewId: parent.configId,
-                                      adUnitID: parent.eventHandler?.adUnitID ?? "",
-                                      errorMessage: error.localizedDescription,
-                                      errorCode: error.errorCode ?? -1)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
+
+    private func makeErrorEvent(parent: AUInterstitialRenderingView, _ error: Error?) {}
 }

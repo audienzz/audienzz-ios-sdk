@@ -106,23 +106,6 @@ class AUBannerHandler: NSObject,
     ) {
         LogEvent("didFailToReceiveAdWithError")
         LogEvent(error.localizedDescription)
-
-        let event = AUFailedLoadEvent(
-            adViewId: auBannerView.configId,
-            adUnitID: adUnitID ?? "",
-            errorMessage: error.localizedDescription,
-            errorCode: error.errorCode ?? -1
-        )
-
-        guard let payload = event.convertToJSONString() else {
-            bannerDelegate?.bannerView?(
-                bannerView,
-                didFailToReceiveAdWithError: error
-            )
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
         bannerDelegate?.bannerView?(
             bannerView,
             didFailToReceiveAdWithError: error
@@ -132,25 +115,25 @@ class AUBannerHandler: NSObject,
     /// Tells the delegate that an impression has been recorded for an ad.
     func bannerViewDidRecordImpression(_ bannerView: BannerView) {
         LogEvent("bannerViewDidRecordImpression")
+        let bidder = auBannerView.prebidLineItemWon
+            ? (auBannerView.prebidWinningBidder ?? AD_SERVER_BIDDER)
+            : AD_SERVER_BIDDER
+        AUEventsManager.shared.adImpression(
+            adUnitId: adUnitID ?? "",
+            adType: AUAdType.banner,
+            adSubtype: auBannerView.makeAdSubType(),
+            apiType: AUEventApiType.original,
+            bidderCode: bidder,
+            winnerBidderCode: bidder
+        )
+        auBannerView.startViewabilityTracking()
         bannerDelegate?.bannerViewDidRecordImpression?(bannerView)
     }
 
     /// Tells the delegate that a click has been recorded for the ad.
     func bannerViewDidRecordClick(_ bannerView: BannerView) {
         LogEvent("bannerViewDidRecordClick")
-
-        let event = AUAdClickEvent(
-            adViewId: auBannerView.configId,
-            adUnitID: adUnitID ?? ""
-        )
-
-        guard let payload = event.convertToJSONString() else {
-            bannerDelegate?.bannerViewDidRecordClick?(bannerView)
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-
+        AUEventsManager.shared.adClick(adUnitId: adUnitID ?? "")
         bannerDelegate?.bannerViewDidRecordClick?(bannerView)
     }
 
@@ -178,6 +161,11 @@ class AUBannerHandler: NSObject,
         with info: String?
     ) {
         LogEvent("didReceiveAppEvent")
+        // A Prebid line item's creative fires this app event when it wins the GAM auction;
+        // its absence by impression time means the ad server (Google) rendered.
+        if name.caseInsensitiveCompare(PREBID_APP_EVENT) == .orderedSame {
+            auBannerView.prebidLineItemWon = true
+        }
         eventDelegate?.adView?(banner, didReceiveAppEvent: name, with: info)
     }
 

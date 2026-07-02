@@ -88,6 +88,13 @@ class ExamplesViewController: UIViewController {
         setupALazydContainer()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // Track the screen visit for analytics (fires `pageImpression` + a fresh page-impression id
+        // that ties this screen's ad events together).
+        Audienzz.shared.onScreenResumed(self)
+    }
+
     private func setupAdContainer() {
         createBannerView_320x50()
         createbannerView_300x250()

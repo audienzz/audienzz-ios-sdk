@@ -170,11 +170,16 @@ extension AUBannerView {
     }
 
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
+        // New auction → reset render-winner state until the bid result / GAM app event report back.
+        prebidLineItemWon = false
+        prebidWinningBidder = nil
+        let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
             self.lastRefreshTime = Date()
+            let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
 
             /*
              use for debug more deep events
@@ -194,31 +199,41 @@ extension AUBannerView {
             AULogEvent.logDebug(
                 "Audienz demand fetch for GAM \(resultCode.name())"
             )
-            self.makeWinnerEvent(
-                AUResulrCodeConverter.convertResultCodeName(resultCode)
-            )
-            self.isInitialAutorefresh = false
 
-            // Cache the winning creative size from Prebid's targeting keywords.
-            // Reading "hb_size" from customTargeting is synchronous and always available
-            // at this point — unlike WebView HTML scraping which can fail when the
-            // WKWebView hasn't loaded yet (rapid navigation, high CPU/memory pressure).
-            // customTargeting arrives as [AnyHashable: Any] at runtime (Prebid rebuilds
-            // the dict internally), so every value access needs an explicit `as? String`.
-            // hb_size can arrive as a plain String ("320x50") or a single-element
-            // Array (["320x50"]) depending on GAM SDK version — both are handled.
+            // Prebid targeting keywords are synchronously available on the GAM request after
+            // fetchDemand. They arrive as [AnyHashable: Any]; a value can be a plain String or a
+            // single-element Array depending on GAM SDK version — both handled by `keyword(_:)`.
             let rawTargeting = gamRequest.customTargeting as? [AnyHashable: Any] ?? [:]
-            let hbSizeRaw = rawTargeting["hb_size"]
-            if let str = hbSizeRaw as? String {
+            let hbSize = AUBannerView.keyword("hb_size", in: rawTargeting)
+            let hbBidder = AUBannerView.keyword("hb_bidder", in: rawTargeting)
+            let hbPb = AUBannerView.keyword("hb_pb", in: rawTargeting)
+            let hbFormat = AUBannerView.keyword("hb_format", in: rawTargeting)
+
+            if let str = hbSize {
                 self.lastPrebidCreativeSize = AUAdViewUtils.stringToCGSize(str)
-            } else if let arr = hbSizeRaw as? [String], let first = arr.first {
-                self.lastPrebidCreativeSize = AUAdViewUtils.stringToCGSize(first)
             } else {
                 self.lastPrebidCreativeSize = nil
             }
 
+            self.makeResultEvents(
+                resultCode: resultCode,
+                timeToRespond: timeToRespond,
+                hbBidder: hbBidder,
+                priceBucket: hbPb,
+                hbSize: hbSize,
+                hbFormat: hbFormat
+            )
+            self.isInitialAutorefresh = false
+
             self.onLoadRequest?(gamRequest)
         }
+    }
+
+    /// Reads a Prebid targeting keyword that may be a String or a single-element [String].
+    static func keyword(_ key: String, in targeting: [AnyHashable: Any]) -> String? {
+        if let str = targeting[key] as? String { return str }
+        if let arr = targeting[key] as? [String] { return arr.first }
+        return nil
     }
 
     func getPrivateBidRequester(from object: AnyObject)
@@ -254,55 +269,87 @@ extension AUBannerView {
             let adUnitID = eventHandler?.adUnitID
         else { return }
 
-        let event = AUBidRequestEvent(
+        AUEventsManager.shared.bidRequest(
+            adUnitId: adUnitID,
             adViewId: configId,
-            adUnitID: adUnitID,
-            size: AUUniqHelper.sizeMaker(adSize),
-            isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
-            autorefreshTime: Int(
-                autorefreshM.autorefreshEventModel.autorefreshTime
-            ),
-            initialRefresh: isInitialAutorefresh,
+            sizes: AUUniqHelper.sizeMaker(adSize),
             adType: adTypeString,
-            adSubType: makeAdSubType(),
-            apiType: apiTypeString
+            adSubtype: makeAdSubType(),
+            apiType: apiTypeString,
+            isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
+            autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
+            isRefresh: !isInitialAutorefresh
         )
-
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
     }
 
-    private func makeWinnerEvent(_ resultCode: String) {
-        AULogEvent.logDebug("makeWinnerEvent")
+    /// Fires bidResponse, then bidWon (only when there's a real Prebid win — success AND hb_bidder)
+    /// or noBid otherwise. Mirrors the Android win-gate that avoids spurious wins on empty SUCCESS.
+    private func makeResultEvents(resultCode: ResultCode, timeToRespond: Int64,
+                                  hbBidder: String?, priceBucket: String?,
+                                  hbSize: String?, hbFormat: String?) {
         guard
             let autorefreshM = adUnitConfiguration
                 as? AUAdUnitConfigurationEventProtocol,
             let adUnitID = eventHandler?.adUnitID
         else { return }
 
-        let event = AUBidWinnerEvent(
-            resultCode: resultCode,
-            adUnitID: adUnitID,
-            targetKeywords: [:],
-            isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
-            autorefreshTime: Int(
-                autorefreshM.autorefreshEventModel.autorefreshTime
-            ),
-            initialRefresh: isInitialAutorefresh,
-            adViewId: configId,
-            size: AUUniqHelper.sizeMaker(adSize),
-            adType: adTypeString,
-            adSubType: makeAdSubType(),
-            apiType: apiTypeString
+        let isAutorefresh = autorefreshM.autorefreshEventModel.isAutorefresh
+        let autorefreshTime = Int(autorefreshM.autorefreshEventModel.autorefreshTime)
+        let isRefresh = !isInitialAutorefresh
+        let sizes = AUUniqHelper.sizeMaker(adSize)
+        let subtype = makeAdSubType()
+        let codeName = AUResulrCodeConverter.convertResultCodeName(resultCode)
+
+        AUEventsManager.shared.bidResponse(
+            adUnitId: adUnitID, adViewId: configId, sizes: sizes,
+            adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
+            isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
+            resultCode: codeName, timeToRespond: timeToRespond
         )
 
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        if resultCode == .prebidDemandFetchSuccess, let bidder = hbBidder, !bidder.isEmpty {
+            self.prebidWinningBidder = bidder
+            AUEventsManager.shared.bidWon(
+                adUnitId: adUnitID, adViewId: configId, sizes: sizes,
+                adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
+                isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
+                priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat
+            )
+        } else {
+            self.prebidWinningBidder = nil
+            AUEventsManager.shared.noBid(
+                adUnitId: adUnitID, adViewId: configId, sizes: sizes,
+                adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
+                isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
+                resultCode: codeName
+            )
+        }
     }
 
-    private func makeAdSubType() -> String {
+    /// Starts (or restarts) viewability tracking for the rendered banner creative.
+    func startViewabilityTracking() {
+        guard let adUnitID = eventHandler?.adUnitID else { return }
+        let subtype = makeAdSubType()
+        let tracker = AUViewabilityTracker(
+            view: self,
+            onStart: {
+                AUEventsManager.shared.viewabilityStart(
+                    adUnitId: adUnitID, adType: adTypeString,
+                    adSubtype: subtype, apiType: apiTypeString
+                )
+            },
+            onSuccess: {
+                AUEventsManager.shared.viewabilitySuccess(
+                    adUnitId: adUnitID, adType: adTypeString,
+                    adSubtype: subtype, apiType: apiTypeString
+                )
+            }
+        )
+        viewabilityTracker = tracker
+        tracker.start()
+    }
+
+    func makeAdSubType() -> String {
         if adUnit.adFormats.count >= 2 {
             return "MULTIFORMAT"
         } else if adUnit.adFormats.contains(where: { $0.rawValue == 1 })
@@ -316,20 +363,5 @@ extension AUBannerView {
         }
 
         return ""
-    }
-
-    internal func makeCreationEvent() {
-        let event = AUAdCreationEvent(
-            adViewId: configId,
-            adUnitID: eventHandler?.adUnitID ?? "-1",
-            size: AUUniqHelper.sizeMaker(adSize),
-            adType: adTypeString,
-            adSubType: makeAdSubType(),
-            apiType: apiTypeString
-        )
-
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
     }
 }

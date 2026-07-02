@@ -57,24 +57,20 @@ class AUInterstitialHandler: NSObject,
 
     func adDidRecordImpression(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordImpression")
+        // Full-screen ads expose no app event, so bidder_code is best-effort: the Prebid auction
+        // winner if there was one, else the ad server.
+        let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
+        AUEventsManager.shared.adImpression(
+            adUnitId: adUnitID, adType: AUAdType.interstitial,
+            adSubtype: adView.makeAdSubType(), apiType: AUEventApiType.original,
+            bidderCode: bidder, winnerBidderCode: bidder
+        )
         fullScreentDelegate?.adDidRecordImpression?(ad)
     }
 
     func adDidRecordClick(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordClick")
-
-        let event = AUAdClickEvent(
-            adViewId: adView.configId,
-            adUnitID: adUnitID
-        )
-
-        guard let payload = event.convertToJSONString() else {
-            fullScreentDelegate?.adDidRecordClick?(ad)
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-
+        AUEventsManager.shared.adClick(adUnitId: adUnitID)
         fullScreentDelegate?.adDidRecordClick?(ad)
     }
 
@@ -83,24 +79,7 @@ class AUInterstitialHandler: NSObject,
         didFailToPresentFullScreenContentWithError error: any Error
     ) {
         LogEvent("didFailToPresentFullScreenContentWithError")
-
-        let event = AUFailedLoadEvent(
-            adViewId: adView.configId,
-            adUnitID: adUnitID,
-            errorMessage: error.localizedDescription,
-            errorCode: error.errorCode ?? -1
-        )
-
-        guard let payload = event.convertToJSONString() else {
-            fullScreentDelegate?.ad?(
-                ad,
-                didFailToPresentFullScreenContentWithError: error
-            )
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-
+        adView.fullScreenViewabilityTimer?.cancel()
         fullScreentDelegate?.ad?(
             ad,
             didFailToPresentFullScreenContentWithError: error
@@ -109,6 +88,22 @@ class AUInterstitialHandler: NSObject,
 
     func adWillPresentFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adWillPresentFullScreenContent")
+        let adUnitID = self.adUnitID
+        let subtype = adView.makeAdSubType()
+        let timer = AUFullScreenViewabilityTimer(
+            onStart: {
+                AUEventsManager.shared.viewabilityStart(
+                    adUnitId: adUnitID, adType: AUAdType.interstitial,
+                    adSubtype: subtype, apiType: AUEventApiType.original)
+            },
+            onSuccess: {
+                AUEventsManager.shared.viewabilitySuccess(
+                    adUnitId: adUnitID, adType: AUAdType.interstitial,
+                    adSubtype: subtype, apiType: AUEventApiType.original)
+            }
+        )
+        adView.fullScreenViewabilityTimer = timer
+        timer.onShown()
         fullScreentDelegate?.adWillPresentFullScreenContent?(ad)
     }
 
@@ -119,18 +114,7 @@ class AUInterstitialHandler: NSObject,
 
     func adDidDismissFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidDismissFullScreenContent")
-
-        let event = AUCloseAdEvent(
-            adViewId: adView.configId,
-            adUnitID: adUnitID
-        )
-        guard let payload = event.convertToJSONString() else {
-            fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-
+        adView.fullScreenViewabilityTimer?.cancel()
         fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
     }
 }

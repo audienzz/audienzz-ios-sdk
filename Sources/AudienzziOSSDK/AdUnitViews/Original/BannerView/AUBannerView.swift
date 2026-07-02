@@ -37,6 +37,15 @@ public class AUBannerView: AUAdView {
     /// Reliable alternative to `AUAdViewUtils.findCreativeSize` for multisize banner resizing.
     public internal(set) var lastPrebidCreativeSize: CGSize?
 
+    /// Render-winner attribution for analytics `adImpression`. `prebidWinningBidder` is the Prebid
+    /// auction winner (hb_bidder); `prebidLineItemWon` is set by the GAM app-event listener when the
+    /// Prebid line item renders. Both reset per auction.
+    internal var prebidWinningBidder: String?
+    internal var prebidLineItemWon: Bool = false
+
+    /// Viewability tracker for the current creative; restarted on each `adImpression`.
+    internal var viewabilityTracker: AUViewabilityTracker?
+
     /**
      Initialize banner view
      Lazy load is true by default.
@@ -134,10 +143,6 @@ public class AUBannerView: AUAdView {
         if let bannerEventHandler = eventHandler {
             self.eventHandler = AUBannerHandler(auBannerView: self, gamView: bannerEventHandler.gamView)
         }
-
-        AUEventsManager.shared.checkImpression(self, adUnitID: self.eventHandler?.adUnitID)
-
-        makeCreationEvent()
 
         if !self.isLazyLoad {
             fetchRequest(gamRequest)

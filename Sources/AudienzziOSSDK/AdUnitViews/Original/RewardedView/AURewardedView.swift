@@ -29,6 +29,11 @@ public class AURewardedView: AUAdView {
     internal var eventHandler: AURewardedHandler?
     internal var gadUnitID: String?
     public var videoParameters: AUVideoParameters?
+
+    /// Prebid auction winner (hb_bidder), captured on bid success and reported on adImpression.
+    internal var prebidWinningBidder: String?
+    /// Full-screen viewability driver (start on present, success after 1s, cancel on dismiss).
+    internal var fullScreenViewabilityTimer: AUFullScreenViewabilityTimer?
     
     /**
      Initialize rewarded view.
@@ -77,7 +82,6 @@ public class AURewardedView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd(with gamRequest: AdManagerRequest, adUnitID: String) {
-        AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
         adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters()
         let ppid = PPIDManager.shared.getPPID()
@@ -94,6 +98,5 @@ public class AURewardedView: AUAdView {
     
     public func connectHandler(_ eventHandler: AURewardedEventHandler) {
         self.eventHandler = AURewardedHandler(handler: eventHandler, adView: self)
-        makeCreationEvent()
     }
 }

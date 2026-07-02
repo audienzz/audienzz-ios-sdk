@@ -35,14 +35,23 @@ extension AUInterstitialView {
     }
 
     internal override func fetchRequest(_ gamRequest: AdManagerRequest) {
+        prebidWinningBidder = nil
+        let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             AULogEvent.logDebug(
                 "Audienzz demand fetch for GAM \(resultCode.name())"
             )
             guard let self = self else { return }
-            self.makeWinnerEvent(
-                AUResulrCodeConverter.convertResultCodeName(resultCode)
+            let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
+            let rawTargeting = gamRequest.customTargeting as? [AnyHashable: Any] ?? [:]
+            self.makeResultEvents(
+                resultCode: resultCode,
+                timeToRespond: timeToRespond,
+                hbBidder: AUBannerView.keyword("hb_bidder", in: rawTargeting),
+                priceBucket: AUBannerView.keyword("hb_pb", in: rawTargeting),
+                hbSize: AUBannerView.keyword("hb_size", in: rawTargeting),
+                hbFormat: AUBannerView.keyword("hb_format", in: rawTargeting)
             )
             self.onLoadRequest?(gamRequest)
         }
@@ -50,47 +59,46 @@ extension AUInterstitialView {
 
     private func makeRequestEvent() {
         guard let adUnitID = gadUnitID else { return }
-
-        let event = AUBidRequestEvent(
-            adViewId: configId,
-            adUnitID: adUnitID,
-            size: AUUniqHelper.sizeMaker(adSize),
-            isAutorefresh: false,
-            autorefreshTime: Int(0),
-            initialRefresh: false,
-            adType: adTypeString,
-            adSubType: makeAdSubType(),
-            apiType: apiTypeString
+        AUEventsManager.shared.bidRequest(
+            adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
+            adType: adTypeString, adSubtype: makeAdSubType(), apiType: apiTypeString,
+            isAutorefresh: false, autorefreshTime: 0, isRefresh: false
         )
-
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
     }
 
-    private func makeWinnerEvent(_ resultCode: String) {
+    private func makeResultEvents(resultCode: ResultCode, timeToRespond: Int64,
+                                  hbBidder: String?, priceBucket: String?,
+                                  hbSize: String?, hbFormat: String?) {
         guard let adUnitID = gadUnitID else { return }
+        let subtype = makeAdSubType()
+        let codeName = AUResulrCodeConverter.convertResultCodeName(resultCode)
 
-        let event = AUBidWinnerEvent(
-            resultCode: resultCode,
-            adUnitID: adUnitID,
-            targetKeywords: [:],
-            isAutorefresh: false,
-            autorefreshTime: Int(0),
-            initialRefresh: false,
-            adViewId: configId,
-            size: AUUniqHelper.sizeMaker(adSize),
-            adType: adTypeString,
-            adSubType: makeAdSubType(),
-            apiType: apiTypeString
+        AUEventsManager.shared.bidResponse(
+            adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
+            adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
+            isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
+            resultCode: codeName, timeToRespond: timeToRespond
         )
 
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        if resultCode == .prebidDemandFetchSuccess, let bidder = hbBidder, !bidder.isEmpty {
+            self.prebidWinningBidder = bidder
+            AUEventsManager.shared.bidWon(
+                adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
+                adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
+                isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
+                priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat
+            )
+        } else {
+            self.prebidWinningBidder = nil
+            AUEventsManager.shared.noBid(
+                adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
+                adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
+                isAutorefresh: false, autorefreshTime: 0, isRefresh: false, resultCode: codeName
+            )
+        }
     }
 
-    private func makeAdSubType() -> String {
+    func makeAdSubType() -> String {
         if adUnit.adFormats.count >= 2 {
             return "MULTIFORMAT"
         } else if adUnit.adFormats.contains(where: { $0.rawValue == 1 })
@@ -104,20 +112,5 @@ extension AUInterstitialView {
         }
 
         return ""
-    }
-
-    internal func makeCreationEvent() {
-        let event = AUAdCreationEvent(
-            adViewId: configId,
-            adUnitID: eventHandler?.adUnitID ?? "",
-            size: AUUniqHelper.sizeMaker(adSize),
-            adType: adTypeString,
-            adSubType: makeAdSubType(),
-            apiType: apiTypeString
-        )
-
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
     }
 }

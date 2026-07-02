@@ -56,62 +56,10 @@ extension AUMultiplatformView {
         return "MULTIFORMAT"
     }
 
-    func makeCreationEvent() {
-        guard let adUnitID = gadUnitID else { return }
-        let event = AUAdCreationEvent(
-            adViewId: configId,
-            adUnitID: adUnitID,
-            size: AUUniqHelper.sizeMaker(adSize),
-            adType: "MULTIFORMAT",
-            adSubType: makeAdSubType(),
-            apiType: "ORIGINAL"
-        )
+    // Multiformat (multiplatform) is out of scope for the new analytics — event firing removed.
+    func makeCreationEvent() {}
 
-        guard let payload = event.convertToJSONString() else { return }
+    private func makeRequestEvent() {}
 
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
-
-    private func makeRequestEvent() {
-        guard let adUnitID = gadUnitID else { return }
-
-        let event = AUBidRequestEvent(
-            adViewId: configId,
-            adUnitID: adUnitID,
-            size: AUUniqHelper.sizeMaker(adSize),
-            isAutorefresh: false,
-            autorefreshTime: Int(0),
-            initialRefresh: false,
-            adType: "MULTIFORMAT",
-            adSubType: makeAdSubType(),
-            apiType: "ORIGINAL"
-        )
-
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
-
-    private func makeWinnerEvent(_ resultCode: String) {
-        AULogEvent.logDebug("makeWinnerEvent")
-        guard let adUnitID = gadUnitID else { return }
-
-        let event = AUBidWinnerEvent(
-            resultCode: resultCode,
-            adUnitID: adUnitID,
-            targetKeywords: [:],
-            isAutorefresh: false,
-            autorefreshTime: Int(0),
-            initialRefresh: false,
-            adViewId: configId,
-            size: AUUniqHelper.sizeMaker(adSize),
-            adType: "MULTIFORMAT",
-            adSubType: makeAdSubType(),
-            apiType: "ORIGINAL"
-        )
-
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
+    private func makeWinnerEvent(_ resultCode: String) {}
 }
