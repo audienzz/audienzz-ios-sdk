@@ -181,12 +181,37 @@ bannerView.smartRefresh = true
 
 ## Analytics
 
-The SDK reports an ad-event clickstream (bid funnel, impressions, clicks, viewability) automatically —
-you don't wire up individual events. The **only** integration step is telling the SDK when an
-ad-bearing screen becomes visible, so its ad events can be grouped under a single screen visit
-(a *page impression*).
+The SDK reports an ad-event clickstream to the Audienzz backend automatically. **Every ad-level
+event fires on its own** once the SDK is initialized — you do not wire up bid, impression, click, or
+viewability tracking yourself. The only integration step is one call per ad-bearing screen
+([Step 2](#step-2--track-screen-visits-required)).
 
-Call `onScreenResumed(_:)` in `viewWillAppear` of every view controller that shows ads:
+### What gets collected
+
+| Event | When it fires |
+|---|---|
+| `pageImpression` | A screen showing ads appears/resumes (you trigger this via `onScreenResumed`) |
+| `bidRequest` | A Prebid bid request is sent for a slot (also on each auto-refresh) |
+| `bidResponse` | Prebid returns a result |
+| `bidWon` | A Prebid bid wins — carries `cpm`, `currency`, `creative_id`, `auction_id`, `ad_id`, `bidder_code` |
+| `noBid` | The auction returned no usable bid |
+| `adImpression` | The ad is rendered on screen — carries `bidder_code` (the demand that rendered) |
+| `adClick` | The user taps the ad |
+| `viewability.start` | The ad becomes ≥ 50% visible |
+| `viewability.success` | The ad stays ≥ 50% visible for 1 continuous second |
+
+Banner, interstitial and rewarded ads on the Original API are all covered.
+
+### Step 1 — Initialize the SDK
+
+Analytics is keyed on your **Company ID** (provided by Audienzz), supplied when you initialize the
+SDK. Nothing is reported until initialization succeeds. See [Initialize SDK](#initialize-sdk).
+
+### Step 2 — Track screen visits (required)
+
+Call `Audienzz.shared.onScreenResumed(_:)` in `viewWillAppear` of **every view controller that shows
+ads**. This fires a `pageImpression` and generates a fresh page-impression id that tags all ad events
+on that screen visit, so the backend can correlate them. Screens without ads don't need it.
 
 ```swift
 override func viewWillAppear(_ animated: Bool) {
@@ -197,10 +222,24 @@ override func viewWillAppear(_ animated: Bool) {
 
 - **Use `viewWillAppear`, not `viewDidAppear`** — it runs before the view lays out and before
   lazy/prefetch banners start loading, so every ad event on the screen inherits the page-impression id.
-- Call it on **each appearance** (it starts a fresh page impression per visit); there is no
-  `onPause`/teardown counterpart to call.
+- Call it on **each appearance** (it starts a fresh page impression per visit). There is **no
+  `onPause`/teardown counterpart** to call.
 - If you omit it, ad events are still reported (the SDK assigns a fallback page-impression id so
   nothing is lost), but they won't be tied to a named screen.
+
+### Demand-source attribution (`bidder_code`) — optional GAM setup
+
+`adImpression` reports `bidder_code` = the demand that actually rendered. To distinguish a winning
+**Prebid** line item from **Google/ad-server** demand, the SDK listens for a GAM **app event named
+`Prebid`**. For this to be accurate, your **GAM Prebid line item must be configured to send an app
+event with the key `Prebid`** (an ad-ops / Google Ad Manager setup — no code on your side). Without
+it, rendered ads are attributed to the ad server (`bidder_code = "google"`).
+
+### Privacy
+
+The SDK includes the device advertising id and standard device/app metadata with each event.
+Configure your app's consent (GDPR/TCF) as usual via `AUTargeting`; the same consent signals that
+govern Prebid apply.
 
 ## API Reference
 
