@@ -99,7 +99,9 @@ struct AUEventNetworkMapper {
         if let v = e.priceBucket { a["price_bucket"] = v }
         if let v = e.hbSize { a["hb_size"] = v }
         if let v = e.hbFormat { a["hb_format"] = v }
-        if let v = e.cpm { a["cpm"] = String(v) }
+        // Round to 6 dp: Prebid's Bid.price is a Float, so widening to Double adds noise
+        // (e.g. 1.4249999523…). 6 dp preserves real sub-cent precision while emitting a clean value.
+        if let v = e.cpm { a["cpm"] = String((v * 1_000_000).rounded() / 1_000_000) }
         if let v = e.currency { a["currency"] = v }
         if let v = e.creativeId { a["creative_id"] = v }
         if let v = e.auctionId { a["auction_id"] = v }

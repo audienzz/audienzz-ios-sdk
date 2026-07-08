@@ -62,6 +62,13 @@ final class AUEventsManager: AULogEventType {
         guard networkManager != nil else { return }
         requestDeviceId()
 
+        // Safety net: if an ad event fires before any onScreenResumed (e.g. a banner prefetches
+        // during layout, before the host's viewWillAppear), lazily start a page-impression id so the
+        // event is never orphaned. onScreenResumed normally sets this first, so this rarely triggers.
+        if currentPageImpressionId == nil, event.type != .pageImpression {
+            currentPageImpressionId = AUUniqHelper.makeUniqID()
+        }
+
         var enriched = event
         enriched.uuid = AUUniqHelper.makeUniqID()
         enriched.visitorId = visitorId

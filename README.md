@@ -179,6 +179,29 @@ bannerView.smartRefresh = true
 
 > **Note:** `smartRefresh` has no effect if `autorefreshTime` is not set on the ad unit configuration (i.e. no auto-refresh interval is defined).
 
+## Analytics
+
+The SDK reports an ad-event clickstream (bid funnel, impressions, clicks, viewability) automatically —
+you don't wire up individual events. The **only** integration step is telling the SDK when an
+ad-bearing screen becomes visible, so its ad events can be grouped under a single screen visit
+(a *page impression*).
+
+Call `onScreenResumed(_:)` in `viewWillAppear` of every view controller that shows ads:
+
+```swift
+override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    Audienzz.shared.onScreenResumed(self)
+}
+```
+
+- **Use `viewWillAppear`, not `viewDidAppear`** — it runs before the view lays out and before
+  lazy/prefetch banners start loading, so every ad event on the screen inherits the page-impression id.
+- Call it on **each appearance** (it starts a fresh page impression per visit); there is no
+  `onPause`/teardown counterpart to call.
+- If you omit it, ad events are still reported (the SDK assigns a fallback page-impression id so
+  nothing is lost), but they won't be tied to a named screen.
+
 ## API Reference
 
 This section provides a detailed reference for the public API of the Audienzz SDK.
