@@ -57,19 +57,30 @@ class AURewardedHandler: NSObject,
 
     func adDidRecordImpression(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordImpression")
-        let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID, adType: AUAdType.rewarded,
             adSubtype: AUAdSubtype.video, apiType: AUEventApiType.original,
-            bidderCode: bidder, winnerBidderCode: bidder
+            adViewId: adView.configId, economics: renderEconomics()
         )
         fullScreentDelegate?.adDidRecordImpression?(ad)
     }
 
     func adDidRecordClick(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordClick")
-        AUEventsManager.shared.adClick(adUnitId: adUnitID)
+        AUEventsManager.shared.adClick(
+            adUnitId: adUnitID, adType: AUAdType.rewarded,
+            adSubtype: AUAdSubtype.video, apiType: AUEventApiType.original,
+            adViewId: adView.configId, economics: renderEconomics()
+        )
         fullScreentDelegate?.adDidRecordClick?(ad)
+    }
+
+    /// Full-screen ads expose no app event, so the render winner is best-effort: the Prebid auction
+    /// winner's economics if there was one, else an ad-server (direct) impression.
+    private func renderEconomics() -> AURenderEconomics {
+        adView.lastRenderEconomics ?? AURenderEconomics(
+            bidderCode: AD_SERVER_BIDDER, winnerBidderCode: AD_SERVER_BIDDER,
+            winnerType: AUWinnerType.direct)
     }
 
     func ad(

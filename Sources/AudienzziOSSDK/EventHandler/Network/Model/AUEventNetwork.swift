@@ -35,6 +35,9 @@ struct AUEventNetwork: Encodable {
     let viewportWidth: Int
     let deviceId: String?
     let userAgent: String?
+    let osName: String
+    let deviceCategory: String
+    let browserName: String
     let sdkName: String
     let sdkVersion: String
     let appPackageName: String?
@@ -63,6 +66,9 @@ struct AUEventNetwork: Encodable {
         case viewportWidth = "viewport_width"
         case deviceId = "device_id"
         case userAgent = "user_agent"
+        case osName = "os_name"
+        case deviceCategory = "device_category"
+        case browserName = "browser_name"
         case sdkName = "sdk_name"
         case sdkVersion = "sdk_version"
         case appPackageName = "app_package_name"

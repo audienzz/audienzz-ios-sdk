@@ -38,83 +38,145 @@ let PREBID_APP_EVENT = "Prebid"
 /// `bidder_code` reported when the ad server (Google/AdX/direct) rendered instead of Prebid.
 let AD_SERVER_BIDDER = "google"
 
+/// `winner_type` values (web-clickstream parity).
+enum AUWinnerType {
+    static let rtb = "RTB"
+    static let direct = "direct"
+}
+
+/// Winning-bid economics captured when a bid resolves and reused across the render events
+/// (`bidResponse`/`bidWon`/`adImpression`/`adClick`/`viewability.*`). Mirrors the web attribute set.
+struct AURenderEconomics {
+    var bidderCode: String?
+    var winnerBidderCode: String?
+    var winnerType: String?
+    var priceBucket: String?
+    var hbSize: String?
+    var hbFormat: String?
+    var mediaType: String?
+    var size: String?
+    var cpm: Double?
+    var currency: String?
+    var creativeId: String?
+    var auctionId: String?
+    var adId: String?
+    var timeToRespond: Int64?
+    var slotReload: Int?
+}
+
+extension AUEventDomain {
+    /// Applies the shared render economics onto an event (no-op for nil fields).
+    mutating func apply(_ ec: AURenderEconomics?) {
+        guard let ec else { return }
+        bidderCode = bidderCode ?? ec.bidderCode
+        winnerBidderCode = winnerBidderCode ?? ec.winnerBidderCode
+        winnerType = ec.winnerType
+        priceBucket = ec.priceBucket
+        hbSize = ec.hbSize
+        hbFormat = ec.hbFormat
+        mediaType = ec.mediaType
+        size = ec.size
+        cpm = ec.cpm
+        currency = ec.currency
+        creativeId = ec.creativeId
+        auctionId = ec.auctionId
+        adId = ec.adId
+        if timeToRespond == nil { timeToRespond = ec.timeToRespond }
+        slotReload = ec.slotReload
+    }
+}
+
 /// Typed event helpers — the public firing surface used by the ad views/handlers.
 extension AUEventsManager {
 
     func bidRequest(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                     adType: String, adSubtype: String, apiType: String,
-                    isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool) {
+                    isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
+                    mediaTypes: String? = nil) {
         var e = AUEventDomain(type: .bidRequest)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
+        e.mediaTypes = mediaTypes
         logEvent(e)
     }
 
     func bidResponse(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                      adType: String, adSubtype: String, apiType: String,
                      isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
-                     resultCode: String?, timeToRespond: Int64? = nil) {
+                     resultCode: String?, timeToRespond: Int64? = nil,
+                     economics: AURenderEconomics? = nil) {
         var e = AUEventDomain(type: .bidResponse)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
         e.resultCode = resultCode; e.timeToRespond = timeToRespond
+        e.apply(economics)
         logEvent(e)
     }
 
-    // Economics params (cpm/currency/creativeId/auctionId/adId) are populated from the winning bid
-    // via the patched Prebid fork (BidInfo now surfaces them on the original/GAM API).
+    // Economics (cpm/currency/creativeId/auctionId/adId/media_type/size/bidder_code) come from the
+    // winning bid via the patched Prebid fork (BidInfo surfaces them on the original/GAM API).
     func bidWon(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                 adType: String, adSubtype: String, apiType: String,
                 isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
-                priceBucket: String? = nil, hbSize: String? = nil, hbFormat: String? = nil,
-                cpm: Double? = nil, currency: String? = nil, creativeId: String? = nil,
-                auctionId: String? = nil, adId: String? = nil) {
+                economics: AURenderEconomics? = nil) {
         var e = AUEventDomain(type: .bidWon)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
-        e.priceBucket = priceBucket; e.hbSize = hbSize; e.hbFormat = hbFormat
-        e.cpm = cpm; e.currency = currency; e.creativeId = creativeId
-        e.auctionId = auctionId; e.adId = adId
+        e.apply(economics)
         logEvent(e)
     }
 
     func noBid(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                adType: String, adSubtype: String, apiType: String,
-               isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool, resultCode: String?) {
+               isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool, resultCode: String?,
+               mediaTypes: String? = nil) {
         var e = AUEventDomain(type: .noBid)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
-        e.resultCode = resultCode
+        e.resultCode = resultCode; e.mediaTypes = mediaTypes
         logEvent(e)
     }
 
     func adImpression(adUnitId: String, adType: String, adSubtype: String, apiType: String,
-                      bidderCode: String? = nil, winnerBidderCode: String? = nil) {
+                      adViewId: String? = nil, bidderCode: String? = nil,
+                      winnerBidderCode: String? = nil, economics: AURenderEconomics? = nil) {
         var e = AUEventDomain(type: .adImpression)
-        e.adUnitId = adUnitId; e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
+        e.adUnitId = adUnitId; e.adViewId = adViewId
+        e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.bidderCode = bidderCode; e.winnerBidderCode = winnerBidderCode
+        e.apply(economics)
         logEvent(e)
     }
 
-    func adClick(adUnitId: String) {
+    func adClick(adUnitId: String, adType: String? = nil, adSubtype: String? = nil,
+                 apiType: String? = nil, adViewId: String? = nil,
+                 economics: AURenderEconomics? = nil) {
         var e = AUEventDomain(type: .adClick)
-        e.adUnitId = adUnitId
+        e.adUnitId = adUnitId; e.adViewId = adViewId
+        e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
+        e.apply(economics)
         logEvent(e)
     }
 
-    func viewabilityStart(adUnitId: String, adType: String, adSubtype: String, apiType: String) {
+    func viewabilityStart(adUnitId: String, adType: String, adSubtype: String, apiType: String,
+                          adViewId: String? = nil, economics: AURenderEconomics? = nil) {
         var e = AUEventDomain(type: .viewabilityStart)
-        e.adUnitId = adUnitId; e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
+        e.adUnitId = adUnitId; e.adViewId = adViewId
+        e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
+        e.apply(economics)
         logEvent(e)
     }
 
-    func viewabilitySuccess(adUnitId: String, adType: String, adSubtype: String, apiType: String) {
+    func viewabilitySuccess(adUnitId: String, adType: String, adSubtype: String, apiType: String,
+                            adViewId: String? = nil, economics: AURenderEconomics? = nil) {
         var e = AUEventDomain(type: .viewabilitySuccess)
-        e.adUnitId = adUnitId; e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
+        e.adUnitId = adUnitId; e.adViewId = adViewId
+        e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
+        e.apply(economics)
         logEvent(e)
     }
 }

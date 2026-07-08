@@ -265,8 +265,18 @@ extension AUBannerView {
             apiType: apiTypeString,
             isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
             autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
-            isRefresh: !isInitialAutorefresh
+            isRefresh: !isInitialAutorefresh,
+            mediaTypes: Self.mediaTypesJSON(subtype: makeAdSubType())
         )
+    }
+
+    /// `media_types` as a JSON array string (web-schema parity), derived from the ad subtype.
+    static func mediaTypesJSON(subtype: String) -> String {
+        switch subtype {
+        case AUAdSubtype.video: return "[\"video\"]"
+        case AUAdSubtype.multiformat: return "[\"banner\",\"video\"]"
+        default: return "[\"banner\"]"
+        }
     }
 
     /// Fires bidResponse, then bidWon (only when there's a real Prebid win — success AND hb_bidder)
@@ -288,50 +298,68 @@ extension AUBannerView {
         let subtype = makeAdSubType()
         let codeName = AUResulrCodeConverter.convertResultCodeName(resultCode)
 
+        // Winning-bid economics, reused on bidResponse/bidWon and later render events.
+        var economics: AURenderEconomics?
+        if resultCode == .prebidDemandFetchSuccess, let bidder = hbBidder, !bidder.isEmpty {
+            economics = AURenderEconomics(
+                bidderCode: bidder, winnerBidderCode: bidder, winnerType: AUWinnerType.rtb,
+                priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
+                mediaType: hbFormat, size: hbSize,
+                cpm: bidInfo.cpm, currency: bidInfo.currency, creativeId: bidInfo.creativeId,
+                auctionId: bidInfo.auctionId, adId: bidInfo.adId,
+                timeToRespond: timeToRespond, slotReload: slotReloadCount)
+        }
+
         AUEventsManager.shared.bidResponse(
             adUnitId: adUnitID, adViewId: configId, sizes: sizes,
             adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
             isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-            resultCode: codeName, timeToRespond: timeToRespond
+            resultCode: codeName, timeToRespond: timeToRespond, economics: economics
         )
 
-        if resultCode == .prebidDemandFetchSuccess, let bidder = hbBidder, !bidder.isEmpty {
-            self.prebidWinningBidder = bidder
+        if let economics {
+            self.prebidWinningBidder = economics.bidderCode
+            self.lastRenderEconomics = economics
             AUEventsManager.shared.bidWon(
                 adUnitId: adUnitID, adViewId: configId, sizes: sizes,
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-                priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
-                cpm: bidInfo.cpm, currency: bidInfo.currency, creativeId: bidInfo.creativeId,
-                auctionId: bidInfo.auctionId, adId: bidInfo.adId
+                economics: economics
             )
         } else {
             self.prebidWinningBidder = nil
+            self.lastRenderEconomics = nil
             AUEventsManager.shared.noBid(
                 adUnitId: adUnitID, adViewId: configId, sizes: sizes,
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-                resultCode: codeName
+                resultCode: codeName, mediaTypes: Self.mediaTypesJSON(subtype: subtype)
             )
         }
+        // Count this load; next auction/refresh reports the incremented value.
+        slotReloadCount += 1
     }
 
     /// Starts (or restarts) viewability tracking for the rendered banner creative.
     func startViewabilityTracking() {
         guard let adUnitID = eventHandler?.adUnitID else { return }
         let subtype = makeAdSubType()
+        let viewId = configId
+        let economics = lastRenderEconomics
         let tracker = AUViewabilityTracker(
             view: self,
             onStart: {
                 AUEventsManager.shared.viewabilityStart(
                     adUnitId: adUnitID, adType: adTypeString,
-                    adSubtype: subtype, apiType: apiTypeString
+                    adSubtype: subtype, apiType: apiTypeString,
+                    adViewId: viewId, economics: economics
                 )
             },
             onSuccess: {
                 AUEventsManager.shared.viewabilitySuccess(
                     adUnitId: adUnitID, adType: adTypeString,
-                    adSubtype: subtype, apiType: apiTypeString
+                    adSubtype: subtype, apiType: apiTypeString,
+                    adViewId: viewId, economics: economics
                 )
             }
         )

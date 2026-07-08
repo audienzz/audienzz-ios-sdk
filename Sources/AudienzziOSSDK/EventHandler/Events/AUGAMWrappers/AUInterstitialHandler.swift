@@ -57,21 +57,30 @@ class AUInterstitialHandler: NSObject,
 
     func adDidRecordImpression(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordImpression")
-        // Full-screen ads expose no app event, so bidder_code is best-effort: the Prebid auction
-        // winner if there was one, else the ad server.
-        let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID, adType: AUAdType.interstitial,
             adSubtype: adView.makeAdSubType(), apiType: AUEventApiType.original,
-            bidderCode: bidder, winnerBidderCode: bidder
+            adViewId: adView.configId, economics: renderEconomics()
         )
         fullScreentDelegate?.adDidRecordImpression?(ad)
     }
 
     func adDidRecordClick(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordClick")
-        AUEventsManager.shared.adClick(adUnitId: adUnitID)
+        AUEventsManager.shared.adClick(
+            adUnitId: adUnitID, adType: AUAdType.interstitial,
+            adSubtype: adView.makeAdSubType(), apiType: AUEventApiType.original,
+            adViewId: adView.configId, economics: renderEconomics()
+        )
         fullScreentDelegate?.adDidRecordClick?(ad)
+    }
+
+    /// Full-screen ads expose no app event, so the render winner is best-effort: the Prebid auction
+    /// winner's economics if there was one, else an ad-server (direct) impression.
+    private func renderEconomics() -> AURenderEconomics {
+        adView.lastRenderEconomics ?? AURenderEconomics(
+            bidderCode: AD_SERVER_BIDDER, winnerBidderCode: AD_SERVER_BIDDER,
+            winnerType: AUWinnerType.direct)
     }
 
     func ad(
@@ -90,16 +99,20 @@ class AUInterstitialHandler: NSObject,
         LogEvent("adWillPresentFullScreenContent")
         let adUnitID = self.adUnitID
         let subtype = adView.makeAdSubType()
+        let viewId = adView.configId
+        let economics = renderEconomics()
         let timer = AUFullScreenViewabilityTimer(
             onStart: {
                 AUEventsManager.shared.viewabilityStart(
                     adUnitId: adUnitID, adType: AUAdType.interstitial,
-                    adSubtype: subtype, apiType: AUEventApiType.original)
+                    adSubtype: subtype, apiType: AUEventApiType.original,
+                    adViewId: viewId, economics: economics)
             },
             onSuccess: {
                 AUEventsManager.shared.viewabilitySuccess(
                     adUnitId: adUnitID, adType: AUAdType.interstitial,
-                    adSubtype: subtype, apiType: AUEventApiType.original)
+                    adSubtype: subtype, apiType: AUEventApiType.original,
+                    adViewId: viewId, economics: economics)
             }
         )
         adView.fullScreenViewabilityTimer = timer

@@ -115,16 +115,13 @@ class AUBannerHandler: NSObject,
     /// Tells the delegate that an impression has been recorded for an ad.
     func bannerViewDidRecordImpression(_ bannerView: BannerView) {
         LogEvent("bannerViewDidRecordImpression")
-        let bidder = auBannerView.prebidLineItemWon
-            ? (auBannerView.prebidWinningBidder ?? AD_SERVER_BIDDER)
-            : AD_SERVER_BIDDER
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID ?? "",
             adType: AUAdType.banner,
             adSubtype: auBannerView.makeAdSubType(),
             apiType: AUEventApiType.original,
-            bidderCode: bidder,
-            winnerBidderCode: bidder
+            adViewId: auBannerView.configId,
+            economics: renderEconomics()
         )
         auBannerView.startViewabilityTracking()
         bannerDelegate?.bannerViewDidRecordImpression?(bannerView)
@@ -133,8 +130,27 @@ class AUBannerHandler: NSObject,
     /// Tells the delegate that a click has been recorded for the ad.
     func bannerViewDidRecordClick(_ bannerView: BannerView) {
         LogEvent("bannerViewDidRecordClick")
-        AUEventsManager.shared.adClick(adUnitId: adUnitID ?? "")
+        AUEventsManager.shared.adClick(
+            adUnitId: adUnitID ?? "",
+            adType: AUAdType.banner,
+            adSubtype: auBannerView.makeAdSubType(),
+            apiType: AUEventApiType.original,
+            adViewId: auBannerView.configId,
+            economics: renderEconomics()
+        )
         bannerDelegate?.bannerViewDidRecordClick?(bannerView)
+    }
+
+    /// Economics reported on render events. The Prebid line item won the GAM auction only if its app
+    /// event fired; otherwise the ad server (Google) rendered — report a direct impression with no
+    /// Prebid economics.
+    private func renderEconomics() -> AURenderEconomics {
+        if auBannerView.prebidLineItemWon, let won = auBannerView.lastRenderEconomics {
+            return won
+        }
+        return AURenderEconomics(
+            bidderCode: AD_SERVER_BIDDER, winnerBidderCode: AD_SERVER_BIDDER,
+            winnerType: AUWinnerType.direct)
     }
 
     // MARK: - Click-Time

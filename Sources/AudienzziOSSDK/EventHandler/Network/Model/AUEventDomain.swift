@@ -61,14 +61,23 @@ struct AUEventDomain {
     // Bid / render economics
     var bidderCode: String?
     var winnerBidderCode: String?
+    var winnerType: String?
     var priceBucket: String?
     var hbSize: String?
     var hbFormat: String?
+    var mediaType: String?
+    var mediaTypes: String?
+    var size: String?
     var cpm: Double?
     var currency: String?
     var creativeId: String?
     var auctionId: String?
     var adId: String?
+    var slotReload: Int?
+
+    // Web-schema parity extras
+    var websiteId: String?
+    var consentString: String?
 
     init(type: AUAnalyticsEventType) {
         self.type = type

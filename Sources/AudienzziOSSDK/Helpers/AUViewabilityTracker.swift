@@ -26,6 +26,9 @@ import UIKit
 /// timer runs independently so it elapses even if the view is static.
 final class AUViewabilityTracker {
 
+    /// Reported as `tracker_version` on viewability events (shared with the full-screen timer).
+    static let trackerVersion = "1.0.0"
+
     private weak var view: VisibleView?
     private let onStart: () -> Void
     private let onSuccess: () -> Void

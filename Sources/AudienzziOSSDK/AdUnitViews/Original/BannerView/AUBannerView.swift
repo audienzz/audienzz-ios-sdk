@@ -43,6 +43,11 @@ public class AUBannerView: AUAdView {
     internal var prebidWinningBidder: String?
     internal var prebidLineItemWon: Bool = false
 
+    /// Winning-bid economics from the last auction, reused on adImpression/adClick/viewability.
+    internal var lastRenderEconomics: AURenderEconomics?
+    /// Number of times this slot has (re)loaded — reported as `slot_reload`. First load = 0.
+    internal var slotReloadCount: Int = 0
+
     /// Viewability tracker for the current creative; restarted on each `adImpression`.
     internal var viewabilityTracker: AUViewabilityTracker?
 

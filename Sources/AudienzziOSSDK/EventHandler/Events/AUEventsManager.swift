@@ -53,6 +53,7 @@ final class AUEventsManager: AULogEventType {
         currentPageImpressionId = AUUniqHelper.makeUniqID()
         var event = AUEventDomain(type: .pageImpression)
         event.screenName = screenName
+        event.consentString = AUTargeting.shared.gdprConsentString
         logEvent(event)
     }
 
@@ -77,6 +78,8 @@ final class AUEventsManager: AULogEventType {
         enriched.sessionStartTimestamp = sessionStartTimestamp
         enriched.deviceId = deviceId
         enriched.pageImpressionId = currentPageImpressionId
+        // website_id — the remote-config publisher id (resolved async; nil for very early events).
+        enriched.websiteId = AudienzzRemoteConfig.shared.publisherId
         enriched.sessionSeq = nextSequence()
 
         let network = mapper.toNetwork(enriched)

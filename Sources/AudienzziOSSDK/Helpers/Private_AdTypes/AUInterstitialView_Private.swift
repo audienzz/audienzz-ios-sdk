@@ -64,7 +64,8 @@ extension AUInterstitialView {
         AUEventsManager.shared.bidRequest(
             adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
             adType: adTypeString, adSubtype: makeAdSubType(), apiType: apiTypeString,
-            isAutorefresh: false, autorefreshTime: 0, isRefresh: false
+            isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
+            mediaTypes: AUBannerView.mediaTypesJSON(subtype: makeAdSubType())
         )
     }
 
@@ -76,29 +77,41 @@ extension AUInterstitialView {
         let subtype = makeAdSubType()
         let codeName = AUResulrCodeConverter.convertResultCodeName(resultCode)
 
+        var economics: AURenderEconomics?
+        if resultCode == .prebidDemandFetchSuccess, let bidder = hbBidder, !bidder.isEmpty {
+            economics = AURenderEconomics(
+                bidderCode: bidder, winnerBidderCode: bidder, winnerType: AUWinnerType.rtb,
+                priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
+                mediaType: hbFormat, size: hbSize,
+                cpm: bidInfo.cpm, currency: bidInfo.currency, creativeId: bidInfo.creativeId,
+                auctionId: bidInfo.auctionId, adId: bidInfo.adId,
+                timeToRespond: timeToRespond, slotReload: 0)
+        }
+
         AUEventsManager.shared.bidResponse(
             adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
             adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
             isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-            resultCode: codeName, timeToRespond: timeToRespond
+            resultCode: codeName, timeToRespond: timeToRespond, economics: economics
         )
 
-        if resultCode == .prebidDemandFetchSuccess, let bidder = hbBidder, !bidder.isEmpty {
-            self.prebidWinningBidder = bidder
+        if let economics {
+            self.prebidWinningBidder = economics.bidderCode
+            self.lastRenderEconomics = economics
             AUEventsManager.shared.bidWon(
                 adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-                priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
-                cpm: bidInfo.cpm, currency: bidInfo.currency, creativeId: bidInfo.creativeId,
-                auctionId: bidInfo.auctionId, adId: bidInfo.adId
+                economics: economics
             )
         } else {
             self.prebidWinningBidder = nil
+            self.lastRenderEconomics = nil
             AUEventsManager.shared.noBid(
                 adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
-                isAutorefresh: false, autorefreshTime: 0, isRefresh: false, resultCode: codeName
+                isAutorefresh: false, autorefreshTime: 0, isRefresh: false, resultCode: codeName,
+                mediaTypes: AUBannerView.mediaTypesJSON(subtype: subtype)
             )
         }
     }

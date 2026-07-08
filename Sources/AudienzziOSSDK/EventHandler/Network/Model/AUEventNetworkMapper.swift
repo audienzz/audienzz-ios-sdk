@@ -39,6 +39,13 @@ struct AUEventNetworkMapper {
             + "AudienzziOSSDK/\(AUSDKVersion)"
     }()
 
+    // Envelope device fields — known directly on mobile (more reliable than parsing the synthetic UA).
+    private static let osName = "iOS"
+    private static let deviceCategory: String =
+        UIDevice.current.userInterfaceIdiom == .pad ? "Tablet" : "Smartphone"
+    // No real browser in-app; the creative renders in a WKWebView.
+    private static let browserName = "WKWebView"
+
     private static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -70,6 +77,9 @@ struct AUEventNetworkMapper {
             viewportWidth: width,
             deviceId: event.deviceId,
             userAgent: Self.userAgent,
+            osName: Self.osName,
+            deviceCategory: Self.deviceCategory,
+            browserName: Self.browserName,
             sdkName: Self.sdkName,
             sdkVersion: AUSDKVersion,
             appPackageName: Self.appPackageName,
@@ -106,6 +116,21 @@ struct AUEventNetworkMapper {
         if let v = e.creativeId { a["creative_id"] = v }
         if let v = e.auctionId { a["auction_id"] = v }
         if let v = e.adId { a["ad_id"] = v }
+        // Web-clickstream parity attributes.
+        if let v = e.adViewId { a["ad_unit_code"] = v }        // Prebid configId
+        if let v = e.websiteId { a["website_id"] = v }         // remote-config publisherId
+        if let v = e.winnerType { a["winner_type"] = v }
+        if let v = e.mediaType { a["media_type"] = v }
+        if let v = e.mediaTypes { a["media_types"] = v }
+        if let v = e.size { a["size"] = v }
+        if let v = e.slotReload { a["slot_reload"] = String(v) }
+        if let v = e.consentString { a["consent_string"] = v }
+        // Transport is constant for the SDK (single POST per event, like the web XHR beacon).
+        a["transport"] = "xhr"
+        // Viewability events carry the tracker version.
+        if e.type == .viewabilityStart || e.type == .viewabilitySuccess {
+            a["tracker_version"] = AUViewabilityTracker.trackerVersion
+        }
         return a
     }
 }
