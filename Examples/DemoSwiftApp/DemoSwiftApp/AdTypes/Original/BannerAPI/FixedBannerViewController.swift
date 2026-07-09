@@ -112,6 +112,13 @@ class FixedBannerViewController: UIViewController {
         setupBanner_multisize()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Track the screen visit for analytics (fires `pageImpression` and a fresh page-impression
+        // id that ties this screen's ad events together). Call it before ads load.
+        Audienzz.shared.onScreenResumed(self)
+    }
+
 
     // MARK: - Layout helpers
 

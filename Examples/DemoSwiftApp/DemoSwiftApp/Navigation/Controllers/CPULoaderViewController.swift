@@ -124,6 +124,13 @@ class CPULoaderViewController: UIViewController {
         /// GAM banners auto-refresh frequently, increasing CPU usage.
         /// Set longer refresh intervals. Use static banners (no refresh) if possible.
     }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Track the screen visit for analytics (fires `pageImpression` and a fresh page-impression
+        // id that ties this screen's ad events together). Call it before ads load.
+        Audienzz.shared.onScreenResumed(self)
+    }
 }
 
 extension CPULoaderViewController: UITableViewDataSource, UITableViewDelegate {
