@@ -340,26 +340,38 @@ extension AUBannerView {
         slotReloadCount += 1
     }
 
+    /// Economics reported on the banner's viewability events. Resolved lazily (at event-fire time)
+    /// so `bidder_code` reflects the actual render winner — the Prebid line item only when its GAM
+    /// app event fired, else the ad server — matching how `adImpression` attributes the render.
+    @nonobjc private func viewabilityEconomics() -> AURenderEconomics {
+        var ec = lastRenderEconomics ?? AURenderEconomics()
+        ec.bidderCode = prebidLineItemWon
+            ? (prebidWinningBidder ?? AD_SERVER_BIDDER)
+            : AD_SERVER_BIDDER
+        return ec
+    }
+
     /// Starts (or restarts) viewability tracking for the rendered banner creative.
     func startViewabilityTracking() {
         guard let adUnitID = eventHandler?.adUnitID else { return }
         let subtype = makeAdSubType()
         let viewId = configId
-        let economics = lastRenderEconomics
         let tracker = AUViewabilityTracker(
             view: self,
-            onStart: {
+            onStart: { [weak self] in
+                guard let self else { return }
                 AUEventsManager.shared.viewabilityStart(
                     adUnitId: adUnitID, adType: adTypeString,
                     adSubtype: subtype, apiType: apiTypeString,
-                    adViewId: viewId, economics: economics
+                    adViewId: viewId, economics: self.viewabilityEconomics()
                 )
             },
-            onSuccess: {
+            onSuccess: { [weak self] in
+                guard let self else { return }
                 AUEventsManager.shared.viewabilitySuccess(
                     adUnitId: adUnitID, adType: adTypeString,
                     adSubtype: subtype, apiType: apiTypeString,
-                    adViewId: viewId, economics: economics
+                    adViewId: viewId, economics: self.viewabilityEconomics()
                 )
             }
         )
