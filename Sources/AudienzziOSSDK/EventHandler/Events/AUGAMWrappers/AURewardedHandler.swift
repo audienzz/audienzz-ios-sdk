@@ -75,12 +75,12 @@ class AURewardedHandler: NSObject,
         fullScreentDelegate?.adDidRecordClick?(ad)
     }
 
-    /// Full-screen ads expose no app event, so the render winner is best-effort: the Prebid auction
-    /// winner's economics if there was one, else an ad-server (direct) impression.
+    /// Full-screen ads expose no app event; carry the winning-bid economics and best-effort
+    /// bidder_code (the Prebid auction winner if there was one, else the ad server).
     private func renderEconomics() -> AURenderEconomics {
-        adView.lastRenderEconomics ?? AURenderEconomics(
-            bidderCode: AD_SERVER_BIDDER, winnerBidderCode: AD_SERVER_BIDDER,
-            winnerType: AUWinnerType.direct)
+        var ec = adView.lastRenderEconomics ?? AURenderEconomics()
+        ec.bidderCode = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
+        return ec
     }
 
     func ad(

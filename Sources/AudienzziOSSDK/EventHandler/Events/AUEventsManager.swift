@@ -35,6 +35,7 @@ final class AUEventsManager: AULogEventType {
 
     /// Regenerated on every `onScreenResumed`; tags all ad events with the current screen visit.
     private var currentPageImpressionId: String?
+    private var currentScreenName: String?
 
     private let mapper = AUEventNetworkMapper()
     private var networkManager: AUEventsNetworkManager<AUBatchResultModel>!
@@ -51,6 +52,7 @@ final class AUEventsManager: AULogEventType {
     /// id and fires a `pageImpression`; subsequent ad events are tagged with that id.
     func onScreenResumed(screenName: String) {
         currentPageImpressionId = AUUniqHelper.makeUniqID()
+        currentScreenName = screenName
         var event = AUEventDomain(type: .pageImpression)
         event.screenName = screenName
         event.consentString = AUTargeting.shared.gdprConsentString
@@ -78,6 +80,8 @@ final class AUEventsManager: AULogEventType {
         enriched.sessionStartTimestamp = sessionStartTimestamp
         enriched.deviceId = deviceId
         enriched.pageImpressionId = currentPageImpressionId
+        // Screen name of the current visit rides on every event (not just pageImpression).
+        enriched.screenName = enriched.screenName ?? currentScreenName
         // website_id — the remote-config publisher id (resolved async; nil for very early events).
         enriched.websiteId = AudienzzRemoteConfig.shared.publisherId
         enriched.sessionSeq = nextSequence()

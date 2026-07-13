@@ -15,6 +15,7 @@
 
 import Foundation
 import UIKit
+import WebKit
 
 /// Maps an `AUEventDomain` to the flat `AUEventNetwork` payload, filling the common envelope
 /// (locale, timezone, screen, app/sdk metadata, user agent). Mirrors Android's `EventNetworkMapper`.
@@ -31,15 +32,20 @@ struct AUEventNetworkMapper {
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
         ?? (Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String)
 
-    /// A UA string the backend can parse as iOS (constructed; iOS has no `http.agent` equivalent).
-    private static let userAgent: String = {
-        let osVersion = UIDevice.current.systemVersion.replacingOccurrences(of: ".", with: "_")
-        return "Mozilla/5.0 (iPhone; CPU iPhone OS \(osVersion) like Mac OS X) "
-            + "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 "
-            + "AudienzziOSSDK/\(AUSDKVersion)"
+    /// The real WebView user agent (the creative renders in a WKWebView). Resolved once on the main
+    /// thread via KVC; nil if unavailable. Mirrors Android's `WebSettings.getDefaultUserAgent`.
+    private static let userAgent: String? = {
+        let resolve: () -> String? = { WKWebView().value(forKey: "userAgent") as? String }
+        return Thread.isMainThread ? resolve() : DispatchQueue.main.sync(execute: resolve)
     }()
 
-    // Envelope device fields — known directly on mobile (more reliable than parsing the synthetic UA).
+    /// Locale as a BCP-47 language tag with hyphens (e.g. `uk-UA`), matching Android's `toLanguageTag()`.
+    private static let localeTag: String = {
+        if #available(iOS 16, *) { return Locale.current.identifier(.bcp47) }
+        return Locale.current.identifier.replacingOccurrences(of: "_", with: "-")
+    }()
+
+    // Envelope device fields — known directly on mobile.
     private static let osName = "iOS"
     private static let deviceCategory: String =
         UIDevice.current.userInterfaceIdiom == .pad ? "Tablet" : "Smartphone"
@@ -69,7 +75,7 @@ struct AUEventNetworkMapper {
             sessionStartTimestamp: event.sessionStartTimestamp,
             sessionSeq: event.sessionSeq ?? 0,
             eventTimestamp: Self.dateFormatter.string(from: event.timestamp),
-            locale: Locale.current.identifier,
+            locale: Self.localeTag,
             zoneOffsetSeconds: TimeZone.current.secondsFromGMT(),
             screenHeight: height,
             screenWidth: width,
@@ -105,7 +111,6 @@ struct AUEventNetworkMapper {
         if let v = e.isRefresh { a["refresh"] = String(v) }
         if let v = e.timeToRespond { a["time_to_respond"] = String(v) }
         if let v = e.bidderCode { a["bidder_code"] = v }
-        if let v = e.winnerBidderCode { a["winner_bidder_code"] = v }
         if let v = e.priceBucket { a["price_bucket"] = v }
         if let v = e.hbSize { a["hb_size"] = v }
         if let v = e.hbFormat { a["hb_format"] = v }
@@ -119,7 +124,6 @@ struct AUEventNetworkMapper {
         // Web-clickstream parity attributes.
         if let v = e.adViewId { a["ad_unit_code"] = v }        // Prebid configId
         if let v = e.websiteId { a["website_id"] = v }         // remote-config publisherId
-        if let v = e.winnerType { a["winner_type"] = v }
         if let v = e.mediaType { a["media_type"] = v }
         if let v = e.mediaTypes { a["media_types"] = v }
         if let v = e.size { a["size"] = v }

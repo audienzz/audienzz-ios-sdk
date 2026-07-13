@@ -145,12 +145,13 @@ class AUBannerHandler: NSObject,
     /// event fired; otherwise the ad server (Google) rendered — report a direct impression with no
     /// Prebid economics.
     private func renderEconomics() -> AURenderEconomics {
-        if auBannerView.prebidLineItemWon, let won = auBannerView.lastRenderEconomics {
-            return won
-        }
-        return AURenderEconomics(
-            bidderCode: AD_SERVER_BIDDER, winnerBidderCode: AD_SERVER_BIDDER,
-            winnerType: AUWinnerType.direct)
+        // Always carry the winning-bid economics that were in play; bidder_code reflects the actual
+        // render winner (the Prebid line item only when its GAM app event fired, else the ad server).
+        var ec = auBannerView.lastRenderEconomics ?? AURenderEconomics()
+        ec.bidderCode = auBannerView.prebidLineItemWon
+            ? (auBannerView.prebidWinningBidder ?? AD_SERVER_BIDDER)
+            : AD_SERVER_BIDDER
+        return ec
     }
 
     // MARK: - Click-Time

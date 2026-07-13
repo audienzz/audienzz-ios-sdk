@@ -47,21 +47,21 @@ enum AUWinnerType {
 /// Winning-bid economics captured when a bid resolves and reused across the render events
 /// (`bidResponse`/`bidWon`/`adImpression`/`adClick`/`viewability.*`). Mirrors the web attribute set.
 struct AURenderEconomics {
-    var bidderCode: String?
-    var winnerBidderCode: String?
-    var winnerType: String?
-    var priceBucket: String?
-    var hbSize: String?
-    var hbFormat: String?
-    var mediaType: String?
-    var size: String?
-    var cpm: Double?
-    var currency: String?
-    var creativeId: String?
-    var auctionId: String?
-    var adId: String?
-    var timeToRespond: Int64?
-    var slotReload: Int?
+    var bidderCode: String? = nil
+    var winnerBidderCode: String? = nil
+    var winnerType: String? = nil
+    var priceBucket: String? = nil
+    var hbSize: String? = nil
+    var hbFormat: String? = nil
+    var mediaType: String? = nil
+    var size: String? = nil
+    var cpm: Double? = nil
+    var currency: String? = nil
+    var creativeId: String? = nil
+    var auctionId: String? = nil
+    var adId: String? = nil
+    var timeToRespond: Int64? = nil
+    var slotReload: Int? = nil
 }
 
 extension AUEventDomain {
