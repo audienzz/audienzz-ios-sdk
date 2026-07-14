@@ -173,6 +173,8 @@ extension AUBannerView {
         // New auction → reset render-winner state until the bid result / GAM app event report back.
         prebidLineItemWon = false
         prebidWinningBidder = nil
+        // Mint the auction id up front so bidRequest and every later event of this auction share it.
+        currentAuctionId = AUUniqHelper.makeUniqID()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] bidInfo in
@@ -259,14 +261,15 @@ extension AUBannerView {
         AUEventsManager.shared.bidRequest(
             adUnitId: adUnitID,
             adViewId: configId,
-            sizes: AUUniqHelper.sizeMaker(adSize),
+            sizes: AUUniqHelper.sizesJSON(adSize),
             adType: adTypeString,
             adSubtype: makeAdSubType(),
             apiType: apiTypeString,
             isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
             autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
             isRefresh: !isInitialAutorefresh,
-            mediaTypes: Self.mediaTypesJSON(subtype: makeAdSubType())
+            mediaTypes: Self.mediaTypesJSON(subtype: makeAdSubType()),
+            auctionId: currentAuctionId
         )
     }
 
@@ -294,7 +297,7 @@ extension AUBannerView {
         let isAutorefresh = autorefreshM.autorefreshEventModel.isAutorefresh
         let autorefreshTime = Int(autorefreshM.autorefreshEventModel.autorefreshTime)
         let isRefresh = !isInitialAutorefresh
-        let sizes = AUUniqHelper.sizeMaker(adSize)
+        let sizes = AUUniqHelper.sizesJSON(adSize)
         let subtype = makeAdSubType()
         let codeName = AUResulrCodeConverter.convertResultCodeName(resultCode)
 
@@ -306,7 +309,9 @@ extension AUBannerView {
                 priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
                 mediaType: hbFormat, size: hbSize,
                 cpm: bidInfo.cpm, currency: bidInfo.currency, creativeId: bidInfo.creativeId,
-                auctionId: bidInfo.auctionId, adId: bidInfo.adId,
+                // Reuse the SDK-minted auction id (not Prebid's) so the whole funnel counts together.
+                // ad_id: prefer the bid's ad id, falling back to the web-style "0" stub when absent.
+                auctionId: currentAuctionId, adId: bidInfo.adId ?? "0",
                 timeToRespond: timeToRespond, slotReload: slotReloadCount)
         }
 
@@ -333,21 +338,30 @@ extension AUBannerView {
                 adUnitId: adUnitID, adViewId: configId, sizes: sizes,
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-                resultCode: codeName, mediaTypes: Self.mediaTypesJSON(subtype: subtype)
+                resultCode: codeName, mediaTypes: Self.mediaTypesJSON(subtype: subtype),
+                auctionId: currentAuctionId
             )
         }
         // Count this load; next auction/refresh reports the incremented value.
         slotReloadCount += 1
     }
 
-    /// Economics reported on the banner's viewability events. Resolved lazily (at event-fire time)
-    /// so `bidder_code` reflects the actual render winner — the Prebid line item only when its GAM
-    /// app event fired, else the ad server — matching how `adImpression` attributes the render.
-    @nonobjc private func viewabilityEconomics() -> AURenderEconomics {
+    /// Economics reported on the banner's render events (adImpression / adClick / viewability.*).
+    /// Resolved lazily (at event-fire time) so `bidder_code` reflects the actual render winner — the
+    /// Prebid line item only when its GAM app event fired, else the ad server. Shared by the handler
+    /// (impression/click) and the viewability closures so all render events agree.
+    @nonobjc func resolvedRenderEconomics() -> AURenderEconomics {
         var ec = lastRenderEconomics ?? AURenderEconomics()
-        ec.bidderCode = prebidLineItemWon
-            ? (prebidWinningBidder ?? AD_SERVER_BIDDER)
-            : AD_SERVER_BIDDER
+        let isPrebidRender = prebidLineItemWon
+        ec.bidderCode = isPrebidRender ? (prebidWinningBidder ?? AD_SERVER_BIDDER) : AD_SERVER_BIDDER
+        if !isPrebidRender {
+            // The ad server (Google/direct) rendered — the Prebid bid's creative id would make the
+            // enricher misclassify a direct-sold impression as RTB. Report the GAM creative id when
+            // available, else the "0" stub. (GMA exposes no served-creative id for banners → "0".)
+            ec.creativeId = "0"
+        }
+        // Always carry the SDK-minted auction id, even on a direct fill with no Prebid economics.
+        ec.auctionId = ec.auctionId ?? currentAuctionId
         return ec
     }
 
@@ -363,7 +377,7 @@ extension AUBannerView {
                 AUEventsManager.shared.viewabilityStart(
                     adUnitId: adUnitID, adType: adTypeString,
                     adSubtype: subtype, apiType: apiTypeString,
-                    adViewId: viewId, economics: self.viewabilityEconomics()
+                    adViewId: viewId, economics: self.resolvedRenderEconomics()
                 )
             },
             onSuccess: { [weak self] in
@@ -371,7 +385,7 @@ extension AUBannerView {
                 AUEventsManager.shared.viewabilitySuccess(
                     adUnitId: adUnitID, adType: adTypeString,
                     adSubtype: subtype, apiType: apiTypeString,
-                    adViewId: viewId, economics: self.viewabilityEconomics()
+                    adViewId: viewId, economics: self.resolvedRenderEconomics()
                 )
             }
         )

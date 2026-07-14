@@ -92,12 +92,12 @@ extension AUEventsManager {
     func bidRequest(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                     adType: String, adSubtype: String, apiType: String,
                     isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
-                    mediaTypes: String? = nil) {
+                    mediaTypes: String? = nil, auctionId: String? = nil) {
         var e = AUEventDomain(type: .bidRequest)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
-        e.mediaTypes = mediaTypes
+        e.mediaTypes = mediaTypes; e.auctionId = auctionId
         logEvent(e)
     }
 
@@ -132,12 +132,12 @@ extension AUEventsManager {
     func noBid(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                adType: String, adSubtype: String, apiType: String,
                isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool, resultCode: String?,
-               mediaTypes: String? = nil) {
+               mediaTypes: String? = nil, auctionId: String? = nil) {
         var e = AUEventDomain(type: .noBid)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
-        e.resultCode = resultCode; e.mediaTypes = mediaTypes
+        e.resultCode = resultCode; e.mediaTypes = mediaTypes; e.auctionId = auctionId
         logEvent(e)
     }
 

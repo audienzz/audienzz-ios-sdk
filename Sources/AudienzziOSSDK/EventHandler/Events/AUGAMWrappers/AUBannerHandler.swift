@@ -141,17 +141,11 @@ class AUBannerHandler: NSObject,
         bannerDelegate?.bannerViewDidRecordClick?(bannerView)
     }
 
-    /// Economics reported on render events. The Prebid line item won the GAM auction only if its app
-    /// event fired; otherwise the ad server (Google) rendered — report a direct impression with no
-    /// Prebid economics.
+    /// Economics reported on render events. Delegates to the view's shared resolver so impression,
+    /// click and viewability all attribute the same render winner (Prebid line item only when its
+    /// GAM app event fired, else the ad server) and carry the SDK-minted auction id.
     private func renderEconomics() -> AURenderEconomics {
-        // Always carry the winning-bid economics that were in play; bidder_code reflects the actual
-        // render winner (the Prebid line item only when its GAM app event fired, else the ad server).
-        var ec = auBannerView.lastRenderEconomics ?? AURenderEconomics()
-        ec.bidderCode = auBannerView.prebidLineItemWon
-            ? (auBannerView.prebidWinningBidder ?? AD_SERVER_BIDDER)
-            : AD_SERVER_BIDDER
-        return ec
+        auBannerView.resolvedRenderEconomics()
     }
 
     // MARK: - Click-Time

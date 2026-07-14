@@ -33,6 +33,9 @@ public class AUInterstitialView: AUAdView {
     internal var prebidWinningBidder: String?
     /// Winning-bid economics from the last auction, reused on adImpression/adClick/viewability.
     internal var lastRenderEconomics: AURenderEconomics?
+    /// SDK-generated auction id, minted at auction start and reused across every event of that
+    /// auction (bidRequest → bidResponse/bidWon/noBid → adImpression/adClick/viewability).
+    internal var currentAuctionId: String?
     /// Full-screen viewability driver (start on present, success after 1s, cancel on dismiss).
     internal var fullScreenViewabilityTimer: AUFullScreenViewabilityTimer?
 

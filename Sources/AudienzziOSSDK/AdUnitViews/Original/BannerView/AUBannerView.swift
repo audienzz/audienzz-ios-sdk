@@ -45,6 +45,10 @@ public class AUBannerView: AUAdView {
 
     /// Winning-bid economics from the last auction, reused on adImpression/adClick/viewability.
     internal var lastRenderEconomics: AURenderEconomics?
+    /// SDK-generated auction id, minted at auction start and reused across every event of that
+    /// auction (bidRequest → bidResponse/bidWon/noBid → adImpression/adClick/viewability). Prebid
+    /// only assigns its own id after the request, so we pre-generate one for full-funnel counting.
+    internal var currentAuctionId: String?
     /// Number of times this slot has (re)loaded — reported as `slot_reload`. First load = 0.
     internal var slotReloadCount: Int = 0
 

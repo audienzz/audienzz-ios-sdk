@@ -36,6 +36,8 @@ extension AUInterstitialView {
 
     internal override func fetchRequest(_ gamRequest: AdManagerRequest) {
         prebidWinningBidder = nil
+        // Mint the auction id up front so bidRequest and every later event of this auction share it.
+        currentAuctionId = AUUniqHelper.makeUniqID()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] bidInfo in
@@ -62,10 +64,11 @@ extension AUInterstitialView {
     private func makeRequestEvent() {
         guard let adUnitID = gadUnitID else { return }
         AUEventsManager.shared.bidRequest(
-            adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
+            adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
             adType: adTypeString, adSubtype: makeAdSubType(), apiType: apiTypeString,
             isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-            mediaTypes: AUBannerView.mediaTypesJSON(subtype: makeAdSubType())
+            mediaTypes: AUBannerView.mediaTypesJSON(subtype: makeAdSubType()),
+            auctionId: currentAuctionId
         )
     }
 
@@ -84,12 +87,12 @@ extension AUInterstitialView {
                 priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
                 mediaType: hbFormat, size: hbSize,
                 cpm: bidInfo.cpm, currency: bidInfo.currency, creativeId: bidInfo.creativeId,
-                auctionId: bidInfo.auctionId, adId: bidInfo.adId,
+                auctionId: currentAuctionId, adId: bidInfo.adId ?? "0",
                 timeToRespond: timeToRespond, slotReload: 0)
         }
 
         AUEventsManager.shared.bidResponse(
-            adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
+            adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
             adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
             isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
             resultCode: codeName, timeToRespond: timeToRespond, economics: economics
@@ -99,7 +102,7 @@ extension AUInterstitialView {
             self.prebidWinningBidder = economics.bidderCode
             self.lastRenderEconomics = economics
             AUEventsManager.shared.bidWon(
-                adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
+                adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
                 economics: economics
@@ -108,10 +111,11 @@ extension AUInterstitialView {
             self.prebidWinningBidder = nil
             self.lastRenderEconomics = nil
             AUEventsManager.shared.noBid(
-                adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizeMaker(adSize),
+                adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: false, autorefreshTime: 0, isRefresh: false, resultCode: codeName,
-                mediaTypes: AUBannerView.mediaTypesJSON(subtype: subtype)
+                mediaTypes: AUBannerView.mediaTypesJSON(subtype: subtype),
+                auctionId: currentAuctionId
             )
         }
     }

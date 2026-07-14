@@ -79,7 +79,14 @@ class AURewardedHandler: NSObject,
     /// bidder_code (the Prebid auction winner if there was one, else the ad server).
     private func renderEconomics() -> AURenderEconomics {
         var ec = adView.lastRenderEconomics ?? AURenderEconomics()
-        ec.bidderCode = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
+        let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
+        ec.bidderCode = bidder
+        if bidder == AD_SERVER_BIDDER {
+            // Ad server rendered — zero the creative id so a direct-sold impression isn't
+            // misclassified as RTB (GMA exposes no served-creative id → "0" stub).
+            ec.creativeId = "0"
+        }
+        ec.auctionId = ec.auctionId ?? adView.currentAuctionId
         return ec
     }
 
