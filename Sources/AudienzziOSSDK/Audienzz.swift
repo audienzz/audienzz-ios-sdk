@@ -285,7 +285,8 @@ public class Audienzz: NSObject {
             AULogEvent.logDebug("setAppVolume: \(volume) is out of [0.0, 1.0], clamped to \(clamped)")
         }
         MobileAds.shared.applicationVolume = clamped
-        AULogEvent.logDebug("GMA app volume updated to \(clamped)")
+        MobileAds.shared.isApplicationMuted = (clamped == 0)
+        AULogEvent.logDebug("GMA app volume updated to \(clamped), muted=\(clamped == 0)")
     }
 
     public var timeoutMillis: Int {
@@ -365,7 +366,8 @@ public class Audienzz: NSObject {
     private func applyGamAppVolume(_ volume: Float) {
         let clamped = min(max(volume, 0), 1)
         MobileAds.shared.applicationVolume = clamped
-        AULogEvent.logDebug("GMA app volume set to \(clamped)")
+        MobileAds.shared.isApplicationMuted = (clamped == 0)
+        AULogEvent.logDebug("GMA app volume set to \(clamped), muted=\(clamped == 0)")
     }
 
     private func handleInitializationResultStatus(
