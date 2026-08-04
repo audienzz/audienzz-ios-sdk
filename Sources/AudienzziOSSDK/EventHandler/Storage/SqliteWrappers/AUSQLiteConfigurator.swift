@@ -29,10 +29,10 @@ final class AUSQLiteConfigurator: AULocalStorageConfigurator {
         if FileManager.default.fileExists(atPath: newDBPath.path) {
             return
         } else {
-            AUSQLiteDataBaseCreator().createLocalStorage()
+            try AUSQLiteDataBaseCreator().createLocalStorage()
         }
     }
-    
+
     func configureStorageTest() throws {
         let destination = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         let newDBPath = destination.appendingPathComponent(SQLiteConstants.dbPathComponentTest)
@@ -40,7 +40,7 @@ final class AUSQLiteConfigurator: AULocalStorageConfigurator {
         if FileManager.default.fileExists(atPath: newDBPath.path) {
             return
         } else {
-            AUSQLiteDataBaseCreator().createLocalStorageTest()
+            try AUSQLiteDataBaseCreator().createLocalStorageTest()
         }
     }
 }

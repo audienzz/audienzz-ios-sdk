@@ -20,7 +20,7 @@ public class AudienzzRemoteConfig: NSObject {
 
     // MARK: - Properties
 
-    private var publisherId: String?
+    private(set) var publisherId: String?
     private var remoteUrl: URL?
 
     private(set) var publisherConfig: RemotePublisherConfiguration?

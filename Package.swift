@@ -26,11 +26,11 @@ let package = Package(
                 .product(name: "SQLite", package: "SQLite.swift"),
                 .product(name: "GoogleMobileAds", package: "swift-package-manager-google-mobile-ads"),
                 .product(name: "GoogleInteractiveMediaAds", package: "swift-package-manager-google-interactive-media-ads-ios")
-            ],
+            ]
         ),
         .testTarget(
             name: "AudienzziOSSDKTests",
-            dependencies: ["AudienzziOSSDK"],
+            dependencies: ["AudienzziOSSDK"]
         )
     ]
 )

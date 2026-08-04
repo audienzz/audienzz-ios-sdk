@@ -127,31 +127,35 @@ public class Audienzz: NSObject {
         }
 
         setupRemotePrebid(
-            publisherConfig.ortb?.schain?.sellerId ?? "1",
+            AudienzzRemoteConfig.shared.publisherId ?? "1",
             prebidServerAccountId: publisherConfig.prebidServer.accountId,
             prebidStatusUrl: publisherConfig.prebidServer.statusUrl,
             appVolume: publisherConfig.gamConfig?.appVolume ?? 0
         )
 
         if let schain = publisherConfig.ortb?.schain {
-            let schainJson = """
-            {
-                "source": {
-                    "ext": {
-                        "schain": {
+            // Build via JSONSerialization instead of string interpolation so a
+            // quote/backslash in the backend-provided asi/sid can't produce
+            // malformed JSON (which silently drops the schain).
+            let schainDict: [String: Any] = [
+                "source": [
+                    "ext": [
+                        "schain": [
                             "complete": 1,
-                            "nodes": [{
-                                "asi": "\(schain.advertisingSystemDomain)",
-                                "sid": "\(schain.sellerId)",
+                            "nodes": [[
+                                "asi": schain.advertisingSystemDomain,
+                                "sid": schain.sellerId,
                                 "hp": 1
-                            }],
+                            ]],
                             "ver": "1.0"
-                        }
-                    }
-                }
+                        ]
+                    ]
+                ]
+            ]
+            if let data = try? JSONSerialization.data(withJSONObject: schainDict),
+               let schainJson = String(data: data, encoding: .utf8) {
+                setSchainObject(schain: schainJson)
             }
-            """
-            setSchainObject(schain: schainJson)
         }
 
         if let ortb = publisherConfig.ortb {
@@ -252,6 +256,9 @@ public class Audienzz: NSObject {
                         AULogEvent.logDebug(
                             "Initialization Error: \(error.localizedDescription)"
                         )
+                        // Must still resolve the bridge promise, otherwise the
+                        // RN/JS caller hangs forever on init failure.
+                        completion?()
                         return
                     }
 
@@ -290,15 +297,24 @@ public class Audienzz: NSObject {
     }
 
     public var timeoutMillis: Int {
+        // Assigning Prebid's `timeoutMillis` also updates `timeoutMillisDynamic`
+        // (via its didSet), so the auction picks up the value AND the getter
+        // reflects what was set. Writing only Dynamic left the getter stale.
         get { Prebid.shared.timeoutMillis }
-        set {
-            Prebid.shared.timeoutMillisDynamic = NSNumber(value: newValue)
-        }
+        set { Prebid.shared.timeoutMillis = newValue }
     }
 
-    public var timeoutMillisDynamic: NSNumber?
+    public var timeoutMillisDynamic: NSNumber? {
+        get { Prebid.shared.timeoutMillisDynamic }
+        set { Prebid.shared.timeoutMillisDynamic = newValue }
+    }
 
-    public var storedAuctionResponse: String?
+    public var storedAuctionResponse: String? {
+        // Previously a dead stored property — setting it never reached Prebid,
+        // so the stored-auction-response feature silently did nothing.
+        get { Prebid.shared.storedAuctionResponse }
+        set { Prebid.shared.storedAuctionResponse = newValue }
+    }
 
     // MARK: - Stored Bid Response
 

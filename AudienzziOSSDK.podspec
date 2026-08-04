@@ -9,7 +9,7 @@ Pod::Spec.new do |spec|
                       :tag => '0.2.6' }
 
     spec.swift_version         = '5.0'
-    spec.ios.deployment_target = '13.0'
+    spec.ios.deployment_target = '15.0'
 
     spec.static_framework      = true
     spec.requires_arc          = true
@@ -17,8 +17,8 @@ Pod::Spec.new do |spec|
     spec.source_files          = 'Sources/**/*.swift'
     spec.exclude_files         = 'Tests', 'Examples'
 
-    spec.dependency 'PrebidMobile', '~> 3.0'
-    spec.dependency 'PrebidMobileGAMEventHandlers', '~> 3.0'
+    spec.dependency 'PrebidMobile', '~> 3.3'
+    spec.dependency 'PrebidMobileGAMEventHandlers', '~> 3.3'
     spec.dependency 'SQLite.swift', '~> 0.14'
     spec.dependency 'Google-Mobile-Ads-SDK', '~> 13.0'
     spec.dependency 'GoogleAds-IMA-iOS-SDK', '~> 3.26'
