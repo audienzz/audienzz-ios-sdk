@@ -74,6 +74,16 @@ public class AUAdView: VisibleView {
     internal dynamic func fetchRequest(_ gamRequest: GAMRequest) {}
     internal var isInitialAutorefresh: Bool = true
 
+    /// M8: re-run the lazy-load trigger after `createAd` has wired up the request.
+    /// Visibility is edge-triggered, so if the view became visible *before*
+    /// createAd ran (e.g. async remote-config setup), `detectVisible` already
+    /// fired and bailed on the nil request — leaving the slot permanently dead.
+    /// Calling it again here loads it if it's currently on screen.
+    internal func loadIfAlreadyVisible() {
+        guard isLazyLoad, !isLazyLoaded, isViewCurrentlyVisible else { return }
+        detectVisible()
+    }
+
     // prefetchMarginPoints is declared and implemented in VisibleView.
     // See VisibleView.prefetchMarginPoints for the full KDoc.
     // Defaults to 200 pt. Set to 0 for exact-visibility loading.

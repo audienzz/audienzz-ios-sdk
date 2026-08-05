@@ -99,6 +99,13 @@ public class AURewardedView: AUAdView {
         self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
+        } else {
+            #if DEBUG
+            // M7: see AUInterstitialView — a fullscreen rewarded placeholder has a
+            // zero frame, so lazy load only fires if the view reaches the viewport.
+            AULogEvent.logDebug("[AURewardedView] lazy load enabled — the ad fetches only once this view reaches the viewport. For a standalone rewarded ad, use isLazyLoad = false.")
+            #endif
+            loadIfAlreadyVisible()
         }
     }
     

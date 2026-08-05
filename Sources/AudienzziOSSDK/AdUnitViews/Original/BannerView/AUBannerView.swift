@@ -152,6 +152,8 @@ public class AUBannerView: AUAdView {
 
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
+        } else {
+            loadIfAlreadyVisible()
         }
     }
 }

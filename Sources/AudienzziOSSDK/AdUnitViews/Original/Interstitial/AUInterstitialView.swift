@@ -121,9 +121,18 @@ public class AUInterstitialView: AUAdView {
         
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
+        } else {
+            #if DEBUG
+            // M7: a fullscreen interstitial placeholder has a zero frame, so the
+            // visibility-based lazy trigger can only fire if the view is actually
+            // added to the hierarchy and scrolled on screen. If it isn't, set
+            // isLazyLoad = false so createAd fetches immediately.
+            AULogEvent.logDebug("[AUInterstitialView] lazy load enabled — the ad fetches only once this view reaches the viewport. For a standalone interstitial, use isLazyLoad = false.")
+            #endif
+            loadIfAlreadyVisible()
         }
     }
-    
+
     public func connectHandler(_ eventHandler: AUInterstitialEventHandler) {
         self.eventHandler = AUInterstitialHandler(handler: eventHandler, adView: self)
         makeCreationEvent()
