@@ -79,7 +79,7 @@ public class AURewardedView: AUAdView {
     public func createAd(with gamRequest: AdManagerRequest, adUnitID: String) {
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
-        adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters()
+        adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters(placement: .Interstitial, plcmnt: .Interstitial)
         let ppid = PPIDManager.shared.getPPID()
         
         if let ppid = ppid {

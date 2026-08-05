@@ -111,12 +111,20 @@ public class AUAdView: VisibleView {
         self.frame = CGRect(x: origin.x, y: origin.y, width: 0, height: 0)
     }
     
-    internal func defaultVideoParameters() -> VideoParameters {
+    /// Builds the fallback video parameters used when the publisher doesn't
+    /// supply their own. `placement`/`plcmnt` must reflect the ad format so
+    /// DSPs classify (and price) the inventory correctly — a fixed `.InBanner`
+    /// default misclassified all interstitial/rewarded video.
+    internal func defaultVideoParameters(
+        placement: Signals.Placement = .InBanner,
+        plcmnt: Signals.Plcmnt? = nil
+    ) -> VideoParameters {
         let videoParameters = VideoParameters(mimes: ["video/mp4"])
         videoParameters.api = [Signals.Api.MRAID_1, Signals.Api.MRAID_2, Signals.Api.MRAID_3, Signals.Api.OMID_1]
         videoParameters.protocols = [Signals.Protocols.VAST_2_0]
         videoParameters.playbackMethod = [Signals.PlaybackMethod.AutoPlaySoundOff]
-        videoParameters.placement = Signals.Placement.InBanner
+        videoParameters.placement = placement
+        videoParameters.plcmnt = plcmnt
         return videoParameters
     }
 }

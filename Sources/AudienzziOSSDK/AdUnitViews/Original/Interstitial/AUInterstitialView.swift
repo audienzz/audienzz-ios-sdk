@@ -96,7 +96,7 @@ public class AUInterstitialView: AUAdView {
     public func createAd(with gamRequest: AdManagerRequest, adUnitID: String) {
         adUnit.bannerParameters = bannerParameters.makeBannerParameters()
         
-        adUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters()
+        adUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters(placement: .Interstitial, plcmnt: .Interstitial)
         
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
