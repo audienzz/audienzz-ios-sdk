@@ -80,8 +80,16 @@ public class AURewardedRenderingView: AUAdView {
         }
     }
     
+    /// Whether the rewarded ad has finished loading and can be shown.
+    @objc public var isReady: Bool { rewardedAdUnit?.isReady ?? false }
+
     /// It is expected from the user to call this method on main thread
     public func showAd(_ controller: UIViewController) {
+        // M12: showing before the ad is ready silently drops a won impression.
+        guard rewardedAdUnit.isReady else {
+            AULogEvent.logDebug("[AURewardedRenderingView] showAd called but ad is not ready; ignoring")
+            return
+        }
         rewardedAdUnit.show(from: controller)
     }
     
