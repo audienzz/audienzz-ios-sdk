@@ -176,6 +176,18 @@ extension AUBannerView {
             guard self.adUnit != nil else { return }
             self.lastRefreshTime = Date()
 
+            // H12: Prebid starts its auto-refresh dispatcher synchronously on the
+            // first fetchDemand. When that first fetch is a prefetch-zone load
+            // (fired up to prefetchMarginPoints before the ad is on screen), the
+            // dispatcher would otherwise keep auto-refreshing at 0% viewability.
+            // Under smart refresh, stop it whenever the ad isn't actually visible;
+            // onBecameVisible resumes it (stale-aware) once the ad is ≥20% on screen.
+            // This runs after onBecameVisible has resolved the already-visible case,
+            // so a banner that's on screen at load keeps refreshing normally.
+            if self.smartRefresh, !self.isViewCurrentlyVisible {
+                self.adUnitConfiguration?.stopAutoRefresh()
+            }
+
             /*
              use for debug more deep events
             
