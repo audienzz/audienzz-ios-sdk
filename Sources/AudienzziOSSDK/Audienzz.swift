@@ -117,11 +117,32 @@ public class Audienzz: NSObject {
         // The value will be overridden below once the remote config is fetched.
         applyGamAppVolume(0)
 
-        try await AudienzzRemoteConfig.shared.fetchPublisherConfig()
+        do {
+            try await AudienzzRemoteConfig.shared.fetchPublisherConfig()
+        } catch {
+            // Don't abort init on fetch failure — fall through to the fallback
+            // below so a first-launch user on a flaky network can still monetize.
+            AULogEvent.logDebug(
+                "Audienzz Remote Config fetch failed: \(error). Falling back to default Prebid host/account."
+            )
+        }
 
         guard let publisherConfig = AudienzzRemoteConfig.shared.publisherConfig else {
+            // Cold start with no cache and no network: initialize Prebid with the
+            // hardcoded default host/account instead of leaving the SDK dead.
             AULogEvent.logDebug(
-                "Initialization Failed because PrebidUrl is empty"
+                "Audienzz Remote Config unavailable — initializing with default Prebid host/account"
+            )
+            setupRemotePrebid(
+                AudienzzRemoteConfig.shared.publisherId ?? "1",
+                prebidServerAccountId: prebidServerAccountId,
+                prebidStatusUrl: customStatusEndpoint,
+                appVolume: 0
+            )
+            initializePrebid(
+                serverURL: customPrebidServerURL,
+                gadMobileAdsVersion: gadMobileAdsVersion,
+                enablePPID: enablePPID
             )
             return
         }
@@ -169,9 +190,23 @@ public class Audienzz: NSObject {
             AUTargeting.shared.itunesID = iosOrtb.bundleId
         }
 
+        initializePrebid(
+            serverURL: publisherConfig.prebidServer.url,
+            gadMobileAdsVersion: gadMobileAdsVersion,
+            enablePPID: enablePPID
+        )
+    }
+
+    /// Shared Prebid initialization used by the remote-config flow (both the
+    /// happy path and the default-host fallback).
+    private func initializePrebid(
+        serverURL: String,
+        gadMobileAdsVersion: String?,
+        enablePPID: Bool
+    ) {
         do {
             try Prebid.initializeSDK(
-                serverURL: publisherConfig.prebidServer.url,
+                serverURL: serverURL,
                 gadMobileAdsVersion: gadMobileAdsVersion
             ) { status, error in
                 if let error = error {
