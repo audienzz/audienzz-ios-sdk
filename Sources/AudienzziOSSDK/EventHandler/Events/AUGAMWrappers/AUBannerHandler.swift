@@ -34,7 +34,11 @@ class AUBannerHandler: NSObject,
     AULogEventType
 {
 
-    let auBannerView: AUBannerView
+    // weak: AUBannerView strongly holds this handler via `eventHandler`. A strong
+    // back-reference here formed a retain cycle that leaked the view, its GAM view
+    // and WKWebView, and the Prebid ad unit — and the leaked dispatcher kept
+    // auctioning an invisible, detached ad indefinitely.
+    weak var auBannerView: AUBannerView?
     let gamView: AdManagerBannerView!
     weak var bannerDelegate: BannerViewDelegate?
     weak var eventDelegate: AppEventDelegate?
@@ -93,7 +97,7 @@ class AUBannerHandler: NSObject,
 
             if actualSize != .zero {
                 gamBannerView.resize(adSizeFor(cgSize: actualSize))
-                auBannerView.onAdSizeChanged?(actualSize)
+                auBannerView?.onAdSizeChanged?(actualSize)
             }
         }
         pendingGAMSize = nil
@@ -108,7 +112,7 @@ class AUBannerHandler: NSObject,
         LogEvent(error.localizedDescription)
 
         let event = AUFailedLoadEvent(
-            adViewId: auBannerView.configId,
+            adViewId: auBannerView?.configId ?? "",
             adUnitID: adUnitID ?? "",
             errorMessage: error.localizedDescription,
             errorCode: error.errorCode ?? -1
@@ -140,7 +144,7 @@ class AUBannerHandler: NSObject,
         LogEvent("bannerViewDidRecordClick")
 
         let event = AUAdClickEvent(
-            adViewId: auBannerView.configId,
+            adViewId: auBannerView?.configId ?? "",
             adUnitID: adUnitID ?? ""
         )
 

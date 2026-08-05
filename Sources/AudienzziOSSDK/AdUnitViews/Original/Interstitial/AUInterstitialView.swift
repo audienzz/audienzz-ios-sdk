@@ -77,7 +77,17 @@ public class AUInterstitialView: AUAdView {
         adUnit = nil
         self.eventHandler = nil
     }
-    
+
+    /// Explicitly tears down the ad: stops auto-refresh and releases the Prebid
+    /// ad unit and event handler. Prefer this over relying on
+    /// `removeFromSuperview` as a destructor. Safe to call more than once.
+    public func destroy() {
+        adUnit?.stopAutoRefresh()
+        adUnit = nil
+        self.gamRequest = nil
+        self.eventHandler = nil
+    }
+
     deinit {
         self.eventHandler = nil
     }

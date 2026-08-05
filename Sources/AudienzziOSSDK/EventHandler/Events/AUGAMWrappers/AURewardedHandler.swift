@@ -32,7 +32,9 @@ class AURewardedHandler: NSObject,
 {
 
     let handler: AURewardedEventHandler
-    let adView: AURewardedView
+    // weak: AURewardedView strongly holds this handler via `eventHandler`; a
+    // strong back-reference leaked the view and the full GAM ad object per screen.
+    weak var adView: AURewardedView?
     weak var fullScreentDelegate: FullScreenContentDelegate?
 
     init(handler: AURewardedEventHandler, adView: AURewardedView) {
@@ -64,7 +66,7 @@ class AURewardedHandler: NSObject,
         LogEvent("adDidRecordClick")
 
         let event = AUAdClickEvent(
-            adViewId: adView.configId,
+            adViewId: adView?.configId ?? "",
             adUnitID: adUnitID
         )
 
@@ -85,7 +87,7 @@ class AURewardedHandler: NSObject,
         LogEvent("didFailToPresentFullScreenContentWithError")
 
         let event = AUFailedLoadEvent(
-            adViewId: adView.configId,
+            adViewId: adView?.configId ?? "",
             adUnitID: adUnitID,
             errorMessage: error.localizedDescription,
             errorCode: error.errorCode ?? -1
@@ -119,7 +121,7 @@ class AURewardedHandler: NSObject,
         LogEvent("adDidDismissFullScreenContent")
 
         let event = AUCloseAdEvent(
-            adViewId: adView.configId,
+            adViewId: adView?.configId ?? "",
             adUnitID: adUnitID
         )
         guard let payload = event.convertToJSONString() else {
