@@ -98,9 +98,16 @@ public class AURemoteConfigBannerView: VisibleView {
             isLazyLoad: true
         )
 
-        bannerView.adUnit.setAutoRefreshMillis(
-            time: Double((remoteConfig.config.refreshTimeSeconds ?? Self.defaultRefreshSeconds) * 1000)
-        )
+        // M4: route refresh through adUnitConfiguration (not adUnit directly) so
+        // autorefreshEventModel is updated — otherwise the stale-aware smart
+        // refresh logic reads autorefreshTime == 0 and never engages, and
+        // analytics report isAutorefresh = false.
+        // M22: Prebid enforces a 30s floor (values below are silently rejected).
+        // Clamp positive values here so Prebid and the SDK's stale-aware refresh
+        // use the same effective cadence.
+        let configuredRefreshMs = Double((remoteConfig.config.refreshTimeSeconds ?? Self.defaultRefreshSeconds) * 1000)
+        let refreshMs = configuredRefreshMs > 0 ? max(configuredRefreshMs, 30_000) : configuredRefreshMs
+        bannerView.adUnitConfiguration.setAutoRefreshMillis(time: refreshMs)
         bannerView.smartRefresh = true
         bannerView.prefetchMarginPoints = CGFloat(remoteConfig.config.prefetchDistancePt ?? Self.defaultPrefetchDistancePt)
 
