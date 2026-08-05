@@ -11,6 +11,7 @@ import GoogleMobileAds
 
 public enum AURemoteConfigInterstitialError: Error {
     case noRemoteConfig
+    case deallocated
 }
 /**
  AURemoteConfigInterstitial.
@@ -54,20 +55,26 @@ public class AURemoteConfigInterstitial: NSObject {
         }
 
         interstitialAdUnit?.fetchDemand(adObject: gamRequest) { [weak self] result in
-            guard let self = self else { return }
+            guard self != nil else {
+                completion(.failure(AURemoteConfigInterstitialError.deallocated))
+                return
+            }
 
             AdManagerInterstitialAd.load(
                 with: remoteConfig.gamConfig.adUnitPath,
                 request: gamRequest
             ) { [weak self] ad, error in
-                guard let self = self else { return }
-                
+                guard let self = self else {
+                    completion(.failure(AURemoteConfigInterstitialError.deallocated))
+                    return
+                }
+
                 if let error = error {
                     AULogEvent.logDebug("[AURemoteConfigInterstitial] Failed to load interstitial: \(error)")
                     completion(.failure(error))
                     return
                 }
-                
+
                 self.gamInterstitialAd = ad
                 completion(.success(()))
             }
@@ -95,5 +102,9 @@ public class AURemoteConfigInterstitial: NSObject {
 
         ad.fullScreenContentDelegate = delegate
         ad.present(from: rootViewController)
+        // GAM interstitials are single-use: once presented the ad can't be shown
+        // again. Clear it so isReady reflects reality and a second show() doesn't
+        // silently no-op on a spent ad (publisher must reload for the next show).
+        gamInterstitialAd = nil
     }
 }
