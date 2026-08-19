@@ -19,30 +19,22 @@ import Foundation
 // create database structure
 // used for debug purposes and for modifing db structure
 protocol AULocalStorageCreator {
-    func createLocalStorage()
+    func createLocalStorage() throws
 }
 
 final class AUSQLiteDataBaseCreator: AULocalStorageCreator {
-    func createLocalStorage() {
-        do {
-            let path = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            let db = try Connection("\(path)/\(SQLiteConstants.dbPathComponent)")
-            
-            try createEventsTable(on: db)
-        } catch let error {
-            fatalError(error.localizedDescription)
-        }
+    func createLocalStorage() throws {
+        let path = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let db = try Connection("\(path)/\(SQLiteConstants.dbPathComponent)")
+
+        try createEventsTable(on: db)
     }
-    
-    func createLocalStorageTest() {
-        do {
-            let path = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            let db = try Connection("\(path)/\(SQLiteConstants.dbPathComponentTest)")
-            
-            try createEventsTable(on: db)
-        } catch let error {
-            fatalError(error.localizedDescription)
-        }
+
+    func createLocalStorageTest() throws {
+        let path = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let db = try Connection("\(path)/\(SQLiteConstants.dbPathComponentTest)")
+
+        try createEventsTable(on: db)
     }
 }
 

@@ -60,7 +60,17 @@ public class AURewardedView: AUAdView {
         adUnit = nil
         self.eventHandler = nil
     }
-    
+
+    /// Explicitly tears down the ad: stops auto-refresh and releases the Prebid
+    /// ad unit and event handler. Prefer this over relying on
+    /// `removeFromSuperview` as a destructor. Safe to call more than once.
+    public func destroy() {
+        adUnit?.stopAutoRefresh()
+        adUnit = nil
+        self.gamRequest = nil
+        self.eventHandler = nil
+    }
+
     deinit {
         self.eventHandler = nil
     }
@@ -79,7 +89,7 @@ public class AURewardedView: AUAdView {
     public func createAd(with gamRequest: AdManagerRequest, adUnitID: String) {
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
-        adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters()
+        adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters(placement: .Interstitial, plcmnt: .Interstitial)
         let ppid = PPIDManager.shared.getPPID()
         
         if let ppid = ppid {
@@ -89,6 +99,13 @@ public class AURewardedView: AUAdView {
         self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
+        } else {
+            #if DEBUG
+            // M7: see AUInterstitialView — a fullscreen rewarded placeholder has a
+            // zero frame, so lazy load only fires if the view reaches the viewport.
+            AULogEvent.logDebug("[AURewardedView] lazy load enabled — the ad fetches only once this view reaches the viewport. For a standalone rewarded ad, use isLazyLoad = false.")
+            #endif
+            loadIfAlreadyVisible()
         }
     }
     

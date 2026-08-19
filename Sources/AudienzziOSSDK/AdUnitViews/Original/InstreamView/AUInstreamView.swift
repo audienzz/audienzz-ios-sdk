@@ -67,7 +67,7 @@ public class AUInstreamView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd(size: CGSize) {
-        adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters()
+        adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters(placement: .InStream, plcmnt: .Instream)
         
         if !self.isLazyLoad {
             fetchRequest()

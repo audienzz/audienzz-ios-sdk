@@ -32,7 +32,9 @@ class AUInterstitialHandler: NSObject,
 {
 
     let handler: AUInterstitialEventHandler
-    let adView: AUInterstitialView
+    // weak: AUInterstitialView strongly holds this handler via `eventHandler`; a
+    // strong back-reference leaked the view and the full GAM ad object per screen.
+    weak var adView: AUInterstitialView?
     weak var fullScreentDelegate: FullScreenContentDelegate?
 
     init(handler: AUInterstitialEventHandler, adView: AUInterstitialView) {
@@ -64,7 +66,7 @@ class AUInterstitialHandler: NSObject,
         LogEvent("adDidRecordClick")
 
         let event = AUAdClickEvent(
-            adViewId: adView.configId,
+            adViewId: adView?.configId ?? "",
             adUnitID: adUnitID
         )
 
@@ -85,7 +87,7 @@ class AUInterstitialHandler: NSObject,
         LogEvent("didFailToPresentFullScreenContentWithError")
 
         let event = AUFailedLoadEvent(
-            adViewId: adView.configId,
+            adViewId: adView?.configId ?? "",
             adUnitID: adUnitID,
             errorMessage: error.localizedDescription,
             errorCode: error.errorCode ?? -1
@@ -121,7 +123,7 @@ class AUInterstitialHandler: NSObject,
         LogEvent("adDidDismissFullScreenContent")
 
         let event = AUCloseAdEvent(
-            adViewId: adView.configId,
+            adViewId: adView?.configId ?? "",
             adUnitID: adUnitID
         )
         guard let payload = event.convertToJSONString() else {

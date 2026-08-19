@@ -333,6 +333,6 @@ public final class AUIMAUtils: NSObject {
     private override init() {}
 
     @objc public func generateInstreamUriForGAM(adUnitID: String, adSlotSizes: [IMAAdSlotSize], customKeywords: [String:String]?) throws -> String {
-        try IMAUtils.shared.generateInstreamUriForGAM(adUnitID: adUnitID, adSlotSizes: adSlotSizes, customKeywords: customKeywords!)
+        try IMAUtils.shared.generateInstreamUriForGAM(adUnitID: adUnitID, adSlotSizes: adSlotSizes, customKeywords: customKeywords ?? [:])
     }
 }

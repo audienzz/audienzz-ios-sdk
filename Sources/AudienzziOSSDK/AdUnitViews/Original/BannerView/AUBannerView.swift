@@ -72,6 +72,17 @@ public class AUBannerView: AUAdView {
         self.gamRequest = nil
         self.eventHandler = nil
     }
+
+    /// Explicitly tears down the ad: stops auto-refresh and releases the Prebid
+    /// ad unit, GAM request, and event handler. Prefer this over relying on
+    /// `removeFromSuperview` as a destructor — call it when you're done with the
+    /// ad (e.g. the owning controller's `deinit`). Safe to call more than once.
+    public func destroy() {
+        adUnit?.stopAutoRefresh()
+        self.adUnit = nil
+        self.gamRequest = nil
+        self.eventHandler = nil
+    }
     
     public func addAdditionalSize(sizes: [CGSize]) {
         adUnit.addAdditionalSize(sizes: sizes)
@@ -141,6 +152,8 @@ public class AUBannerView: AUAdView {
 
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
+        } else {
+            loadIfAlreadyVisible()
         }
     }
 }

@@ -244,10 +244,18 @@ public class AUTargeting: NSObject {
     // MARK: - Global User Data (user.ext.data)
 
     public func addUserData(key: String, value: String) {
+        // userExt is nil until first set; optional-chaining alone silently
+        // dropped the write. Initialize it so the value actually lands.
+        if Targeting.shared.userExt == nil {
+            Targeting.shared.userExt = [:]
+        }
         Targeting.shared.userExt?["\(key)"] = value
     }
 
     public func updateUserData(key: String, value: Set<String>) {
+        if Targeting.shared.userExt == nil {
+            Targeting.shared.userExt = [:]
+        }
         Targeting.shared.userExt?["\(key)"] = value
     }
 
@@ -324,31 +332,31 @@ public class AUTargeting: NSObject {
     }
 
     public func setGlobalOrtbConfig(ortbConfig: String) {
-        let customOrtb = ArbitraryGlobalORTBHelper.init(ortb: ortbConfig)
-            .getValidatedORTBDict()
-
-        let schainOrtb: [String: Any]?
-
-        if let schainConfig = Audienzz.shared.audienzzSchainObjectConfig {
-            schainOrtb = ArbitraryGlobalORTBHelper.init(ortb: schainConfig)
-                .getValidatedORTBDict()
-        } else {
-            schainOrtb = nil
-        }
-
-        guard let customOrtb = customOrtb else {
+        guard let customOrtb = ArbitraryGlobalORTBHelper.init(ortb: ortbConfig)
+            .getValidatedORTBDict() else {
             AULogEvent.logDebug(
                 "Provided ortb config couldn't be parsed successfully"
             )
             return
         }
 
-        var combinedOrtb: [String: Any]
-        if let schainOrtb = schainOrtb {
-            combinedOrtb = schainOrtb.deepMerging(with: customOrtb)
-        } else {
-            combinedOrtb = customOrtb
+        // Start from the current global ORTB config so previously-set publisher
+        // data (contextual app.content.data, user.ext.data, etc.) is preserved
+        // and merged into — not replaced — by this fragment.
+        var combinedOrtb: [String: Any] = [:]
+        if let existing = Targeting.shared.getGlobalORTBConfig(),
+           let existingOrtb = ArbitraryGlobalORTBHelper.init(ortb: existing)
+            .getValidatedORTBDict() {
+            combinedOrtb = existingOrtb
         }
+
+        if let schainConfig = Audienzz.shared.audienzzSchainObjectConfig,
+           let schainOrtb = ArbitraryGlobalORTBHelper.init(ortb: schainConfig)
+            .getValidatedORTBDict() {
+            combinedOrtb = combinedOrtb.deepMerging(with: schainOrtb)
+        }
+
+        combinedOrtb = combinedOrtb.deepMerging(with: customOrtb)
 
         // Always embed Audienzz SDK metadata in app.ext.audienzz so every
         // Prebid request carries the SDK identifier and version.

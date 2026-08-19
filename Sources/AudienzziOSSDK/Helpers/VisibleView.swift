@@ -53,6 +53,11 @@ public class VisibleView: UIView {
     private var contentOffsetObservations = [NSKeyValueObservation]()
     private var isCurrentlyVisible: Bool = false
 
+    /// Whether the view currently meets the visibility threshold (≥20% on screen).
+    /// Exposed so subclasses can tell a prefetch-zone (not-yet-visible) load apart
+    /// from a genuinely visible one.
+    internal var isViewCurrentlyVisible: Bool { isCurrentlyVisible }
+
     // MARK: - Prefetch margin
 
     /// Distance in points before the view enters the viewport that triggers

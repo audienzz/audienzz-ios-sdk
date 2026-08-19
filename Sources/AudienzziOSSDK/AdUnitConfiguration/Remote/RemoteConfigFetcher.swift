@@ -27,11 +27,24 @@ final class RemoteConfigFetcher {
     }
 
     func fetchAdUnitConfigs(remoteUrl: URL, publisherId: String) async throws -> [RemoteAdConfiguration] {
-        try await fetch(
+        let data = try await fetchData(
             remoteUrl: remoteUrl,
-            pathComponents: ["publishers", publisherId, "ad-configs"],
-            as: [RemoteAdConfiguration].self
+            pathComponents: ["publishers", publisherId, "ad-configs"]
         )
+
+        do {
+            // Lossy decode: a single malformed ad-config entry must not discard
+            // every other (valid) ad unit's config. Skip the bad ones instead.
+            let items = try JSONDecoder().decode([FailableDecodable<RemoteAdConfiguration>].self, from: data)
+            let configs = items.compactMap { $0.value }
+            let skipped = items.count - configs.count
+            if skipped > 0 {
+                AULogEvent.logDebug("Remote Config: skipped \(skipped) malformed ad-config ent\(skipped == 1 ? "ry" : "ries")")
+            }
+            return configs
+        } catch {
+            throw RemoteConfigError.decodingFailed(error)
+        }
     }
 
     func fetchAdUnitConfig(remoteUrl: URL, publisherId: String, adConfigId: String) async throws -> RemoteAdConfiguration {
@@ -51,6 +64,19 @@ private extension RemoteConfigFetcher {
         pathComponents: [String],
         as type: T.Type
     ) async throws -> T {
+        let data = try await fetchData(remoteUrl: remoteUrl, pathComponents: pathComponents)
+
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            throw RemoteConfigError.decodingFailed(error)
+        }
+    }
+
+    func fetchData(
+        remoteUrl: URL,
+        pathComponents: [String]
+    ) async throws -> Data {
         let requestURL = pathComponents.reduce(remoteUrl) { url, component in
             url.appendingPathComponent(component)
         }
@@ -61,10 +87,17 @@ private extension RemoteConfigFetcher {
             throw RemoteConfigError.invalidResponse
         }
 
-        do {
-            return try JSONDecoder().decode(T.self, from: data)
-        } catch {
-            throw RemoteConfigError.decodingFailed(error)
-        }
+        return data
+    }
+}
+
+/// Decodes to `nil` instead of throwing when the underlying element is
+/// malformed, so a lossy array decode can skip bad entries.
+private struct FailableDecodable<Base: Decodable>: Decodable {
+    let value: Base?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        value = try? container.decode(Base.self)
     }
 }
