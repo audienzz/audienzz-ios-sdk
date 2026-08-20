@@ -29,9 +29,7 @@ internal class AURewardedRenderingDelegateType: NSObject, RewardedAdUnitDelegate
     }
     
     public func rewardedAd(_ rewardedAd: RewardedAdUnit, didFailToReceiveAdWithError error: Error?) {
-        guard let parent = parent else { return }
-        makeErrorEvent(parent: parent, error)
-        parent.delegate?.rewardedAdDidFailToReceiveAdWithError?(error)
+        parent?.delegate?.rewardedAdDidFailToReceiveAdWithError?(error)
     }
     
     public func rewardedAdWillPresentAd(_ rewardedAd: RewardedAdUnit) {
@@ -40,9 +38,7 @@ internal class AURewardedRenderingDelegateType: NSObject, RewardedAdUnitDelegate
 
     /// Called when the interstial is dismissed by the user
     public func rewardedAdDidDismissAd(_ rewardedAd: RewardedAdUnit) {
-        guard let parent = parent else { return }
-        makeCloseEvent(parent)
-        parent.delegate?.rewardedAdDidDismissAd?()
+        parent?.delegate?.rewardedAdDidDismissAd?()
     }
 
     /// Called when an ad causes the sdk to leave the app
@@ -62,32 +58,9 @@ internal class AURewardedRenderingDelegateType: NSObject, RewardedAdUnitDelegate
         parent?.delegate?.rewardedAdUserDidEarnReward?(reward)
     }
     
-    private func makeCloseEvent(_ parent: AURewardedRenderingView) {
-        let event = AUCloseAdEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
-    
     private func makeClickEvent(_ parent: AURewardedRenderingView) {
         let event = AUAdClickEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
-    
-    private func makeErrorEvent(parent: AURewardedRenderingView, _ error: Error?) {
-        guard let error = error else { return }
-        let event = AUFailedLoadEvent(adViewId: parent.configId,
-                                      adUnitID: parent.eventHandler?.adUnitID ?? "",
-                                      errorMessage: error.localizedDescription,
-                                      errorCode: error.errorCode ?? -1)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.sendEvent(event)
     }
 }
 

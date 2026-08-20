@@ -170,7 +170,7 @@ extension AUBannerView {
     }
 
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
-        makeRequestEvent()
+        makeBidRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
@@ -190,10 +190,10 @@ extension AUBannerView {
 
             /*
              use for debug more deep events
-            
+
             if let bidRequester = getPrivateBidRequester(from: adUnit) {
                 print("Got bidRequester: \(bidRequester)")
-            
+
                 bidRequester.requestBids { bidResponse, error in
                     guard let bidResponse else { return }
                     print(bidResponse)
@@ -206,9 +206,13 @@ extension AUBannerView {
             AULogEvent.logDebug(
                 "Audienz demand fetch for GAM \(resultCode.name())"
             )
-            self.makeWinnerEvent(
-                AUResulrCodeConverter.convertResultCodeName(resultCode)
-            )
+            let resultCodeStr = AUResulrCodeConverter.convertResultCodeName(resultCode)
+            self.makeBidResponseEvent(resultCodeStr)
+            if resultCode == .prebidDemandFetchSuccess {
+                self.makeBidWonEvent()
+            } else {
+                self.makeNoBidEvent(resultCodeStr)
+            }
             self.isInitialAutorefresh = false
 
             // Cache the winning creative size from Prebid's targeting keywords.
@@ -246,7 +250,7 @@ extension AUBannerView {
 
         return nil
     }
-    
+
     private func isVisible(view: UIView) -> Bool {
         func isVisible(view: UIView, inView: UIView?) -> Bool {
             guard let inView = inView else { return true }
@@ -259,7 +263,9 @@ extension AUBannerView {
         return isVisible(view: view, inView: view.superview)
     }
 
-    private func makeRequestEvent() {
+    internal var adEventSubType: String { makeAdSubType() }
+
+    private func makeBidRequestEvent() {
         guard
             let autorefreshM = adUnitConfiguration
                 as? AUAdUnitConfigurationEventProtocol,
@@ -279,39 +285,79 @@ extension AUBannerView {
             adSubType: makeAdSubType(),
             apiType: apiTypeString
         )
-
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.sendEvent(event)
     }
 
-    private func makeWinnerEvent(_ resultCode: String) {
-        AULogEvent.logDebug("makeWinnerEvent")
+    private func makeBidResponseEvent(_ resultCode: String) {
         guard
             let autorefreshM = adUnitConfiguration
                 as? AUAdUnitConfigurationEventProtocol,
             let adUnitID = eventHandler?.adUnitID
         else { return }
 
-        let event = AUBidWinnerEvent(
-            resultCode: resultCode,
+        let event = AUBidResponseEvent(
+            adViewId: configId,
             adUnitID: adUnitID,
-            targetKeywords: [:],
+            resultCode: resultCode,
+            size: AUUniqHelper.sizeMaker(adSize),
             isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
             autorefreshTime: Int(
                 autorefreshM.autorefreshEventModel.autorefreshTime
             ),
             initialRefresh: isInitialAutorefresh,
-            adViewId: configId,
-            size: AUUniqHelper.sizeMaker(adSize),
             adType: adTypeString,
             adSubType: makeAdSubType(),
             apiType: apiTypeString
         )
+        AUEventsManager.shared.sendEvent(event)
+    }
 
-        guard let payload = event.convertToJSONString() else { return }
+    private func makeBidWonEvent() {
+        guard
+            let autorefreshM = adUnitConfiguration
+                as? AUAdUnitConfigurationEventProtocol,
+            let adUnitID = eventHandler?.adUnitID
+        else { return }
 
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        let event = AUBidWonEvent(
+            adViewId: configId,
+            adUnitID: adUnitID,
+            targetKeywords: [:],
+            size: AUUniqHelper.sizeMaker(adSize),
+            isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
+            autorefreshTime: Int(
+                autorefreshM.autorefreshEventModel.autorefreshTime
+            ),
+            initialRefresh: isInitialAutorefresh,
+            adType: adTypeString,
+            adSubType: makeAdSubType(),
+            apiType: apiTypeString
+        )
+        AUEventsManager.shared.sendEvent(event)
+    }
+
+    private func makeNoBidEvent(_ resultCode: String) {
+        guard
+            let autorefreshM = adUnitConfiguration
+                as? AUAdUnitConfigurationEventProtocol,
+            let adUnitID = eventHandler?.adUnitID
+        else { return }
+
+        let event = AUNoBidEvent(
+            adViewId: configId,
+            adUnitID: adUnitID,
+            resultCode: resultCode,
+            size: AUUniqHelper.sizeMaker(adSize),
+            isAutorefresh: autorefreshM.autorefreshEventModel.isAutorefresh,
+            autorefreshTime: Int(
+                autorefreshM.autorefreshEventModel.autorefreshTime
+            ),
+            initialRefresh: isInitialAutorefresh,
+            adType: adTypeString,
+            adSubType: makeAdSubType(),
+            apiType: apiTypeString
+        )
+        AUEventsManager.shared.sendEvent(event)
     }
 
     private func makeAdSubType() -> String {
@@ -330,8 +376,8 @@ extension AUBannerView {
         return ""
     }
 
-    internal func makeCreationEvent() {
-        let event = AUAdCreationEvent(
+    internal func makeHeaderLoadedEvent() {
+        let event = AUHeaderLoadedEvent(
             adViewId: configId,
             adUnitID: eventHandler?.adUnitID ?? "-1",
             size: AUUniqHelper.sizeMaker(adSize),
@@ -339,9 +385,6 @@ extension AUBannerView {
             adSubType: makeAdSubType(),
             apiType: apiTypeString
         )
-
-        guard let payload = event.convertToJSONString() else { return }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.sendEvent(event)
     }
 }

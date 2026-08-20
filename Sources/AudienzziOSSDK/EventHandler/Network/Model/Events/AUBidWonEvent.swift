@@ -15,9 +15,10 @@
 
 import Foundation
 
-struct AUBidRequestEvent: AUEventHandlerType {
+struct AUBidWonEvent: AUEventHandlerType {
     let adViewId: String
     let adUnitID: String
+    let targetKeywords: [String: String]
     let size: String?
     let isAutorefresh: Bool
     let autorefreshTime: Int
@@ -25,7 +26,7 @@ struct AUBidRequestEvent: AUEventHandlerType {
     let adType: String
     let adSubType: String
     let apiType: String
-    let type: AUAdEventType = .BID_REQUEST
+    let type: AUAdEventType = .BID_WON
 
     var visitorId: String = ""
     var companyId: String = ""
@@ -38,11 +39,12 @@ struct AUBidRequestEvent: AUEventHandlerType {
     var locale: String = ""
     var zoneOffsetSeconds: Int = 0
 
-    init(adViewId: String, adUnitID: String, size: String?,
+    init(adViewId: String, adUnitID: String, targetKeywords: [String: String], size: String?,
          isAutorefresh: Bool, autorefreshTime: Int, initialRefresh: Bool?,
          adType: String, adSubType: String, apiType: String) {
         self.adViewId = adViewId
         self.adUnitID = adUnitID
+        self.targetKeywords = targetKeywords
         self.size = size
         self.isAutorefresh = isAutorefresh
         self.autorefreshTime = autorefreshTime
@@ -53,7 +55,7 @@ struct AUBidRequestEvent: AUEventHandlerType {
     }
 }
 
-extension AUBidRequestEvent: BodyObjectEncodable {
+extension AUBidWonEvent: BodyObjectEncodable {
     func encode() -> JSONObject {
         var attrs = JSONObject()
         attrs["device_id"] = deviceId
@@ -65,6 +67,9 @@ extension AUBidRequestEvent: BodyObjectEncodable {
         attrs["autorefresh_time"] = autorefreshTime
         if let refresh = initialRefresh { attrs["refresh"] = refresh }
         if size != AUUniqHelper.sizeUndefined { attrs["sizes"] = size }
+        if !targetKeywords.isEmpty {
+            attrs["target_keywords"] = targetKeywords.values.joined(separator: ",")
+        }
         return buildFlatPayload(attributes: attrs)
     }
 }

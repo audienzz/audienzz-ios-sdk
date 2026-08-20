@@ -30,7 +30,6 @@ internal class AUInterstitialRenderingDelegateType: NSObject, InterstitialAdUnit
 
     public func interstitial(_ interstitial: InterstitialRenderingAdUnit, didFailToReceiveAdWithError error: Error?) {
         guard let parent = parent else { return }
-        makeErrorEvent(parent: parent, error)
         parent.delegate?.interstitialDidFailToReceiveAdWithError?(error: error)
     }
 
@@ -39,9 +38,7 @@ internal class AUInterstitialRenderingDelegateType: NSObject, InterstitialAdUnit
     }
 
     public func interstitialDidDismissAd(_ interstitial: InterstitialRenderingAdUnit) {
-        guard let parent = parent else { return }
-        makeCloseEvent(parent)
-        parent.delegate?.interstitialDidDismissAd?()
+        parent?.delegate?.interstitialDidDismissAd?()
     }
 
     public func interstitialWillLeaveApplication(_ interstitial: InterstitialRenderingAdUnit) {
@@ -54,31 +51,8 @@ internal class AUInterstitialRenderingDelegateType: NSObject, InterstitialAdUnit
         parent.delegate?.interstitialDidClickAd?()
     }
     
-    private func makeCloseEvent(_ parent: AUInterstitialRenderingView) {
-        let event = AUCloseAdEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
-    
     private func makeClickEvent(_ parent: AUInterstitialRenderingView) {
         let event = AUAdClickEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
-    
-    private func makeErrorEvent(parent: AUInterstitialRenderingView, _ error: Error?) {
-        guard let error = error else { return }
-        let event = AUFailedLoadEvent(adViewId: parent.configId,
-                                      adUnitID: parent.eventHandler?.adUnitID ?? "",
-                                      errorMessage: error.localizedDescription,
-                                      errorCode: error.errorCode ?? -1)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.sendEvent(event)
     }
 }

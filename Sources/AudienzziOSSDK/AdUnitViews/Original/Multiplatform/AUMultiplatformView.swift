@@ -75,7 +75,7 @@ public class AUMultiplatformView: AUAdView {
         self.gadUnitID = adUnitID
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         
-        makeCreationEvent()
+        makeHeaderLoadedEvent()
         
         if !self.isLazyLoad {
             fetchRequest(gamRequest, prebidRequest: prebidRequest)

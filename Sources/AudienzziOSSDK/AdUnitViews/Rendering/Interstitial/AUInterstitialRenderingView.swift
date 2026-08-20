@@ -87,7 +87,7 @@ public class AUInterstitialRenderingView: AUAdView {
         // rewarded rendering view.
         self.adUnitConfiguration = AUInterstitialRenderingConfiguration(adUnit: adUnit)
 
-        makeCreationEvent(adFormat, eventHandler: eventHandler)
+        makeHeaderLoadedEvent(adFormat, eventHandler: eventHandler)
     }
 
     /// Whether the interstitial has finished loading and can be shown.
@@ -144,16 +144,13 @@ public class AUInterstitialRenderingView: AUAdView {
 }
 
 fileprivate extension AUInterstitialRenderingView {
-    func makeCreationEvent(_ format: AURenderingInsterstitialAdFormat, eventHandler: AUGAMInterstitialEventHandler) {
-        let event = AUAdCreationEvent(adViewId: configId,
-                                      adUnitID: eventHandler.adUnitID,
-                                      size: AUUniqHelper.sizeMaker(adSize),
-                                      adType: adTypeString,
-                                      adSubType: format == .banner ? "HTML" : "VIDEO",
-                                      apiType: apiTypeString)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+    func makeHeaderLoadedEvent(_ format: AURenderingInsterstitialAdFormat, eventHandler: AUGAMInterstitialEventHandler) {
+        let event = AUHeaderLoadedEvent(adViewId: configId,
+                                        adUnitID: eventHandler.adUnitID,
+                                        size: AUUniqHelper.sizeMaker(adSize),
+                                        adType: adTypeString,
+                                        adSubType: format == .banner ? "HTML" : "VIDEO",
+                                        apiType: apiTypeString)
+        AUEventsManager.shared.sendEvent(event)
     }
 }
