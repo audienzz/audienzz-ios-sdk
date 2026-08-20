@@ -32,7 +32,9 @@ class AURewardedHandler: NSObject,
 {
 
     let handler: AURewardedEventHandler
-    let adView: AURewardedView
+    // weak: AURewardedView strongly holds this handler via `eventHandler`; a
+    // strong back-reference leaked the view and the full GAM ad object per screen.
+    weak var adView: AURewardedView?
     weak var fullScreentDelegate: FullScreenContentDelegate?
 
     init(handler: AURewardedEventHandler, adView: AURewardedView) {
@@ -59,7 +61,7 @@ class AURewardedHandler: NSObject,
         LogEvent("adDidRecordImpression")
 
         let event = AUAdImpressionEvent(
-            adViewId: adView.configId,
+            adViewId: adView?.configId ?? "",
             adUnitID: adUnitID,
             adType: "REWARDED",
             adSubType: "VIDEO",
@@ -74,7 +76,7 @@ class AURewardedHandler: NSObject,
         LogEvent("adDidRecordClick")
 
         let event = AUAdClickEvent(
-            adViewId: adView.configId,
+            adViewId: adView?.configId ?? "",
             adUnitID: adUnitID
         )
         AUEventsManager.shared.sendEvent(event)

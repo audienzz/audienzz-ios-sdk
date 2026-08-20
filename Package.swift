@@ -12,8 +12,8 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/prebid/prebid-mobile-ios.git", from: "3.0.0"),
-        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", from: "12.3.0"),
+        .package(url: "https://github.com/prebid/prebid-mobile-ios.git", from: "3.3.1"),
+        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", from: "13.0.0"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-interactive-media-ads-ios.git", from: "3.18.4"),
     ],
     targets: [
@@ -24,11 +24,11 @@ let package = Package(
                 .product(name: "PrebidMobileGAMEventHandlers", package: "prebid-mobile-ios"),
                 .product(name: "GoogleMobileAds", package: "swift-package-manager-google-mobile-ads"),
                 .product(name: "GoogleInteractiveMediaAds", package: "swift-package-manager-google-interactive-media-ads-ios")
-            ],
+            ]
         ),
         .testTarget(
             name: "AudienzziOSSDKTests",
-            dependencies: ["AudienzziOSSDK"],
+            dependencies: ["AudienzziOSSDK"]
         )
     ]
 )

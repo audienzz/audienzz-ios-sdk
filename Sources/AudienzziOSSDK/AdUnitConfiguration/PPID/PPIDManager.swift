@@ -19,22 +19,38 @@ public class PPIDManager: NSObject, AULogEventType {
     
     // MARK: - Properties
 
-    private var automaticPpidEnabled: Bool = false
+    /// PPID is on by default — a UUID is generated automatically if the publisher
+    /// doesn't supply one. Set to false to opt out entirely.
+    private var automaticPpidEnabled: Bool = true
+    /// Publisher-supplied PPID (e.g. hashed email). When set, always wins over the
+    /// SDK-generated UUID. Cleared by passing nil.
+    private var publisherPpid: String? = nil
     private let userDefaults = UserDefaults.standard
-    
+
     // MARK: - Public Methods
-    
+
     /// Check if automatic PPID is enabled
     public func getAutomaticPpidEnabled() -> Bool {
         return automaticPpidEnabled
     }
-    
-    /// Used to enable or disable automatic PPID usage
+
+    /// Enable or disable automatic PPID. Defaults to `true` — a UUID is generated
+    /// automatically unless the publisher opts out by passing `false`.
     public func setAutomaticPpidEnabled(_ enabled: Bool) {
         automaticPpidEnabled = enabled
     }
-    
-    /// Used to obtain PPID if automaticPpid is enabled
+
+    /// Provide a publisher-owned PPID (e.g. a hashed e-mail address).
+    /// When set this always takes precedence over the SDK-generated UUID.
+    /// Pass `nil` to clear and fall back to the generated UUID.
+    public func setPublisherPPID(_ ppid: String?) {
+        publisherPpid = ppid
+    }
+
+    /// Returns the active PPID:
+    ///   1. Publisher-supplied PPID (if set).
+    ///   2. SDK-generated UUID (persisted, rotated every 12 months).
+    ///   3. `nil` if automatic PPID is disabled or consent is missing.
     public func getPPID() -> String? {
         if !automaticPpidEnabled {
             LogEvent("Automatic PPID is disabled")
@@ -42,25 +58,29 @@ public class PPIDManager: NSObject, AULogEventType {
         } else if AUTargeting.shared.purposeConsents?.isEmpty ?? false {
             LogEvent("Consent missing, cannot get PPID")
             return nil
-        } else {
-            let ppid = getPpid()
-            let ppidTimestamp = getPpidTimestamp()
-            
-            if let ppid = ppid, ppidTimestamp != 0 {
-                if isOlderThanYear(ppidTimestamp) {
-                    LogEvent("PPID timestamp is older than 12 months, generating new one")
-                    let newPpid = UUID().uuidString
-                    storePpidToUserDefaults(newPpid)
-                    return newPpid
-                } else {
-                    return ppid
-                }
-            } else {
-                LogEvent("PPID is nil or timestamp is nil, generating new one")
+        }
+
+        if let publisher = publisherPpid {
+            return publisher
+        }
+
+        let ppid = getPpid()
+        let ppidTimestamp = getPpidTimestamp()
+
+        if let ppid = ppid, ppidTimestamp != 0 {
+            if isOlderThanYear(ppidTimestamp) {
+                LogEvent("PPID timestamp is older than 12 months, generating new one")
                 let newPpid = UUID().uuidString
                 storePpidToUserDefaults(newPpid)
                 return newPpid
+            } else {
+                return ppid
             }
+        } else {
+            LogEvent("PPID is nil or timestamp is nil, generating new one")
+            let newPpid = UUID().uuidString
+            storePpidToUserDefaults(newPpid)
+            return newPpid
         }
     }
     

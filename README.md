@@ -62,6 +62,20 @@ Follow these steps to get your first ad showing:
 6. Verify
    - See Verification section below for what to look for
 
+## Consent
+
+The SDK does **not** gate itself on user consent — that's the app's responsibility.
+Run your CMP (consent) flow and forward the result **before** you call
+`configureSDK` or load any ads:
+
+1. Show your CMP and obtain the user's choice.
+2. Forward the consent signals (GDPR subject, TCF consent string, purpose
+   consents) via `AUTargeting.shared`.
+3. **Then** call `Audienzz.shared.configureSDK(...)` and load ads.
+
+Initializing or loading ads before consent will request ads without the consent
+signals.
+
 ## Initialize SDK
 
 Initialize the SDK in your `AppDelegate`:
@@ -104,8 +118,80 @@ In this way the `createAd()` or `fetchDemand()` will be postponed until the view
 
 The `createAd()` method, available on classes like `AUBannerView` and `AUInterstitialView`, initiates the ad loading process.
 When `lazyLoading` is enabled, the SDK intelligently delays this process until the ad view is about to become visible to the user,
-optimizing resource usage and improving performance. 
+optimizing resource usage and improving performance.
 It is done with view visibility detection which triggers ad loading when the view becomes visible.
+
+### Prefetch Margin
+
+The correct prefetch mechanism depends on the scroll container your ad lives in:
+
+| Container | Prefetch mechanism | How to configure |
+|---|---|---|
+| `UIScrollView` / `UITableView` (non-cell) | Distance-based (pt) | `prefetchMarginPoints` on the ad view |
+| `UITableView` / `UICollectionView` cells | Item-count-based | `UITableView.prefetchDataSource` / `UICollectionView.isPrefetchingEnabled` |
+
+**Why they differ:** In a plain `UIScrollView` all views are laid out in the hierarchy upfront. The SDK observes `contentOffset` via KVO and can detect "this view is now within N pt of the visible area" at exactly the right scroll position.
+
+In a `UITableView` or `UICollectionView`, cells are created and laid out on-demand — just before they scroll into view. By the time `createAd()` is called from `cellForRow(at:)`, the cell is already within ~a row height of the viewport regardless of `prefetchMarginPoints`.
+
+By default, lazy loading starts **200 pt before** the view enters the viewport. You can customise this with `prefetchMarginPoints`:
+
+```swift
+let bannerView = AUBannerView(
+    configId: PREBID_CONFIG_ID,
+    adSize: CGSize(width: 320, height: 50),
+    adFormats: [.banner],
+    isLazyLoad: true
+)
+
+// Default — start loading 200 pt before the view enters the viewport
+// bannerView.prefetchMarginPoints = 200
+
+// Custom margin — start loading 600 pt ahead
+bannerView.prefetchMarginPoints = 600
+
+// Exact visibility — load only when the view is actually on screen
+bannerView.prefetchMarginPoints = 0
+```
+
+#### UITableView / UICollectionView cells
+
+Use `isLazyLoad = false` to load immediately when the cell is created, and control how many cells ahead are pre-created with the table/collection prefetch APIs:
+
+```swift
+// In cellForRow(at:) — load immediately on cell creation
+let bannerView = AUBannerView(
+    configId: PREBID_CONFIG_ID,
+    adSize: CGSize(width: 320, height: 50),
+    adFormats: [.banner],
+    isLazyLoad: false  // Load immediately — prefetchMarginPoints has no effect in cells
+)
+
+// UICollectionView: enable prefetching so cells are created further ahead of the viewport
+collectionView.isPrefetchingEnabled = true
+```
+
+## Smart Refresh
+
+Smart Refresh makes banner auto-refresh viewport-aware: refresh is paused while the ad is off-screen, and resumes intelligently when it returns.
+
+When the ad scrolls back into view the SDK checks how long it was hidden:
+- **Stale** (hidden ≥ refresh interval) → a new ad is fetched immediately, then normal auto-refresh resumes.
+- **Not stale** (hidden < refresh interval) → the remaining time is waited before the next fetch, then normal auto-refresh resumes.
+
+Enable it by setting `smartRefresh = true` on any `AUBannerView`:
+
+```swift
+let bannerView = AUBannerView(
+    configId: PREBID_CONFIG_ID,
+    adSize: CGSize(width: 320, height: 50),
+    adFormats: [.banner],
+    isLazyLoad: true
+)
+bannerView.smartRefresh = true
+```
+
+> **Note:** `smartRefresh` has no effect if `autorefreshTime` is not set on the ad unit configuration (i.e. no auto-refresh interval is defined).
 
 ## API Reference
 
@@ -137,6 +223,8 @@ Ad view used for displaying banner and video ads.
 | `bannerParameters` | `AUBannerParameters?`       | Banner ad parameters (optional).                 |
 | `adUnitConfiguration` | `AUAdUnitConfigurationType!`| Ad unit configuration object.                 |
 | `onLoadRequest`    | `((AnyObject) -> Void)?`    | Callback triggered when a GAM request is ready.  |
+| `prefetchMarginPoints` | `CGFloat`              | Distance in points before the view enters the viewport that starts the Prebid demand fetch. Only effective when `isLazyLoad = true`. **Default:** `200`. No effect inside `UITableView`/`UICollectionView` cells — use `isLazyLoad = false` there. |
+| `smartRefresh`     | `Bool`                      | When `true`, pauses auto-refresh while the ad is off-screen and force-refreshes when it returns to viewport if the refresh interval has elapsed. **Default:** `false`. |
 
 **Constructors:**
 
@@ -425,6 +513,56 @@ audienzzBannerView.onLoadRequest = { gamRequest in
 }
 ```
 
+### Multi-Size Banner
+
+GAM can serve ads at any of the sizes you declare on the `AdManagerBannerView`. When the winning creative — whether from Prebid or a GAM direct campaign — renders at a size different from the primary declared size, the SDK automatically resizes the banner. There are two requirements on the client side.
+
+#### 1. Declare additional sizes correctly
+
+Use `AUBannerView.validAdSizes(for:)` instead of `NSValue(cgSize:)` when assigning `validAdSizes`. The raw `NSValue(cgSize:)` initializer wraps a plain `CGSize` rather than an `AdSize` struct, which causes GAM to silently ignore all additional sizes and only ever serve the primary size.
+
+```swift
+// ❌ Wrong — additional sizes are silently ignored by GAM
+gamBannerAdView.validAdSizes = [
+    NSValue(cgSize: CGSize(width: 300, height: 250)),
+    NSValue(cgSize: CGSize(width: 300, height: 600)),
+]
+
+// ✅ Correct — properly encoded AdSize values
+gamBannerAdView.validAdSizes = AUBannerView.validAdSizes(for: [
+    CGSize(width: 300, height: 250),
+    CGSize(width: 300, height: 600),
+])
+```
+
+#### 2. Update container constraints when the size changes
+
+When GAM serves at a size different from the primary `adSize`, the SDK calls `onAdSizeChanged` with the actual rendered dimensions. Use this callback to update your container constraints so the ad is neither clipped nor surrounded by blank space.
+
+```swift
+// Keep references to the constraints you want to update
+var bannerHeightConstraint: NSLayoutConstraint!
+
+// Set up your layout
+bannerHeightConstraint = adContainerView.heightAnchor.constraint(equalToConstant: 250)
+NSLayoutConstraint.activate([
+    adContainerView.widthAnchor.constraint(equalToConstant: 300),
+    bannerHeightConstraint,
+])
+
+// React to the actual rendered size
+audienzzBannerView.onAdSizeChanged = { [weak self] newSize in
+    self?.bannerHeightConstraint.constant = newSize.height
+    UIView.animate(withDuration: 0.2) {
+        self?.view.layoutIfNeeded()
+    }
+}
+```
+
+> **Note:** `AURemoteConfigBannerView` handles constraint updates automatically — no `onAdSizeChanged` wiring is needed when using remote configuration.
+
+---
+
 ### Interstitial Ad
 Here is minimum example of configuring and loading interstitial ad:
 
@@ -595,11 +733,140 @@ Task {
 }
 ```
 
+## Sticky Ads
+
+`AUStickyAdWrapperView` reserves a fixed area in your layout and keeps the ad view visible as the user scrolls past it. The child ad slides within that reserved area — sticking to the top of the viewport — then scrolls off once the reserved space has fully passed the viewport.
+
+This is useful for billboard-height placements (e.g. 300×600) inside a scrollable page, where you want the ad to remain in view for as long as possible without overlapping other content.
+
+### How it works
+
+- You reserve `maxHeight` points in your layout by adding `AUStickyAdWrapperView` as a normal subview with Auto Layout constraints. Its intrinsic height is `maxHeight` — no height constraint required.
+- The wrapper observes `UIScrollView.contentOffset` via KVO and repositions the child ad using `CGAffineTransform`, avoiding layout passes on every scroll tick.
+- When the wrapper is fully above or below the visible viewport, the child snaps to its natural position. When the wrapper is partially in view, the child slides to stay on screen.
+
+### Basic usage (manual banner)
+
+```swift
+// 1. Create your ad view as usual
+let audienzzBannerView = AUBannerView(
+    configId: "YOUR_PREBID_CONFIG_ID",
+    adSize: CGSize(width: 300, height: 600),
+    adFormats: [.banner]
+)
+
+let gamBannerView = AdManagerBannerView(adSize: GADAdSizeMediumRectangle)
+gamBannerView.adUnitID = "YOUR_GAM_AD_UNIT_ID"
+gamBannerView.rootViewController = self
+
+audienzzBannerView.bannerParameters = AUBannerParameters()
+audienzzBannerView.createAd(
+    with: AdManagerRequest(),
+    gamBanner: gamBannerView,
+    eventHandler: AUBannerEventHandler(adUnitId: "YOUR_GAM_AD_UNIT_ID", gamView: gamBannerView)
+)
+audienzzBannerView.onLoadRequest = { request in
+    guard let r = request as? Request else { return }
+    gamBannerView.load(r)
+}
+
+// 2. Wrap the ad view
+let stickyWrapper = AUStickyAdWrapperView(
+    adView: audienzzBannerView,
+    maxHeight: 600,         // Reserve 600 pt in the layout
+    scrollView: scrollView  // The UIScrollView driving the page
+)
+
+// 3. Add to your layout — treat it like any other UIView
+contentStackView.addArrangedSubview(stickyWrapper)
+// or with manual constraints:
+// view.addSubview(stickyWrapper)
+// NSLayoutConstraint.activate([
+//     stickyWrapper.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+//     stickyWrapper.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+//     stickyWrapper.topAnchor.constraint(equalTo: previousView.bottomAnchor),
+// ])
+```
+
+### Usage with remote config banner
+
+`AURemoteConfigBannerView` works as the child view without any changes — pass it directly to `AUStickyAdWrapperView`:
+
+```swift
+let remoteBanner = AURemoteConfigBannerView(adConfigId: "YOUR_CONFIG_ID")
+
+let stickyWrapper = AUStickyAdWrapperView(
+    adView: remoteBanner,
+    maxHeight: 600,
+    scrollView: scrollView
+)
+contentStackView.addArrangedSubview(stickyWrapper)
+
+// Load the remote banner after the wrapper is in the view hierarchy
+remoteBanner.load(in: stickyWrapper, rootViewController: self)
+```
+
+### Attaching to the scroll view later
+
+If the `UIScrollView` is not available at initialisation time (for example, when building the layout inside `viewDidLoad` before the scroll view's frame is set), pass `nil` and call `attachToScrollView(_:)` later:
+
+```swift
+let stickyWrapper = AUStickyAdWrapperView(adView: audienzzBannerView, maxHeight: 600)
+// ...add to hierarchy...
+
+override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    stickyWrapper.attachToScrollView(scrollView)
+}
+```
+
+### Cleanup
+
+`AUStickyAdWrapperView` invalidates its KVO observation automatically in `deinit`. If you remove the wrapper from the view hierarchy before it is deallocated — for example, when reusing a container — call `detachFromScrollView()` explicitly:
+
+```swift
+stickyWrapper.detachFromScrollView()
+stickyWrapper.removeFromSuperview()
+```
+
+### Configuration reference
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `maxHeight` | `CGFloat` | `600` | Total height reserved in the layout. The child ad slides within this space. |
+| `stickyTopOffset` | `CGFloat?` | `nil` | Y offset from the top of the scroll viewport where the ad sticks. `nil` uses the scroll view's top safe-area inset. |
+| `isEnabled` | `Bool` | `true` | Toggle sticky behaviour. When `false`, the child stays at its natural position (offset 0). |
+
+---
+
 ## Troubleshooting
 
 ### Unfilled ads
 In order to handle unfilled ads it is advised to build your logic around `onAdFailedToLoad()` method.
 There you receive `LoadAdError` object, which contains details about the error. When it has code:1 and message "No ad to show" - it is an unfilled ad.
+
+### Banner is clipped or shows at the wrong height
+
+**Symptom:** A multi-size banner is clipped to the primary declared height, or shows blank space when a smaller size is served. The ad is otherwise functional (impression and click tracking work correctly).
+
+**Cause — incorrect `validAdSizes` encoding.** Setting `validAdSizes` using the plain `NSValue(cgSize:)` initializer causes GAM to silently discard all additional sizes and only serve the primary `adSize`. As a result, creatives that require a taller slot are clipped by the container.
+
+```swift
+// ❌ This looks correct but silently breaks multi-size serving
+gamBannerAdView.validAdSizes = [NSValue(cgSize: CGSize(width: 300, height: 600))]
+```
+
+**Fix:** Use `AUBannerView.validAdSizes(for:)`, which encodes sizes as proper `AdSize` values that GAM understands:
+
+```swift
+// ✅ Correct
+gamBannerAdView.validAdSizes = AUBannerView.validAdSizes(for: [
+    CGSize(width: 300, height: 250),
+    CGSize(width: 300, height: 600),
+])
+```
+
+**Cause — container constraints not updated on size change.** Even after fixing the encoding, if your container has a fixed-height constraint sized to the primary ad slot, a taller creative will still be clipped. Wire up `onAdSizeChanged` on the `AUBannerView` to update the constraint whenever GAM serves at a different size (see the **Multi-Size Banner** example above).
 
 ## Glossary / Terminology
 

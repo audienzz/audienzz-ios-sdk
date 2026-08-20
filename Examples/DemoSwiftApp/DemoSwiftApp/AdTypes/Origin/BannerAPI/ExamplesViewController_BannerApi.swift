@@ -39,8 +39,12 @@ extension ExamplesViewController {
         adContainerView.addSubview(bannerView)
         
         //configuration
-        bannerView.adUnitConfiguration.setAutoRefreshMillis(time: 30000)
-        
+        bannerView.adUnitConfiguration.setAutoRefreshMillis(
+            time: Double((config.config.refreshTimeSeconds ?? 30) * 1000)
+        )
+        bannerView.smartRefresh = true
+        bannerView.prefetchMarginPoints = CGFloat(config.config.prefetchDistancePt ?? 200)
+
         bannerView.createAd(with: gamRequest,
                             gamBanner: gamBanner,
                             eventHandler: AUBannerEventHandler(adUnitId: gamAdUnitPath, gamView: gamBanner))

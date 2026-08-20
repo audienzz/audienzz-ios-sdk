@@ -77,7 +77,17 @@ public class AUInterstitialView: AUAdView {
         adUnit = nil
         self.eventHandler = nil
     }
-    
+
+    /// Explicitly tears down the ad: stops auto-refresh and releases the Prebid
+    /// ad unit and event handler. Prefer this over relying on
+    /// `removeFromSuperview` as a destructor. Safe to call more than once.
+    public func destroy() {
+        adUnit?.stopAutoRefresh()
+        adUnit = nil
+        self.gamRequest = nil
+        self.eventHandler = nil
+    }
+
     deinit {
         self.eventHandler = nil
     }
@@ -96,7 +106,7 @@ public class AUInterstitialView: AUAdView {
     public func createAd(with gamRequest: AdManagerRequest, adUnitID: String) {
         adUnit.bannerParameters = bannerParameters.makeBannerParameters()
         
-        adUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters()
+        adUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters(placement: .Interstitial, plcmnt: .Interstitial)
         
         AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
@@ -111,9 +121,18 @@ public class AUInterstitialView: AUAdView {
         
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
+        } else {
+            #if DEBUG
+            // M7: a fullscreen interstitial placeholder has a zero frame, so the
+            // visibility-based lazy trigger can only fire if the view is actually
+            // added to the hierarchy and scrolled on screen. If it isn't, set
+            // isLazyLoad = false so createAd fetches immediately.
+            AULogEvent.logDebug("[AUInterstitialView] lazy load enabled — the ad fetches only once this view reaches the viewport. For a standalone interstitial, use isLazyLoad = false.")
+            #endif
+            loadIfAlreadyVisible()
         }
     }
-    
+
     public func connectHandler(_ eventHandler: AUInterstitialEventHandler) {
         self.eventHandler = AUInterstitialHandler(handler: eventHandler, adView: self)
         makeHeaderLoadedEvent()

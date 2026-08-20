@@ -22,6 +22,8 @@ private let customPrebidServerURL = "https://ib.adnxs.com/openrtb2/prebid"
 private let prebidServerAccountId = "3927"
 private let customStatusEndpoint = "https://ib.adnxs.com/status"
 
+internal let AUSDKVersion = "0.2.7"
+
 @objcMembers
 public class Audienzz: NSObject {
     var audienzzSchainObjectConfig: String?
@@ -116,41 +118,66 @@ public class Audienzz: NSObject {
         // The value will be overridden below once the remote config is fetched.
         applyGamAppVolume(0)
 
-        try await AudienzzRemoteConfig.shared.fetchPublisherConfig()
+        do {
+            try await AudienzzRemoteConfig.shared.fetchPublisherConfig()
+        } catch {
+            // Don't abort init on fetch failure — fall through to the fallback
+            // below so a first-launch user on a flaky network can still monetize.
+            AULogEvent.logDebug(
+                "Audienzz Remote Config fetch failed: \(error). Falling back to default Prebid host/account."
+            )
+        }
 
         guard let publisherConfig = AudienzzRemoteConfig.shared.publisherConfig else {
+            // Cold start with no cache and no network: initialize Prebid with the
+            // hardcoded default host/account instead of leaving the SDK dead.
             AULogEvent.logDebug(
-                "Initialization Failed because PrebidUrl is empty"
+                "Audienzz Remote Config unavailable — initializing with default Prebid host/account"
+            )
+            setupRemotePrebid(
+                AudienzzRemoteConfig.shared.publisherId ?? "1",
+                prebidServerAccountId: prebidServerAccountId,
+                prebidStatusUrl: customStatusEndpoint,
+                appVolume: 0
+            )
+            initializePrebid(
+                serverURL: customPrebidServerURL,
+                gadMobileAdsVersion: gadMobileAdsVersion,
+                enablePPID: enablePPID
             )
             return
         }
 
         setupRemotePrebid(
-            publisherConfig.ortb?.schain?.sellerId ?? "1",
+            AudienzzRemoteConfig.shared.publisherId ?? "1",
             prebidServerAccountId: publisherConfig.prebidServer.accountId,
             prebidStatusUrl: publisherConfig.prebidServer.statusUrl,
             appVolume: publisherConfig.gamConfig?.appVolume ?? 0
         )
 
         if let schain = publisherConfig.ortb?.schain {
-            let schainJson = """
-            {
-                "source": {
-                    "ext": {
-                        "schain": {
+            // Build via JSONSerialization instead of string interpolation so a
+            // quote/backslash in the backend-provided asi/sid can't produce
+            // malformed JSON (which silently drops the schain).
+            let schainDict: [String: Any] = [
+                "source": [
+                    "ext": [
+                        "schain": [
                             "complete": 1,
-                            "nodes": [{
-                                "asi": "\(schain.advertisingSystemDomain)",
-                                "sid": "\(schain.sellerId)",
+                            "nodes": [[
+                                "asi": schain.advertisingSystemDomain,
+                                "sid": schain.sellerId,
                                 "hp": 1
-                            }],
+                            ]],
                             "ver": "1.0"
-                        }
-                    }
-                }
+                        ]
+                    ]
+                ]
+            ]
+            if let data = try? JSONSerialization.data(withJSONObject: schainDict),
+               let schainJson = String(data: data, encoding: .utf8) {
+                setSchainObject(schain: schainJson)
             }
-            """
-            setSchainObject(schain: schainJson)
         }
 
         if let ortb = publisherConfig.ortb {
@@ -164,9 +191,23 @@ public class Audienzz: NSObject {
             AUTargeting.shared.itunesID = iosOrtb.bundleId
         }
 
+        initializePrebid(
+            serverURL: publisherConfig.prebidServer.url,
+            gadMobileAdsVersion: gadMobileAdsVersion,
+            enablePPID: enablePPID
+        )
+    }
+
+    /// Shared Prebid initialization used by the remote-config flow (both the
+    /// happy path and the default-host fallback).
+    private func initializePrebid(
+        serverURL: String,
+        gadMobileAdsVersion: String?,
+        enablePPID: Bool
+    ) {
         do {
             try Prebid.initializeSDK(
-                serverURL: publisherConfig.prebidServer.url,
+                serverURL: serverURL,
                 gadMobileAdsVersion: gadMobileAdsVersion
             ) { status, error in
                 if let error = error {
@@ -187,6 +228,16 @@ public class Audienzz: NSObject {
     }
 
     // MARK: - Public Init For RN Bridg (Audienzz)
+
+    /// Stable Obj-C selector for RN bridge: `configureSDK_RNWithCompanyId:enablePPID:completion:`
+    @objc(configureSDK_RNWithCompanyId:enablePPID:completion:)
+    public func configureSDK_RN(
+        companyId: String,
+        enablePPID: Bool,
+        completion: (() -> Void)?
+    ) {
+        configureSDK_RN(companyId: companyId, appVolume: 0, enablePPID: enablePPID, completion)
+    }
 
     /// Special method used for RN bridging initialization
     public func configureSDK_RN(
@@ -241,6 +292,9 @@ public class Audienzz: NSObject {
                         AULogEvent.logDebug(
                             "Initialization Error: \(error.localizedDescription)"
                         )
+                        // Must still resolve the bridge promise, otherwise the
+                        // RN/JS caller hangs forever on init failure.
+                        completion?()
                         return
                     }
 
@@ -274,19 +328,29 @@ public class Audienzz: NSObject {
             AULogEvent.logDebug("setAppVolume: \(volume) is out of [0.0, 1.0], clamped to \(clamped)")
         }
         MobileAds.shared.applicationVolume = clamped
-        AULogEvent.logDebug("GMA app volume updated to \(clamped)")
+        MobileAds.shared.isApplicationMuted = (clamped == 0)
+        AULogEvent.logDebug("GMA app volume updated to \(clamped), muted=\(clamped == 0)")
     }
 
     public var timeoutMillis: Int {
+        // Assigning Prebid's `timeoutMillis` also updates `timeoutMillisDynamic`
+        // (via its didSet), so the auction picks up the value AND the getter
+        // reflects what was set. Writing only Dynamic left the getter stale.
         get { Prebid.shared.timeoutMillis }
-        set {
-            Prebid.shared.timeoutMillisDynamic = NSNumber(value: newValue)
-        }
+        set { Prebid.shared.timeoutMillis = newValue }
     }
 
-    public var timeoutMillisDynamic: NSNumber?
+    public var timeoutMillisDynamic: NSNumber? {
+        get { Prebid.shared.timeoutMillisDynamic }
+        set { Prebid.shared.timeoutMillisDynamic = newValue }
+    }
 
-    public var storedAuctionResponse: String?
+    public var storedAuctionResponse: String? {
+        // Previously a dead stored property — setting it never reached Prebid,
+        // so the stored-auction-response feature silently did nothing.
+        get { Prebid.shared.storedAuctionResponse }
+        set { Prebid.shared.storedAuctionResponse = newValue }
+    }
 
     // MARK: - Stored Bid Response
 
@@ -340,6 +404,9 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = customStatusEndpoint
+        Targeting.shared.omidPartnerName = "Google"
+        let v = MobileAds.shared.versionNumber
+        Targeting.shared.omidPartnerVersion = "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
         applyGamAppVolume(appVolume)
     }
 
@@ -352,13 +419,17 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = prebidStatusUrl
+        Targeting.shared.omidPartnerName = "Google"
+        let v = MobileAds.shared.versionNumber
+        Targeting.shared.omidPartnerVersion = "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
         applyGamAppVolume(appVolume)
     }
 
     private func applyGamAppVolume(_ volume: Float) {
         let clamped = min(max(volume, 0), 1)
         MobileAds.shared.applicationVolume = clamped
-        AULogEvent.logDebug("GMA app volume set to \(clamped)")
+        MobileAds.shared.isApplicationMuted = (clamped == 0)
+        AULogEvent.logDebug("GMA app volume set to \(clamped), muted=\(clamped == 0)")
     }
 
     private func handleInitializationResultStatus(

@@ -72,6 +72,17 @@ public class AUBannerView: AUAdView {
         self.gamRequest = nil
         self.eventHandler = nil
     }
+
+    /// Explicitly tears down the ad: stops auto-refresh and releases the Prebid
+    /// ad unit, GAM request, and event handler. Prefer this over relying on
+    /// `removeFromSuperview` as a destructor — call it when you're done with the
+    /// ad (e.g. the owning controller's `deinit`). Safe to call more than once.
+    public func destroy() {
+        adUnit?.stopAutoRefresh()
+        self.adUnit = nil
+        self.gamRequest = nil
+        self.eventHandler = nil
+    }
     
     public func addAdditionalSize(sizes: [CGSize]) {
         adUnit.addAdditionalSize(sizes: sizes)
@@ -83,6 +94,25 @@ public class AUBannerView: AUAdView {
     
     public func getImpOrtbConfig() -> String? {
         return adUnit.getImpORTBConfig()
+    }
+
+    /// Returns a correctly-encoded `NSValue` array ready to assign to
+    /// `AdManagerBannerView.validAdSizes`.
+    ///
+    /// Use this instead of `NSValue(cgSize:)`, which wraps a plain `CGSize` and
+    /// causes GAM to silently ignore all additional sizes — resulting in only the
+    /// primary declared `adSize` ever being served (and multi-size banners being
+    /// clipped to the primary height).
+    ///
+    /// Example usage:
+    /// ```swift
+    /// gamBanner.validAdSizes = AUBannerView.validAdSizes(for: [
+    ///     CGSize(width: 320, height: 50),
+    ///     CGSize(width: 300, height: 250)
+    /// ])
+    /// ```
+    public static func validAdSizes(for sizes: [CGSize]) -> [NSValue] {
+        sizes.map { nsValue(for: adSizeFor(cgSize: $0)) }
     }
 
     deinit {
@@ -97,7 +127,7 @@ public class AUBannerView: AUAdView {
             adUnit.bannerParameters = parameters.makeBannerParameters()
         } else {
             let parameters = BannerParameters()
-            parameters.api = [Signals.Api.MRAID_2, Signals.Api.MRAID_3, Signals.Api.OMID_1]
+            parameters.api = [Signals.Api.MRAID_1, Signals.Api.MRAID_2, Signals.Api.MRAID_3, Signals.Api.OMID_1]
             adUnit.bannerParameters = parameters
         }
         addSubview(gamBanner)
@@ -122,6 +152,8 @@ public class AUBannerView: AUAdView {
 
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
+        } else {
+            loadIfAlreadyVisible()
         }
     }
 }

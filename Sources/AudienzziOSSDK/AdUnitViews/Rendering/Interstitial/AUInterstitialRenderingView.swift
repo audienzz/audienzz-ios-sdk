@@ -82,9 +82,16 @@ public class AUInterstitialRenderingView: AUAdView {
         self.adUnit = InterstitialRenderingAdUnit(configID: configId,
                                                   minSizePercentage: minSizePerc ?? .zero,
                                                   eventHandler: interstitialEventHandler)
-        
+        // M11: without this the inherited adUnitConfiguration (an IUO) stays nil
+        // and any access to the documented config surface crashes. Mirrors the
+        // rewarded rendering view.
+        self.adUnitConfiguration = AUInterstitialRenderingConfiguration(adUnit: adUnit)
+
         makeHeaderLoadedEvent(adFormat, eventHandler: eventHandler)
     }
+
+    /// Whether the interstitial has finished loading and can be shown.
+    @objc public var isReady: Bool { adUnit?.isReady ?? false }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -114,6 +121,11 @@ public class AUInterstitialRenderingView: AUAdView {
     
     /// It is expected from the user to call this method on main thread
     public func showAd(_ controller: UIViewController) {
+        // M12: showing before the ad is ready silently drops a won impression.
+        guard adUnit.isReady else {
+            AULogEvent.logDebug("[AUInterstitialRenderingView] showAd called but ad is not ready; ignoring")
+            return
+        }
         adUnit.show(from: controller)
     }
     

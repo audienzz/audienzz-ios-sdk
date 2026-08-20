@@ -95,12 +95,21 @@ public class AURemoteConfigBannerView: VisibleView {
             configId: remoteConfig.prebidConfig.placementId,
             adSize: sortedSizes.first ?? .zero,
             adFormats: [.banner],
-            isLazyLoad: false
+            isLazyLoad: true
         )
 
-        if let refreshTimeSeconds = remoteConfig.config.refreshTimeSeconds {
-            bannerView.adUnit.setAutoRefreshMillis(time: Double(refreshTimeSeconds * 1000))
-        }
+        // M4: route refresh through adUnitConfiguration (not adUnit directly) so
+        // autorefreshEventModel is updated — otherwise the stale-aware smart
+        // refresh logic reads autorefreshTime == 0 and never engages, and
+        // analytics report isAutorefresh = false.
+        // M22: Prebid enforces a 30s floor (values below are silently rejected).
+        // Clamp positive values here so Prebid and the SDK's stale-aware refresh
+        // use the same effective cadence.
+        let configuredRefreshMs = Double((remoteConfig.config.refreshTimeSeconds ?? Self.defaultRefreshSeconds) * 1000)
+        let refreshMs = configuredRefreshMs > 0 ? max(configuredRefreshMs, 30_000) : configuredRefreshMs
+        bannerView.adUnitConfiguration.setAutoRefreshMillis(time: refreshMs)
+        bannerView.smartRefresh = true
+        bannerView.prefetchMarginPoints = CGFloat(remoteConfig.config.prefetchDistancePt ?? Self.defaultPrefetchDistancePt)
 
         bannerView.addAdditionalSize(sizes: Array(sortedSizes.dropFirst()))
         bannerView.videoParameters = videoParameters
@@ -127,14 +136,33 @@ public class AURemoteConfigBannerView: VisibleView {
             gamBanner.load(request)
         }
 
+        let bannerWidthConstraint = bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width)
+        let bannerHeightConstraint = bannerView.heightAnchor.constraint(equalToConstant: gadSize.size.height)
+        let containerWidthConstraint = container.widthAnchor.constraint(equalToConstant: gadSize.size.width)
+        let containerHeightConstraint = container.heightAnchor.constraint(equalToConstant: gadSize.size.height)
+
         NSLayoutConstraint.activate([
             bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             bannerView.topAnchor.constraint(equalTo: container.topAnchor),
-            bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width),
-            bannerView.heightAnchor.constraint(equalToConstant: gadSize.size.height),
-            container.widthAnchor.constraint(equalToConstant: gadSize.size.width),
-            container.heightAnchor.constraint(equalToConstant: gadSize.size.height)
+            bannerWidthConstraint,
+            bannerHeightConstraint,
+            containerWidthConstraint,
+            containerHeightConstraint
         ])
+
+        // When GAM serves an ad at a different size than the initially declared slot
+        // (e.g. a 300×600 direct campaign against a 300×250 Prebid bid), update the
+        // bannerView and container constraints to match the actual rendered size so
+        // the ad is neither clipped nor surrounded by blank space.
+        bannerView.onAdSizeChanged = { [weak container] newSize in
+            bannerWidthConstraint.constant = newSize.width
+            bannerHeightConstraint.constant = newSize.height
+            containerWidthConstraint.constant = newSize.width
+            containerHeightConstraint.constant = newSize.height
+            // layoutIfNeeded on the superview ensures constraints attached to `container`
+            // itself (not just inside it) are also resolved in the same layout pass.
+            container?.superview?.layoutIfNeeded()
+        }
     }
     
     @objc public func load(
@@ -148,4 +176,8 @@ public class AURemoteConfigBannerView: VisibleView {
         load(in: container, size: size, rootViewController: rootViewController, delegate: delegate)
     }
 
+    // MARK: - Private
+
+    private static let defaultRefreshSeconds = 30
+    private static let defaultPrefetchDistancePt = 200
 }

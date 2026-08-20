@@ -29,6 +29,11 @@ public class AUAdView: VisibleView {
     
     public var adUnitConfiguration: AUAdUnitConfigurationType!
     public var onLoadRequest: ((AnyObject) -> Void)?
+    /// Fired after every ad load with the actual rendered size GAM chose to serve.
+    /// Use this to update your container constraints when the served size differs
+    /// from the initially declared slot size (e.g. GAM picks a 300×600 direct ad
+    /// against a slot that Prebid bid at 300×250).
+    public var onAdSizeChanged: ((CGSize) -> Void)?
     
     public override func awakeFromNib() {
         super.awakeFromNib()
@@ -68,6 +73,30 @@ public class AUAdView: VisibleView {
     
     internal dynamic func fetchRequest(_ gamRequest: GAMRequest) {}
     internal var isInitialAutorefresh: Bool = true
+
+    /// M8: re-run the lazy-load trigger after `createAd` has wired up the request.
+    /// Visibility is edge-triggered, so if the view became visible *before*
+    /// createAd ran (e.g. async remote-config setup), `detectVisible` already
+    /// fired and bailed on the nil request — leaving the slot permanently dead.
+    /// Calling it again here loads it if it's currently on screen.
+    internal func loadIfAlreadyVisible() {
+        guard isLazyLoad, !isLazyLoaded, isViewCurrentlyVisible else { return }
+        detectVisible()
+    }
+
+    // prefetchMarginPoints is declared and implemented in VisibleView.
+    // See VisibleView.prefetchMarginPoints for the full KDoc.
+    // Defaults to 200 pt. Set to 0 for exact-visibility loading.
+    // Not effective in UITableView / UICollectionView — use isLazyLoad = false there.
+
+    /// Pause auto-refresh when the ad scrolls off-screen and resume when it returns.
+    /// Defaults to `false`. When `true`, pairs with the refresh interval to avoid refreshing
+    /// stale off-screen creatives.
+    public var smartRefresh: Bool = false
+
+    // MARK: - Smart refresh internals
+    internal var lastRefreshTime: Date?
+    internal var pendingSmartRefreshWorkItem: DispatchWorkItem?
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in
@@ -92,11 +121,20 @@ public class AUAdView: VisibleView {
         self.frame = CGRect(x: origin.x, y: origin.y, width: 0, height: 0)
     }
     
-    internal func defaultVideoParameters() -> VideoParameters {
+    /// Builds the fallback video parameters used when the publisher doesn't
+    /// supply their own. `placement`/`plcmnt` must reflect the ad format so
+    /// DSPs classify (and price) the inventory correctly — a fixed `.InBanner`
+    /// default misclassified all interstitial/rewarded video.
+    internal func defaultVideoParameters(
+        placement: Signals.Placement = .InBanner,
+        plcmnt: Signals.Plcmnt? = nil
+    ) -> VideoParameters {
         let videoParameters = VideoParameters(mimes: ["video/mp4"])
+        videoParameters.api = [Signals.Api.MRAID_1, Signals.Api.MRAID_2, Signals.Api.MRAID_3, Signals.Api.OMID_1]
         videoParameters.protocols = [Signals.Protocols.VAST_2_0]
         videoParameters.playbackMethod = [Signals.PlaybackMethod.AutoPlaySoundOff]
-        videoParameters.placement = Signals.Placement.InBanner
+        videoParameters.placement = placement
+        videoParameters.plcmnt = plcmnt
         return videoParameters
     }
 }
