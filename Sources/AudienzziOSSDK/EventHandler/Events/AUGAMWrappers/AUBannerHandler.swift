@@ -64,6 +64,13 @@ class AUBannerHandler: NSObject,
         self.gamView.delegate = self
         self.gamView.appEventDelegate = self
         self.gamView.adSizeDelegate = self
+        // GMA reports the impression's paid value + currency here (the only fork-free currency
+        // source). Stash it on the view so the render events can carry currency (and cpm on a
+        // direct fill). Fires around impression, so it lands on adImpression/adClick/viewability.
+        self.gamView.paidEventHandler = { [weak auBannerView] adValue in
+            auBannerView?.lastPaidCurrency = adValue.currencyCode
+            auBannerView?.lastPaidCpm = adValue.value.doubleValue
+        }
     }
 
     deinit {

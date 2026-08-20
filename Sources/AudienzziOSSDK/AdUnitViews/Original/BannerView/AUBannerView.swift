@@ -49,6 +49,11 @@ public class AUBannerView: AUAdView {
     /// auction (bidRequest → bidResponse/bidWon/noBid → adImpression/adClick/viewability). Prebid
     /// only assigns its own id after the request, so we pre-generate one for full-funnel counting.
     internal var currentAuctionId: String?
+    /// Currency + value captured from the GMA paid event (`AdValue`), which fires around impression.
+    /// Backfills `currency` (and cpm on a direct fill) on the render events, since exact economics
+    /// aren't available on the original API without the Prebid fork.
+    internal var lastPaidCurrency: String?
+    internal var lastPaidCpm: Double?
     /// Number of times this slot has (re)loaded — reported as `slot_reload`. First load = 0.
     internal var slotReloadCount: Int = 0
 

@@ -37,6 +37,10 @@ public class AURewardedView: AUAdView {
     /// SDK-generated auction id, minted at auction start and reused across every event of that
     /// auction (bidRequest → bidResponse/bidWon/noBid → adImpression/adClick/viewability).
     internal var currentAuctionId: String?
+    /// Currency + value captured from the GMA paid event (`AdValue`); backfills currency (and cpm)
+    /// on the render events, since exact economics aren't on the original API without the fork.
+    internal var lastPaidCurrency: String?
+    internal var lastPaidCpm: Double?
     /// Full-screen viewability driver (start on present, success after 1s, cancel on dismiss).
     internal var fullScreenViewabilityTimer: AUFullScreenViewabilityTimer?
     

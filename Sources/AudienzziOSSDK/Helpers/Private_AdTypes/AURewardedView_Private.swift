@@ -40,8 +40,7 @@ extension AURewardedView {
         currentAuctionId = AUUniqHelper.makeUniqID()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
-        adUnit.fetchDemand(adObject: gamRequest) { [weak self] bidInfo in
-            let resultCode = bidInfo.resultCode
+        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             AULogEvent.logDebug(
                 "Audienz demand fetch for GAM \(resultCode.name())"
             )
@@ -55,7 +54,8 @@ extension AURewardedView {
                 priceBucket: AUBannerView.keyword("hb_pb", in: rawTargeting),
                 hbSize: AUBannerView.keyword("hb_size", in: rawTargeting),
                 hbFormat: AUBannerView.keyword("hb_format", in: rawTargeting),
-                bidInfo: bidInfo
+                adId: AUBannerView.keyword("hb_adid", in: rawTargeting),
+                creativeId: AUBannerView.creativeIdKeyword(in: rawTargeting)
             )
             self.onLoadRequest?(gamRequest)
         }
@@ -75,7 +75,7 @@ extension AURewardedView {
     private func makeResultEvents(resultCode: ResultCode, timeToRespond: Int64,
                                   hbBidder: String?, priceBucket: String?,
                                   hbSize: String?, hbFormat: String?,
-                                  bidInfo: BidInfo) {
+                                  adId: String?, creativeId: String?) {
         guard let adUnitID = gadUnitID else { return }
         let codeName = AUResulrCodeConverter.convertResultCodeName(resultCode)
 
@@ -85,8 +85,10 @@ extension AURewardedView {
                 bidderCode: bidder, winnerBidderCode: bidder, winnerType: AUWinnerType.rtb,
                 priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
                 mediaType: hbFormat ?? "video", size: hbSize,
-                cpm: bidInfo.cpm, currency: bidInfo.currency, creativeId: bidInfo.creativeId,
-                auctionId: currentAuctionId, adId: bidInfo.adId ?? "0",
+                // Fork-free: cpm = bucketed hb_pb; currency from the GMA paid event at render;
+                // creative_id = bidder-specific keyword when present, else "0"; ad_id = hb_adid.
+                cpm: priceBucket.flatMap { Double($0) }, currency: nil, creativeId: creativeId ?? "0",
+                auctionId: currentAuctionId, adId: adId ?? "0",
                 timeToRespond: timeToRespond, slotReload: 0)
         }
 

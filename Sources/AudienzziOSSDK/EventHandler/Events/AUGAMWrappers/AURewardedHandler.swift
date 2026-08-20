@@ -49,6 +49,11 @@ class AURewardedHandler: NSObject,
 
     private func addListener() {
         handler.adUnit.fullScreenContentDelegate = self
+        // GMA paid value + currency (the only fork-free currency source), stashed for the render events.
+        handler.adUnit.paidEventHandler = { [weak adView] adValue in
+            adView?.lastPaidCurrency = adValue.currencyCode
+            adView?.lastPaidCpm = adValue.value.doubleValue
+        }
     }
 
     deinit {
@@ -87,6 +92,9 @@ class AURewardedHandler: NSObject,
             ec.creativeId = "0"
         }
         ec.auctionId = ec.auctionId ?? adView.currentAuctionId
+        // Currency (and cpm on a direct fill) from the GMA paid event.
+        ec.currency = ec.currency ?? adView.lastPaidCurrency
+        ec.cpm = ec.cpm ?? adView.lastPaidCpm
         return ec
     }
 

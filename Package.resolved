@@ -10,12 +10,12 @@
       }
     },
     {
-      "identity" : "audienzz-ios-prebid-sdk-fork",
+      "identity" : "prebid-mobile-ios",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/audienzz/audienzz-ios-prebid-sdk-fork.git",
+      "location" : "https://github.com/prebid/prebid-mobile-ios.git",
       "state" : {
-        "revision" : "f4bd087dde0e14920f29f62246c16d08e46e493f",
-        "version" : "3.3.1-audienzz.1"
+        "revision" : "4f96890f9f8b38db6abd92044a928a709d5458d2",
+        "version" : "3.3.1"
       }
     },
     {

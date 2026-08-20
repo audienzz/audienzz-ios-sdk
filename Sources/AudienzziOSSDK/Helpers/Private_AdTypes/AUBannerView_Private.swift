@@ -177,10 +177,9 @@ extension AUBannerView {
         currentAuctionId = AUUniqHelper.makeUniqID()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
-        adUnit.fetchDemand(adObject: gamRequest) { [weak self] bidInfo in
+        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
-            let resultCode = bidInfo.resultCode
             self.lastRefreshTime = Date()
             let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
 
@@ -196,6 +195,10 @@ extension AUBannerView {
             let hbBidder = AUBannerView.keyword("hb_bidder", in: rawTargeting)
             let hbPb = AUBannerView.keyword("hb_pb", in: rawTargeting)
             let hbFormat = AUBannerView.keyword("hb_format", in: rawTargeting)
+            // Fork-free economics come from the targeting keywords: hb_adid (ad id) and any
+            // bidder-specific `*creative_id` key (crid isn't a standard keyword).
+            let hbAdid = AUBannerView.keyword("hb_adid", in: rawTargeting)
+            let creativeId = AUBannerView.creativeIdKeyword(in: rawTargeting)
 
             if let str = hbSize {
                 self.lastPrebidCreativeSize = AUAdViewUtils.stringToCGSize(str)
@@ -210,7 +213,8 @@ extension AUBannerView {
                 priceBucket: hbPb,
                 hbSize: hbSize,
                 hbFormat: hbFormat,
-                bidInfo: bidInfo
+                adId: hbAdid,
+                creativeId: creativeId
             )
             self.isInitialAutorefresh = false
 
@@ -222,6 +226,17 @@ extension AUBannerView {
     static func keyword(_ key: String, in targeting: [AnyHashable: Any]) -> String? {
         if let str = targeting[key] as? String { return str }
         if let arr = targeting[key] as? [String] { return arr.first }
+        return nil
+    }
+
+    /// Best-effort creative id from targeting. Stock Prebid has no standard `crid` keyword, but some
+    /// SSP adapters emit a bidder-specific one (e.g. `hb_xandr_creative_id`). Returns the first
+    /// non-empty `*creative_id` value; callers fall back to `"0"`.
+    static func creativeIdKeyword(in targeting: [AnyHashable: Any]) -> String? {
+        for key in targeting.keys {
+            guard let k = key as? String, k.lowercased().hasSuffix("creative_id") else { continue }
+            if let v = keyword(k, in: targeting), !v.isEmpty { return v }
+        }
         return nil
     }
 
@@ -287,7 +302,7 @@ extension AUBannerView {
     private func makeResultEvents(resultCode: ResultCode, timeToRespond: Int64,
                                   hbBidder: String?, priceBucket: String?,
                                   hbSize: String?, hbFormat: String?,
-                                  bidInfo: BidInfo) {
+                                  adId: String?, creativeId: String?) {
         guard
             let autorefreshM = adUnitConfiguration
                 as? AUAdUnitConfigurationEventProtocol,
@@ -308,10 +323,11 @@ extension AUBannerView {
                 bidderCode: bidder, winnerBidderCode: bidder, winnerType: AUWinnerType.rtb,
                 priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
                 mediaType: hbFormat, size: hbSize,
-                cpm: bidInfo.cpm, currency: bidInfo.currency, creativeId: bidInfo.creativeId,
-                // Reuse the SDK-minted auction id (not Prebid's) so the whole funnel counts together.
-                // ad_id: prefer the bid's ad id, falling back to the web-style "0" stub when absent.
-                auctionId: currentAuctionId, adId: bidInfo.adId ?? "0",
+                // Fork-free economics: exact cpm/currency/crid aren't on the original (GAM) API.
+                // cpm = bucketed hb_pb; currency is backfilled from the GMA paid event at render;
+                // creative_id = bidder-specific targeting key when present, else "0"; ad_id = hb_adid.
+                cpm: priceBucket.flatMap { Double($0) }, currency: nil, creativeId: creativeId ?? "0",
+                auctionId: currentAuctionId, adId: adId ?? "0",
                 timeToRespond: timeToRespond, slotReload: slotReloadCount)
         }
 
@@ -362,6 +378,10 @@ extension AUBannerView {
         }
         // Always carry the SDK-minted auction id, even on a direct fill with no Prebid economics.
         ec.auctionId = ec.auctionId ?? currentAuctionId
+        // Currency (and, on a direct fill with no Prebid bid, cpm) come from the GMA paid event,
+        // which fires around impression — so they populate on adImpression/adClick/viewability.
+        ec.currency = ec.currency ?? lastPaidCurrency
+        ec.cpm = ec.cpm ?? lastPaidCpm
         return ec
     }
 

@@ -115,8 +115,8 @@ extension AUEventsManager {
         logEvent(e)
     }
 
-    // Economics (cpm/currency/creativeId/auctionId/adId/media_type/size/bidder_code) come from the
-    // winning bid via the patched Prebid fork (BidInfo surfaces them on the original/GAM API).
+    // Economics come from the Prebid targeting keywords on the GAM request (bidder_code, price
+    // bucket, size, media_type, hb_adid) plus the GMA paid event (currency); no Prebid fork needed.
     func bidWon(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                 adType: String, adSubtype: String, apiType: String,
                 isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
