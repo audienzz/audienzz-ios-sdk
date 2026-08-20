@@ -68,6 +68,7 @@ class AUBannerHandler: NSObject,
         // source). Stash it on the view so the render events can carry currency (and cpm on a
         // direct fill). Fires around impression, so it lands on adImpression/adClick/viewability.
         self.gamView.paidEventHandler = { [weak auBannerView] adValue in
+            AUAnalyticsDebugProbe.logAdValue(adValue, context: "banner")
             auBannerView?.lastPaidCurrency = adValue.currencyCode
             auBannerView?.lastPaidCpm = adValue.value.doubleValue
         }
@@ -122,6 +123,7 @@ class AUBannerHandler: NSObject,
     /// Tells the delegate that an impression has been recorded for an ad.
     func bannerViewDidRecordImpression(_ bannerView: BannerView) {
         LogEvent("bannerViewDidRecordImpression")
+        AUAnalyticsDebugProbe.logResponseInfo(bannerView.responseInfo, context: "banner")
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID ?? "",
             adType: AUAdType.banner,

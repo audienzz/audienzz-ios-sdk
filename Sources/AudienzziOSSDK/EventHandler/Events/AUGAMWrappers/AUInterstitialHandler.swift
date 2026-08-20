@@ -51,6 +51,7 @@ class AUInterstitialHandler: NSObject,
         handler.adUnit.fullScreenContentDelegate = self
         // GMA paid value + currency (the only fork-free currency source), stashed for the render events.
         handler.adUnit.paidEventHandler = { [weak adView] adValue in
+            AUAnalyticsDebugProbe.logAdValue(adValue, context: "interstitial")
             adView?.lastPaidCurrency = adValue.currencyCode
             adView?.lastPaidCpm = adValue.value.doubleValue
         }
@@ -62,6 +63,7 @@ class AUInterstitialHandler: NSObject,
 
     func adDidRecordImpression(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordImpression")
+        AUAnalyticsDebugProbe.logResponseInfo(handler.adUnit.responseInfo, context: "interstitial")
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID, adType: AUAdType.interstitial,
             adSubtype: adView.makeAdSubType(), apiType: AUEventApiType.original,

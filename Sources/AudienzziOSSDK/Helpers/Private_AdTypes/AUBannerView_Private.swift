@@ -191,6 +191,7 @@ extension AUBannerView {
             // fetchDemand. They arrive as [AnyHashable: Any]; a value can be a plain String or a
             // single-element Array depending on GAM SDK version — both handled by `keyword(_:)`.
             let rawTargeting = gamRequest.customTargeting as? [AnyHashable: Any] ?? [:]
+            AUAnalyticsDebugProbe.logTargeting(rawTargeting, context: "banner")
             let hbSize = AUBannerView.keyword("hb_size", in: rawTargeting)
             let hbBidder = AUBannerView.keyword("hb_bidder", in: rawTargeting)
             let hbPb = AUBannerView.keyword("hb_pb", in: rawTargeting)
