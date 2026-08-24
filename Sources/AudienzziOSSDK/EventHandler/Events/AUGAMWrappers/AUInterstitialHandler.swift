@@ -32,7 +32,9 @@ class AUInterstitialHandler: NSObject,
 {
 
     let handler: AUInterstitialEventHandler
-    let adView: AUInterstitialView
+    // weak: AUInterstitialView strongly holds this handler via `eventHandler`; a
+    // strong back-reference leaked the view and the full GAM ad object per screen.
+    weak var adView: AUInterstitialView?
     weak var fullScreentDelegate: FullScreenContentDelegate?
 
     init(handler: AUInterstitialEventHandler, adView: AUInterstitialView) {
@@ -64,8 +66,8 @@ class AUInterstitialHandler: NSObject,
         LogEvent("adDidRecordImpression")
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID, adType: AUAdType.interstitial,
-            adSubtype: adView.makeAdSubType(), apiType: AUEventApiType.original,
-            adViewId: adView.configId, economics: renderEconomics()
+            adSubtype: adView?.makeAdSubType() ?? "", apiType: AUEventApiType.original,
+            adViewId: adView?.configId ?? "", economics: renderEconomics()
         )
         fullScreentDelegate?.adDidRecordImpression?(ad)
     }
@@ -74,8 +76,8 @@ class AUInterstitialHandler: NSObject,
         LogEvent("adDidRecordClick")
         AUEventsManager.shared.adClick(
             adUnitId: adUnitID, adType: AUAdType.interstitial,
-            adSubtype: adView.makeAdSubType(), apiType: AUEventApiType.original,
-            adViewId: adView.configId, economics: renderEconomics()
+            adSubtype: adView?.makeAdSubType() ?? "", apiType: AUEventApiType.original,
+            adViewId: adView?.configId ?? "", economics: renderEconomics()
         )
         fullScreentDelegate?.adDidRecordClick?(ad)
     }
@@ -83,6 +85,7 @@ class AUInterstitialHandler: NSObject,
     /// Full-screen ads expose no app event; carry the winning-bid economics and best-effort
     /// bidder_code (the Prebid auction winner if there was one, else the ad server).
     private func renderEconomics() -> AURenderEconomics {
+        guard let adView else { return AURenderEconomics() }
         var ec = adView.lastRenderEconomics ?? AURenderEconomics()
         let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
         ec.bidderCode = bidder
@@ -103,7 +106,7 @@ class AUInterstitialHandler: NSObject,
         didFailToPresentFullScreenContentWithError error: any Error
     ) {
         LogEvent("didFailToPresentFullScreenContentWithError")
-        adView.fullScreenViewabilityTimer?.cancel()
+        adView?.fullScreenViewabilityTimer?.cancel()
         fullScreentDelegate?.ad?(
             ad,
             didFailToPresentFullScreenContentWithError: error
@@ -113,8 +116,8 @@ class AUInterstitialHandler: NSObject,
     func adWillPresentFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adWillPresentFullScreenContent")
         let adUnitID = self.adUnitID
-        let subtype = adView.makeAdSubType()
-        let viewId = adView.configId
+        let subtype = adView?.makeAdSubType() ?? ""
+        let viewId = adView?.configId ?? ""
         let economics = renderEconomics()
         let timer = AUFullScreenViewabilityTimer(
             onStart: {
@@ -130,7 +133,7 @@ class AUInterstitialHandler: NSObject,
                     adViewId: viewId, economics: economics)
             }
         )
-        adView.fullScreenViewabilityTimer = timer
+        adView?.fullScreenViewabilityTimer = timer
         timer.onShown()
         fullScreentDelegate?.adWillPresentFullScreenContent?(ad)
     }
@@ -142,7 +145,7 @@ class AUInterstitialHandler: NSObject,
 
     func adDidDismissFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidDismissFullScreenContent")
-        adView.fullScreenViewabilityTimer?.cancel()
+        adView?.fullScreenViewabilityTimer?.cancel()
         fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
     }
 }

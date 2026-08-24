@@ -131,7 +131,39 @@ public enum AUPlacement: Int {
     case InFeed
     case Interstitial
 
+    // NOTE: this enum is 0-based while Prebid's Signals.Placement is 1-based
+    // (InStream=1 … Interstitial=5). Mapping self.rawValue straight through
+    // shifted every value by one (e.g. .Interstitial emitted InFeed). Map to
+    // the named Prebid constants explicitly instead.
     internal var toPlacement: Signals.Placement {
-        Signals.Placement(integerLiteral: self.rawValue)
+        switch self {
+        case .InStream: return .InStream
+        case .InBanner: return .InBanner
+        case .InArticle: return .InArticle
+        case .InFeed: return .InFeed
+        case .Interstitial: return .Interstitial
+        }
+    }
+}
+
+/// # OpenRTB 2.6 - Updated Video Placement (plcmnt) #
+/// ```
+/// | Value | Description          |
+/// |-------|----------------------|
+/// | 1     | Instream             |
+/// | 2     | Accompanying Content |
+/// | 3     | Interstitial         |
+/// | 4     | No Content/Standalone|
+/// ```
+/// Preferred over the deprecated `placement` field by modern DSPs.
+@objc(AUPlcmnt)
+public enum AUPlcmnt: Int {
+    case instream = 1
+    case accompanyingContent = 2
+    case interstitial = 3
+    case noContent = 4
+
+    internal var toPlcmnt: Signals.Plcmnt {
+        Signals.Plcmnt(integerLiteral: self.rawValue)
     }
 }

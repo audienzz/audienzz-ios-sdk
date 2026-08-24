@@ -32,14 +32,17 @@ extension AUInstreamView {
 
     func fetchRequest() {
         adUnit.fetchDemand { [weak self] bidInfo in
-            guard let self = self,
-                let resultCode = AUResultCode(
-                    rawValue: bidInfo.resultCode.rawValue
-                )
-            else { return }
+            guard let self = self else { return }
+            let resultCode = AUResultCode(rawValue: bidInfo.resultCode.rawValue)
             if resultCode == .audienzzDemandFetchSuccess {
                 self.customKeywords = bidInfo.targetingKeywords
                 self.onLoadInstreamRequest?(bidInfo.targetingKeywords)
+            } else {
+                // On no-bid/timeout/error still request the IMA/GAM tag so
+                // GAM-direct and house demand can fill. Dropping the callback
+                // here forfeits the entire instream impression opportunity.
+                self.customKeywords = nil
+                self.onLoadInstreamRequest?(nil)
             }
         }
     }

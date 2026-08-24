@@ -92,7 +92,11 @@ public class AUNativeAd: NSObject {
     internal init(_ nativeAd: NativeAd) {
         super.init()
         self.nativeAd = nativeAd
-        self.subdelegate = AUNativeAdDelegateType(parent: self)
+        let subdelegate = AUNativeAdDelegateType(parent: self)
+        self.subdelegate = subdelegate
+        // Without this, Prebid's NativeAd never forwards impression/click/expiry
+        // events, so AUNativeAdEventDelegate callbacks never fire.
+        self.nativeAd.delegate = subdelegate
     }
 
     //MARK: registerView function

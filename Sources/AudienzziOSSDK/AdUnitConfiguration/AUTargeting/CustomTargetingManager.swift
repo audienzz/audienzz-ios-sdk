@@ -80,9 +80,12 @@ class CustomTargetingManager {
 
     /** For GAM requests - apply global targeting  */
     func applyToGamRequest(request: AdManagerRequest) -> AdManagerRequest {
-        // Start with publisher keys, then overlay SDK-reserved keys so they
-        // always win — publisher can never overwrite them.
-        var targeting = targetingMap
+        // Merge into whatever the publisher already set on the request (e.g.
+        // direct-sold GAM line-item keys) — assigning outright wiped those and
+        // broke direct-sold delivery. Then overlay SDK keys, then reserved keys
+        // last so the SDK's own values always win.
+        var targeting = request.customTargeting ?? [:]
+        targetingMap.forEach { targeting[$0.key] = $0.value }
         targeting["au_sdk"] = sdkPlatform
         if !sdkVersion.isEmpty {
             targeting["au_v"] = sdkVersion

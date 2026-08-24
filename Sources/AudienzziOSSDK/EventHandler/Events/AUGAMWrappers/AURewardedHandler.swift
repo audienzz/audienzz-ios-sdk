@@ -32,7 +32,9 @@ class AURewardedHandler: NSObject,
 {
 
     let handler: AURewardedEventHandler
-    let adView: AURewardedView
+    // weak: AURewardedView strongly holds this handler via `eventHandler`; a
+    // strong back-reference leaked the view and the full GAM ad object per screen.
+    weak var adView: AURewardedView?
     weak var fullScreentDelegate: FullScreenContentDelegate?
 
     init(handler: AURewardedEventHandler, adView: AURewardedView) {
@@ -65,7 +67,7 @@ class AURewardedHandler: NSObject,
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID, adType: AUAdType.rewarded,
             adSubtype: AUAdSubtype.video, apiType: AUEventApiType.original,
-            adViewId: adView.configId, economics: renderEconomics()
+            adViewId: adView?.configId ?? "", economics: renderEconomics()
         )
         fullScreentDelegate?.adDidRecordImpression?(ad)
     }
@@ -75,7 +77,7 @@ class AURewardedHandler: NSObject,
         AUEventsManager.shared.adClick(
             adUnitId: adUnitID, adType: AUAdType.rewarded,
             adSubtype: AUAdSubtype.video, apiType: AUEventApiType.original,
-            adViewId: adView.configId, economics: renderEconomics()
+            adViewId: adView?.configId ?? "", economics: renderEconomics()
         )
         fullScreentDelegate?.adDidRecordClick?(ad)
     }
@@ -83,6 +85,7 @@ class AURewardedHandler: NSObject,
     /// Full-screen ads expose no app event; carry the winning-bid economics and best-effort
     /// bidder_code (the Prebid auction winner if there was one, else the ad server).
     private func renderEconomics() -> AURenderEconomics {
+        guard let adView else { return AURenderEconomics() }
         var ec = adView.lastRenderEconomics ?? AURenderEconomics()
         let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
         ec.bidderCode = bidder
@@ -103,7 +106,7 @@ class AURewardedHandler: NSObject,
         didFailToPresentFullScreenContentWithError error: any Error
     ) {
         LogEvent("didFailToPresentFullScreenContentWithError")
-        adView.fullScreenViewabilityTimer?.cancel()
+        adView?.fullScreenViewabilityTimer?.cancel()
         fullScreentDelegate?.ad?(
             ad,
             didFailToPresentFullScreenContentWithError: error
@@ -125,7 +128,7 @@ class AURewardedHandler: NSObject,
                     adSubtype: AUAdSubtype.video, apiType: AUEventApiType.original)
             }
         )
-        adView.fullScreenViewabilityTimer = timer
+        adView?.fullScreenViewabilityTimer = timer
         timer.onShown()
         fullScreentDelegate?.adWillPresentFullScreenContent?(ad)
     }
@@ -137,7 +140,7 @@ class AURewardedHandler: NSObject,
 
     func adDidDismissFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidDismissFullScreenContent")
-        adView.fullScreenViewabilityTimer?.cancel()
+        adView?.fullScreenViewabilityTimer?.cancel()
         fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
     }
 }

@@ -62,6 +62,20 @@ Follow these steps to get your first ad showing:
 6. Verify
    - See Verification section below for what to look for
 
+## Consent
+
+The SDK does **not** gate itself on user consent — that's the app's responsibility.
+Run your CMP (consent) flow and forward the result **before** you call
+`configureSDK` or load any ads:
+
+1. Show your CMP and obtain the user's choice.
+2. Forward the consent signals (GDPR subject, TCF consent string, purpose
+   consents) via `AUTargeting.shared`.
+3. **Then** call `Audienzz.shared.configureSDK(...)` and load ads.
+
+Initializing or loading ads before consent will request ads without the consent
+signals.
+
 ## Initialize SDK
 
 Initialize the SDK in your `AppDelegate`:

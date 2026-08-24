@@ -66,8 +66,12 @@ public class AUVideoParameters: NSObject {
     /// Indicates the start delay in seconds for pre-roll, mid-roll, or post-roll ad placements.
     public var startDelay: AUVideoStartDelay?
 
-    /// Placement type for the impression.
+    /// Placement type for the impression (deprecated OpenRTB `video.placement`).
     public var placement: AUPlacement?
+
+    /// OpenRTB 2.6 placement type for the impression (`video.plcmnt`).
+    /// Preferred over `placement` by modern DSPs.
+    public var plcmnt: AUPlcmnt?
 
     /// Indicates if the impression must be linear, nonlinear, etc. If none specified, assume all are allowed.
     public var linearity: Int?
@@ -117,5 +121,10 @@ public class AUVideoParameters: NSObject {
     /// Placement type for the impression.
     public func setPlacement(_ value: AUPlacement) {
         self.placement = value
+    }
+
+    /// OpenRTB 2.6 placement type for the impression (`video.plcmnt`).
+    public func setPlcmnt(_ value: AUPlcmnt) {
+        self.plcmnt = value
     }
 }

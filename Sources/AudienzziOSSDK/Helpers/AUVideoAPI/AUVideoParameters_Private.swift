@@ -57,6 +57,7 @@ extension AUVideoParameters {
         parameters.protocols = toProtocols()
         parameters.playbackMethod = toPlaybackMethods()
         parameters.placement = placement?.toPlacement
+        parameters.plcmnt = plcmnt?.toPlcmnt
 
         parameters.api = toApi()
         parameters.startDelay = startDelay?.toStartDelay

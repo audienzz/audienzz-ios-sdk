@@ -34,7 +34,11 @@ class AUBannerHandler: NSObject,
     AULogEventType
 {
 
-    let auBannerView: AUBannerView
+    // weak: AUBannerView strongly holds this handler via `eventHandler`. A strong
+    // back-reference here formed a retain cycle that leaked the view, its GAM view
+    // and WKWebView, and the Prebid ad unit — and the leaked dispatcher kept
+    // auctioning an invisible, detached ad indefinitely.
+    weak var auBannerView: AUBannerView?
     let gamView: AdManagerBannerView!
     weak var bannerDelegate: BannerViewDelegate?
     weak var eventDelegate: AppEventDelegate?
@@ -100,7 +104,7 @@ class AUBannerHandler: NSObject,
 
             if actualSize != .zero {
                 gamBannerView.resize(adSizeFor(cgSize: actualSize))
-                auBannerView.onAdSizeChanged?(actualSize)
+                auBannerView?.onAdSizeChanged?(actualSize)
             }
         }
         pendingGAMSize = nil
@@ -125,12 +129,12 @@ class AUBannerHandler: NSObject,
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID ?? "",
             adType: AUAdType.banner,
-            adSubtype: auBannerView.makeAdSubType(),
+            adSubtype: auBannerView?.makeAdSubType() ?? "",
             apiType: AUEventApiType.original,
-            adViewId: auBannerView.configId,
+            adViewId: auBannerView?.configId ?? "",
             economics: renderEconomics()
         )
-        auBannerView.startViewabilityTracking()
+        auBannerView?.startViewabilityTracking()
         bannerDelegate?.bannerViewDidRecordImpression?(bannerView)
     }
 
@@ -140,9 +144,9 @@ class AUBannerHandler: NSObject,
         AUEventsManager.shared.adClick(
             adUnitId: adUnitID ?? "",
             adType: AUAdType.banner,
-            adSubtype: auBannerView.makeAdSubType(),
+            adSubtype: auBannerView?.makeAdSubType() ?? "",
             apiType: AUEventApiType.original,
-            adViewId: auBannerView.configId,
+            adViewId: auBannerView?.configId ?? "",
             economics: renderEconomics()
         )
         bannerDelegate?.bannerViewDidRecordClick?(bannerView)
@@ -152,7 +156,7 @@ class AUBannerHandler: NSObject,
     /// click and viewability all attribute the same render winner (Prebid line item only when its
     /// GAM app event fired, else the ad server) and carry the SDK-minted auction id.
     private func renderEconomics() -> AURenderEconomics {
-        auBannerView.resolvedRenderEconomics()
+        auBannerView?.resolvedRenderEconomics() ?? AURenderEconomics()
     }
 
     // MARK: - Click-Time
@@ -182,7 +186,7 @@ class AUBannerHandler: NSObject,
         // A Prebid line item's creative fires this app event when it wins the GAM auction;
         // its absence by impression time means the ad server (Google) rendered.
         if name.caseInsensitiveCompare(PREBID_APP_EVENT) == .orderedSame {
-            auBannerView.prebidLineItemWon = true
+            auBannerView?.prebidLineItemWon = true
         }
         eventDelegate?.adView?(banner, didReceiveAppEvent: name, with: info)
     }
