@@ -47,7 +47,6 @@ extension AURewardedView {
             guard let self = self else { return }
             let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
             let rawTargeting = gamRequest.customTargeting as? [AnyHashable: Any] ?? [:]
-            AUAnalyticsDebugProbe.logTargeting(rawTargeting, context: "rewarded")
             self.makeResultEvents(
                 resultCode: resultCode,
                 timeToRespond: timeToRespond,
