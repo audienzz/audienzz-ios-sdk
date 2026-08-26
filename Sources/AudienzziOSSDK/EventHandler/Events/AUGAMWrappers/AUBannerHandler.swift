@@ -68,6 +68,13 @@ class AUBannerHandler: NSObject,
         self.gamView.delegate = self
         self.gamView.appEventDelegate = self
         self.gamView.adSizeDelegate = self
+        // GMA reports the impression's paid value + currency here (the only fork-free currency
+        // source). Stash it on the view so the render events can carry currency (and cpm on a
+        // direct fill). Fires around impression, so it lands on adImpression/adClick/viewability.
+        self.gamView.paidEventHandler = { [weak auBannerView] adValue in
+            auBannerView?.lastPaidCurrency = adValue.currencyCode
+            auBannerView?.lastPaidCpm = adValue.value.doubleValue
+        }
     }
 
     deinit {
@@ -110,23 +117,6 @@ class AUBannerHandler: NSObject,
     ) {
         LogEvent("didFailToReceiveAdWithError")
         LogEvent(error.localizedDescription)
-
-        let event = AUFailedLoadEvent(
-            adViewId: auBannerView?.configId ?? "",
-            adUnitID: adUnitID ?? "",
-            errorMessage: error.localizedDescription,
-            errorCode: error.errorCode ?? -1
-        )
-
-        guard let payload = event.convertToJSONString() else {
-            bannerDelegate?.bannerView?(
-                bannerView,
-                didFailToReceiveAdWithError: error
-            )
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
         bannerDelegate?.bannerView?(
             bannerView,
             didFailToReceiveAdWithError: error
@@ -136,26 +126,37 @@ class AUBannerHandler: NSObject,
     /// Tells the delegate that an impression has been recorded for an ad.
     func bannerViewDidRecordImpression(_ bannerView: BannerView) {
         LogEvent("bannerViewDidRecordImpression")
+        AUEventsManager.shared.adImpression(
+            adUnitId: adUnitID ?? "",
+            adType: AUAdType.banner,
+            adSubtype: auBannerView?.makeAdSubType() ?? "",
+            apiType: AUEventApiType.original,
+            adViewId: auBannerView?.configId ?? "",
+            economics: renderEconomics()
+        )
+        auBannerView?.startViewabilityTracking()
         bannerDelegate?.bannerViewDidRecordImpression?(bannerView)
     }
 
     /// Tells the delegate that a click has been recorded for the ad.
     func bannerViewDidRecordClick(_ bannerView: BannerView) {
         LogEvent("bannerViewDidRecordClick")
-
-        let event = AUAdClickEvent(
+        AUEventsManager.shared.adClick(
+            adUnitId: adUnitID ?? "",
+            adType: AUAdType.banner,
+            adSubtype: auBannerView?.makeAdSubType() ?? "",
+            apiType: AUEventApiType.original,
             adViewId: auBannerView?.configId ?? "",
-            adUnitID: adUnitID ?? ""
+            economics: renderEconomics()
         )
-
-        guard let payload = event.convertToJSONString() else {
-            bannerDelegate?.bannerViewDidRecordClick?(bannerView)
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-
         bannerDelegate?.bannerViewDidRecordClick?(bannerView)
+    }
+
+    /// Economics reported on render events. Delegates to the view's shared resolver so impression,
+    /// click and viewability all attribute the same render winner (Prebid line item only when its
+    /// GAM app event fired, else the ad server) and carry the SDK-minted auction id.
+    private func renderEconomics() -> AURenderEconomics {
+        auBannerView?.resolvedRenderEconomics() ?? AURenderEconomics()
     }
 
     // MARK: - Click-Time
@@ -182,6 +183,11 @@ class AUBannerHandler: NSObject,
         with info: String?
     ) {
         LogEvent("didReceiveAppEvent")
+        // A Prebid line item's creative fires this app event when it wins the GAM auction;
+        // its absence by impression time means the ad server (Google) rendered.
+        if name.caseInsensitiveCompare(PREBID_APP_EVENT) == .orderedSame {
+            auBannerView?.prebidLineItemWon = true
+        }
         eventDelegate?.adView?(banner, didReceiveAppEvent: name, with: info)
     }
 

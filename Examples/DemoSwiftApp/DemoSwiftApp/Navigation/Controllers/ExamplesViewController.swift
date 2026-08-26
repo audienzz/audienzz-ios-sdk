@@ -88,6 +88,14 @@ class ExamplesViewController: UIViewController {
         setupALazydContainer()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Track the screen visit for analytics (fires `pageImpression` + a fresh page-impression id
+        // that ties this screen's ad events together). Do this in viewWillAppear — before the view
+        // lays out and banners prefetch — so every ad event inherits the page-impression id.
+        Audienzz.shared.onScreenResumed(self)
+    }
+
     private func setupAdContainer() {
         createBannerView_320x50()
         createbannerView_300x250()

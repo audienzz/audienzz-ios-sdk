@@ -1,0 +1,140 @@
+/*   Copyright 2018-2025 Audienzz.org, Inc.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+import Foundation
+import UIKit
+import WebKit
+
+/// Maps an `AUEventDomain` to the flat `AUEventNetwork` payload, filling the common envelope
+/// (locale, timezone, screen, app/sdk metadata, user agent). Mirrors Android's `EventNetworkMapper`.
+struct AUEventNetworkMapper {
+
+    static let source = "ios-sdk"
+    static let sdkName = "ios"
+
+    // App metadata is constant for the process — resolve once.
+    private static let appPackageName = Bundle.main.bundleIdentifier
+    private static let appVersion =
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    private static let appTitle =
+        (Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
+        ?? (Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String)
+
+    /// The real WebView user agent (the creative renders in a WKWebView). Resolved once on the main
+    /// thread via KVC; nil if unavailable. Mirrors Android's `WebSettings.getDefaultUserAgent`.
+    private static let userAgent: String? = {
+        let resolve: () -> String? = { WKWebView().value(forKey: "userAgent") as? String }
+        return Thread.isMainThread ? resolve() : DispatchQueue.main.sync(execute: resolve)
+    }()
+
+    /// Locale as a BCP-47 language tag with hyphens (e.g. `uk-UA`), matching Android's `toLanguageTag()`.
+    private static let localeTag: String = {
+        if #available(iOS 16, *) { return Locale.current.identifier(.bcp47) }
+        return Locale.current.identifier.replacingOccurrences(of: "_", with: "-")
+    }()
+
+    // Envelope device fields — known directly on mobile.
+    private static let osName = "iOS"
+    private static let deviceCategory: String =
+        UIDevice.current.userInterfaceIdiom == .pad ? "Tablet" : "Smartphone"
+    // No real browser in-app; the creative renders in a WKWebView.
+    private static let browserName = "WKWebView"
+
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        f.timeZone = TimeZone(identifier: "UTC")
+        return f
+    }()
+
+    func toNetwork(_ event: AUEventDomain) -> AUEventNetwork {
+        let screen = UIScreen.main.bounds.size
+        let width = Int(screen.width)
+        let height = Int(screen.height)
+
+        return AUEventNetwork(
+            eventType: event.type.rawValue,
+            companyId: event.companyId,
+            source: Self.source,
+            eventId: event.uuid ?? UUID().uuidString.lowercased(),
+            pageImpressionId: event.pageImpressionId,
+            sessionId: event.sessionId,
+            sessionStartTimestamp: event.sessionStartTimestamp,
+            sessionSeq: event.sessionSeq ?? 0,
+            eventTimestamp: Self.dateFormatter.string(from: event.timestamp),
+            locale: Self.localeTag,
+            zoneOffsetSeconds: TimeZone.current.secondsFromGMT(),
+            screenHeight: height,
+            screenWidth: width,
+            viewportHeight: height,
+            viewportWidth: width,
+            deviceId: event.deviceId,
+            userAgent: Self.userAgent,
+            osName: Self.osName,
+            deviceCategory: Self.deviceCategory,
+            browserName: Self.browserName,
+            sdkName: Self.sdkName,
+            sdkVersion: AUSDKVersion,
+            appPackageName: Self.appPackageName,
+            appVersion: Self.appVersion,
+            appTitle: Self.appTitle,
+            screenName: event.screenName,
+            pageUrl: nil,
+            visitorId: event.visitorId,
+            attributes: Self.buildAttributes(event)
+        )
+    }
+
+    private static func buildAttributes(_ e: AUEventDomain) -> [String: String] {
+        var a: [String: String] = [:]
+        if let v = e.adUnitId { a["ad_unit_id"] = v }
+        if let v = e.resultCode { a["result_code"] = v }
+        if let v = e.sizes { a["sizes"] = v }
+        if let v = e.adType { a["ad_type"] = v }
+        if let v = e.adSubtype { a["ad_subtype"] = v }
+        if let v = e.apiType { a["api_type"] = v }
+        if let v = e.isAutorefresh { a["autorefresh"] = String(v) }
+        if let v = e.autorefreshTime { a["autorefresh_time"] = String(v) }
+        if let v = e.isRefresh { a["refresh"] = String(v) }
+        if let v = e.timeToRespond { a["time_to_respond"] = String(v) }
+        if let v = e.bidderCode { a["bidder_code"] = v }
+        if let v = e.priceBucket { a["price_bucket"] = v }
+        if let v = e.hbSize { a["hb_size"] = v }
+        if let v = e.hbFormat { a["hb_format"] = v }
+        // Round to 6 dp: Prebid's Bid.price is a Float, so widening to Double adds noise
+        // (e.g. 1.4249999523…). 6 dp preserves real sub-cent precision while emitting a clean value.
+        if let v = e.cpm { a["cpm"] = String((v * 1_000_000).rounded() / 1_000_000) }
+        if let v = e.currency { a["currency"] = v }
+        if let v = e.creativeId { a["creative_id"] = v }
+        if let v = e.auctionId { a["auction_id"] = v }
+        if let v = e.adId { a["ad_id"] = v }
+        // Web-clickstream parity attributes.
+        if let v = e.adViewId { a["ad_unit_code"] = v }        // Prebid configId
+        if let v = e.websiteId { a["website_id"] = v }         // remote-config publisherId
+        if let v = e.mediaType { a["media_type"] = v }
+        if let v = e.mediaTypes { a["media_types"] = v }
+        if let v = e.size { a["size"] = v }
+        if let v = e.slotReload { a["slot_reload"] = String(v) }
+        if let v = e.consentString { a["consent_string"] = v }
+        // Transport is constant for the SDK (single POST per event, like the web XHR beacon).
+        a["transport"] = "xhr"
+        // Viewability events carry the tracker version.
+        if e.type == .viewabilityStart || e.type == .viewabilitySuccess {
+            a["tracker_version"] = AUViewabilityTracker.trackerVersion
+        }
+        return a
+    }
+}

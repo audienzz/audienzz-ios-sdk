@@ -20,6 +20,7 @@ public class AudienzzRemoteConfig: NSObject {
 
     // MARK: - Properties
 
+    // Exposed read-only: analytics reports it as `website_id`.
     private(set) var publisherId: String?
     private var remoteUrl: URL?
 

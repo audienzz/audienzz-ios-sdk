@@ -73,10 +73,7 @@ public class AUMultiplatformView: AUAdView {
         
         self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
         self.gadUnitID = adUnitID
-        AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
-        
-        makeCreationEvent()
-        
+
         if !self.isLazyLoad {
             fetchRequest(gamRequest, prebidRequest: prebidRequest)
         }

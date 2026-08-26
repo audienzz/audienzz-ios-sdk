@@ -29,6 +29,20 @@ public class AURewardedView: AUAdView {
     internal var eventHandler: AURewardedHandler?
     internal var gadUnitID: String?
     public var videoParameters: AUVideoParameters?
+
+    /// Prebid auction winner (hb_bidder), captured on bid success and reported on adImpression.
+    internal var prebidWinningBidder: String?
+    /// Winning-bid economics from the last auction, reused on adImpression/adClick/viewability.
+    internal var lastRenderEconomics: AURenderEconomics?
+    /// SDK-generated auction id, minted at auction start and reused across every event of that
+    /// auction (bidRequest → bidResponse/bidWon/noBid → adImpression/adClick/viewability).
+    internal var currentAuctionId: String?
+    /// Currency + value captured from the GMA paid event (`AdValue`); backfills currency (and cpm)
+    /// on the render events, since exact economics aren't on the original API without the fork.
+    internal var lastPaidCurrency: String?
+    internal var lastPaidCpm: Double?
+    /// Full-screen viewability driver (start on present, success after 1s, cancel on dismiss).
+    internal var fullScreenViewabilityTimer: AUFullScreenViewabilityTimer?
     
     /**
      Initialize rewarded view.
@@ -87,7 +101,6 @@ public class AURewardedView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd(with gamRequest: AdManagerRequest, adUnitID: String) {
-        AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
         self.gadUnitID = adUnitID
         adUnit.videoParameters = videoParameters?.unwrap() ?? defaultVideoParameters(placement: .Interstitial, plcmnt: .Interstitial)
         let ppid = PPIDManager.shared.getPPID()
@@ -111,6 +124,5 @@ public class AURewardedView: AUAdView {
     
     public func connectHandler(_ eventHandler: AURewardedEventHandler) {
         self.eventHandler = AURewardedHandler(handler: eventHandler, adView: self)
-        makeCreationEvent()
     }
 }

@@ -26,7 +26,15 @@ internal class AUUniqHelper {
         guard size.width > 0 && size.height > 0 else {
             return sizeUndefined
         }
-        
+
         return "\(Int(size.width))x\(Int(size.height))"
+    }
+
+    /// `sizes` as a JSON-array-encoded string (web-schema parity, like `media_types`) — e.g.
+    /// `["300x250"]`. Returns `nil` for an undefined size so the attribute is simply omitted.
+    static func sizesJSON(_ size: CGSize) -> String? {
+        let s = sizeMaker(size)
+        guard s != sizeUndefined else { return nil }
+        return "[\"\(s)\"]"
     }
 }

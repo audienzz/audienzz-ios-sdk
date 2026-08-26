@@ -51,6 +51,11 @@ class AURewardedHandler: NSObject,
 
     private func addListener() {
         handler.adUnit.fullScreenContentDelegate = self
+        // GMA paid value + currency (the only fork-free currency source), stashed for the render events.
+        handler.adUnit.paidEventHandler = { [weak adView] adValue in
+            adView?.lastPaidCurrency = adValue.currencyCode
+            adView?.lastPaidCpm = adValue.value.doubleValue
+        }
     }
 
     deinit {
@@ -59,25 +64,41 @@ class AURewardedHandler: NSObject,
 
     func adDidRecordImpression(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordImpression")
+        AUEventsManager.shared.adImpression(
+            adUnitId: adUnitID, adType: AUAdType.rewarded,
+            adSubtype: AUAdSubtype.video, apiType: AUEventApiType.original,
+            adViewId: adView?.configId ?? "", economics: renderEconomics()
+        )
         fullScreentDelegate?.adDidRecordImpression?(ad)
     }
 
     func adDidRecordClick(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidRecordClick")
-
-        let event = AUAdClickEvent(
-            adViewId: adView?.configId ?? "",
-            adUnitID: adUnitID
+        AUEventsManager.shared.adClick(
+            adUnitId: adUnitID, adType: AUAdType.rewarded,
+            adSubtype: AUAdSubtype.video, apiType: AUEventApiType.original,
+            adViewId: adView?.configId ?? "", economics: renderEconomics()
         )
-
-        guard let payload = event.convertToJSONString() else {
-            fullScreentDelegate?.adDidRecordClick?(ad)
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-
         fullScreentDelegate?.adDidRecordClick?(ad)
+    }
+
+    /// Full-screen ads expose no app event; carry the winning-bid economics and best-effort
+    /// bidder_code (the Prebid auction winner if there was one, else the ad server).
+    private func renderEconomics() -> AURenderEconomics {
+        guard let adView else { return AURenderEconomics() }
+        var ec = adView.lastRenderEconomics ?? AURenderEconomics()
+        let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
+        ec.bidderCode = bidder
+        if bidder == AD_SERVER_BIDDER {
+            // Ad server rendered — zero the creative id so a direct-sold impression isn't
+            // misclassified as RTB (GMA exposes no served-creative id → "0" stub).
+            ec.creativeId = "0"
+        }
+        ec.auctionId = ec.auctionId ?? adView.currentAuctionId
+        // Currency (and cpm on a direct fill) from the GMA paid event.
+        ec.currency = ec.currency ?? adView.lastPaidCurrency
+        ec.cpm = ec.cpm ?? adView.lastPaidCpm
+        return ec
     }
 
     func ad(
@@ -85,22 +106,7 @@ class AURewardedHandler: NSObject,
         didFailToPresentFullScreenContentWithError error: any Error
     ) {
         LogEvent("didFailToPresentFullScreenContentWithError")
-
-        let event = AUFailedLoadEvent(
-            adViewId: adView?.configId ?? "",
-            adUnitID: adUnitID,
-            errorMessage: error.localizedDescription,
-            errorCode: error.errorCode ?? -1
-        )
-
-        guard event.convertToJSONString() != nil else {
-            fullScreentDelegate?.ad?(
-                ad,
-                didFailToPresentFullScreenContentWithError: error
-            )
-            return
-        }
-
+        adView?.fullScreenViewabilityTimer?.cancel()
         fullScreentDelegate?.ad?(
             ad,
             didFailToPresentFullScreenContentWithError: error
@@ -109,6 +115,21 @@ class AURewardedHandler: NSObject,
 
     func adWillPresentFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adWillPresentFullScreenContent")
+        let adUnitID = self.adUnitID
+        let timer = AUFullScreenViewabilityTimer(
+            onStart: {
+                AUEventsManager.shared.viewabilityStart(
+                    adUnitId: adUnitID, adType: AUAdType.rewarded,
+                    adSubtype: AUAdSubtype.video, apiType: AUEventApiType.original)
+            },
+            onSuccess: {
+                AUEventsManager.shared.viewabilitySuccess(
+                    adUnitId: adUnitID, adType: AUAdType.rewarded,
+                    adSubtype: AUAdSubtype.video, apiType: AUEventApiType.original)
+            }
+        )
+        adView?.fullScreenViewabilityTimer = timer
+        timer.onShown()
         fullScreentDelegate?.adWillPresentFullScreenContent?(ad)
     }
 
@@ -119,18 +140,7 @@ class AURewardedHandler: NSObject,
 
     func adDidDismissFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidDismissFullScreenContent")
-
-        let event = AUCloseAdEvent(
-            adViewId: adView?.configId ?? "",
-            adUnitID: adUnitID
-        )
-        guard let payload = event.convertToJSONString() else {
-            fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
-            return
-        }
-
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-
+        adView?.fullScreenViewabilityTimer?.cancel()
         fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
     }
 }

@@ -15,8 +15,7 @@
 
 import Foundation
 
-fileprivate let baseUrl: String = "https://api.adnz.co/api/ws-event-ingester"
-//fileprivate let baseUrl: String = "https://api.adnz.co/api/ws-event-ingester"
+fileprivate let baseUrl: String = "https://api.adnz.co/api/ws-clickstream-collector"
 
 enum APIRoute<T: JSONObjectDecodable> {
     case visitorId
@@ -52,7 +51,7 @@ final class APIGateway<T: APIResult>: APIMethodBuilderType {
             let jsonData = try? encodeJSON(json: models )
             return APIMethod(request: HTTPRequest(method: HTTPMethodType.POST,
                                                   url: URL(string: "\(baseUrl)/submit/batch")!,
-                                                  headers: ["Content-Type": "application/cloudevents-batch+json"],
+                                                  headers: ["Content-Type": "application/json"],
                                                   body: jsonData),
                              resultParser: route.parser)
             

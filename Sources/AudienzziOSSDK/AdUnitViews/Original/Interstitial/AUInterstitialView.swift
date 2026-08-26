@@ -28,7 +28,21 @@ public class AUInterstitialView: AUAdView {
     internal var gamRequest: AnyObject?
     internal var eventHandler: AUInterstitialHandler?
     internal var gadUnitID: String?
-    
+
+    /// Prebid auction winner (hb_bidder), captured on bid success and reported on adImpression.
+    internal var prebidWinningBidder: String?
+    /// Winning-bid economics from the last auction, reused on adImpression/adClick/viewability.
+    internal var lastRenderEconomics: AURenderEconomics?
+    /// SDK-generated auction id, minted at auction start and reused across every event of that
+    /// auction (bidRequest → bidResponse/bidWon/noBid → adImpression/adClick/viewability).
+    internal var currentAuctionId: String?
+    /// Currency + value captured from the GMA paid event (`AdValue`); backfills currency (and cpm)
+    /// on the render events, since exact economics aren't on the original API without the fork.
+    internal var lastPaidCurrency: String?
+    internal var lastPaidCpm: Double?
+    /// Full-screen viewability driver (start on present, success after 1s, cancel on dismiss).
+    internal var fullScreenViewabilityTimer: AUFullScreenViewabilityTimer?
+
     public var videoParameters: AUVideoParameters?
     public var bannerParameters = AUBannerParameters()
     
@@ -107,8 +121,8 @@ public class AUInterstitialView: AUAdView {
         adUnit.bannerParameters = bannerParameters.makeBannerParameters()
         
         adUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters(placement: .Interstitial, plcmnt: .Interstitial)
-        
-        AUEventsManager.shared.checkImpression(self, adUnitID: adUnitID)
+
+
         self.gadUnitID = adUnitID
         
         let ppid = PPIDManager.shared.getPPID()
@@ -135,7 +149,6 @@ public class AUInterstitialView: AUAdView {
 
     public func connectHandler(_ eventHandler: AUInterstitialEventHandler) {
         self.eventHandler = AUInterstitialHandler(handler: eventHandler, adView: self)
-        makeCreationEvent()
     }
     
  }

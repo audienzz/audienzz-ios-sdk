@@ -124,7 +124,6 @@ public class AUBannerRenderingView: AUAdView {
      If you use VIDEO please use 'setVideoParameters' method befrore.
      */
     public func createAd() {
-        AUEventsManager.shared.checkImpression(self, adUnitID: eventHandler?.adUnitID)
         bannerView.delegate = subdelegate
         
         self.addSubview(bannerView)
@@ -190,47 +189,19 @@ internal class AUBannerRenderingDelegateType: NSObject, BannerViewDelegate {
         parent.delegate?.bannerViewDidDismissModal?(parent)
     }
     
-    private func makeCloseEvent(_ parent: AUBannerRenderingView) {
-        let event = AUCloseAdEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
-    
+    // Rendering API: analytics not ported beyond adClick (bid funnel/impression handled by Prebid's
+    // own rendering path). Close/error events are not part of the clickstream schema.
+    private func makeCloseEvent(_ parent: AUBannerRenderingView) {}
+
     private func makeClickEvent(_ parent: AUBannerRenderingView) {
-        let event = AUAdClickEvent(adViewId: parent.configId, adUnitID: parent.eventHandler?.adUnitID ?? "")
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
+        AUEventsManager.shared.adClick(adUnitId: parent.eventHandler?.adUnitID ?? "")
     }
-    
-    private func makeErrorEvent(parent: AUBannerRenderingView, _ error: Error) {
-        let event = AUFailedLoadEvent(adViewId: parent.configId,
-                                      adUnitID: parent.eventHandler?.adUnitID ?? "",
-                                      errorMessage: error.localizedDescription,
-                                      errorCode: error.errorCode ?? -1)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
+
+    private func makeErrorEvent(parent: AUBannerRenderingView, _ error: Error) {}
 }
 
 fileprivate extension AUBannerRenderingView {
-    func makeCreationEvent(_ format: AUAdFormat, eventHandler: AUGAMBannerEventHandler) {
-        let event = AUAdCreationEvent(adViewId: configId,
-                                      adUnitID: eventHandler.adUnitID,
-                                      size: AUUniqHelper.sizeMaker(adSize),
-                                      adType: adTypeString,
-                                      adSubType: "MULTIFORMAT",
-                                      apiType: apiTypeString)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
+    func makeCreationEvent(_ format: AUAdFormat, eventHandler: AUGAMBannerEventHandler) {}
     
     func setupVideoParameters(_ videoParameters: AUVideoParameters) {
         bannerView.videoParameters.protocols = videoParameters.toProtocols()

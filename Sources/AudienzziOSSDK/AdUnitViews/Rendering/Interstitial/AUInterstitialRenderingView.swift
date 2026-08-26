@@ -101,7 +101,6 @@ public class AUInterstitialRenderingView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd() {
-        AUEventsManager.shared.checkImpression(self, adUnitID: eventHandler?.adUnitID)
         switch adFormat {
         case .banner:
             adUnit.adFormats = [.banner]
@@ -144,16 +143,6 @@ public class AUInterstitialRenderingView: AUAdView {
 }
 
 fileprivate extension AUInterstitialRenderingView {
-    func makeCreationEvent(_ format: AURenderingInsterstitialAdFormat, eventHandler: AUGAMInterstitialEventHandler) {
-        let event = AUAdCreationEvent(adViewId: configId,
-                                      adUnitID: eventHandler.adUnitID,
-                                      size: AUUniqHelper.sizeMaker(adSize),
-                                      adType: adTypeString,
-                                      adSubType: format == .banner ? "HTML" : "VIDEO",
-                                      apiType: apiTypeString)
-        
-        guard let payload = event.convertToJSONString() else { return }
-        
-        AUEventsManager.shared.addEvent(event: AUEventDB(payload))
-    }
+    // Rendering API: creation/headerLoaded event removed (not part of the clickstream schema).
+    func makeCreationEvent(_ format: AURenderingInsterstitialAdFormat, eventHandler: AUGAMInterstitialEventHandler) {}
 }
