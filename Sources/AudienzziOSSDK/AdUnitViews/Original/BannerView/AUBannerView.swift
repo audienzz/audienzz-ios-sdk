@@ -60,6 +60,29 @@ public class AUBannerView: AUAdView {
     /// Viewability tracker for the current creative; restarted on each `adImpression`.
     internal var viewabilityTracker: AUViewabilityTracker?
 
+    /// Cached host UIViewController (the "screen") for smart-refresh-v2 screen matching.
+    private weak var cachedHostVC: UIViewController?
+
+    /// Smart-refresh v2 uses the directional viewport gate; legacy uses the base ≥20% gate.
+    internal override var usesDirectionalRefreshGate: Bool {
+        Audienzz.shared.isSmartRefreshV2Enabled
+    }
+
+    /// The nearest `UIViewController` up the responder chain — this banner's "screen". Cached once
+    /// resolved (nil is not cached, since the responder chain is only reliable once in a window).
+    internal func resolveHostViewController() -> UIViewController? {
+        if let cached = cachedHostVC { return cached }
+        var responder: UIResponder? = self.next
+        while let current = responder {
+            if let vc = current as? UIViewController {
+                cachedHostVC = vc
+                return vc
+            }
+            responder = current.next
+        }
+        return nil
+    }
+
     /**
      Initialize banner view
      Lazy load is true by default.
@@ -90,6 +113,7 @@ public class AUBannerView: AUAdView {
 
     public override func removeFromSuperview() {
         super.removeFromSuperview()
+        AUScreenAdCoordinator.shared.deregister(self)
         adUnit?.stopAutoRefresh()
         self.adUnit = nil
         self.gamRequest = nil
@@ -101,6 +125,7 @@ public class AUBannerView: AUAdView {
     /// `removeFromSuperview` as a destructor — call it when you're done with the
     /// ad (e.g. the owning controller's `deinit`). Safe to call more than once.
     public func destroy() {
+        AUScreenAdCoordinator.shared.deregister(self)
         adUnit?.stopAutoRefresh()
         self.adUnit = nil
         self.gamRequest = nil
@@ -168,6 +193,11 @@ public class AUBannerView: AUAdView {
         if let bannerEventHandler = eventHandler {
             self.eventHandler = AUBannerHandler(auBannerView: self, gamView: bannerEventHandler.gamView)
         }
+
+        // Register for screen-aware smart refresh (v2). The coordinator only acts under v2; under
+        // the legacy model `screenActive` stays true and nothing pauses/reloads on screen change.
+        AUScreenAdCoordinator.shared.register(self)
+        screenActive = AUScreenAdCoordinator.shared.isActiveScreen(resolveHostViewController())
 
         if !self.isLazyLoad {
             fetchRequest(gamRequest)

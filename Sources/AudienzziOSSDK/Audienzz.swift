@@ -331,6 +331,23 @@ public class Audienzz: NSObject {
         AULogEvent.logDebug("GMA app volume updated to \(clamped), muted=\(clamped == 0)")
     }
 
+    // MARK: - Smart refresh v2 (screen-aware) feature flag
+
+    /// Local override for the screen-aware smart-refresh model (directional viewport gate +
+    /// screen-navigation pause/reload). Takes precedence over the backend
+    /// `publisherConfig.smartRefreshV2` for the remainder of the session. `nil` (default) = defer
+    /// to the backend value; `false`/`true` = force off/on regardless of the backend.
+    public var smartRefreshV2Override: Bool?
+
+    /// Resolved smart-refresh-v2 flag: local override wins, else the backend publisher config, else
+    /// `false` (legacy smart refresh). Read at use-time so it picks up the async remote config once
+    /// it loads.
+    internal var isSmartRefreshV2Enabled: Bool {
+        smartRefreshV2Override
+            ?? AudienzzRemoteConfig.shared.publisherConfig?.smartRefreshV2
+            ?? false
+    }
+
     public var timeoutMillis: Int {
         // Assigning Prebid's `timeoutMillis` also updates `timeoutMillisDynamic`
         // (via its didSet), so the auction picks up the value AND the getter
@@ -397,6 +414,11 @@ public class Audienzz: NSObject {
         AUEventsManager.shared.onScreenResumed(
             screenName: String(describing: type(of: viewController))
         )
+        // Screen-aware smart refresh (v2 only): pause the previous screen's banners and force-reload
+        // the incoming screen's banners. No-op under the legacy model.
+        if isSmartRefreshV2Enabled {
+            AUScreenAdCoordinator.shared.onScreenResumed(viewController)
+        }
     }
 
     private func setupPrebid(_ companyId: String, appVolume: Float = 0) {

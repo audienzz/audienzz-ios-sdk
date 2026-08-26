@@ -97,6 +97,12 @@ public class AUAdView: VisibleView {
     // MARK: - Smart refresh internals
     internal var lastRefreshTime: Date?
     internal var pendingSmartRefreshWorkItem: DispatchWorkItem?
+
+    /// Whether this ad's host screen is the currently-active one (smart-refresh v2 / screen-aware).
+    /// Defaults to `true` so ads on screens that never call `onScreenResumed`, and all ads under the
+    /// legacy model, behave exactly as before. Flipped by `AUScreenAdCoordinator` on screen changes;
+    /// while `false`, the viewport gate must not resume the ad.
+    internal var screenActive: Bool = true
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in

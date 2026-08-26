@@ -62,6 +62,9 @@ extension AUBannerView {
     /// screen AND ≤50% off the bottom). Gates refreshes only — the first load happens earlier
     /// via the prefetch / ≥20% path, so this never triggers the initial fetch.
     override func onRefreshBecameEligible() {
+        // Smart-refresh v2: never resume a banner whose screen isn't the active one — the screen
+        // coordinator owns pause/reload for inactive screens. Always true under the legacy model.
+        guard screenActive else { return }
         guard smartRefresh, isLazyLoaded || !isLazyLoad,
               let request = gamRequest as? AdManagerRequest else { return }
 
@@ -131,6 +134,7 @@ extension AUBannerView {
     ///
     /// Mirrors Android's `AudienzzAdViewHandler.resumeSmartRefresh()`.
     public func resumeSmartRefresh() {
+        guard screenActive else { return }
         guard isLazyLoaded || !isLazyLoad,
               let request = gamRequest as? GAMRequest else { return }
         guard let lastTime = lastRefreshTime else {
@@ -176,6 +180,19 @@ extension AUBannerView {
         pendingSmartRefreshWorkItem?.cancel()
         pendingSmartRefreshWorkItem = nil
         adUnitConfiguration?.stopAutoRefresh()
+    }
+
+    /// Smart-refresh v2 screen-activation reload. Unlike `resumeSmartRefresh` (stale-aware), this
+    /// always forces a fresh auction when the ad has loaded before — the "new pageImpression →
+    /// reload" semantics on screen change. Called by `AUScreenAdCoordinator` for the now-active
+    /// screen's banners. A never-loaded banner is left for its normal lazy/prefetch first load.
+    func forceScreenReload() {
+        pendingSmartRefreshWorkItem?.cancel()
+        pendingSmartRefreshWorkItem = nil
+        guard smartRefresh, lastRefreshTime != nil,
+              let request = gamRequest as? AdManagerRequest else { return }
+        fetchRequest(request)
+        adUnitConfiguration?.resumeAutoRefresh()
     }
 
     override func fetchRequest(_ gamRequest: AdManagerRequest) {

@@ -145,6 +145,11 @@ public class VisibleView: UIView {
     /// or >50% of its height off the bottom). Override to pause auto-refresh.
     internal dynamic func onRefreshBecameIneligible() {}
 
+    /// Whether the smart-refresh eligibility uses the directional (v2) gate — top edge fully on
+    /// screen AND ≤50% off the bottom. Overridden by `AUBannerView` to reflect the resolved feature
+    /// flag; base returns `false` so the legacy ≥20%-visible gate drives the refresh hooks.
+    internal dynamic var usesDirectionalRefreshGate: Bool { false }
+
     public override func removeFromSuperview() {
         if isCurrentlyVisible {
             isCurrentlyVisible = false
@@ -226,9 +231,13 @@ public class VisibleView: UIView {
             onBecameHidden()
         }
 
-        // Smart-refresh eligibility — a stricter, directional rule than the ≥20% check above.
-        // Drives pause/resume of the refresh cycle only; the initial load uses the paths above.
-        let refreshEligible = computeRefreshEligible(frameInWindow: frameInWindow, viewport: window.bounds)
+        // Smart-refresh eligibility drives pause/resume of the refresh cycle only; the initial load
+        // uses the paths above. Under smart-refresh v2 this is the stricter directional rule; under
+        // the legacy model it falls back to the same ≥20%-visible threshold as `visible` above, so
+        // the refresh hooks reproduce the old become-visible/hidden behavior.
+        let refreshEligible = usesDirectionalRefreshGate
+            ? computeRefreshEligible(frameInWindow: frameInWindow, viewport: window.bounds)
+            : visible
         if refreshEligible && !isRefreshEligible {
             isRefreshEligible = true
             onRefreshBecameEligible()
