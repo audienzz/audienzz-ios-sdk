@@ -52,11 +52,19 @@ public class VisibleView: UIView {
 
     private var contentOffsetObservations = [NSKeyValueObservation]()
     private var isCurrentlyVisible: Bool = false
+    private var isRefreshEligible: Bool = false
 
     /// Whether the view currently meets the visibility threshold (≥20% on screen).
     /// Exposed so subclasses can tell a prefetch-zone (not-yet-visible) load apart
-    /// from a genuinely visible one.
+    /// from a genuinely visible one. Drives the lazy-load / prefetch path only.
     internal var isViewCurrentlyVisible: Bool { isCurrentlyVisible }
+
+    /// Whether the view currently qualifies for smart **refresh** (a stricter, directional
+    /// rule than ``isViewCurrentlyVisible``): the ad's top edge must be fully on screen and no
+    /// more than 50% of its height may be off the bottom of the viewport. See
+    /// ``computeRefreshEligible(frameInWindow:viewport:)``. Used to gate refreshes only —
+    /// the initial load still uses the prefetch / ≥20% path.
+    internal var isViewRefreshEligible: Bool { isRefreshEligible }
 
     // MARK: - Prefetch margin
 
@@ -104,6 +112,10 @@ public class VisibleView: UIView {
                 isCurrentlyVisible = false
                 onBecameHidden()
             }
+            if isRefreshEligible {
+                isRefreshEligible = false
+                onRefreshBecameIneligible()
+            }
             removeAsSuperviewObserver()
         }
     }
@@ -125,10 +137,22 @@ public class VisibleView: UIView {
 
     internal dynamic func onBecameHidden() {}
 
+    /// Called when the view crosses into the smart-refresh eligible zone (top edge fully on
+    /// screen AND ≤50% of its height off the bottom). Override to resume auto-refresh.
+    internal dynamic func onRefreshBecameEligible() {}
+
+    /// Called when the view leaves the smart-refresh eligible zone (top edge clipped by ≥1pt,
+    /// or >50% of its height off the bottom). Override to pause auto-refresh.
+    internal dynamic func onRefreshBecameIneligible() {}
+
     public override func removeFromSuperview() {
         if isCurrentlyVisible {
             isCurrentlyVisible = false
             onBecameHidden()
+        }
+        if isRefreshEligible {
+            isRefreshEligible = false
+            onRefreshBecameIneligible()
         }
         removeAsSuperviewObserver()
         super.removeFromSuperview()
@@ -201,6 +225,36 @@ public class VisibleView: UIView {
             isCurrentlyVisible = false
             onBecameHidden()
         }
+
+        // Smart-refresh eligibility — a stricter, directional rule than the ≥20% check above.
+        // Drives pause/resume of the refresh cycle only; the initial load uses the paths above.
+        let refreshEligible = computeRefreshEligible(frameInWindow: frameInWindow, viewport: window.bounds)
+        if refreshEligible && !isRefreshEligible {
+            isRefreshEligible = true
+            onRefreshBecameEligible()
+        } else if !refreshEligible && isRefreshEligible {
+            isRefreshEligible = false
+            onRefreshBecameIneligible()
+        }
+    }
+
+    /// Smart-refresh eligibility rule (asymmetric, directional):
+    /// - **Top edge** must be fully on screen — if ≥1pt of the top is clipped above the
+    ///   viewport, the ad is ineligible (pause).
+    /// - **Bottom edge** may be clipped by up to 50% of the ad's height — if more than 50%
+    ///   is off the bottom of the viewport, the ad is ineligible (pause on start).
+    ///
+    /// A fully-visible ad, or one entering from the bottom with ≥50% on screen, is eligible.
+    /// Kept separate from `currentVisibleHeightFraction()` so the viewability tracker's math
+    /// is untouched. Geometry is in window coordinates.
+    private func computeRefreshEligible(frameInWindow: CGRect, viewport: CGRect) -> Bool {
+        guard frameInWindow.height > 0 else { return false }
+        // >0 when the top edge is above the viewport top; >0 when the bottom edge is below it.
+        let topOffscreen = viewport.minY - frameInWindow.minY
+        let bottomOffscreen = frameInWindow.maxY - viewport.maxY
+        let topFullyOnScreen = topOffscreen < 1.0
+        let bottomWithinHalf = bottomOffscreen <= frameInWindow.height * 0.5
+        return topFullyOnScreen && bottomWithinHalf
     }
 
     /// Fraction (0...1) of the view's height currently intersecting the window — used by the

@@ -53,8 +53,15 @@ extension AUBannerView {
     }
 
     override func onBecameVisible() {
+        // ≥20% visible only drives the lazy-load fallback; smart refresh is gated by the
+        // stricter eligibility rule via onRefreshBecameEligible()/onRefreshBecameIneligible().
         super.onBecameVisible() // triggers lazy load via detectVisible()
+    }
 
+    /// Smart-refresh RESUME. Fires when the ad enters the eligible zone (top edge fully on
+    /// screen AND ≤50% off the bottom). Gates refreshes only — the first load happens earlier
+    /// via the prefetch / ≥20% path, so this never triggers the initial fetch.
+    override func onRefreshBecameEligible() {
         guard smartRefresh, isLazyLoaded || !isLazyLoad,
               let request = gamRequest as? AdManagerRequest else { return }
 
@@ -63,7 +70,7 @@ extension AUBannerView {
         // → remaining = 0 → immediate fetchRequest, duplicating the prefetch fetch.
         // Mirrors Android's: if (lastRefreshTime == 0L) return
         guard lastRefreshTime != nil else {
-            AULogEvent.logDebug("[AUBannerView] smartRefresh — became visible before first load, skipping")
+            AULogEvent.logDebug("[AUBannerView] smartRefresh — eligible before first load, skipping")
             return
         }
 
@@ -97,7 +104,9 @@ extension AUBannerView {
         }
     }
 
-    override func onBecameHidden() {
+    /// Smart-refresh PAUSE. Fires when the ad leaves the eligible zone (top edge clipped by
+    /// ≥1pt, or >50% off the bottom).
+    override func onRefreshBecameIneligible() {
         guard smartRefresh else { return }
         pendingSmartRefreshWorkItem?.cancel()
         pendingSmartRefreshWorkItem = nil
@@ -186,12 +195,13 @@ extension AUBannerView {
             // H12: Prebid starts its auto-refresh dispatcher synchronously on the
             // first fetchDemand. When that first fetch is a prefetch-zone load
             // (fired up to prefetchMarginPoints before the ad is on screen), the
-            // dispatcher would otherwise keep auto-refreshing at 0% viewability.
-            // Under smart refresh, stop it whenever the ad isn't actually visible;
-            // onBecameVisible resumes it (stale-aware) once the ad is ≥20% on screen.
-            // This runs after onBecameVisible has resolved the already-visible case,
-            // so a banner that's on screen at load keeps refreshing normally.
-            if self.smartRefresh, !self.isViewCurrentlyVisible {
+            // dispatcher would otherwise keep auto-refreshing while the ad isn't in the
+            // refresh-eligible zone. Under smart refresh, stop it whenever the ad isn't
+            // eligible; onRefreshBecameEligible resumes it (stale-aware) once the ad's top
+            // is fully on screen with ≥50% visible. This runs after the eligibility check
+            // has resolved the already-eligible case, so a banner that's fully on screen at
+            // load keeps refreshing normally.
+            if self.smartRefresh, !self.isViewRefreshEligible {
                 self.adUnitConfiguration?.stopAutoRefresh()
             }
 
