@@ -356,6 +356,12 @@ public class Audienzz: NSObject {
     /// `onScreenResumed(_:)` yourself.
     public var autoScreenTracking: Bool = true
 
+    /// When `true`, a screen-change reload (smart refresh v2, on returning to a screen) briefly
+    /// blanks the current banner — keeping the slot's size — until the fresh ad renders, making the
+    /// refresh visually obvious. Default `false`. Only affects screen-change reloads, not periodic
+    /// refresh.
+    public var blankOnScreenReload: Bool = false
+
     public var timeoutMillis: Int {
         // Assigning Prebid's `timeoutMillis` also updates `timeoutMillisDynamic`
         // (via its didSet), so the auction picks up the value AND the getter

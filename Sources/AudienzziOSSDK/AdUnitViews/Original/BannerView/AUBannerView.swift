@@ -63,6 +63,10 @@ public class AUBannerView: AUAdView {
     /// Cached host UIViewController (the "screen") for smart-refresh-v2 screen matching.
     private weak var cachedHostVC: UIViewController?
 
+    /// Set while the GAM banner is hidden for a screen-change reload (see `blankOnScreenReload`);
+    /// the handler restores visibility when the fresh ad is received.
+    internal var blankedForReload = false
+
     /// Smart-refresh v2 uses the directional viewport gate; legacy uses the base ≥20% gate.
     internal override var usesDirectionalRefreshGate: Bool {
         Audienzz.shared.isSmartRefreshV2Enabled

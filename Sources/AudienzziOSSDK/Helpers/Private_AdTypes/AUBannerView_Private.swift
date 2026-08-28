@@ -191,6 +191,12 @@ extension AUBannerView {
         pendingSmartRefreshWorkItem = nil
         guard smartRefresh, lastRefreshTime != nil,
               let request = gamRequest as? AdManagerRequest else { return }
+        // Optionally blank the current creative (keeping the slot size — the container view keeps
+        // its frame) so the refresh is visually obvious; restored when the fresh ad is received.
+        if Audienzz.shared.blankOnScreenReload {
+            eventHandler?.gamView?.isHidden = true
+            blankedForReload = true
+        }
         fetchRequest(request)
         adUnitConfiguration?.resumeAutoRefresh()
     }

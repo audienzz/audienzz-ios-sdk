@@ -31,6 +31,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Demo: apply the persisted Smart Refresh v2 toggle (see the switch on the home screen).
         // The local override wins over the backend flag, so this forces the model on/off for the app.
         Audienzz.shared.smartRefreshV2Override = DemoFeatureFlags.smartRefreshV2Enabled
+        // Demo: blank the slot (same size) during a screen-change reload so it's obvious it refreshed.
+        Audienzz.shared.blankOnScreenReload = true
 
         if useRemoteConfiguration {
             AudienzzRemoteConfig.shared.configureRemote(
