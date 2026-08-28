@@ -10,6 +10,25 @@ The implementation includes lazy loading functionality to optimize application p
 > - **Screen tracking is automatic.** The SDK tracks screens for you (navigation pushes, tab changes, presented controllers) — no per-screen code. It powers analytics page impressions and screen-aware Smart Refresh. Opt out with `Audienzz.shared.autoScreenTracking = false`, or report screens it can't see (e.g. SwiftUI) with `onScreenResumed("routeKey")`. See [Screen tracking](#step-2--screen-tracking-automatic).
 > - **Smart Refresh v2 is opt-in.** The screen-aware refresh model (directional viewport gate + pause/reload on screen navigation) is **off by default** — the classic viewport-aware refresh runs unless you enable it via the backend `smartRefreshV2` flag or `Audienzz.shared.smartRefreshV2Override = true`. See [Smart Refresh](#smart-refresh).
 
+## How screens & ads work (read this first)
+
+The SDK is **screen-aware**: it knows which screen is active and which ads belong to it, and drives
+each ad's lifecycle (page impressions + smart refresh) for you. Understanding this model is the key
+to integrating correctly.
+
+- **A screen** is a `UIViewController` — navigation pushes, tab changes, and presented controllers
+  are tracked **automatically** (see [Screen tracking](#step-2--screen-tracking-automatic)); you
+  write no per-screen code. Opt out with `Audienzz.shared.autoScreenTracking = false`.
+- **An ad belongs to the screen it is placed in.** Each banner resolves its host view controller by
+  walking the responder chain, and screens are matched by **object identity**, so two tabs, or two
+  instances of the same screen class, are distinct. The host is pinned once resolved, so the
+  association never drifts.
+- **Lifecycle:** when a screen becomes active, its banners (re)load; when you leave it, they pause;
+  returning reloads them (with Smart Refresh v2). This stops off-screen slots from auctioning and
+  gives each visit a fresh, viewable ad.
+- **Screens the SDK can't infer** (SwiftUI, a custom navigation model) — report them by route key:
+  `Audienzz.shared.onScreenResumed("home")`.
+
 ## Underlying Technologies
 
 ### Prebid Mobile SDK
