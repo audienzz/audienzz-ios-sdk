@@ -129,6 +129,10 @@ enum DemoFeatureFlags {
             if UserDefaults.standard.object(forKey: smartRefreshV2Key) == nil { return true }
             return UserDefaults.standard.bool(forKey: smartRefreshV2Key)
         }
-        set { UserDefaults.standard.set(newValue, forKey: smartRefreshV2Key) }
+        set {
+            UserDefaults.standard.set(newValue, forKey: smartRefreshV2Key)
+            // Flush now — the toggle calls exit(0) right after, which would drop the async write.
+            UserDefaults.standard.synchronize()
+        }
     }
 }
