@@ -28,6 +28,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         // Override point for customization after application launch.
 
+        // Demo: apply the persisted Smart Refresh v2 toggle (see the switch on the home screen).
+        // The local override wins over the backend flag, so this forces the model on/off for the app.
+        Audienzz.shared.smartRefreshV2Override = DemoFeatureFlags.smartRefreshV2Enabled
+
         if useRemoteConfiguration {
             AudienzzRemoteConfig.shared.configureRemote(
                 remoteUrl: URL(string: "https://api.adnz.co/api/ws-sdk-config/public/v1/")!,
@@ -108,5 +112,23 @@ private extension AppDelegate {
                             } 
                         }
                     """)
+    }
+}
+
+// MARK: - Demo feature flags
+
+/// Persisted demo toggles for the example app. Backed by `UserDefaults` so the choice survives
+/// relaunches. The home screen exposes a Smart Refresh v2 switch that writes this and restarts.
+enum DemoFeatureFlags {
+    private static let smartRefreshV2Key = "demo.smartRefreshV2Enabled"
+
+    /// Whether Smart Refresh v2 (screen-aware) is enabled for the demo. Defaults to `true` on first
+    /// launch so the new behavior is visible out of the box.
+    static var smartRefreshV2Enabled: Bool {
+        get {
+            if UserDefaults.standard.object(forKey: smartRefreshV2Key) == nil { return true }
+            return UserDefaults.standard.bool(forKey: smartRefreshV2Key)
+        }
+        set { UserDefaults.standard.set(newValue, forKey: smartRefreshV2Key) }
     }
 }
