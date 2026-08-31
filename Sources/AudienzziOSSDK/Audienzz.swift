@@ -433,20 +433,25 @@ public class Audienzz: NSObject {
 
     /// Manual screen signal by an opaque key (e.g. a SwiftUI/route name). The key is the screen
     /// identity; always applied, since automatic tracking can't see non-UIViewController screens.
-    /// Analytics-only — native banners match screens by view-controller identity.
+    /// Fires the page impression and drives screen-aware smart refresh (v2) for banners tagged with
+    /// the same key via `AUBannerView.setScreen(_:)` — matched by value.
     @objc(onScreenResumedWithKey:)
     public func onScreenResumed(_ screenKey: String) {
-        AUEventsManager.shared.onScreenResumed(screenName: screenKey)
+        notifyScreenResumed(screenKey as AnyObject, name: screenKey)
     }
 
     /// Single sink used by both the automatic tracker and the manual API: page impression + the
     /// screen-aware smart-refresh coordinator (v2 only).
     internal func notifyScreenResumed(_ viewController: UIViewController) {
-        let name = String(describing: type(of: viewController))
+        notifyScreenResumed(viewController, name: String(describing: type(of: viewController)))
+    }
+
+    /// Generalized sink taking any screen token (a `UIViewController` or a route key).
+    internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
         AULogEvent.logDebug("[Audienzz] screenResumed: \(name) (smartRefreshV2=\(isSmartRefreshV2Enabled))")
         AUEventsManager.shared.onScreenResumed(screenName: name)
         if isSmartRefreshV2Enabled {
-            AUScreenAdCoordinator.shared.onScreenResumed(viewController)
+            AUScreenAdCoordinator.shared.onScreenResumed(screen)
         }
     }
 

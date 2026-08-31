@@ -26,8 +26,24 @@ internal final class AUScreenAdCoordinator {
     /// Live smart-refresh banners. Weak so views deallocate freely and entries auto-prune.
     private let ads = NSHashTable<AUBannerView>.weakObjects()
 
-    /// Host `UIViewController` of the most recent `onScreenResumed` — the currently-active screen.
-    private weak var activeScreen: UIViewController?
+    /// The most recent `onScreenResumed` screen. A `UIViewController` host is held weakly (so it
+    /// deallocates freely); a value token (e.g. a route-key `String`) is held strongly, since the
+    /// caller may not otherwise retain it. Exactly one is non-nil at a time.
+    private weak var activeScreenVC: UIViewController?
+    private var activeScreenToken: AnyObject?
+
+    /// The current active screen (token preferred), or nil before the first resume.
+    private var activeScreen: AnyObject? { activeScreenToken ?? activeScreenVC }
+
+    private func setActiveScreen(_ screen: AnyObject) {
+        if let vc = screen as? UIViewController {
+            activeScreenVC = vc
+            activeScreenToken = nil
+        } else {
+            activeScreenToken = screen
+            activeScreenVC = nil
+        }
+    }
 
     func register(_ ad: AUBannerView) {
         assertMain()
@@ -39,29 +55,30 @@ internal final class AUScreenAdCoordinator {
         ads.remove(ad)
     }
 
-    /// True when `vc` is the active screen, or when no screen has resumed yet (so a freshly-created
-    /// banner starts active rather than paused). Used to initialize a banner's `screenActive`.
-    func isActiveScreen(_ vc: UIViewController?) -> Bool {
+    /// True when `ad` lives on the active screen, or when no screen has resumed yet (so a freshly-
+    /// created banner starts active rather than paused). Used to initialize a banner's `screenActive`.
+    func isActiveScreen(for ad: AUBannerView) -> Bool {
         guard let activeScreen else { return true }
-        return vc != nil && vc === activeScreen
+        return ad.isHostedBy(activeScreen)
     }
 
-    /// Hard screen transition. Matching is by host-VC object identity (not class name), so two
-    /// screens of the same class, and the same screen re-resuming (app foreground), both behave as
-    /// distinct transitions — releasing the previous screen's banners and reloading the incoming
-    /// screen's already-loaded banners (a never-loaded banner is left for its normal lazy load).
-    func onScreenResumed(_ viewController: UIViewController) {
+    /// Hard screen transition. The screen is any token — a host `UIViewController` (matched by object
+    /// identity) or a route key (matched by value against a banner's `setScreen`). So two screens of
+    /// the same class, and the same screen re-resuming (app foreground), both behave as distinct
+    /// transitions — releasing the previous screen's banners and reloading the incoming screen's
+    /// already-loaded banners (a never-loaded banner is left for its normal lazy load).
+    func onScreenResumed(_ screen: AnyObject) {
         assertMain()
-        activeScreen = viewController
+        setActiveScreen(screen)
         let live = ads.allObjects
         AULogEvent.logDebug(
-            "[AUScreenCoordinator] onScreenResumed screen=\(type(of: viewController)) — \(live.count) banner(s) registered")
+            "[AUScreenCoordinator] onScreenResumed screen=\(type(of: screen)) — \(live.count) banner(s) registered")
         for ad in live {
             guard ad.smartRefresh else { continue }
-            let host = ad.resolveHostViewController()
-            let active = (host != nil && host === viewController)
+            let active = ad.isHostedBy(screen)
             ad.screenActive = active
-            let hostName = host.map { String(describing: type(of: $0)) } ?? "none"
+            let hostName = ad.resolveHostViewController().map { String(describing: type(of: $0)) }
+                ?? (ad.hostScreenOverride.map { "\($0)" } ?? "none")
             if active {
                 AULogEvent.logDebug("[AUScreenCoordinator]   \(ad.configId) host=\(hostName) — ACTIVE, reloading")
                 ad.forceScreenReload()

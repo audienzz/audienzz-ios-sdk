@@ -20,6 +20,19 @@ public class AURemoteConfigBannerView: VisibleView {
     public var bannerParameters: AUBannerParameters?
     public var videoParameters: AUVideoParameters?
 
+    /// Screen token applied to the underlying `AUBannerView` once it's built (see `setScreen`).
+    private var pendingScreenKey: AnyObject?
+    private weak var bannerView: AUBannerView?
+
+    /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
+    /// destination, or a custom route). Pass the same token reported to
+    /// `Audienzz.shared.onScreenResumed(token)`; matched by value. Call before or after `load(...)` —
+    /// the underlying banner is built asynchronously, so the key is applied when ready.
+    public func setScreen(_ screenKey: Any) {
+        pendingScreenKey = screenKey as AnyObject
+        bannerView?.hostScreenOverride = pendingScreenKey
+    }
+
     // MARK: - Init
 
     public init(adConfigId: String) {
@@ -97,6 +110,8 @@ public class AURemoteConfigBannerView: VisibleView {
             adFormats: [.banner],
             isLazyLoad: true
         )
+        self.bannerView = bannerView
+        if let pendingScreenKey { bannerView.hostScreenOverride = pendingScreenKey }
 
         // M4: route refresh through adUnitConfiguration (not adUnit directly) so
         // autorefreshEventModel is updated — otherwise the stale-aware smart
