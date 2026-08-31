@@ -121,6 +121,21 @@ final class RemoteConfigViewController: UIViewController {
             for: .touchUpInside
         )
         stackView.addArrangedSubview(interstitialButton)
+
+        let openScreenButton = UIButton(type: .system)
+        openScreenButton.setTitle("Open ad screen (test screen nav)", for: .normal)
+        openScreenButton.setTitleColor(.white, for: .normal)
+        openScreenButton.setTitleColor(.white.withAlphaComponent(0.7), for: .highlighted)
+        openScreenButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        openScreenButton.backgroundColor = .systemBlue
+        openScreenButton.layer.cornerRadius = 12
+        openScreenButton.addTarget(self, action: #selector(openAdScreenTapped), for: .touchUpInside)
+        stackView.addArrangedSubview(openScreenButton)
+    }
+
+    @objc private func openAdScreenTapped() {
+        navigationController?.pushViewController(
+            RemoteConfigAdScreenViewController(), animated: true)
     }
 
     // MARK: - Ads
@@ -192,5 +207,45 @@ extension RemoteConfigViewController: BannerViewDelegate {
         adaptiveBannerContainer.heightAnchor.constraint(
             equalToConstant: bannerView.frame.height
         ).isActive = true
+    }
+}
+
+/// A separate screen with a remote-config banner, pushed from the Remote Config screen. Navigating
+/// here and back exercises screen-navigation pause/resume/reload and ad↔screen matching. Screen
+/// tracking is automatic — no `onScreenResumed` calls here.
+final class RemoteConfigAdScreenViewController: UIViewController {
+    private var banner: AURemoteConfigBannerView?
+    private let bannerContainer = UIView()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "Remote Config Ad Screen"
+        view.backgroundColor = .systemBackground
+
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.font = .systemFont(ofSize: 14)
+        label.textColor = .secondaryLabel
+        label.text = "Navigate back to verify the Remote Config screen's banners reload, and that "
+            + "this screen's banner pauses/reloads on screen changes."
+        label.translatesAutoresizingMaskIntoConstraints = false
+        bannerContainer.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(bannerContainer)
+        view.addSubview(label)
+
+        NSLayoutConstraint.activate([
+            bannerContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
+            bannerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            bannerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            bannerContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
+
+            label.topAnchor.constraint(equalTo: bannerContainer.bottomAnchor, constant: 16),
+            label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+        ])
+
+        let b = AURemoteConfigBannerView(adConfigId: "46")
+        banner = b
+        b.load(in: bannerContainer, rootViewController: self)
     }
 }

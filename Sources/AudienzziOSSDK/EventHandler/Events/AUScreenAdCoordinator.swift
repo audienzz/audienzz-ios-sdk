@@ -53,14 +53,20 @@ internal final class AUScreenAdCoordinator {
     func onScreenResumed(_ viewController: UIViewController) {
         assertMain()
         activeScreen = viewController
-        for ad in ads.allObjects {
+        let live = ads.allObjects
+        AULogEvent.logDebug(
+            "[AUScreenCoordinator] onScreenResumed screen=\(type(of: viewController)) — \(live.count) banner(s) registered")
+        for ad in live {
             guard ad.smartRefresh else { continue }
             let host = ad.resolveHostViewController()
             let active = (host != nil && host === viewController)
             ad.screenActive = active
+            let hostName = host.map { String(describing: type(of: $0)) } ?? "none"
             if active {
+                AULogEvent.logDebug("[AUScreenCoordinator]   \(ad.configId) host=\(hostName) — ACTIVE, reloading")
                 ad.forceScreenReload()
             } else {
+                AULogEvent.logDebug("[AUScreenCoordinator]   \(ad.configId) host=\(hostName) — INACTIVE, pausing")
                 ad.pauseSmartRefresh()
             }
         }

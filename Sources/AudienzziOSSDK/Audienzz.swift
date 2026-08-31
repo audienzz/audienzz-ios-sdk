@@ -442,9 +442,9 @@ public class Audienzz: NSObject {
     /// Single sink used by both the automatic tracker and the manual API: page impression + the
     /// screen-aware smart-refresh coordinator (v2 only).
     internal func notifyScreenResumed(_ viewController: UIViewController) {
-        AUEventsManager.shared.onScreenResumed(
-            screenName: String(describing: type(of: viewController))
-        )
+        let name = String(describing: type(of: viewController))
+        AULogEvent.logDebug("[Audienzz] screenResumed: \(name) (smartRefreshV2=\(isSmartRefreshV2Enabled))")
+        AUEventsManager.shared.onScreenResumed(screenName: name)
         if isSmartRefreshV2Enabled {
             AUScreenAdCoordinator.shared.onScreenResumed(viewController)
         }
