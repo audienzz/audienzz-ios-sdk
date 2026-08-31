@@ -27,7 +27,8 @@ to integrating correctly.
   returning reloads them (with Smart Refresh v2). This stops off-screen slots from auctioning and
   gives each visit a fresh, viewable ad.
 - **Screens the SDK can't infer** (SwiftUI, a custom navigation model) — report them by route key:
-  `Audienzz.shared.onScreenResumed("home")`.
+  `Audienzz.shared.onScreenResumed("home")`, and (for screen-aware reload) tag each banner on that
+  screen with the same key via `banner.setScreen("home")`. See [Screen tracking](#step-2--screen-tracking-automatic).
 
 ## Underlying Technologies
 
@@ -290,16 +291,31 @@ override func viewWillAppear(_ animated: Bool) {
 }
 ```
 
-**Screens auto-tracking can't see** (SwiftUI destinations, or a custom navigation model) can be
-reported by an opaque route key — this works whether or not auto-tracking is on:
+**Screens auto-tracking can't see** (SwiftUI destinations, or a custom navigation model) are reported
+by an opaque route key — this works whether or not auto-tracking is on:
 
 ```swift
 Audienzz.shared.onScreenResumed("home")   // route id / name as the screen identity
 ```
 
+For analytics that's all you need. To also get **screen-aware Smart Refresh** (pause/reload on
+navigation) for a banner on such a screen, tag the banner with the same key so the SDK knows which
+screen it belongs to — otherwise it resolves to the host view controller and won't match a route key:
+
+```swift
+let banner = AUBannerView(configId: "…", adSize: …, adFormats: [.banner])
+banner.setScreen("home")                  // AURemoteConfigBannerView.setScreen("home") likewise
+// …on that screen's appearance:
+Audienzz.shared.onScreenResumed("home")   // reloads banners tagged "home"; pauses the rest
+```
+
+The key is matched **by value**, so the string reported to `onScreenResumed` and the one passed to
+`setScreen` just have to be equal.
+
 Notes:
 - While auto-tracking is on, manual `onScreenResumed(_ viewController:)` calls are **ignored** (auto
   already covers them) to avoid double-counting; the string-key overload is always applied.
+- `setScreen` isn't needed for `UIViewController`-hosted banners (those are matched automatically).
 - There is **no `onPause`/teardown counterpart**. If no screen is ever reported, ad events still send
   with a fallback page-impression id; they just aren't tied to a named screen.
 
