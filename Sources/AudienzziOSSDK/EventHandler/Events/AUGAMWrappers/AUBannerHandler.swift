@@ -81,9 +81,19 @@ class AUBannerHandler: NSObject,
         AULogEvent.logDebug("AUBannerHandler")
     }
 
+    /// Reveals the GAM banner again after a `blankOnScreenReload` blanking, once the fresh ad
+    /// arrives (or fails). No-op unless this reload blanked the slot.
+    private func restoreFromBlankIfNeeded() {
+        if auBannerView?.blankedForReload == true {
+            auBannerView?.blankedForReload = false
+            gamView?.isHidden = false
+        }
+    }
+
     // MARK: - GADBannerViewDelegate
     func bannerViewDidReceiveAd(_ bannerView: BannerView) {
         LogEvent("bannerViewDidReceiveAd")
+        restoreFromBlankIfNeeded()
 
         if let gamBannerView = bannerView as? AdManagerBannerView {
             // Determine the actual rendered size using two sources:
@@ -117,6 +127,7 @@ class AUBannerHandler: NSObject,
     ) {
         LogEvent("didFailToReceiveAdWithError")
         LogEvent(error.localizedDescription)
+        restoreFromBlankIfNeeded()
         bannerDelegate?.bannerView?(
             bannerView,
             didFailToReceiveAdWithError: error

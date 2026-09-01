@@ -60,6 +60,58 @@ public class AUBannerView: AUAdView {
     /// Viewability tracker for the current creative; restarted on each `adImpression`.
     internal var viewabilityTracker: AUViewabilityTracker?
 
+    /// Cached host UIViewController (the "screen") for smart-refresh-v2 screen matching.
+    private weak var cachedHostVC: UIViewController?
+
+    /// Set while the GAM banner is hidden for a screen-change reload (see `blankOnScreenReload`);
+    /// the handler restores visibility when the fresh ad is received.
+    internal var blankedForReload = false
+
+    /// Caller-supplied screen token (a route key) for hosts not inferable from the responder chain —
+    /// SwiftUI destinations, or a custom navigation model. Wins over view-controller resolution.
+    internal var hostScreenOverride: AnyObject?
+
+    /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
+    /// destination, or a custom route). Pass the same token you report to
+    /// `Audienzz.shared.onScreenResumed(token)` — typically the route-key `String`; it's matched by
+    /// value, so the key reported on resume and the one set here just have to be equal. Not needed
+    /// for `UIViewController`-hosted banners (those are resolved automatically via the responder chain).
+    public func setScreen(_ screenKey: Any) {
+        hostScreenOverride = screenKey as AnyObject
+    }
+
+    /// True when this ad lives on `screen`. An explicit `hostScreenOverride` (route key) matches by
+    /// value; otherwise the host `UIViewController` matches by identity.
+    internal func isHostedBy(_ screen: AnyObject) -> Bool {
+        if let override = hostScreenOverride {
+            if override === screen { return true }
+            if let a = override as? NSObject, let b = screen as? NSObject { return a.isEqual(b) }
+            return false
+        }
+        guard let host = resolveHostViewController() else { return false }
+        return host === screen
+    }
+
+    /// Smart-refresh v2 uses the directional viewport gate; legacy uses the base ≥20% gate.
+    internal override var usesDirectionalRefreshGate: Bool {
+        Audienzz.shared.isSmartRefreshV2Enabled
+    }
+
+    /// The nearest `UIViewController` up the responder chain — this banner's "screen". Cached once
+    /// resolved (nil is not cached, since the responder chain is only reliable once in a window).
+    internal func resolveHostViewController() -> UIViewController? {
+        if let cached = cachedHostVC { return cached }
+        var responder: UIResponder? = self.next
+        while let current = responder {
+            if let vc = current as? UIViewController {
+                cachedHostVC = vc
+                return vc
+            }
+            responder = current.next
+        }
+        return nil
+    }
+
     /**
      Initialize banner view
      Lazy load is true by default.
@@ -90,6 +142,7 @@ public class AUBannerView: AUAdView {
 
     public override func removeFromSuperview() {
         super.removeFromSuperview()
+        AUScreenAdCoordinator.shared.deregister(self)
         adUnit?.stopAutoRefresh()
         self.adUnit = nil
         self.gamRequest = nil
@@ -101,6 +154,7 @@ public class AUBannerView: AUAdView {
     /// `removeFromSuperview` as a destructor — call it when you're done with the
     /// ad (e.g. the owning controller's `deinit`). Safe to call more than once.
     public func destroy() {
+        AUScreenAdCoordinator.shared.deregister(self)
         adUnit?.stopAutoRefresh()
         self.adUnit = nil
         self.gamRequest = nil
@@ -168,6 +222,11 @@ public class AUBannerView: AUAdView {
         if let bannerEventHandler = eventHandler {
             self.eventHandler = AUBannerHandler(auBannerView: self, gamView: bannerEventHandler.gamView)
         }
+
+        // Register for screen-aware smart refresh (v2). The coordinator only acts under v2; under
+        // the legacy model `screenActive` stays true and nothing pauses/reloads on screen change.
+        AUScreenAdCoordinator.shared.register(self)
+        screenActive = AUScreenAdCoordinator.shared.isActiveScreen(for: self)
 
         if !self.isLazyLoad {
             fetchRequest(gamRequest)

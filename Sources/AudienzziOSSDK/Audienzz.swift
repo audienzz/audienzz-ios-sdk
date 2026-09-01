@@ -112,6 +112,7 @@ public class Audienzz: NSObject {
         gadMobileAdsVersion: String? = nil,
         enablePPID: Bool = false
     ) async throws {
+        if autoScreenTracking { AUScreenTracker.installIfNeeded() }
         // Apply muted default immediately so ads are always muted even if remote
         // config is unavailable (network error, backend not ready, nil response).
         // The value will be overridden below once the remote config is fetched.
@@ -331,6 +332,36 @@ public class Audienzz: NSObject {
         AULogEvent.logDebug("GMA app volume updated to \(clamped), muted=\(clamped == 0)")
     }
 
+    // MARK: - Smart refresh v2 (screen-aware) feature flag
+
+    /// Local override for the screen-aware smart-refresh model (directional viewport gate +
+    /// screen-navigation pause/reload). Takes precedence over the backend
+    /// `publisherConfig.smartRefreshV2` for the remainder of the session. `nil` (default) = defer
+    /// to the backend value; `false`/`true` = force off/on regardless of the backend.
+    public var smartRefreshV2Override: Bool?
+
+    /// Resolved smart-refresh-v2 flag: local override wins, else the backend publisher config, else
+    /// `false` (legacy smart refresh). Read at use-time so it picks up the async remote config once
+    /// it loads.
+    internal var isSmartRefreshV2Enabled: Bool {
+        smartRefreshV2Override
+            ?? AudienzzRemoteConfig.shared.publisherConfig?.smartRefreshV2
+            ?? false
+    }
+
+    /// Automatic screen tracking. When `true` (default), the SDK swizzles `UIViewController`
+    /// appearance and fires a page impression (and drives screen-aware smart refresh) on every
+    /// content screen — including navigation pushes and tab changes — with no per-screen code. Set
+    /// to `false` **before** `configureSDK`/`configureWithRemoteSDK` to opt out and call
+    /// `onScreenResumed(_:)` yourself.
+    public var autoScreenTracking: Bool = true
+
+    /// When `true`, a screen-change reload (smart refresh v2, on returning to a screen) briefly
+    /// blanks the current banner — keeping the slot's size — until the fresh ad renders, making the
+    /// refresh visually obvious. Default `false`. Only affects screen-change reloads, not periodic
+    /// refresh.
+    public var blankOnScreenReload: Bool = false
+
     public var timeoutMillis: Int {
         // Assigning Prebid's `timeoutMillis` also updates `timeoutMillisDynamic`
         // (via its didSet), so the auction picks up the value AND the getter
@@ -394,12 +425,44 @@ public class Audienzz: NSObject {
     /// on that screen visit together (the iOS analogue of the Android `onScreenResumed`).
     /// Screens without ads don't need to call it.
     public func onScreenResumed(_ viewController: UIViewController) {
-        AUEventsManager.shared.onScreenResumed(
-            screenName: String(describing: type(of: viewController))
-        )
+        // Ignored while automatic tracking is on — it already observes view controllers (avoids
+        // double-counting). Turn off `autoScreenTracking` to drive screens manually.
+        if autoScreenTracking { return }
+        notifyScreenResumed(viewController)
+    }
+
+    /// Manual screen signal by an opaque key (e.g. a SwiftUI/route name). The key is the screen
+    /// identity; always applied, since automatic tracking can't see non-UIViewController screens.
+    /// Fires the page impression and drives screen-aware smart refresh (v2) for banners tagged with
+    /// the same key via `AUBannerView.setScreen(_:)` — matched by value.
+    @objc(onScreenResumedWithKey:)
+    public func onScreenResumed(_ screenKey: String) {
+        notifyScreenResumed(screenKey as AnyObject, name: screenKey)
+    }
+
+    /// Single sink used by both the automatic tracker and the manual API: page impression + the
+    /// screen-aware smart-refresh coordinator (v2 only).
+    internal func notifyScreenResumed(_ viewController: UIViewController) {
+        notifyScreenResumed(viewController, name: String(describing: type(of: viewController)))
+    }
+
+    /// Identity of the controller most recently passed to `notifyScreenResumed`. Lets a banner tell
+    /// whether its host screen is already the active one before deciding to resume it proactively
+    /// (see `AUBannerView.ensureHostScreenResumed`). Weak — never keeps a screen alive.
+    internal weak var lastResumedScreenVC: UIViewController?
+
+    /// Generalized sink taking any screen token (a `UIViewController` or a route key).
+    internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
+        AULogEvent.logDebug("[Audienzz] screenResumed: \(name) (smartRefreshV2=\(isSmartRefreshV2Enabled))")
+        lastResumedScreenVC = screen as? UIViewController
+        AUEventsManager.shared.onScreenResumed(screenName: name)
+        if isSmartRefreshV2Enabled {
+            AUScreenAdCoordinator.shared.onScreenResumed(screen)
+        }
     }
 
     private func setupPrebid(_ companyId: String, appVolume: Float = 0) {
+        if autoScreenTracking { AUScreenTracker.installIfNeeded() }
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
         Prebid.shared.customStatusEndpoint = customStatusEndpoint

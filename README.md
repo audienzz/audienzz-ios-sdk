@@ -5,6 +5,31 @@ Audienzz iOS SDK
 A mobile advertising SDK that combines header bidding capabilities from Prebid Mobile with Google's advertising ecosystem through a unified interface.
 The implementation includes lazy loading functionality to optimize application performance by deferring ad initialization until needed.
 
+> ### ⚠️ Important
+>
+> - **Screen tracking is automatic.** The SDK tracks screens for you (navigation pushes, tab changes, presented controllers) — no per-screen code. It powers analytics page impressions and screen-aware Smart Refresh. Opt out with `Audienzz.shared.autoScreenTracking = false`, or report screens it can't see (e.g. SwiftUI) with `onScreenResumed("routeKey")`. See [Screen tracking](#step-2--screen-tracking-automatic).
+> - **Smart Refresh v2 is opt-in.** The screen-aware refresh model (directional viewport gate + pause/reload on screen navigation) is **off by default** — the classic viewport-aware refresh runs unless you enable it via the backend `smartRefreshV2` flag or `Audienzz.shared.smartRefreshV2Override = true`. See [Smart Refresh](#smart-refresh).
+
+## How screens & ads work (read this first)
+
+The SDK is **screen-aware**: it knows which screen is active and which ads belong to it, and drives
+each ad's lifecycle (page impressions + smart refresh) for you. Understanding this model is the key
+to integrating correctly.
+
+- **A screen** is a `UIViewController` — navigation pushes, tab changes, and presented controllers
+  are tracked **automatically** (see [Screen tracking](#step-2--screen-tracking-automatic)); you
+  write no per-screen code. Opt out with `Audienzz.shared.autoScreenTracking = false`.
+- **An ad belongs to the screen it is placed in.** Each banner resolves its host view controller by
+  walking the responder chain, and screens are matched by **object identity**, so two tabs, or two
+  instances of the same screen class, are distinct. The host is pinned once resolved, so the
+  association never drifts.
+- **Lifecycle:** when a screen becomes active, its banners (re)load; when you leave it, they pause;
+  returning reloads them (with Smart Refresh v2). This stops off-screen slots from auctioning and
+  gives each visit a fresh, viewable ad.
+- **Screens the SDK can't infer** (SwiftUI, a custom navigation model) — report them by route key:
+  `Audienzz.shared.onScreenResumed("home")`, and (for screen-aware reload) tag each banner on that
+  screen with the same key via `banner.setScreen("home")`. See [Screen tracking](#step-2--screen-tracking-automatic).
+
 ## Underlying Technologies
 
 ### Prebid Mobile SDK
@@ -193,6 +218,26 @@ bannerView.smartRefresh = true
 
 > **Note:** `smartRefresh` has no effect if `autorefreshTime` is not set on the ad unit configuration (i.e. no auto-refresh interval is defined).
 
+### Smart Refresh v2 (screen-aware) — opt-in
+
+Smart Refresh v2 refines the model in two ways. It is **off by default**; when disabled, the classic behavior above applies unchanged.
+
+**1. Directional visibility gate.** A refresh runs only while the ad's **top edge is fully on screen** and **at least 50% of the ad is visible**. It pauses the moment the top scrolls off (even 1px) or more than half the ad drops below the fold — a stricter, less "wasteful" rule than a plain visible-percentage threshold. The **initial load is unaffected** (the ad still loads as early as possible via lazy/prefetch).
+
+**2. Screen-aware pause & reload.** Refresh is matched to the screen (view controller) the ad lives on. When you open a new screen, the previous screen's banners **pause**; when you navigate back — a new page impression — that screen's banners **reload** with a fresh ad. This is driven by [automatic screen tracking](#step-2--screen-tracking-automatic), so no per-screen or per-ad wiring is needed.
+
+The scroll-off/scroll-back timer is unchanged (stale-aware, respecting your refresh interval); only **screen navigation** forces an immediate reload.
+
+Optionally, set `Audienzz.shared.blankOnScreenReload = true` to briefly blank the slot (keeping its size, so no layout shift) during a screen-change reload — a clear visual cue that the ad refreshed. Default is off.
+
+Enable it per publisher from the backend remote config (`smartRefreshV2: true` on the publisher config), or locally in the app (the local override wins):
+
+```swift
+// Force the screen-aware model on (or off) regardless of the backend flag.
+Audienzz.shared.smartRefreshV2Override = true
+```
+
+> **Note:** v2 still requires `smartRefresh = true` and an `autorefreshTime` on each banner — the flag switches *which* refresh model runs, not whether refresh is enabled.
 ## Analytics
 
 The SDK reports an ad-event clickstream to the Audienzz backend automatically. **Every ad-level
@@ -221,25 +266,57 @@ Banner, interstitial and rewarded ads on the Original API are all covered.
 Analytics is keyed on your **Company ID** (provided by Audienzz), supplied when you initialize the
 SDK. Nothing is reported until initialization succeeds. See [Initialize SDK](#initialize-sdk).
 
-### Step 2 — Track screen visits (required)
+### Step 2 — Screen tracking (automatic)
 
-Call `Audienzz.shared.onScreenResumed(_:)` in `viewWillAppear` of **every view controller that shows
-ads**. This fires a `pageImpression` and generates a fresh page-impression id that tags all ad events
-on that screen visit, so the backend can correlate them. Screens without ads don't need it.
+**You don't need to write any per-screen code.** Once the SDK is configured it observes view-
+controller appearance and fires a `pageImpression` (with a fresh page-impression id that tags all ad
+events on that visit). Navigation pushes/pops, tab changes, and presented controllers are each
+tracked as distinct screens, and container controllers (navigation/tab/split/page) and alerts are
+filtered out. This same signal drives screen-aware
+[Smart Refresh v2](#smart-refresh-v2-screen-aware--opt-in): entering a screen reloads its banners,
+leaving pauses them.
+
+That's it — no `viewWillAppear`/`viewDidAppear` wiring.
+
+**Opt out / manual control.** Set `Audienzz.shared.autoScreenTracking = false` **before** you call
+`configureSDK`/`configureWithRemoteSDK` to disable it and drive screens yourself:
 
 ```swift
+Audienzz.shared.autoScreenTracking = false
+// then, in each ad-bearing controller:
 override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     Audienzz.shared.onScreenResumed(self)
 }
 ```
 
-- **Use `viewWillAppear`, not `viewDidAppear`** — it runs before the view lays out and before
-  lazy/prefetch banners start loading, so every ad event on the screen inherits the page-impression id.
-- Call it on **each appearance** (it starts a fresh page impression per visit). There is **no
-  `onPause`/teardown counterpart** to call.
-- If you omit it, ad events are still reported (the SDK assigns a fallback page-impression id so
-  nothing is lost), but they won't be tied to a named screen.
+**Screens auto-tracking can't see** (SwiftUI destinations, or a custom navigation model) are reported
+by an opaque route key — this works whether or not auto-tracking is on:
+
+```swift
+Audienzz.shared.onScreenResumed("home")   // route id / name as the screen identity
+```
+
+For analytics that's all you need. To also get **screen-aware Smart Refresh** (pause/reload on
+navigation) for a banner on such a screen, tag the banner with the same key so the SDK knows which
+screen it belongs to — otherwise it resolves to the host view controller and won't match a route key:
+
+```swift
+let banner = AUBannerView(configId: "…", adSize: …, adFormats: [.banner])
+banner.setScreen("home")                  // AURemoteConfigBannerView.setScreen("home") likewise
+// …on that screen's appearance:
+Audienzz.shared.onScreenResumed("home")   // reloads banners tagged "home"; pauses the rest
+```
+
+The key is matched **by value**, so the string reported to `onScreenResumed` and the one passed to
+`setScreen` just have to be equal.
+
+Notes:
+- While auto-tracking is on, manual `onScreenResumed(_ viewController:)` calls are **ignored** (auto
+  already covers them) to avoid double-counting; the string-key overload is always applied.
+- `setScreen` isn't needed for `UIViewController`-hosted banners (those are matched automatically).
+- There is **no `onPause`/teardown counterpart**. If no screen is ever reported, ad events still send
+  with a fallback page-impression id; they just aren't tied to a named screen.
 
 ### Demand-source attribution (`bidder_code`) — optional GAM setup
 

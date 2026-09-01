@@ -76,11 +76,17 @@ public struct RemotePublisherConfiguration: Codable {
     public let ortb: OrtbConfig?
     public let ios: IosConfig?
 
+    /// Backend switch for the screen-aware smart-refresh model (directional viewport gate +
+    /// screen-navigation pause/reload). Absent/nil → the SDK default (legacy smart refresh).
+    /// A local override on `Audienzz.shared.smartRefreshV2Override` takes precedence over this.
+    public let smartRefreshV2: Bool?
+
     enum CodingKeys: String, CodingKey {
         case id
         case prebidServer
         case gamConfig
         case ortb
         case ios
+        case smartRefreshV2
     }
 }

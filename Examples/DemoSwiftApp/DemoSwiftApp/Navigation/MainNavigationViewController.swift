@@ -100,9 +100,40 @@ class MainNavigationViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        setupSmartRefreshV2Toggle()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             self?.requestTrackingAuthorization()
         }
+    }
+
+    /// Demo control: a Smart Refresh v2 switch in the nav bar. Persists the choice and restarts the
+    /// app so the SDK picks up the new `smartRefreshV2Override` at launch (applied in AppDelegate).
+    private func setupSmartRefreshV2Toggle() {
+        title = "Audienzz Examples"
+        let toggle = UISwitch()
+        toggle.isOn = DemoFeatureFlags.smartRefreshV2Enabled
+        toggle.addTarget(self, action: #selector(smartRefreshV2Changed(_:)), for: .valueChanged)
+        let label = UILabel()
+        label.text = "SR v2"
+        label.font = .systemFont(ofSize: 13)
+        let stack = UIStackView(arrangedSubviews: [label, toggle])
+        stack.axis = .horizontal
+        stack.spacing = 6
+        stack.alignment = .center
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: stack)
+    }
+
+    @objc private func smartRefreshV2Changed(_ sender: UISwitch) {
+        DemoFeatureFlags.smartRefreshV2Enabled = sender.isOn
+        let alert = UIAlertController(
+            title: "Smart Refresh v2 \(sender.isOn ? "enabled" : "disabled")",
+            message: "The app will restart to apply the change.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Restart", style: .default) { _ in
+            exit(0)
+        })
+        present(alert, animated: true)
     }
     
     private func requestTrackingAuthorization() {

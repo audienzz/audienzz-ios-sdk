@@ -53,8 +53,18 @@ extension AUBannerView {
     }
 
     override func onBecameVisible() {
+        // ≥20% visible only drives the lazy-load fallback; smart refresh is gated by the
+        // stricter eligibility rule via onRefreshBecameEligible()/onRefreshBecameIneligible().
         super.onBecameVisible() // triggers lazy load via detectVisible()
+    }
 
+    /// Smart-refresh RESUME. Fires when the ad enters the eligible zone (top edge fully on
+    /// screen AND ≤50% off the bottom). Gates refreshes only — the first load happens earlier
+    /// via the prefetch / ≥20% path, so this never triggers the initial fetch.
+    override func onRefreshBecameEligible() {
+        // Smart-refresh v2: never resume a banner whose screen isn't the active one — the screen
+        // coordinator owns pause/reload for inactive screens. Always true under the legacy model.
+        guard screenActive else { return }
         guard smartRefresh, isLazyLoaded || !isLazyLoad,
               let request = gamRequest as? AdManagerRequest else { return }
 
@@ -63,7 +73,7 @@ extension AUBannerView {
         // → remaining = 0 → immediate fetchRequest, duplicating the prefetch fetch.
         // Mirrors Android's: if (lastRefreshTime == 0L) return
         guard lastRefreshTime != nil else {
-            AULogEvent.logDebug("[AUBannerView] smartRefresh — became visible before first load, skipping")
+            AULogEvent.logDebug("[AUBannerView] smartRefresh — eligible before first load, skipping")
             return
         }
 
@@ -97,7 +107,9 @@ extension AUBannerView {
         }
     }
 
-    override func onBecameHidden() {
+    /// Smart-refresh PAUSE. Fires when the ad leaves the eligible zone (top edge clipped by
+    /// ≥1pt, or >50% off the bottom).
+    override func onRefreshBecameIneligible() {
         guard smartRefresh else { return }
         pendingSmartRefreshWorkItem?.cancel()
         pendingSmartRefreshWorkItem = nil
@@ -122,6 +134,7 @@ extension AUBannerView {
     ///
     /// Mirrors Android's `AudienzzAdViewHandler.resumeSmartRefresh()`.
     public func resumeSmartRefresh() {
+        guard screenActive else { return }
         guard isLazyLoaded || !isLazyLoad,
               let request = gamRequest as? GAMRequest else { return }
         guard let lastTime = lastRefreshTime else {
@@ -169,7 +182,44 @@ extension AUBannerView {
         adUnitConfiguration?.stopAutoRefresh()
     }
 
+    /// Smart-refresh v2 screen-activation reload. Unlike `resumeSmartRefresh` (stale-aware), this
+    /// always forces a fresh auction when the ad has loaded before — the "new pageImpression →
+    /// reload" semantics on screen change. Called by `AUScreenAdCoordinator` for the now-active
+    /// screen's banners. A never-loaded banner is left for its normal lazy/prefetch first load.
+    func forceScreenReload() {
+        pendingSmartRefreshWorkItem?.cancel()
+        pendingSmartRefreshWorkItem = nil
+        guard smartRefresh, lastRefreshTime != nil,
+              let request = gamRequest as? AdManagerRequest else { return }
+        // Optionally blank the current creative (keeping the slot size — the container view keeps
+        // its frame) so the refresh is visually obvious; restored when the fresh ad is received.
+        if Audienzz.shared.blankOnScreenReload {
+            eventHandler?.gamView?.isHidden = true
+            blankedForReload = true
+        }
+        fetchRequest(request)
+        adUnitConfiguration?.resumeAutoRefresh()
+    }
+
+    /// Attributes this auction's events to the banner's own screen. The prefetch that drives the
+    /// first `fetchRequest` fires from `didMoveToWindow` during layout — before the host controller's
+    /// swizzled `viewDidAppear` runs — so without this the first `bidRequest`/`bidResponse`/`bidWon`
+    /// would inherit the previously-resumed screen's page-impression id and name. When the host
+    /// controller isn't already the active screen, resume it now (firing its page impression ahead of
+    /// the auction) and swallow the one duplicate `viewDidAppear` that follows. No-op on refreshes and
+    /// once the screen is active, so later auctions don't re-resume. Left to the app for manual mode
+    /// and route-key (SwiftUI) hosts, which drive `onScreenResumed` themselves.
+    private func ensureHostScreenResumed() {
+        guard Audienzz.shared.autoScreenTracking, hostScreenOverride == nil,
+              let hostVC = resolveHostViewController(),
+              Audienzz.shared.lastResumedScreenVC !== hostVC else { return }
+        AUScreenTracker.shared.suppressNextAppearance(for: hostVC)
+        Audienzz.shared.notifyScreenResumed(hostVC)
+    }
+
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
+        // Make sure the host screen's page impression precedes this auction's events (see above).
+        ensureHostScreenResumed()
         // New auction → reset render-winner state until the bid result / GAM app event report back.
         prebidLineItemWon = false
         prebidWinningBidder = nil
@@ -186,12 +236,13 @@ extension AUBannerView {
             // H12: Prebid starts its auto-refresh dispatcher synchronously on the
             // first fetchDemand. When that first fetch is a prefetch-zone load
             // (fired up to prefetchMarginPoints before the ad is on screen), the
-            // dispatcher would otherwise keep auto-refreshing at 0% viewability.
-            // Under smart refresh, stop it whenever the ad isn't actually visible;
-            // onBecameVisible resumes it (stale-aware) once the ad is ≥20% on screen.
-            // This runs after onBecameVisible has resolved the already-visible case,
-            // so a banner that's on screen at load keeps refreshing normally.
-            if self.smartRefresh, !self.isViewCurrentlyVisible {
+            // dispatcher would otherwise keep auto-refreshing while the ad isn't in the
+            // refresh-eligible zone. Under smart refresh, stop it whenever the ad isn't
+            // eligible; onRefreshBecameEligible resumes it (stale-aware) once the ad's top
+            // is fully on screen with ≥50% visible. This runs after the eligibility check
+            // has resolved the already-eligible case, so a banner that's fully on screen at
+            // load keeps refreshing normally.
+            if self.smartRefresh, !self.isViewRefreshEligible {
                 self.adUnitConfiguration?.stopAutoRefresh()
             }
 
