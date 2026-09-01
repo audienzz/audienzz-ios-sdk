@@ -238,7 +238,6 @@ Audienzz.shared.smartRefreshV2Override = true
 ```
 
 > **Note:** v2 still requires `smartRefresh = true` and an `autorefreshTime` on each banner — the flag switches *which* refresh model runs, not whether refresh is enabled.
-
 ## Analytics
 
 The SDK reports an ad-event clickstream to the Audienzz backend automatically. **Every ad-level
