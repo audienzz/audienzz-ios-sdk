@@ -29,6 +29,13 @@ final class AUScreenTracker {
     private var pendingVC: UIViewController?
     private var scheduled = false
 
+    /// One-shot: the next `viewDidAppear` for this controller is ignored. Set when a banner has
+    /// already resumed its host screen proactively (its prefetch fires during layout, before
+    /// `viewDidAppear`), so the swizzle's later callback for the same appearance doesn't fire a
+    /// duplicate page impression / coordinator transition. Weak so a controller that never re-appears
+    /// can't be leaked or wrongly matched after it deallocates.
+    private weak var suppressNextVC: UIViewController?
+
     /// Installs the `viewDidAppear` swizzle once. Safe to call from every init entry point.
     static func installIfNeeded() {
         guard !installed else { return }
@@ -36,10 +43,21 @@ final class AUScreenTracker {
         UIViewController.au_installScreenTrackingSwizzle()
     }
 
+    /// Skip the next automatic `viewDidAppear` for `viewController` (one-shot). Called right before a
+    /// banner proactively resumes its host screen so the appearance isn't counted twice.
+    func suppressNextAppearance(for viewController: UIViewController) {
+        suppressNextVC = viewController
+    }
+
     /// Called from the swizzled `viewDidAppear`. Filters, then coalesces to the deepest content
     /// controller appearing in this run-loop turn (child `viewDidAppear` fires after its parent).
     func viewControllerDidAppear(_ viewController: UIViewController) {
         guard Audienzz.shared.autoScreenTracking, Self.isTrackable(viewController) else { return }
+        // A banner already resumed this screen ahead of its first fetch — swallow the one duplicate.
+        if suppressNextVC === viewController {
+            suppressNextVC = nil
+            return
+        }
         pendingVC = viewController
         guard !scheduled else { return }
         scheduled = true

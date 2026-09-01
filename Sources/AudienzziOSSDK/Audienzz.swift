@@ -446,9 +446,15 @@ public class Audienzz: NSObject {
         notifyScreenResumed(viewController, name: String(describing: type(of: viewController)))
     }
 
+    /// Identity of the controller most recently passed to `notifyScreenResumed`. Lets a banner tell
+    /// whether its host screen is already the active one before deciding to resume it proactively
+    /// (see `AUBannerView.ensureHostScreenResumed`). Weak — never keeps a screen alive.
+    internal weak var lastResumedScreenVC: UIViewController?
+
     /// Generalized sink taking any screen token (a `UIViewController` or a route key).
     internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
         AULogEvent.logDebug("[Audienzz] screenResumed: \(name) (smartRefreshV2=\(isSmartRefreshV2Enabled))")
+        lastResumedScreenVC = screen as? UIViewController
         AUEventsManager.shared.onScreenResumed(screenName: name)
         if isSmartRefreshV2Enabled {
             AUScreenAdCoordinator.shared.onScreenResumed(screen)

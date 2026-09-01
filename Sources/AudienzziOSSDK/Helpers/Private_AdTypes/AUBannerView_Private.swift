@@ -201,7 +201,25 @@ extension AUBannerView {
         adUnitConfiguration?.resumeAutoRefresh()
     }
 
+    /// Attributes this auction's events to the banner's own screen. The prefetch that drives the
+    /// first `fetchRequest` fires from `didMoveToWindow` during layout — before the host controller's
+    /// swizzled `viewDidAppear` runs — so without this the first `bidRequest`/`bidResponse`/`bidWon`
+    /// would inherit the previously-resumed screen's page-impression id and name. When the host
+    /// controller isn't already the active screen, resume it now (firing its page impression ahead of
+    /// the auction) and swallow the one duplicate `viewDidAppear` that follows. No-op on refreshes and
+    /// once the screen is active, so later auctions don't re-resume. Left to the app for manual mode
+    /// and route-key (SwiftUI) hosts, which drive `onScreenResumed` themselves.
+    private func ensureHostScreenResumed() {
+        guard Audienzz.shared.autoScreenTracking, hostScreenOverride == nil,
+              let hostVC = resolveHostViewController(),
+              Audienzz.shared.lastResumedScreenVC !== hostVC else { return }
+        AUScreenTracker.shared.suppressNextAppearance(for: hostVC)
+        Audienzz.shared.notifyScreenResumed(hostVC)
+    }
+
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
+        // Make sure the host screen's page impression precedes this auction's events (see above).
+        ensureHostScreenResumed()
         // New auction → reset render-winner state until the bid result / GAM app event report back.
         prebidLineItemWon = false
         prebidWinningBidder = nil
