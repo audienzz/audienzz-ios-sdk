@@ -40,6 +40,18 @@ public class AURemoteConfigBannerView: VisibleView {
         bannerView?.reloadAd()
     }
 
+    /// Pause Prebid smart-refresh on the underlying banner. Forwards to
+    /// `AUBannerView.pauseSmartRefresh()`. No-op until the banner has been built.
+    @objc public func stopAutoRefresh() {
+        bannerView?.pauseSmartRefresh()
+    }
+
+    /// Resume Prebid smart-refresh on the underlying banner previously paused via
+    /// `stopAutoRefresh()`. Forwards to `AUBannerView.resumeSmartRefresh()`.
+    @objc public func resumeAutoRefresh() {
+        bannerView?.resumeSmartRefresh()
+    }
+
     // MARK: - Init
 
     public init(adConfigId: String) {
