@@ -201,6 +201,24 @@ extension AUBannerView {
         adUnitConfiguration?.resumeAutoRefresh()
     }
 
+    /// Force a fresh auction now, ignoring the stale-aware timing of `resumeSmartRefresh`.
+    ///
+    /// Public entry point for a manual reload — e.g. the React Native / Flutter bridges reloading a
+    /// banner when its screen (route/tab) becomes active again, or a publisher triggering a refresh
+    /// on demand. Unlike `forceScreenReload()` (coordinator-internal, gated on smart refresh), this
+    /// works for any banner that has completed its initial setup. No-op before the first `createAd`.
+    public func reloadAd() {
+        guard let request = gamRequest as? AdManagerRequest else { return }
+        pendingSmartRefreshWorkItem?.cancel()
+        pendingSmartRefreshWorkItem = nil
+        if Audienzz.shared.blankOnScreenReload {
+            eventHandler?.gamView?.isHidden = true
+            blankedForReload = true
+        }
+        fetchRequest(request)
+        adUnitConfiguration?.resumeAutoRefresh()
+    }
+
     /// Attributes this auction's events to the banner's own screen. The prefetch that drives the
     /// first `fetchRequest` fires from `didMoveToWindow` during layout — before the host controller's
     /// swizzled `viewDidAppear` runs — so without this the first `bidRequest`/`bidResponse`/`bidWon`
