@@ -33,6 +33,13 @@ public class AURemoteConfigBannerView: VisibleView {
         bannerView?.hostScreenOverride = pendingScreenKey
     }
 
+    /// Force a fresh auction now on the underlying banner, ignoring the stale-aware refresh timing.
+    /// Forwards to `AUBannerView.reloadAd()` — used by the RN/Flutter bridges to reload on screen
+    /// change, and for a manual reload. No-op until the underlying banner has been built.
+    @objc public func reloadAd() {
+        bannerView?.reloadAd()
+    }
+
     // MARK: - Init
 
     public init(adConfigId: String) {
