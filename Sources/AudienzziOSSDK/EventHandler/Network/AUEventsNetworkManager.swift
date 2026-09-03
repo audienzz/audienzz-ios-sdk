@@ -33,7 +33,11 @@ class AUEventsNetworkManager<T: APIResult> {
     }
     
     private(set) var isConnection: Bool = false
-    
+
+    /// Invoked when connectivity transitions from unavailable to available — lets the event queue
+    /// drain any backed-up batches as soon as the network returns.
+    var onConnectionRestored: (() -> Void)?
+
     func request(_ route: APIRoute<T>, handler: @escaping (Result<T, AUAPIError>) -> Void) {
         let method = APIGateway<T>().build(route: route)
         run(request: method.request) { [weak self] result in
@@ -65,8 +69,11 @@ fileprivate extension AUEventsNetworkManager {
             var jObject = JSONObject()
             jObject["code"] = responce.statusCode
             handler(extractAPIResponce(jsonObject: jObject, parser: method.resultParser))
+            // Success is fully handled above; returning here prevents a second `handler` call from
+            // the body-parsing path below (which would double-account a batch in the event queue).
+            return
         }
-        
+
         guard let data = responce.body, let json = try? decodeJSON(data), let jsonObject = json as? JSONObject else {
             return
         }
@@ -98,14 +105,17 @@ fileprivate extension AUEventsNetworkManager {
 fileprivate extension AUEventsNetworkManager {
     func startMonitoring() {
         monitor.pathUpdateHandler = { [weak self] path in
+            guard let self = self else { return }
             if path.status == .satisfied {
                 AULogEvent.logDebug("We're connected!")
-                self?.isConnection = true
+                let wasConnected = self.isConnection
+                self.isConnection = true
+                if !wasConnected { self.onConnectionRestored?() }
             } else {
                 AULogEvent.logDebug("No connection.")
-                self?.isConnection = false
+                self.isConnection = false
             }
-            
+
             AULogEvent.logDebug("Is expensive: \(path.isExpensive)")
         }
         

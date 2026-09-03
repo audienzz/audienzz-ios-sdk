@@ -15,11 +15,15 @@
 
 import Foundation
 import AdSupport
+#if canImport(UIKit)
+import UIKit
+#endif
 
 fileprivate let keyVisitorId = "keyVisitorId"
 
-/// Clickstream analytics logger. Each event is enriched with identity/session data and POSTed
-/// immediately to the collector (mirrors the Android `EventLoggerImpl` — no local queue/batching).
+/// Clickstream analytics logger. Each event is enriched with identity/session data, serialized, and
+/// handed to `AUEventQueue`, which coalesces events into batched POSTs to the collector (mirrors the
+/// Android `EventLoggerImpl` + `EventBatcher`).
 final class AUEventsManager: AULogEventType {
     static let shared = AUEventsManager()
 
@@ -38,12 +42,15 @@ final class AUEventsManager: AULogEventType {
     private var currentScreenName: String?
 
     private let mapper = AUEventNetworkMapper()
-    private var networkManager: AUEventsNetworkManager<AUBatchResultModel>!
+    private var eventQueue: AUEventQueue?
+    private var lifecycleObserved = false
 
     func configure(companyId: String) {
-        networkManager = AUEventsNetworkManager<AUBatchResultModel>()
+        let networkManager = AUEventsNetworkManager<AUBatchResultModel>()
+        eventQueue = AUEventQueue(networkManager: networkManager)
         visitorId = makeVisitorId()
         self.companyId = companyId
+        observeAppLifecycle()
     }
 
     // MARK: - Screen tracking
@@ -62,7 +69,7 @@ final class AUEventsManager: AULogEventType {
     // MARK: - Logging
 
     func logEvent(_ event: AUEventDomain) {
-        guard networkManager != nil else { return }
+        guard let eventQueue = eventQueue else { return }
         requestDeviceId()
 
         // Safety net: if an ad event fires before any onScreenResumed (e.g. a banner prefetches
@@ -101,17 +108,45 @@ final class AUEventsManager: AULogEventType {
             print("[AUAnalytics] ▶︎ \(network.eventType) seq=\(network.sessionSeq)\n\(str)")
         }
         #endif
-        networkManager.request(.batchEvents([json])) { result in
-            switch result {
-            case .success:
-                AULogEvent.logDebug(
-                    "[AUAnalytics] ✓ sent \(network.eventType) seq=\(network.sessionSeq)")
-            case .failure(let error):
-                AULogEvent.logDebug(
-                    "[AUAnalytics] ✗ FAILED \(network.eventType) seq=\(network.sessionSeq): \(error.localizedDescription)")
-            }
+        // Enqueue for batched delivery; the queue coalesces events and POSTs them to /submit/batch
+        // on size/time/background triggers, with bounded retry.
+        eventQueue.enqueue(json)
+    }
+
+    // MARK: - App lifecycle (batch flush)
+
+    /// Flush the event queue when the app backgrounds (so a pending buffer isn't stranded) and again
+    /// when it returns to the foreground (drains anything left after a failed/backoff cycle). Uses
+    /// block-based observers (added once) since `AUEventsManager` is not an `NSObject`.
+    private func observeAppLifecycle() {
+        #if canImport(UIKit)
+        guard !lifecycleObserved else { return }
+        lifecycleObserved = true
+        let nc = NotificationCenter.default
+        nc.addObserver(forName: UIApplication.didEnterBackgroundNotification,
+                       object: nil, queue: .main) { [weak self] _ in
+            self?.flushOnBackground()
+        }
+        nc.addObserver(forName: UIApplication.didBecomeActiveNotification,
+                       object: nil, queue: .main) { [weak self] _ in
+            self?.eventQueue?.flush()
+        }
+        #endif
+    }
+
+    #if canImport(UIKit)
+    private func flushOnBackground() {
+        // Buy a little time for the in-flight batch to complete after the app leaves the foreground.
+        var bgTask: UIBackgroundTaskIdentifier = .invalid
+        bgTask = UIApplication.shared.beginBackgroundTask(withName: "AUEventsFlush") {
+            if bgTask != .invalid { UIApplication.shared.endBackgroundTask(bgTask); bgTask = .invalid }
+        }
+        eventQueue?.flush()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            if bgTask != .invalid { UIApplication.shared.endBackgroundTask(bgTask); bgTask = .invalid }
         }
     }
+    #endif
 
     private func nextSequence() -> Int {
         seqLock.lock()
