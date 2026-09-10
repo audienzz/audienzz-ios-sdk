@@ -34,9 +34,29 @@ public class AUAdView: VisibleView {
     /// from the initially declared slot size (e.g. GAM picks a 300×600 direct ad
     /// against a slot that Prebid bid at 300×250).
     public var onAdSizeChanged: ((CGSize) -> Void)?
-    
+
+    /// The banner/creative subview that must stay horizontally centered within this host.
+    /// Subclasses set this when they add their GAM/Prebid banner. Without it, a creative
+    /// narrower than the host (e.g. a 300-wide banner in a full-width/tablet slot, or a
+    /// multisize slot filled with a smaller creative) pins to the leading edge. See
+    /// `layoutSubviews`. Weak so `collapseBehaviour` (which removes subviews) clears it.
+    internal weak var centeredAdSubview: UIView?
+
     public override func awakeFromNib() {
         super.awakeFromNib()
+    }
+
+    /// Keep `centeredAdSubview` horizontally centered. GAM/Prebid banner views are
+    /// frame-driven and resize themselves in place, so we only adjust the x origin and
+    /// leave their size and vertical position alone. Re-runs on GAM resize via the
+    /// `setNeedsLayout()` in `AUBannerHandler` after `willChangeAdSizeTo`/`resize`.
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        guard let banner = centeredAdSubview, banner.superview === self else { return }
+        let centeredX = ((bounds.width - banner.frame.width) / 2).rounded()
+        if banner.frame.origin.x != centeredX {
+            banner.frame.origin.x = centeredX
+        }
     }
     
     public init(configId: String, adSize: CGSize, isLazyLoad: Bool) {

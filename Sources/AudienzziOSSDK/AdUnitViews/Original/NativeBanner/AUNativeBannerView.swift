@@ -81,7 +81,10 @@ public class AUNativeBannerView: AUAdView {
         nativeUnit.ext = configuration.ext
         
         addSubview(gamBanner)
-        
+        // Center the GAM banner in this host so a sub-width creative isn't leading-aligned.
+        centeredAdSubview = gamBanner
+        setNeedsLayout()
+
         let ppid = PPIDManager.shared.getPPID()
         
         if let ppid = ppid {

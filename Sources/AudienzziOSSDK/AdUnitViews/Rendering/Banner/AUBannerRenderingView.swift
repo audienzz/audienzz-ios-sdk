@@ -127,7 +127,11 @@ public class AUBannerRenderingView: AUAdView {
         bannerView.delegate = subdelegate
         
         self.addSubview(bannerView)
-        
+        // Center the rendering banner in this host so a sub-width creative isn't
+        // leading-aligned. See AUAdView.layoutSubviews.
+        centeredAdSubview = bannerView
+        setNeedsLayout()
+
         if !isLazyLoad {
             delegate?.bannerAdDidDisplayOnScreen?()
             bannerView.loadAd()
