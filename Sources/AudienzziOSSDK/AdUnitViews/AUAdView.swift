@@ -99,7 +99,7 @@ public class AUAdView: VisibleView {
     internal var pendingSmartRefreshWorkItem: DispatchWorkItem?
 
     /// Whether this ad's host screen is the currently-active one (smart-refresh v2 / screen-aware).
-    /// Defaults to `true` so ads on screens that never call `onScreenResumed`, and all ads under the
+    /// Defaults to `true` so ads on screens that never call `pageImpression`, and all ads under the
     /// legacy model, behave exactly as before. Flipped by `AUScreenAdCoordinator` on screen changes;
     /// while `false`, the viewport gate must not resume the ad.
     internal var screenActive: Bool = true

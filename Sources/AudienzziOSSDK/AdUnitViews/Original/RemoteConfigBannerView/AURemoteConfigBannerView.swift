@@ -26,7 +26,7 @@ public class AURemoteConfigBannerView: VisibleView {
 
     /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
     /// destination, or a custom route). Pass the same token reported to
-    /// `Audienzz.shared.onScreenResumed(token)`; matched by value. Call before or after `load(...)` —
+    /// `Audienzz.shared.pageImpression(token)`; matched by value. Call before or after `load(...)` —
     /// the underlying banner is built asynchronously, so the key is applied when ready.
     public func setScreen(_ screenKey: Any) {
         pendingScreenKey = screenKey as AnyObject
@@ -173,6 +173,15 @@ public class AURemoteConfigBannerView: VisibleView {
         let bannerWidthConstraint = bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width)
         let bannerHeightConstraint = bannerView.heightAnchor.constraint(equalToConstant: gadSize.size.height)
         let containerWidthConstraint = container.widthAnchor.constraint(equalToConstant: gadSize.size.width)
+        // The host owns the container's width: the RN bridge lets React Native size the
+        // view (full width), and native callers pin it themselves (e.g. leading+trailing).
+        // Pinning the container to the creative's own width at required priority forced it
+        // to the leading edge — so a creative narrower than the screen (e.g. 300x600 on a
+        // tablet) rendered left-aligned instead of centered, and conflicted with a host that
+        // already constrained the width. Demote it to a fallback: a host-provided width wins
+        // and `centerXAnchor` centers the banner; if no width is supplied, this still sizes
+        // the container to the ad.
+        containerWidthConstraint.priority = .defaultLow
         let containerHeightConstraint = container.heightAnchor.constraint(equalToConstant: gadSize.size.height)
 
         NSLayoutConstraint.activate([

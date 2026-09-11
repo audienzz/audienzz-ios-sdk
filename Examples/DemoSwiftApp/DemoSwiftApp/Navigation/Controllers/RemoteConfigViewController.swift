@@ -65,7 +65,7 @@ final class RemoteConfigViewController: UIViewController {
         super.viewWillAppear(animated)
         // Track the screen visit for analytics (fires `pageImpression` and a fresh page-impression
         // id that ties this screen's ad events together). Call it before ads load.
-        Audienzz.shared.onScreenResumed(self)
+        Audienzz.shared.pageImpression(self)
     }
 
     // MARK: - Layout
@@ -212,7 +212,7 @@ extension RemoteConfigViewController: BannerViewDelegate {
 
 /// A separate screen with a remote-config banner, pushed from the Remote Config screen. Navigating
 /// here and back exercises screen-navigation pause/resume/reload and ad↔screen matching. Screen
-/// tracking is automatic — no `onScreenResumed` calls here.
+/// tracking is automatic — no `pageImpression` calls here.
 final class RemoteConfigAdScreenViewController: UIViewController {
     private var banner: AURemoteConfigBannerView?
     private let bannerContainer = UIView()
