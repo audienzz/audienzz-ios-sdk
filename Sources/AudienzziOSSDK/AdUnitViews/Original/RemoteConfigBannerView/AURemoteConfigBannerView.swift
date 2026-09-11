@@ -26,7 +26,7 @@ public class AURemoteConfigBannerView: VisibleView {
 
     /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
     /// destination, or a custom route). Pass the same token reported to
-    /// `Audienzz.shared.onScreenResumed(token)`; matched by value. Call before or after `load(...)` —
+    /// `Audienzz.shared.pageImpression(token)`; matched by value. Call before or after `load(...)` —
     /// the underlying banner is built asynchronously, so the key is applied when ready.
     public func setScreen(_ screenKey: Any) {
         pendingScreenKey = screenKey as AnyObject

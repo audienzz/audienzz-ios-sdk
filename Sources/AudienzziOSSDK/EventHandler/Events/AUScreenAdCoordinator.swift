@@ -18,7 +18,7 @@ import UIKit
 /// Screen-aware smart refresh (v2). Matches banner ads to the screen (`UIViewController`) they live
 /// on and, on every `onScreenResumed` transition, pauses the previous screen's banners and force-
 /// reloads the incoming screen's banners. Wired only under the smart-refresh-v2 feature flag —
-/// `Audienzz.onScreenResumed` gates the call — so the legacy model is untouched. Main-thread affine.
+/// `Audienzz.pageImpression` gates the call — so the legacy model is untouched. Main-thread affine.
 internal final class AUScreenAdCoordinator {
     static let shared = AUScreenAdCoordinator()
     private init() {}

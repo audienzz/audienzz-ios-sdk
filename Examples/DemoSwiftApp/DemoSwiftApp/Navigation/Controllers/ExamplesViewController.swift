@@ -93,7 +93,7 @@ class ExamplesViewController: UIViewController {
         // Track the screen visit for analytics (fires `pageImpression` + a fresh page-impression id
         // that ties this screen's ad events together). Do this in viewWillAppear — before the view
         // lays out and banners prefetch — so every ad event inherits the page-impression id.
-        Audienzz.shared.onScreenResumed(self)
+        Audienzz.shared.pageImpression(self)
     }
 
     private func setupAdContainer() {

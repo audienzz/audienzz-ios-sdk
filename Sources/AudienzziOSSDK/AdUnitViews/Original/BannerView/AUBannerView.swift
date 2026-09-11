@@ -73,7 +73,7 @@ public class AUBannerView: AUAdView {
 
     /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
     /// destination, or a custom route). Pass the same token you report to
-    /// `Audienzz.shared.onScreenResumed(token)` — typically the route-key `String`; it's matched by
+    /// `Audienzz.shared.pageImpression(token)` — typically the route-key `String`; it's matched by
     /// value, so the key reported on resume and the one set here just have to be equal. Not needed
     /// for `UIViewController`-hosted banners (those are resolved automatically via the responder chain).
     public func setScreen(_ screenKey: Any) {
