@@ -27,6 +27,9 @@ extension AUBannerView {
     /// Primary lazy-load trigger: fires `prefetchMarginPoints` pt before the view enters the
     /// viewport so the Prebid demand fetch completes by the time the ad is visible.
     override func onEnteredPrefetchZone() {
+        // A banner whose page has been released must not load, even if it scrolls into range —
+        // its screen is no longer the one the user is on.
+        guard screenActive else { return }
         guard isLazyLoad, !isLazyLoaded, let request = gamRequest as? AdManagerRequest else {
             return
         }
@@ -42,6 +45,7 @@ extension AUBannerView {
     /// `onEnteredPrefetchZone`), so this is a no-op. It only triggers a load if the prefetch
     /// zone somehow never fired (e.g. `prefetchMarginPoints = 0` with no scroll event).
     override func detectVisible() {
+        guard screenActive else { return }
         guard isLazyLoad, !isLazyLoaded, let request = gamRequest as? AdManagerRequest else {
             return
         }
@@ -182,14 +186,28 @@ extension AUBannerView {
         adUnitConfiguration?.stopAutoRefresh()
     }
 
-    /// Smart-refresh v2 screen-activation reload. Unlike `resumeSmartRefresh` (stale-aware), this
-    /// always forces a fresh auction when the ad has loaded before — the "new pageImpression →
-    /// reload" semantics on screen change. Called by `AUScreenAdCoordinator` for the now-active
-    /// screen's banners. A never-loaded banner is left for its normal lazy/prefetch first load.
-    func forceScreenReload() {
+    /// Page release: the ad's screen is no longer the active page, so stop everything. Cancels any
+    /// pending stale-aware refresh and stops Prebid's auto-refresh dispatcher, leaving the slot
+    /// dormant — no auctions, no GAM loads — until its page comes back and `recreateForPage()` runs.
+    ///
+    /// `screenActive` (set by the coordinator) is what keeps the viewport gate from resuming it in
+    /// the meantime, so a released banner scrolling through the viewport stays silent.
+    func releaseForPage() {
         pendingSmartRefreshWorkItem?.cancel()
         pendingSmartRefreshWorkItem = nil
-        guard smartRefresh, lastRefreshTime != nil,
+        adUnitConfiguration?.stopAutoRefresh()
+        adUnit?.stopAutoRefresh()
+    }
+
+    /// Page (re)activation: this ad's screen is the incoming page, so serve a fresh creative.
+    /// Unlike `resumeSmartRefresh` (stale-aware), this always forces a new auction when the ad has
+    /// loaded before — that is the "new page impression → fresh ad" semantics, and it's what makes a
+    /// back-navigation or a return from the background show a current creative rather than a stale
+    /// one. A never-loaded banner is left for its normal lazy/prefetch first load.
+    func recreateForPage() {
+        pendingSmartRefreshWorkItem?.cancel()
+        pendingSmartRefreshWorkItem = nil
+        guard lastRefreshTime != nil,
               let request = gamRequest as? AdManagerRequest else { return }
         // Optionally blank the current creative (keeping the slot size — the container view keeps
         // its frame) so the refresh is visually obvious; restored when the fresh ad is received.
@@ -205,9 +223,12 @@ extension AUBannerView {
     ///
     /// Public entry point for a manual reload — e.g. the React Native / Flutter bridges reloading a
     /// banner when its screen (route/tab) becomes active again, or a publisher triggering a refresh
-    /// on demand. Unlike `forceScreenReload()` (coordinator-internal, gated on smart refresh), this
+    /// on demand. Unlike `recreateForPage()` (driven by the page coordinator), this
     /// works for any banner that has completed its initial setup. No-op before the first `createAd`.
     public func reloadAd() {
+        // Never re-auction a banner the page sweep has released — the bridges broadcast reloads,
+        // and without this a released banner on a kept-mounted route would come back to life.
+        guard screenActive else { return }
         guard let request = gamRequest as? AdManagerRequest else { return }
         pendingSmartRefreshWorkItem?.cancel()
         pendingSmartRefreshWorkItem = nil

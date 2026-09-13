@@ -16,6 +16,7 @@
 import Foundation
 import GoogleMobileAds
 import PrebidMobile
+import UIKit
 
 private let customPrebidServerURL = "https://ib.adnxs.com/openrtb2/prebid"
 private let prebidServerAccountId = "3927"
@@ -432,15 +433,62 @@ public class Audienzz: NSObject {
         notifyScreenResumed(name as AnyObject, name: name)
     }
 
-    /// Single sink for the manual page-impression API: page impression + the screen-aware
-    /// smart-refresh coordinator (v2 only). Takes any screen token (a `UIViewController` or a name).
+    /// Single sink for the manual page-impression API: page impression + the page-scoped ad
+    /// coordinator. Takes any screen token (a `UIViewController` or a name).
+    ///
+    /// Ads are page-scoped unconditionally — this is NOT gated on `isSmartRefreshV2Enabled`, which
+    /// now only selects the viewport gate used for scroll pause/resume. Every page impression
+    /// releases the previous page's banners and reloads the incoming page's, so a banner can never
+    /// keep auctioning for a screen the user has left.
     internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
-        AULogEvent.logDebug("[Audienzz][pageImpression] firing → \"\(name)\" (smartRefreshV2=\(isSmartRefreshV2Enabled))")
+        AULogEvent.logDebug("[Audienzz][pageImpression] firing → \"\(name)\"")
+        lastPageImpressionAt = Date()
+        // Armed on the first page impression, so there is always an active screen to re-fire for.
+        observeForegroundReimpression()
         AUEventsManager.shared.onScreenResumed(screenName: name)
-        if isSmartRefreshV2Enabled {
-            AUScreenAdCoordinator.shared.onScreenResumed(screen)
+        AUScreenAdCoordinator.shared.onScreenResumed(screen, name: name)
+    }
+
+    // MARK: - Foreground re-impression
+
+    /// Returning from the background is a new page impression for the screen the user comes back to:
+    /// its banners reload so the creative is fresh at the moment it's looked at, and any banner left
+    /// over from an earlier screen is released.
+    ///
+    /// Suppressed when the app itself reported a page impression within
+    /// `foregroundReimpressionDebounce` of the activation (the common case where a view controller's
+    /// `viewDidAppear` also fires on return), so a restore never double-auctions.
+    internal func observeForegroundReimpression() {
+        guard foregroundObserver == nil else { return }
+        foregroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.fireForegroundReimpression()
         }
     }
+
+    private func fireForegroundReimpression() {
+        guard let (screen, name) = AUScreenAdCoordinator.shared.activeScreenAndName else {
+            AULogEvent.logDebug("[Audienzz][pageImpression] foreground — no active screen yet, skipping")
+            return
+        }
+        if let last = lastPageImpressionAt,
+           Date().timeIntervalSince(last) < Self.foregroundReimpressionDebounce {
+            AULogEvent.logDebug(
+                "[Audienzz][pageImpression] foreground — app already reported \"\(name)\", skipping")
+            return
+        }
+        AULogEvent.logDebug("[Audienzz][pageImpression] foreground → re-firing \"\(name)\"")
+        notifyScreenResumed(screen, name: name)
+    }
+
+    /// Window after an explicit `pageImpression` in which a foreground activation does not re-fire.
+    private static let foregroundReimpressionDebounce: TimeInterval = 0.3
+
+    internal var lastPageImpressionAt: Date?
+    private var foregroundObserver: NSObjectProtocol?
 
     private func setupPrebid(_ companyId: String, appVolume: Float = 0) {
         AUEventsManager.shared.configure(companyId: companyId)

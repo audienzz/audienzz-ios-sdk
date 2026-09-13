@@ -98,11 +98,15 @@ public class AUAdView: VisibleView {
     internal var lastRefreshTime: Date?
     internal var pendingSmartRefreshWorkItem: DispatchWorkItem?
 
-    /// Whether this ad's host screen is the currently-active one (smart-refresh v2 / screen-aware).
-    /// Defaults to `true` so ads on screens that never call `pageImpression`, and all ads under the
-    /// legacy model, behave exactly as before. Flipped by `AUScreenAdCoordinator` on screen changes;
-    /// while `false`, the viewport gate must not resume the ad.
+    /// Whether this ad's host screen is the currently-active one. Defaults to `true` so ads in apps
+    /// that never call `pageImpression` behave exactly as before. Flipped by `AUScreenAdCoordinator`
+    /// on page transitions; while `false` the ad is released and the viewport gate must not resume it.
     internal var screenActive: Bool = true
+
+    /// The page epoch this ad was created under (see `AUScreenAdCoordinator.epoch`). A stamp older
+    /// than the coordinator's current epoch means the ad was created before its screen's
+    /// `pageImpression` — an ordering violation the coordinator reports and later repairs on attach.
+    internal var pageEpoch: Int = 0
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in

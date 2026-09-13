@@ -140,6 +140,15 @@ public class AUBannerView: AUAdView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// Once the banner is in a window its responder chain resolves, so a banner that was created
+    /// before its screen's `pageImpression` — and therefore looked host-less to the page sweep —
+    /// can be adopted into the current page instead of staying dormant.
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        guard window != nil else { return }
+        AUScreenAdCoordinator.shared.adoptIfOnActiveScreen(self)
+    }
+
     public override func removeFromSuperview() {
         super.removeFromSuperview()
         AUScreenAdCoordinator.shared.deregister(self)
@@ -223,10 +232,11 @@ public class AUBannerView: AUAdView {
             self.eventHandler = AUBannerHandler(auBannerView: self, gamView: bannerEventHandler.gamView)
         }
 
-        // Register for screen-aware smart refresh (v2). The coordinator only acts under v2; under
-        // the legacy model `screenActive` stays true and nothing pauses/reloads on screen change.
+        // Join the current page. The epoch stamp is what lets the coordinator tell this screen's
+        // banners from a previous screen's on the next page impression.
         AUScreenAdCoordinator.shared.register(self)
         screenActive = AUScreenAdCoordinator.shared.isActiveScreen(for: self)
+        pageEpoch = AUScreenAdCoordinator.shared.epoch
 
         if !self.isLazyLoad {
             fetchRequest(gamRequest)

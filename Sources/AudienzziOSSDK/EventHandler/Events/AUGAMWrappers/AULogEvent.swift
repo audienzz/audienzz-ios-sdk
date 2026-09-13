@@ -36,6 +36,12 @@ final class AULogEvent {
         print(message)
         #endif
     }
+
+    /// Integration problems the publisher needs to see. Unlike `logDebug` this is not DEBUG-gated —
+    /// a misconfiguration that silently kills an ad slot must be visible in a release build too.
+    static func logWarn(_ message: String) {
+        print("[Audienzz][warning] \(message)")
+    }
 }
 
 extension AULogEventType {
