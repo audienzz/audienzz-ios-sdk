@@ -300,9 +300,10 @@ extension AUBannerView {
             // in flight, so its creative belongs to a screen the user has left. Dropping it here is
             // what stops `onLoadRequest` from loading GAM into a released slot.
             guard generationAtRequest == self.auctionGeneration, self.screenActive else {
+                // Drop only. There is ONE dispatcher per ad unit, so stopping it here would kill
+                // the refresh belonging to the replacement auction that superseded this one.
                 AULogEvent.logDebug(
-                    "[AUBannerView] dropping response for a released page (gen \(generationAtRequest) vs \(self.auctionGeneration), screenActive=\(self.screenActive))")
-                self.adUnitConfiguration?.stopAutoRefresh()
+                    "[AUBannerView] dropping superseded response (gen \(generationAtRequest) vs \(self.auctionGeneration), screenActive=\(self.screenActive))")
                 return
             }
             self.lastRefreshTime = Date()

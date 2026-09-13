@@ -464,6 +464,18 @@ public class Audienzz: NSObject {
             // window would otherwise recreate the whole active page while backgrounded.
             self?.cancelPendingForegroundReimpression()
         }
+        // Clear the auction gate at willEnterForeground, not didBecomeActive. An app that reports
+        // its page from `willEnterForeground` runs BEFORE activation: with the gate still closed its
+        // recreation was rejected, and the activation that followed then suppressed the automatic
+        // re-impression as a duplicate — so the visit got no fresh auction at all and a blanked slot
+        // could stay blank.
+        willForegroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.isAppBackgrounded = false
+        }
         foregroundObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
@@ -521,6 +533,7 @@ public class Audienzz: NSObject {
     private var pendingForegroundReimpression: DispatchWorkItem?
     private var foregroundObserver: NSObjectProtocol?
     private var backgroundObserver: NSObjectProtocol?
+    private var willForegroundObserver: NSObjectProtocol?
 
     private func setupPrebid(_ companyId: String, appVolume: Float = 0) {
         AUEventsManager.shared.configure(companyId: companyId)
