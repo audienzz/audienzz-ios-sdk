@@ -493,7 +493,7 @@ This object contains methods to initialize the SDK and configure global settings
 
 | Name                                | Parameters                                                                                               | Description                                  |
 |-------------------------------------|----------------------------------------------------------------------------------------------------------|----------------------------------------------|
-| `configureSDK`                     | `companyId: String`, `gadMobileAdsVersion: String? = nil`, `enablePPID: Bool = false` , | Initializes the SDK. When `enablePPID` is `true` - SDK will automatically generate unique identifier, store it in UserDefaults and add it to all Google Ad Manager requests as a Publisher Provided identifier. On additional methods to work with PPID look at [PPIDManager](#ppidmanager) |
+| `configureSDK`                     | `companyId: String`, `gadMobileAdsVersion: String? = nil` | Initializes the SDK. A Publisher Provided Identifier is generated, persisted and attached to every Google Ad Manager request automatically — see [PPIDManager](#ppidmanager) to supply your own instead. |
 `setSchainObject` | `schain: String` | Method used to set Schain object for all ad requests. For example on usage refer to [AppDelegate](Examples/DemoSwiftApp/DemoSwiftApp/AppDelegate.swift)|
 ### `AUTargeting`
 
@@ -548,9 +548,14 @@ This object is used to set targeting parameters for ad requests.
 
 | Name                                | Parameters                                       | Description                                    |
 |-------------------------------------|--------------------------------------------------|------------------------------------------------|
-| `getAutomaticPpidEnabled`                    | | Used to get current status of automatic PPID usage (if true - PPID is generated and used with all requests, if false - PPID is not used)                           |
-| `setAutomaticPpidEnabled`                   | `_ enabled: Bool`                        | Used to enable or disable automatic PPID usage                  |
-| `getPPID`                 | | Used to obtain current PPID if automaticPpid is enabled |
+| `setPublisherPPID`                          | `_ ppid: String?`                        | Supply your own PPID (e.g. a hashed e-mail). Takes precedence over the SDK-generated one; pass `nil` to clear and fall back to it. |
+| `getPPID`                                   |                                          | The PPID currently being sent: your PPID if set, otherwise the SDK-generated UUID. `nil` only when consent is missing. |
+
+A PPID is **always** sent with ad requests — the SDK generates one (a UUID,
+persisted locally and rotated every 12 months) whenever you haven't supplied
+your own. There is no enable/disable switch: a missing PPID costs frequency
+capping and cross-session targeting. It is suppressed only when consent is
+missing.
 
 
 ### Targeting & Advanced Configuration
@@ -771,8 +776,7 @@ func application(_ application: UIApplication, didFinishLaunchingWithOptions lau
     Task {
         // 2. Initialize SDK with remote configuration
         try await Audienzz.shared.configureWithRemoteSDK(
-            gadMobileAdsVersion: GADGetStringFromVersionNumber(GADMobileAds.sharedInstance().versionNumber),
-            enablePPID: false
+            gadMobileAdsVersion: GADGetStringFromVersionNumber(GADMobileAds.sharedInstance().versionNumber)
         )
         
         // 3. Start Google Mobile Ads

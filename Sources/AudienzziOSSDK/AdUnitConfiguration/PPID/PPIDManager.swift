@@ -19,26 +19,12 @@ public class PPIDManager: NSObject, AULogEventType {
     
     // MARK: - Properties
 
-    /// PPID is on by default — a UUID is generated automatically if the publisher
-    /// doesn't supply one. Set to false to opt out entirely.
-    private var automaticPpidEnabled: Bool = true
     /// Publisher-supplied PPID (e.g. hashed email). When set, always wins over the
     /// SDK-generated UUID. Cleared by passing nil.
     private var publisherPpid: String? = nil
     private let userDefaults = UserDefaults.standard
 
     // MARK: - Public Methods
-
-    /// Check if automatic PPID is enabled
-    public func getAutomaticPpidEnabled() -> Bool {
-        return automaticPpidEnabled
-    }
-
-    /// Enable or disable automatic PPID. Defaults to `true` — a UUID is generated
-    /// automatically unless the publisher opts out by passing `false`.
-    public func setAutomaticPpidEnabled(_ enabled: Bool) {
-        automaticPpidEnabled = enabled
-    }
 
     /// Provide a publisher-owned PPID (e.g. a hashed e-mail address).
     /// When set this always takes precedence over the SDK-generated UUID.
@@ -48,14 +34,15 @@ public class PPIDManager: NSObject, AULogEventType {
     }
 
     /// Returns the active PPID:
-    ///   1. Publisher-supplied PPID (if set).
+    ///   1. Publisher-supplied PPID (if set via `setPublisherPPID`).
     ///   2. SDK-generated UUID (persisted, rotated every 12 months).
-    ///   3. `nil` if automatic PPID is disabled or consent is missing.
+    ///   3. `nil` only when consent is missing.
+    ///
+    /// A PPID is always sent otherwise — there is no opt-out switch. A missing
+    /// PPID costs frequency capping and cross-session targeting, so the SDK
+    /// generates and persists one rather than leaving the field empty.
     public func getPPID() -> String? {
-        if !automaticPpidEnabled {
-            LogEvent("Automatic PPID is disabled")
-            return nil
-        } else if AUTargeting.shared.purposeConsents?.isEmpty ?? false {
+        if AUTargeting.shared.purposeConsents?.isEmpty ?? false {
             LogEvent("Consent missing, cannot get PPID")
             return nil
         }

@@ -42,7 +42,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
             Task {
                 try await Audienzz.shared.configureWithRemoteSDK(
-                    enablePPID: true
                 )
 
                 performAdditionalInitialization()
@@ -50,8 +49,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         } else {
             Audienzz.shared.configureSDK(
                 companyId: "companyID",
-                gadMobileAdsVersion: nil,
-                enablePPID: true
+                gadMobileAdsVersion: nil
             )
 
             performAdditionalInitialization()

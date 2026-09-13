@@ -241,6 +241,12 @@ extension AUBannerView {
     }
 
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
+        // Re-read the PPID on every auction rather than trusting the one stamped at createAd.
+        // A banner refreshes for the lifetime of its screen, so a publisher PPID set after the ad
+        // was built, a 12-month rotation, or consent arriving late would otherwise never reach the
+        // request. Mirrors Android's AudienzzAdViewHandler.buildRequest().
+        gamRequest.publisherProvidedID = PPIDManager.shared.getPPID()
+
         // New auction → reset render-winner state until the bid result / GAM app event report back.
         prebidLineItemWon = false
         prebidWinningBidder = nil

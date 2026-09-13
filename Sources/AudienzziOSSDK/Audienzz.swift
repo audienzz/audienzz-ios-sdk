@@ -57,7 +57,7 @@ public class Audienzz: NSObject {
 
     public static let shared = Audienzz()
 
-    public func configureSDK(companyId: String, appVolume: Float = 0, enablePPID: Bool = false) {
+    public func configureSDK(companyId: String, appVolume: Float = 0) {
         setupPrebid(companyId, appVolume: appVolume)
 
         do {
@@ -66,7 +66,6 @@ public class Audienzz: NSObject {
                     error in
                 self.handleInitializationResultStatus(status: status)
 
-                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
 
                 if let error = error {
                     AULogEvent.logDebug("Initialization Error: \(error)")
@@ -82,8 +81,7 @@ public class Audienzz: NSObject {
     public func configureSDK(
         companyId: String,
         gadMobileAdsVersion: String? = nil,
-        appVolume: Float = 0,
-        enablePPID: Bool = false
+        appVolume: Float = 0
     ) {
         setupPrebid(companyId, appVolume: appVolume)
 
@@ -100,7 +98,6 @@ public class Audienzz: NSObject {
                 }
 
                 self.handleInitializationResultStatus(status: status)
-                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
             }
         } catch {
             AULogEvent.logDebug(
@@ -110,8 +107,7 @@ public class Audienzz: NSObject {
     }
 
     public func configureWithRemoteSDK(
-        gadMobileAdsVersion: String? = nil,
-        enablePPID: Bool = false
+        gadMobileAdsVersion: String? = nil
     ) async throws {
         // Apply muted default immediately so ads are always muted even if remote
         // config is unavailable (network error, backend not ready, nil response).
@@ -143,7 +139,6 @@ public class Audienzz: NSObject {
             initializePrebid(
                 serverURL: customPrebidServerURL,
                 gadMobileAdsVersion: gadMobileAdsVersion,
-                enablePPID: enablePPID
             )
             return
         }
@@ -194,7 +189,6 @@ public class Audienzz: NSObject {
         initializePrebid(
             serverURL: publisherConfig.prebidServer.url,
             gadMobileAdsVersion: gadMobileAdsVersion,
-            enablePPID: enablePPID
         )
     }
 
@@ -202,8 +196,7 @@ public class Audienzz: NSObject {
     /// happy path and the default-host fallback).
     private func initializePrebid(
         serverURL: String,
-        gadMobileAdsVersion: String?,
-        enablePPID: Bool
+        gadMobileAdsVersion: String?
     ) {
         do {
             try Prebid.initializeSDK(
@@ -218,7 +211,6 @@ public class Audienzz: NSObject {
                 }
 
                 self.handleInitializationResultStatus(status: status)
-                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
             }
         } catch {
             AULogEvent.logDebug(
@@ -229,21 +221,19 @@ public class Audienzz: NSObject {
 
     // MARK: - Public Init For RN Bridg (Audienzz)
 
-    /// Stable Obj-C selector for RN bridge: `configureSDK_RNWithCompanyId:enablePPID:completion:`
-    @objc(configureSDK_RNWithCompanyId:enablePPID:completion:)
+    /// Stable Obj-C selector for RN bridge: `configureSDK_RNWithCompanyId:completion:`
+    @objc(configureSDK_RNWithCompanyId:completion:)
     public func configureSDK_RN(
         companyId: String,
-        enablePPID: Bool,
         completion: (() -> Void)?
     ) {
-        configureSDK_RN(companyId: companyId, appVolume: 0, enablePPID: enablePPID, completion)
+        configureSDK_RN(companyId: companyId, appVolume: 0, completion)
     }
 
     /// Special method used for RN bridging initialization
     public func configureSDK_RN(
         companyId: String,
         appVolume: Float = 0,
-        enablePPID: Bool = false,
         _ completion: (() -> Void)? = nil
     ) {
         Task {
@@ -259,7 +249,6 @@ public class Audienzz: NSObject {
                         AULogEvent.logDebug("Initialization Error: \(error)")
                     }
 
-                    PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
                     completion?()
                 }
             } catch {
@@ -277,7 +266,6 @@ public class Audienzz: NSObject {
         companyId: String,
         gadMobileAdsVersion: String?,
         appVolume: Float = 0,
-        enablePPID: Bool = false,
         _ completion: (() -> Void)? = nil
     ) {
         Task {
@@ -299,7 +287,6 @@ public class Audienzz: NSObject {
                     }
 
                     self.handleInitializationResultStatus(status: status)
-                    PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
                     completion?()
                 }
             } catch {
