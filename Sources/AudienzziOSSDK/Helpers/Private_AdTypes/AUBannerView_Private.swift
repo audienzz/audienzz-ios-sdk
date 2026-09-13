@@ -213,6 +213,9 @@ extension AUBannerView {
         // so a response from the previous visit can't load a creative or overwrite this visit's
         // auction analytics.
         auctionGeneration += 1
+        // Retire, don't merely invalidate: the replacement may be deferred (a lazy banner out of
+        // range), and an un-retired dispatcher keeps auctioning while every callback is dropped.
+        adUnitConfiguration?.stopAutoRefresh()
         guard let request = gamRequest as? AdManagerRequest else { return }
         guard lastRefreshTime != nil else {
             // Never loaded: this banner's first load was deferred because its page wasn't active
@@ -224,6 +227,10 @@ extension AUBannerView {
                 loadIfAlreadyVisible()
             } else {
                 fetchRequest(request)
+                // Prebid only auto-starts its dispatcher on the FIRST-EVER fetch
+                // (`isInitialFetchDemandCallMade`), and the release already stopped it — so without
+                // this the replacement creative loads but never refreshes again.
+                adUnitConfiguration?.resumeAutoRefresh()
             }
             return
         }
@@ -268,10 +275,32 @@ extension AUBannerView {
             return false
         }
         guard !Audienzz.shared.isAppBackgrounded else {
-            AULogEvent.logDebug("[AUBannerView] auction blocked \(configId) — app is backgrounded")
+            AULogEvent.logDebug("[AUBannerView] auction deferred \(configId) — app is backgrounded")
+            auctionDeferred = true
             return false
         }
         return true
+    }
+
+    /// Retry an auction the gate deferred. Called when the app reaches the foreground, so the
+    /// interleaving of the SDK's and the publisher's lifecycle observers stops mattering.
+    func retryDeferredAuction() {
+        guard auctionDeferred else { return }
+        auctionDeferred = false
+        guard screenActive, let request = gamRequest as? AdManagerRequest else { return }
+        AULogEvent.logDebug("[AUBannerView] \(configId) — retrying deferred auction now that the app is foreground")
+        if lastRefreshTime == nil {
+            if isLazyLoad {
+                isLazyLoaded = false
+                loadIfAlreadyVisible()
+            } else {
+                fetchRequest(request)
+                adUnitConfiguration?.resumeAutoRefresh()
+            }
+        } else {
+            fetchRequest(request)
+            adUnitConfiguration?.resumeAutoRefresh()
+        }
     }
 
     override func fetchRequest(_ gamRequest: AdManagerRequest) {

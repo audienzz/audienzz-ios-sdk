@@ -436,6 +436,7 @@ public class Audienzz: NSObject {
         // Armed on the first page impression, so there is always an active screen to re-fire for.
         observeForegroundReimpression()
         AUEventsManager.shared.onScreenResumed(screenName: name)
+        pageImpressionObserver?(name)
         AUScreenAdCoordinator.shared.onScreenResumed(screen, name: name)
     }
 
@@ -475,6 +476,7 @@ public class Audienzz: NSObject {
             queue: .main
         ) { [weak self] _ in
             self?.isAppBackgrounded = false
+            AUScreenAdCoordinator.shared.retryDeferredAuctions()
         }
         foregroundObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
@@ -483,6 +485,9 @@ public class Audienzz: NSObject {
         ) { [weak self] _ in
             guard let self else { return }
             self.isAppBackgrounded = false
+            // Covers the case where the publisher's willEnterForeground observer ran before the
+            // SDK's and had its recreation deferred.
+            AUScreenAdCoordinator.shared.retryDeferredAuctions()
             guard self.didEnterBackground else { return }
             self.didEnterBackground = false
             self.scheduleForegroundReimpression()
@@ -529,6 +534,16 @@ public class Audienzz: NSObject {
     internal private(set) var isAppBackgrounded = false
 
     private var didEnterBackground = false
+    /// Notified after every page impression, including the automatic one fired on returning to the
+    /// foreground.
+    ///
+    /// The Flutter and React Native bridges need to know a page transition happened so they can
+    /// remount platform views and page-scope the ad types the native coordinator doesn't track. They
+    /// used to observe their own app lifecycle and report a page impression themselves, which meant
+    /// two independent owners each scheduling and de-duplicating — no ordering of the two ever came
+    /// out right. Native owns foreground reporting; the bridges just listen.
+    public var pageImpressionObserver: ((String) -> Void)?
+
     private var lastPageImpressionAt: Date?
     private var pendingForegroundReimpression: DispatchWorkItem?
     private var foregroundObserver: NSObjectProtocol?

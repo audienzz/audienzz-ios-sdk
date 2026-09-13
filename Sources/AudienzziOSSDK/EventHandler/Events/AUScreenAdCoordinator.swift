@@ -113,6 +113,15 @@ internal final class AUScreenAdCoordinator {
         }
     }
 
+    /// Retry every auction the gate deferred while the app was backgrounded. Called on foreground,
+    /// so the order in which the SDK's and the publisher's lifecycle observers run stops mattering.
+    func retryDeferredAuctions() {
+        assertMain()
+        for ad in ads.allObjects {
+            ad.retryDeferredAuction()
+        }
+    }
+
     /// Repairs the one case the sweep genuinely gets wrong: a banner created *before* its screen's
     /// `pageImpression` that was not yet in a window when the sweep ran. Its responder chain could
     /// not resolve a host, so `isHostedBy` said no and it was released — a dead slot.

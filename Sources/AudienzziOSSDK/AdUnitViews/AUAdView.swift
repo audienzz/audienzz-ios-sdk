@@ -115,6 +115,11 @@ public class AUAdView: VisibleView {
 
     /// True once a first request has actually been issued, so re-activation can't double-auction.
     internal var initialLoadRequested: Bool = false
+
+    /// Set when the auction gate rejected a load that should run once the app is foreground again.
+    /// Rejecting outright made correctness depend on notification order — a publisher observing
+    /// `willEnterForeground` before the SDK does had its recreation rejected and nothing retried it.
+    internal var auctionDeferred: Bool = false
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in
