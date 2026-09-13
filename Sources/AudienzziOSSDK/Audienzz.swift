@@ -429,7 +429,8 @@ public class Audienzz: NSObject {
     /// keep auctioning for a screen the user has left.
     internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
         AULogEvent.logDebug("[Audienzz][pageImpression] firing → \"\(name)\"")
-        lastPageImpressionAt = Date()
+        // An explicit report always wins over a pending automatic foreground one.
+        cancelPendingForegroundReimpression()
         // Armed on the first page impression, so there is always an active screen to re-fire for.
         observeForegroundReimpression()
         AUEventsManager.shared.onScreenResumed(screenName: name)
@@ -447,35 +448,58 @@ public class Audienzz: NSObject {
     /// `viewDidAppear` also fires on return), so a restore never double-auctions.
     internal func observeForegroundReimpression() {
         guard foregroundObserver == nil else { return }
+        // Only a real background → foreground round trip counts. `didBecomeActive` alone also fires
+        // after Control Centre, a system permission prompt or an incoming call — none of which are a
+        // new page view, and all of which would otherwise burn an auction.
+        backgroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.didEnterBackground = true
+        }
         foregroundObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.fireForegroundReimpression()
+            guard let self, self.didEnterBackground else { return }
+            self.didEnterBackground = false
+            self.scheduleForegroundReimpression()
         }
     }
 
-    private func fireForegroundReimpression() {
+    /// Schedules the automatic re-impression instead of firing it immediately, so an app that
+    /// reports its own page impression on resume cancels it. That makes the outcome the same in
+    /// both callback orders — exactly one page impression, not two.
+    private func scheduleForegroundReimpression() {
         guard let (screen, name) = AUScreenAdCoordinator.shared.activeScreenAndName else {
             AULogEvent.logDebug("[Audienzz][pageImpression] foreground — no active screen yet, skipping")
             return
         }
-        if let last = lastPageImpressionAt,
-           Date().timeIntervalSince(last) < Self.foregroundReimpressionDebounce {
-            AULogEvent.logDebug(
-                "[Audienzz][pageImpression] foreground — app already reported \"\(name)\", skipping")
-            return
+        pendingForegroundReimpression?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.pendingForegroundReimpression = nil
+            AULogEvent.logDebug("[Audienzz][pageImpression] foreground → re-firing \"\(name)\"")
+            self?.notifyScreenResumed(screen, name: name)
         }
-        AULogEvent.logDebug("[Audienzz][pageImpression] foreground → re-firing \"\(name)\"")
-        notifyScreenResumed(screen, name: name)
+        pendingForegroundReimpression = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.foregroundReimpressionDelay, execute: work)
     }
 
-    /// Window after an explicit `pageImpression` in which a foreground activation does not re-fire.
-    private static let foregroundReimpressionDebounce: TimeInterval = 0.3
+    internal func cancelPendingForegroundReimpression() {
+        pendingForegroundReimpression?.cancel()
+        pendingForegroundReimpression = nil
+    }
 
-    internal var lastPageImpressionAt: Date?
+    /// Delay before an automatic foreground re-impression fires, giving the app's own report a
+    /// chance to cancel it.
+    private static let foregroundReimpressionDelay: TimeInterval = 0.4
+
+    private var didEnterBackground = false
+    private var pendingForegroundReimpression: DispatchWorkItem?
     private var foregroundObserver: NSObjectProtocol?
+    private var backgroundObserver: NSObjectProtocol?
 
     private func setupPrebid(_ companyId: String, appVolume: Float = 0) {
         AUEventsManager.shared.configure(companyId: companyId)

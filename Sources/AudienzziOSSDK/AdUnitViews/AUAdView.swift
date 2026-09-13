@@ -107,6 +107,11 @@ public class AUAdView: VisibleView {
     /// than the coordinator's current epoch means the ad was created before its screen's
     /// `pageImpression` — an ordering violation the coordinator reports and later repairs on attach.
     internal var pageEpoch: Int = 0
+
+    /// Incremented whenever this ad's liveness changes (page release). An auction captures it at
+    /// `fetchRequest` and the completion re-checks it, so a response that lands after the user has
+    /// left the screen cannot push a creative into a released slot.
+    internal var auctionGeneration: Int = 0
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in

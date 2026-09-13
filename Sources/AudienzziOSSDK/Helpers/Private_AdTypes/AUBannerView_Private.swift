@@ -193,6 +193,8 @@ extension AUBannerView {
     /// `screenActive` (set by the coordinator) is what keeps the viewport gate from resuming it in
     /// the meantime, so a released banner scrolling through the viewport stays silent.
     func releaseForPage() {
+        // Bump first so an auction already in flight is recognised as stale by its completion.
+        auctionGeneration += 1
         pendingSmartRefreshWorkItem?.cancel()
         pendingSmartRefreshWorkItem = nil
         adUnitConfiguration?.stopAutoRefresh()
@@ -253,10 +255,20 @@ extension AUBannerView {
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
+        let generationAtRequest = auctionGeneration
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
+            // Stale-response guard: the page was released (or re-activated) while this auction was
+            // in flight, so its creative belongs to a screen the user has left. Dropping it here is
+            // what stops `onLoadRequest` from loading GAM into a released slot.
+            guard generationAtRequest == self.auctionGeneration, self.screenActive else {
+                AULogEvent.logDebug(
+                    "[AUBannerView] dropping response for a released page (gen \(generationAtRequest) vs \(self.auctionGeneration), screenActive=\(self.screenActive))")
+                self.adUnitConfiguration?.stopAutoRefresh()
+                return
+            }
             self.lastRefreshTime = Date()
             let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
 

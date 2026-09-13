@@ -238,6 +238,14 @@ public class AUBannerView: AUAdView {
         screenActive = AUScreenAdCoordinator.shared.isActiveScreen(for: self)
         pageEpoch = AUScreenAdCoordinator.shared.epoch
 
+        // A non-lazy banner must still respect page ownership: asynchronous setup can finish after
+        // the user has moved to another screen, and firing here would auction for a page they left.
+        // `recreateForPage` picks it up when its page comes back.
+        guard screenActive else {
+            AULogEvent.logDebug("[AUBannerView] \(configId) created for a non-active page — deferring first load")
+            return
+        }
+
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
         } else {
