@@ -209,8 +209,24 @@ extension AUBannerView {
     func recreateForPage() {
         pendingSmartRefreshWorkItem?.cancel()
         pendingSmartRefreshWorkItem = nil
-        guard lastRefreshTime != nil,
-              let request = gamRequest as? AdManagerRequest else { return }
+        // A hard transition supersedes the outgoing auction even when the SAME page is re-reported,
+        // so a response from the previous visit can't load a creative or overwrite this visit's
+        // auction analytics.
+        auctionGeneration += 1
+        guard let request = gamRequest as? AdManagerRequest else { return }
+        guard lastRefreshTime != nil else {
+            // Never loaded: this banner's first load was deferred because its page wasn't active
+            // (or its lazy trigger was consumed while released). Activation is its only remaining
+            // chance — without this the slot stays blank forever.
+            AULogEvent.logDebug("[AUBannerView] \(configId) — activating a never-loaded banner, starting first load")
+            if isLazyLoad {
+                isLazyLoaded = false
+                loadIfAlreadyVisible()
+            } else {
+                fetchRequest(request)
+            }
+            return
+        }
         // Optionally blank the current creative (keeping the slot size — the container view keeps
         // its frame) so the refresh is visually obvious; restored when the fresh ad is received.
         if Audienzz.shared.blankOnScreenReload {
@@ -242,7 +258,27 @@ extension AUBannerView {
         adUnitConfiguration?.resumeAutoRefresh()
     }
 
+    /// The one place an auction can start. Every entry point — first load, prefetch, viewport
+    /// resume, page activation, manual reload — funnels through `fetchRequest`, so this is the
+    /// single gate deciding whether auctioning is legitimate right now. Guarding the call sites
+    /// individually is what let earlier revisions leak an auction through whichever path was missed.
+    func canStartAuction() -> Bool {
+        guard screenActive else {
+            AULogEvent.logDebug("[AUBannerView] auction blocked \(configId) — page released")
+            return false
+        }
+        guard !Audienzz.shared.isAppBackgrounded else {
+            AULogEvent.logDebug("[AUBannerView] auction blocked \(configId) — app is backgrounded")
+            return false
+        }
+        return true
+    }
+
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
+        guard canStartAuction() else { return }
+        // Every new auction supersedes the previous one.
+        auctionGeneration += 1
+        initialLoadRequested = true
         // Re-read the PPID on every auction rather than trusting the one stamped at createAd.
         // A banner refreshes for the lifetime of its screen, so a publisher PPID set after the ad
         // was built, a 12-month rotation, or consent arriving late would otherwise never reach the

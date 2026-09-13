@@ -429,7 +429,9 @@ public class Audienzz: NSObject {
     /// keep auctioning for a screen the user has left.
     internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
         AULogEvent.logDebug("[Audienzz][pageImpression] firing → \"\(name)\"")
-        // An explicit report always wins over a pending automatic foreground one.
+        // An explicit report always wins over a pending automatic foreground one, and is recorded
+        // so an activation arriving just afterwards doesn't schedule a duplicate.
+        lastPageImpressionAt = Date()
         cancelPendingForegroundReimpression()
         // Armed on the first page impression, so there is always an active screen to re-fire for.
         observeForegroundReimpression()
@@ -457,13 +459,19 @@ public class Audienzz: NSObject {
             queue: .main
         ) { [weak self] _ in
             self?.didEnterBackground = true
+            self?.isAppBackgrounded = true
+            // Drop any pending automatic re-impression: backgrounding again inside the scheduling
+            // window would otherwise recreate the whole active page while backgrounded.
+            self?.cancelPendingForegroundReimpression()
         }
         foregroundObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self, self.didEnterBackground else { return }
+            guard let self else { return }
+            self.isAppBackgrounded = false
+            guard self.didEnterBackground else { return }
             self.didEnterBackground = false
             self.scheduleForegroundReimpression()
         }
@@ -475,6 +483,14 @@ public class Audienzz: NSObject {
     private func scheduleForegroundReimpression() {
         guard let (screen, name) = AUScreenAdCoordinator.shared.activeScreenAndName else {
             AULogEvent.logDebug("[Audienzz][pageImpression] foreground — no active screen yet, skipping")
+            return
+        }
+        // Cancelling on an explicit report only covers the order "activation first". An app that
+        // reports from `willEnterForeground` reports BEFORE activation, so also look back.
+        if let last = lastPageImpressionAt,
+           Date().timeIntervalSince(last) < Self.foregroundReimpressionDelay {
+            AULogEvent.logDebug(
+                "[Audienzz][pageImpression] foreground — app already reported \"\(name)\", skipping")
             return
         }
         pendingForegroundReimpression?.cancel()
@@ -496,7 +512,12 @@ public class Audienzz: NSObject {
     /// chance to cancel it.
     private static let foregroundReimpressionDelay: TimeInterval = 0.4
 
+    /// True between `didEnterBackground` and the next activation. Read by the ad views' auction
+    /// gate, so nothing auctions while the app is backgrounded.
+    internal private(set) var isAppBackgrounded = false
+
     private var didEnterBackground = false
+    private var lastPageImpressionAt: Date?
     private var pendingForegroundReimpression: DispatchWorkItem?
     private var foregroundObserver: NSObjectProtocol?
     private var backgroundObserver: NSObjectProtocol?

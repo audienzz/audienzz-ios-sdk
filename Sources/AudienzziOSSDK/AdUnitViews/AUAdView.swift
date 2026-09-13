@@ -112,6 +112,9 @@ public class AUAdView: VisibleView {
     /// `fetchRequest` and the completion re-checks it, so a response that lands after the user has
     /// left the screen cannot push a creative into a released slot.
     internal var auctionGeneration: Int = 0
+
+    /// True once a first request has actually been issued, so re-activation can't double-auction.
+    internal var initialLoadRequested: Bool = false
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in
