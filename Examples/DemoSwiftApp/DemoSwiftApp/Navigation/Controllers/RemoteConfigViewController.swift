@@ -172,14 +172,14 @@ final class RemoteConfigViewController: UIViewController {
     @objc private func loadInterstitialTapped() {
         interstitial = AURemoteConfigInterstitial(adConfigId: Constants.interstitialConfigId)
         interstitial?.delegate = self
+        interstitial?.presentationViewController = self
+        interstitial?.onPresentationError = { print("Interstitial presentation failed: \($0)") }
 
         print("Loading interstitial...")
-        interstitial?.load { [weak self] result in
-            guard let self = self else { return }
+        interstitial?.load { result in
             switch result {
             case .success:
-                print("Interstitial loaded, showing...")
-                self.interstitial?.show(from: self)
+                print("Interstitial loaded; native presents automatically.")
             case .failure(let error):
                 print("Failed to load interstitial: \(error)")
             }

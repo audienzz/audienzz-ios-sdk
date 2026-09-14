@@ -1,110 +1,231 @@
-//
-//  AURemoteConfigInterstitial.swift
-//  AudienzziOSSDK
-//
-//  Created by Maksym Ovcharuk on 20.11.2025.
-//
-
 import UIKit
 import PrebidMobile
 import GoogleMobileAds
 
 public enum AURemoteConfigInterstitialError: Error {
-    case noRemoteConfig
-    case deallocated
+    case noRemoteConfig, deallocated, busy, cancelled, notReady, expired, inactive
 }
-/**
- AURemoteConfigInterstitial.
- Interstitial ad controller based on the remote configuration.
- */
+
+/// Remote fullscreen inventory. By default a successful load immediately presents once,
+/// matching Android. Set automaticallyShowOnLoad=false to explicitly preload instead.
 @objcMembers
-public class AURemoteConfigInterstitial: NSObject {
+public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     private let adConfigId: String
     private var interstitialAdUnit: InterstitialAdUnit?
-    private var gamInterstitialAd: AdManagerInterstitialAd?
-    
-    /// Delegate for handling ad presentation events (show, dismiss, fail to show).
+    private var loadedAd: AUInterstitialPresenting?
+    private var loading = false
+    private var presenting = false
+    private var generation = 0
+    private var loadedAt: TimeInterval?
+    private var completion: AUInterstitialLoadCompletion?
+    private var loadID = UUID().uuidString
+    // Google keeps its delegate weak. Keep the owner until the presentation terminates.
+    private var presentationOwner: AURemoteConfigInterstitial?
+
     public weak var delegate: FullScreenContentDelegate?
+    public weak var presentationViewController: UIViewController?
+    public var automaticallyShowOnLoad = true
+    /// Includes preflight errors (inactive app, expired or absent ad) that have no Google ad callback.
+    public var onPresentationError: ((NSError) -> Void)?
+    /// Per-load diagnostics; forward to publisher analytics as needed.
+    public var onLifecycleEvent: (([String: Any]) -> Void)?
+
+    @nonobjc internal var now: () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }
+    @nonobjc internal var isForeground: () -> Bool = { UIApplication.shared.applicationState == .active }
+    @nonobjc internal var loadOverride: ((@escaping (Result<AUInterstitialPresenting, Error>) -> Void) -> Void)?
 
     public init(adConfigId: String) {
         self.adConfigId = adConfigId
         super.init()
     }
-    
-    /// Returns true if the ad is loaded and ready to be shown.
+
     public var isReady: Bool {
-        return gamInterstitialAd != nil
+        loadedAd != nil && !presenting && loadedAt.map { now() - $0 < 3600 } == true
     }
-    
-    /// Starts loading the interstitial ad.
-    /// - Parameter completion: A closure to be executed when the ad loading completes. Returns success or failure error.
+
+    /// Completion reports loading, not presentation. Display failures go to onPresentationError
+    /// and Google's delegate. Concurrent/redundant loads are rejected rather than replacing inventory.
     public func load(completion: @escaping (Result<Void, Error>) -> Void) {
-        guard let remoteConfig = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
-            AULogEvent.logDebug("[AURemoteConfigInterstitial] Remote config is nil for id: \(adConfigId)")
-            completion(.failure(AURemoteConfigInterstitialError.noRemoteConfig))
-            return
+        guard !loading, !presenting, !isReady else {
+            completion(.failure(AURemoteConfigInterstitialError.busy)); return
         }
-
-        interstitialAdUnit = InterstitialAdUnit(configId: remoteConfig.prebidConfig.placementId)
-        interstitialAdUnit?.adFormats = [.banner, .video]
-
-        let gamRequest = AdManagerRequest()
-        let ppid = PPIDManager.shared.getPPID()
-        if let ppid = ppid {
-            gamRequest.publisherProvidedID = ppid
+        loadedAd = nil
+        loadedAt = nil
+        generation += 1
+        let token = generation
+        loading = true
+        let pending = AUInterstitialLoadCompletion(completion)
+        self.completion = pending
+        loadID = UUID().uuidString
+        emit("loadRequested")
+        let receive: (Result<AUInterstitialPresenting, Error>) -> Void = { [weak self] result in
+            guard let self else { pending.finish(.failure(AURemoteConfigInterstitialError.deallocated)); return }
+            self.didLoad(result, generation: token)
         }
-
-        interstitialAdUnit?.fetchDemand(adObject: gamRequest) { [weak self] result in
-            guard self != nil else {
-                completion(.failure(AURemoteConfigInterstitialError.deallocated))
-                return
+        if let loadOverride { loadOverride(receive); return }
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
+            receive(.failure(AURemoteConfigInterstitialError.noRemoteConfig)); return
+        }
+        let unit = InterstitialAdUnit(configId: config.prebidConfig.placementId)
+        interstitialAdUnit = unit
+        unit.adFormats = [.banner, .video]
+        let request = AdManagerRequest()
+        request.publisherProvidedID = PPIDManager.shared.getPPID()
+        unit.fetchDemand(adObject: request) { [weak self] _ in
+            guard let self else {
+                receive(.failure(AURemoteConfigInterstitialError.deallocated)); return
             }
-
-            AdManagerInterstitialAd.load(
-                with: remoteConfig.gamConfig.adUnitPath,
-                request: gamRequest
-            ) { [weak self] ad, error in
-                guard let self = self else {
-                    completion(.failure(AURemoteConfigInterstitialError.deallocated))
-                    return
-                }
-
-                if let error = error {
-                    AULogEvent.logDebug("[AURemoteConfigInterstitial] Failed to load interstitial: \(error)")
-                    completion(.failure(error))
-                    return
-                }
-
-                self.gamInterstitialAd = ad
-                completion(.success(()))
+            guard self.loading, self.generation == token else { return }
+            AdManagerInterstitialAd.load(with: config.gamConfig.adUnitPath, request: request) { ad, error in
+                if let ad { receive(.success(AUGoogleInterstitial(ad))) }
+                else { receive(.failure(error ?? AURemoteConfigInterstitialError.notReady)) }
             }
         }
     }
-    
-    @objc public func loadWithCompletion(_ completion: @escaping (Error?) -> Void) {
+
+    private func didLoad(_ result: Result<AUInterstitialPresenting, Error>, generation token: Int) {
+        guard loading, token == generation else { return }
+        loading = false
+        let callback = completion
+        completion = nil
+        switch result {
+        case .failure(let error):
+            emit("loadFailed", error: error)
+            callback?.finish(.failure(error))
+        case .success(let ad):
+            loadedAd = ad
+            loadedAt = now()
+            ad.delegate = self
+            emit("loaded")
+            callback?.finish(.success(()))
+            // A legacy caller may show/destroy in its load callback. Do not show twice.
+            if automaticallyShowOnLoad, token == generation, loadedAd != nil, !presenting {
+                present(from: presentationViewController)
+            }
+        }
+    }
+
+    public func loadWithCompletion(_ completion: @escaping (Error?) -> Void) {
         load { result in
             switch result {
-            case .success:
-                completion(nil)
-            case .failure(let error):
-                completion(error)
+            case .success: completion(nil)
+            case .failure(let error): completion(error)
             }
         }
     }
-    
-    /// Presents the interstitial ad from the specified view controller.
-    /// - Parameter rootViewController: The view controller to present the ad from.
-    public func show(from rootViewController: UIViewController) {
-        guard let ad = gamInterstitialAd else {
-            AULogEvent.logDebug("[AURemoteConfigInterstitial] Ad not ready to show")
-            return
-        }
 
-        ad.fullScreenContentDelegate = delegate
+    public func show(from rootViewController: UIViewController) { present(from: rootViewController) }
+
+    private func present(from rootViewController: UIViewController?) {
+        guard !presenting else { return } // Single-use, including reentrant publisher callbacks.
+        guard let ad = loadedAd else { reportPresentationError(AURemoteConfigInterstitialError.notReady); return }
+        emit("showAttempted")
+        guard isReady else { reportPresentationError(AURemoteConfigInterstitialError.expired); return }
+        guard isForeground() else { reportPresentationError(AURemoteConfigInterstitialError.inactive); return }
+        do { try ad.canPresent(from: rootViewController) }
+        catch { reportPresentationError(error); return }
+        presenting = true
+        presentationOwner = self
         ad.present(from: rootViewController)
-        // GAM interstitials are single-use: once presented the ad can't be shown
-        // again. Clear it so isReady reflects reality and a second show() doesn't
-        // silently no-op on a spent ad (publisher must reload for the next show).
-        gamInterstitialAd = nil
+    }
+
+    private func reportPresentationError(_ error: Error) {
+        emit("showFailed", error: error)
+        loadedAd = nil
+        loadedAt = nil
+        onPresentationError?(error as NSError)
+    }
+
+    /// Cancels a preload. An on-screen ad keeps its owner until its terminal delegate callback.
+    public func destroy() {
+        guard !presenting else { emit("disposeDeferred"); return }
+        generation += 1
+        loading = false
+        let callback = completion
+        completion = nil
+        emit("disposed")
+        loadedAd = nil
+        loadedAt = nil
+        interstitialAdUnit = nil
+        callback?.finish(.failure(AURemoteConfigInterstitialError.cancelled))
+    }
+
+    private func emit(_ event: String, error: Error? = nil) {
+        var values: [String: Any] = ["event": event, "loadId": loadID, "configId": adConfigId]
+        if let loadedAt { values["loadAgeMillis"] = Int((now() - loadedAt) * 1000) }
+        values["responseId"] = loadedAd?.responseID
+        if let error = error as NSError? {
+            values["errorCode"] = error.code; values["errorDomain"] = error.domain
+            values["errorMessage"] = error.localizedDescription
+        }
+        onLifecycleEvent?(values)
+    }
+
+    internal func finishPresentation() {
+        presenting = false
+        loadedAd = nil
+        loadedAt = nil
+        presentationOwner = nil
+    }
+
+    private func owns(_ ad: FullScreenPresentingAd) -> Bool {
+        presenting && (loadedAd?.googleAd as AnyObject?) === (ad as AnyObject)
+    }
+
+    public func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
+        guard owns(ad) else { return }
+        emit("presented")
+        delegate?.adWillPresentFullScreenContent?(ad)
+    }
+    public func adDidRecordImpression(_ ad: FullScreenPresentingAd) {
+        guard owns(ad) else { return }
+        emit("impression")
+        delegate?.adDidRecordImpression?(ad)
+    }
+    public func adDidRecordClick(_ ad: FullScreenPresentingAd) { guard owns(ad) else { return }; delegate?.adDidRecordClick?(ad) }
+    public func adWillDismissFullScreenContent(_ ad: FullScreenPresentingAd) { guard owns(ad) else { return }; delegate?.adWillDismissFullScreenContent?(ad) }
+    public func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
+        guard owns(ad) else { return }
+        emit("dismissed")
+        finishPresentation()
+        delegate?.adDidDismissFullScreenContent?(ad)
+    }
+    public func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+        guard owns(ad) else { return }
+        emit("showFailed", error: error)
+        finishPresentation()
+        onPresentationError?(error as NSError)
+        delegate?.ad?(ad, didFailToPresentFullScreenContentWithError: error)
+    }
+}
+
+internal protocol AUInterstitialPresenting: AnyObject {
+    var delegate: FullScreenContentDelegate? { get set }
+    var responseID: String? { get }
+    var googleAd: FullScreenPresentingAd? { get }
+    func canPresent(from controller: UIViewController?) throws
+    func present(from controller: UIViewController?)
+}
+private final class AUGoogleInterstitial: AUInterstitialPresenting {
+    let ad: AdManagerInterstitialAd
+    init(_ ad: AdManagerInterstitialAd) { self.ad = ad }
+    var delegate: FullScreenContentDelegate? {
+        get { ad.fullScreenContentDelegate }
+        set { ad.fullScreenContentDelegate = newValue }
+    }
+    var responseID: String? { ad.responseInfo.responseIdentifier }
+    var googleAd: FullScreenPresentingAd? { ad }
+    func canPresent(from controller: UIViewController?) throws { try ad.canPresent(from: controller) }
+    func present(from controller: UIViewController?) { ad.present(from: controller) }
+}
+
+
+private final class AUInterstitialLoadCompletion {
+    private var callback: ((Result<Void, Error>) -> Void)?
+    init(_ callback: @escaping (Result<Void, Error>) -> Void) { self.callback = callback }
+    func finish(_ result: Result<Void, Error>) {
+        let run = callback
+        callback = nil
+        run?(result)
     }
 }

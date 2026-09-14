@@ -79,6 +79,7 @@ public class AURewardedView: AUAdView {
     /// ad unit and event handler. Prefer this over relying on
     /// `removeFromSuperview` as a destructor. Safe to call more than once.
     public func destroy() {
+        fullscreenDemand.destroy()
         adUnit?.stopAutoRefresh()
         adUnit = nil
         self.gamRequest = nil

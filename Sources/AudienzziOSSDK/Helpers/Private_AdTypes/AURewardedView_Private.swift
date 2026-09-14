@@ -35,7 +35,7 @@ extension AURewardedView {
     }
 
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
-        guard let generation = configuredDemandRefresh?.begin({ [weak self] in self?.fetchRequest(gamRequest) }) else { return }
+        guard adUnit != nil, let generation = fullscreenDemand.begin() else { return }
         prebidWinningBidder = nil
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
@@ -45,7 +45,7 @@ extension AURewardedView {
             AULogEvent.logDebug(
                 "Audienz demand fetch for GAM \(resultCode.name())"
             )
-            guard let self = self, self.configuredDemandRefresh?.finish(generation) == true else { return }
+            guard let self = self, self.fullscreenDemand.finish(generation) else { return }
             let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
             let rawTargeting = gamRequest.customTargeting as? [AnyHashable: Any] ?? [:]
             self.makeResultEvents(

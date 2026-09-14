@@ -32,12 +32,14 @@ public class AUAdView: VisibleView {
             configuredDemandRefresh?.destroy()
             // GAM banners install their own full load lifecycle. Other configurable ad formats
             // preserve their demand cadence through this SDK-owned controller.
-            if !(self is AUBannerView), let configuration = adUnitConfiguration as? AUAdUnitConfiguration {
+            configuredDemandRefresh = nil
+            if !(self is AUBannerView), !(self is AUInterstitialView), !(self is AURewardedView), let configuration = adUnitConfiguration as? AUAdUnitConfiguration {
                 configuredDemandRefresh = AUConfiguredDemandRefresh(view: self, configuration: configuration)
             }
         }
     }
     internal var configuredDemandRefresh: AUConfiguredDemandRefresh?
+    internal let fullscreenDemand = AUFullscreenDemand()
 
     public override func didMoveToWindow() {
         super.didMoveToWindow()
@@ -47,6 +49,7 @@ public class AUAdView: VisibleView {
     public override func removeFromSuperview() {
         super.removeFromSuperview()
         configuredDemandRefresh?.destroy()
+        fullscreenDemand.destroy()
     }
 
     override func onRefreshBecameEligible() {

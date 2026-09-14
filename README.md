@@ -828,17 +828,16 @@ Use `AURemoteConfigInterstitial` to load an interstitial defined by a remote con
 // 1. Initialize with the configuration ID
 let interstitial = AURemoteConfigInterstitial(adConfigId: "YOUR_CONFIG_ID")
 
-// 2. Set the delegate (optional, for lifecycle events)
+// Retain this controller as a property while loading/presenting.
 interstitial.delegate = self
+interstitial.presentationViewController = self
+interstitial.onPresentationError = { print("Presentation failed: \($0)") }
 
-// 3. Load the ad
-interstitial.load { [weak self] result in
+// Load at the intended transition. Native presents automatically once ready.
+interstitial.load { result in
     switch result {
     case .success:
-        // 4. Show the ad when ready
-        if let self = self {
-            interstitial.show(from: self)
-        }
+        print("Loaded; native owns the presentation")
     case .failure(let error):
         print("Failed to load interstitial: \(error)")
     }
@@ -1041,3 +1040,22 @@ banner.notifyAdLoadCompleted(retryableFailure: true) // transient ad-server fail
 Do not report these manually for a GAM banner already observed by the SDK. `stopAutoRefresh()` is a durable publisher block; only `resumeAutoRefresh()` clears it. Page, foreground, attachment and visibility blocks are independent. First loads retain prefetch behavior; periodic refresh requires attachment and the configured visibility gate. Deferred first loads/page replacements recover when their applicable blocks clear.
 
 The shared configuration's other consumers (custom native, multiformat, instream, interstitial and rewarded APIs) retain their configurable **demand** cadence through `AUConfiguredDemandRefresh`, without a Prebid timer. Their cadence ends at the demand handoff, not at a publisher-owned renderer's completion; they do not infer fast retries from Prebid results. Their page ownership is captured when the configured view is created, so report `pageImpression` first. This distinction does not change Prebid Rendering banner APIs, which remain a separate integration surface.
+
+
+### Remote interstitial presentation behavior
+
+`AURemoteConfigInterstitial` now **shows automatically after a successful load**, matching native
+Android. Set `presentationViewController` and `delegate` before calling `load`; do not also call
+`show` from the completion. The completion reports loading; `onPresentationError` reports both
+preflight and Google presentation errors. `onLifecycleEvent` exposes correlated Google load/show
+milestones for publisher analytics.
+
+For deliberate preloading, set `automaticallyShowOnLoad = false`, then use `isReady` and
+`show(from:)` at the chosen transition. A ready/presenting ad is never replaced by another load.
+An ad expires after one hour. No automatic presentation is replayed later if the app is inactive
+when loading finishes. `destroy()` cancels pending loads; destruction during a presentation is
+deferred until dismissal/failure.
+
+Fullscreen `AUInterstitialView` and `AURewardedView` demand is one-shot and independent of page,
+attachment, viewport and banner refresh. Their shared configuration cannot turn on a periodic
+fullscreen timer. A page report never replaces their prefetched inventory.
