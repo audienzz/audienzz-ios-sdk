@@ -222,14 +222,18 @@ extension AUBannerView {
             // (or its lazy trigger was consumed while released). Activation is its only remaining
             // chance — without this the slot stays blank forever.
             AULogEvent.logDebug("[AUBannerView] \(configId) — activating a never-loaded banner, starting first load")
+            // Prebid only auto-starts its dispatcher on the FIRST-EVER fetch
+            // (`isInitialFetchDemandCallMade`), and the release already stopped it — so whichever
+            // path actually fetches, refresh has to be restarted explicitly or the replacement
+            // creative loads and then never refreshes again.
             if isLazyLoad {
                 isLazyLoaded = false
                 loadIfAlreadyVisible()
+                if isLazyLoaded {
+                    adUnitConfiguration?.resumeAutoRefresh()
+                }
             } else {
                 fetchRequest(request)
-                // Prebid only auto-starts its dispatcher on the FIRST-EVER fetch
-                // (`isInitialFetchDemandCallMade`), and the release already stopped it — so without
-                // this the replacement creative loads but never refreshes again.
                 adUnitConfiguration?.resumeAutoRefresh()
             }
             return
@@ -286,25 +290,36 @@ extension AUBannerView {
     /// interleaving of the SDK's and the publisher's lifecycle observers stops mattering.
     func retryDeferredAuction() {
         guard auctionDeferred else { return }
-        auctionDeferred = false
-        guard screenActive, let request = gamRequest as? AdManagerRequest else { return }
-        AULogEvent.logDebug("[AUBannerView] \(configId) — retrying deferred auction now that the app is foreground")
-        if lastRefreshTime == nil {
-            if isLazyLoad {
-                isLazyLoaded = false
-                loadIfAlreadyVisible()
+        // Deliberately delayed past the automatic foreground page impression. That impression
+        // recreates every banner on the active page, and a deferred banner is by definition on the
+        // active page (the check below), so retrying immediately auctioned once here and again when
+        // the impression landed. `auctionDeferred` is cleared by any auction that actually starts,
+        // so if the impression got there first this is a no-op.
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.deferredRetryDelay) { [weak self] in
+            guard let self, self.auctionDeferred, self.screenActive,
+                  !Audienzz.shared.isAppBackgrounded,
+                  let request = self.gamRequest as? AdManagerRequest else { return }
+            AULogEvent.logDebug("[AUBannerView] \(self.configId) — retrying deferred auction, no page impression claimed it")
+            if self.lastRefreshTime == nil, self.isLazyLoad {
+                self.isLazyLoaded = false
+                self.loadIfAlreadyVisible()
+                if self.isLazyLoaded {
+                    self.adUnitConfiguration?.resumeAutoRefresh()
+                }
             } else {
-                fetchRequest(request)
-                adUnitConfiguration?.resumeAutoRefresh()
+                self.fetchRequest(request)
+                self.adUnitConfiguration?.resumeAutoRefresh()
             }
-        } else {
-            fetchRequest(request)
-            adUnitConfiguration?.resumeAutoRefresh()
         }
     }
 
+    /// Past the automatic foreground page-impression delay, so that claims the retry first.
+    private static var deferredRetryDelay: TimeInterval { 0.6 }
+
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
         guard canStartAuction() else { return }
+        // An auction is actually starting, so nothing is owed any more.
+        auctionDeferred = false
         // Every new auction supersedes the previous one.
         auctionGeneration += 1
         initialLoadRequested = true
