@@ -481,8 +481,11 @@ public class Audienzz: NSObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
+            // Only the gate opens here. Deferred retries deliberately do NOT run yet: whether an
+            // automatic page impression is going to own this recovery is not known until
+            // didBecomeActive, and the gap between the two notifications is not bounded. Retrying
+            // here meant a long gap let the retry auction first and the impression auction again.
             self?.isAppBackgrounded = false
-            AUScreenAdCoordinator.shared.retryDeferredAuctions()
         }
         foregroundObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
@@ -491,12 +494,15 @@ public class Audienzz: NSObject {
         ) { [weak self] _ in
             guard let self else { return }
             self.isAppBackgrounded = false
-            // Covers the case where the publisher's willEnterForeground observer ran before the
-            // SDK's and had its recreation deferred.
+            // Decide ownership BEFORE releasing the retries. If an automatic impression is
+            // scheduled it recreates every banner on the active page, and the retries — which check
+            // for exactly that — stand down. If it is suppressed or impossible (no active screen,
+            // or the app already reported), nothing is pending and the retries run.
+            if self.didEnterBackground {
+                self.didEnterBackground = false
+                self.scheduleForegroundReimpression()
+            }
             AUScreenAdCoordinator.shared.retryDeferredAuctions()
-            guard self.didEnterBackground else { return }
-            self.didEnterBackground = false
-            self.scheduleForegroundReimpression()
         }
     }
 

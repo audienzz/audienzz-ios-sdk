@@ -136,6 +136,36 @@ final class AUScreenAdCoordinatorTests: XCTestCase {
         XCTAssertTrue(article.canStartAuction())
     }
 
+    // ── Refresh restoration ─────────────────────────────────────────────────
+
+    func testLeavingAPageMarksRefreshForRestart() {
+        // Prebid only auto-starts its refresh dispatcher on the first-ever fetch, so every stop the
+        // SDK performs has to be paired with a restart by the next load — otherwise the slot loads
+        // once and then never refreshes again.
+        let article = banner(on: "Article")
+        openPage("Article")
+
+        openPage("Home")
+
+        XCTAssertTrue(article.needsRefreshRestart)
+    }
+
+    func testReReportingTheSamePageMarksRefreshForRestart() {
+        // Re-reporting the page mid-first-auction takes the never-loaded branch, which starts a
+        // replacement. The dispatcher was stopped on the way in, so without the flag that
+        // replacement rendered and then never refreshed.
+        let article = banner(on: "Article")
+        openPage("Article")
+        article.needsRefreshRestart = false
+
+        openPage("Article")
+
+        XCTAssertTrue(
+            article.needsRefreshRestart,
+            "a recreation that stops the dispatcher must also arrange for it to be restarted"
+        )
+    }
+
     // ── Before any page impression ──────────────────────────────────────────
 
     func testANewBannerDefaultsToActive() {

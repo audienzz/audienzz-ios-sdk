@@ -192,14 +192,25 @@ extension AUBannerView {
     ///
     /// `screenActive` (set by the coordinator) is what keeps the viewport gate from resuming it in
     /// the meantime, so a released banner scrolling through the viewport stays silent.
+    /// Stop Prebid's refresh dispatcher for a page transition, and remember that whichever load
+    /// comes next has to restart it.
+    ///
+    /// Prebid only auto-starts the dispatcher on its FIRST-EVER fetch, so every stop has to be
+    /// paired with a restart or the slot loads once and then never refreshes again. Pairing the two
+    /// here rather than at each call site is the point: the flag was previously set only on release,
+    /// so a same-page recreation stopped the dispatcher and nothing ever restarted it.
+    private func stopRefreshUntilNextLoad() {
+        adUnitConfiguration?.stopAutoRefresh()
+        needsRefreshRestart = true
+    }
+
     func releaseForPage() {
         // Bump first so an auction already in flight is recognised as stale by its completion.
         auctionGeneration += 1
         cancelDeferredRetry()
-        needsRefreshRestart = true
         pendingSmartRefreshWorkItem?.cancel()
         pendingSmartRefreshWorkItem = nil
-        adUnitConfiguration?.stopAutoRefresh()
+        stopRefreshUntilNextLoad()
         adUnit?.stopAutoRefresh()
     }
 
@@ -218,7 +229,7 @@ extension AUBannerView {
         cancelDeferredRetry()
         // Retire, don't merely invalidate: the replacement may be deferred (a lazy banner out of
         // range), and an un-retired dispatcher keeps auctioning while every callback is dropped.
-        adUnitConfiguration?.stopAutoRefresh()
+        stopRefreshUntilNextLoad()
         guard let request = gamRequest as? AdManagerRequest else { return }
         guard lastRefreshTime != nil else {
             // Never loaded: this banner's first load was deferred because its page wasn't active
