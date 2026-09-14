@@ -1023,3 +1023,21 @@ Use this checklist to verify your integration:
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+
+
+## Refresh ownership and custom load completion
+
+Original GAM display and native banners (`AUBannerView` and `AUNativeBannerView`) use an Audienzz-owned refresh controller. Prebid receives no refresh interval. Configure the GAM ad unit with its own refresh rate unset so it does not run a second schedule.
+
+The refresh interval starts when Google finishes loading, including a no-fill response. Only a transient Google load failure triggers bounded retries. A Prebid timeout still proceeds to Google and does not retry a successfully filled Google slot. There is one Google load outstanding per banner view: after a page transition, its stale terminal callback is discarded before the replacement begins. This can defer a page replacement until the old Google load finishes.
+
+Set the Google delegate before `createAd`. Passing an `AdManagerBannerView` installs the SDK's delegate wrapper automatically; `AUBannerEventHandler` can identify a Google banner inside a custom container. If the SDK cannot observe your custom ad-server view, report its terminal callback exactly once:
+
+```swift
+banner.notifyAdLoadCompleted() // loaded, no-fill, or a permanent configuration failure
+banner.notifyAdLoadCompleted(retryableFailure: true) // transient ad-server failure
+```
+
+Do not report these manually for a GAM banner already observed by the SDK. `stopAutoRefresh()` is a durable publisher block; only `resumeAutoRefresh()` clears it. Page, foreground, attachment and visibility blocks are independent. First loads retain prefetch behavior; periodic refresh requires attachment and the configured visibility gate. Deferred first loads/page replacements recover when their applicable blocks clear.
+
+The shared configuration's other consumers (custom native, multiformat, instream, interstitial and rewarded APIs) retain their configurable **demand** cadence through `AUConfiguredDemandRefresh`, without a Prebid timer. Their cadence ends at the demand handoff, not at a publisher-owned renderer's completion; they do not infer fast retries from Prebid results. Their page ownership is captured when the configured view is created, so report `pageImpression` first. This distinction does not change Prebid Rendering banner APIs, which remain a separate integration surface.

@@ -36,8 +36,7 @@ extension AUBannerView {
         #if DEBUG
         AULogEvent.logDebug("[AUBannerView] entered prefetch zone (\(Int(prefetchMarginPoints))pt margin), starting fetchDemand")
         #endif
-        fetchRequest(request, reason: .firstLoad)
-        isLazyLoaded = true
+        isLazyLoaded = fetchRequest(request, reason: .firstLoad)
     }
 
     /// Safety fallback: fires when the view is exactly on screen.
@@ -52,8 +51,7 @@ extension AUBannerView {
         #if DEBUG
         AULogEvent.logDebug("[AUBannerView] became visible (prefetch zone not reached), starting fetchDemand")
         #endif
-        fetchRequest(request, reason: .firstLoad)
-        isLazyLoaded = true
+        isLazyLoaded = fetchRequest(request, reason: .firstLoad)
     }
 
     override func onBecameVisible() {
@@ -100,19 +98,15 @@ extension AUBannerView {
 
     /// Shared by the viewport gate and its external equivalent.
     private func clearViewportBlock() {
-        refreshController.unblock(.notVisible)
-        if lastRefreshTime == nil, !refreshController.isBlocked {
-            // Never completed a first fetch, so there is no interval to resume — the controller only
-            // schedules once something has loaded. Re-arm the first load instead, which respects the
-            // lazy settings rather than auctioning a banner that isn't on screen yet.
-            rearmInitialLoad()
-        }
+        refreshController.unblock(.notVisible, schedule: false)
+        resumeEligibleWork()
     }
 
     /// Give a never-loaded banner its first load back, honouring the lazy settings. A lazy banner
     /// only loads if it is actually on screen now; otherwise its trigger is simply re-armed.
     func rearmInitialLoad() {
-        guard lastRefreshTime == nil, let request = gamRequest as? AdManagerRequest else { return }
+        guard lastRefreshTime == nil, !refreshController.hasRequestInFlight,
+              let request = gamRequest as? AdManagerRequest else { return }
         if isLazyLoad {
             isLazyLoaded = false
             loadIfAlreadyVisible()
@@ -133,6 +127,7 @@ extension AUBannerView {
         // Bump first so an auction already in flight is recognised as stale by its completion.
         auctionGeneration += 1
         refreshController.invalidatePending()
+        pendingLoadReason = nil
     }
 
     /// Page release: the ad's screen is no longer the active page, so stop everything. The slot is
@@ -157,8 +152,10 @@ extension AUBannerView {
         // A live page is not an inactive one, and returning to the foreground is what this
         // transition represents. The viewport and publisher reasons are deliberately untouched: a
         // page impression does not make an off-screen banner visible, nor undo a publisher pause.
-        refreshController.unblock(.pageInactive)
-        refreshController.unblock(.appBackground)
+        refreshController.unblock(.pageInactive, schedule: false)
+        if !Audienzz.shared.isAppBackgrounded {
+            refreshController.unblock(.appBackground, schedule: false)
+        }
         guard let request = gamRequest as? AdManagerRequest else { return }
         guard lastRefreshTime != nil else {
             // Never loaded: this banner's first load was deferred because its page wasn't active
@@ -190,7 +187,7 @@ extension AUBannerView {
         guard let request = gamRequest as? AdManagerRequest else { return }
         // This reload owns the replacement, so a pending periodic refresh or retry is retired rather
         // than allowed to issue a second one for the same transition.
-        refreshController.invalidatePending()
+        retireCurrentAuction()
         if Audienzz.shared.blankOnScreenReload {
             eventHandler?.gamView?.isHidden = true
             blankedForReload = true
@@ -216,16 +213,16 @@ extension AUBannerView {
     /// its refresh directly; otherwise backgrounding once would silently kill refresh for the rest
     /// of the process.
     func resumeAfterForeground() {
-        refreshController.unblock(.appBackground)
-        if lastRefreshTime == nil, !refreshController.isBlocked {
-            rearmInitialLoad()
-        }
+        guard !Audienzz.shared.hasPendingForegroundReimpression else { return }
+        refreshController.unblock(.appBackground, schedule: false)
+        resumeEligibleWork()
     }
 
     /// Attach state. A detached view cannot render, so a refresh into it would be an
     /// impression-less request; re-attaching clears only this reason.
     func onAttachedToWindow() {
-        refreshController.unblock(.detached)
+        refreshController.unblock(.detached, schedule: false)
+        resumeEligibleWork()
     }
 
     func onDetachedFromWindow() {
@@ -237,28 +234,40 @@ extension AUBannerView {
     /// this is the single gate deciding whether auctioning is legitimate right now. Guarding the
     /// call sites individually is what let earlier revisions leak an auction through whichever path
     /// was missed.
-    func canStartAuction() -> Bool {
-        guard !refreshController.isDestroyed else { return false }
-        guard screenActive else {
-            // Kept alongside the controller's own reasons: page ownership is decided by the
-            // coordinator, and a banner can be built for an already-inactive page before any block
-            // has been recorded.
-            AULogEvent.logDebug("[AUBannerView] auction blocked \(configId) — page released")
-            return false
+    @nonobjc func canStartAuction(_ reason: AURefreshRequestReason = .firstLoad) -> Bool {
+        guard !refreshController.isDestroyed, screenActive, !Audienzz.shared.isAppBackgrounded,
+              !Audienzz.shared.hasPendingForegroundReimpression else { return false }
+        // Prefetch may precede attachment and periodic-refresh visibility. Other gates still apply.
+        return !refreshController.blockReasons.contains {
+            reason != .firstLoad || ($0 != .detached && $0 != .notVisible)
         }
-        guard !refreshController.isBlocked else {
-            AULogEvent.logDebug("[AUBannerView] auction blocked \(configId) — \(refreshController.blockReasons)")
-            return false
+    }
+
+    func resumeEligibleWork() {
+        guard !refreshController.isDestroyed, screenActive else { return }
+        if pendingLoadReason == .firstLoad || lastRefreshTime == nil {
+            rearmInitialLoad()
+        } else if let reason = pendingLoadReason, let request = gamRequest as? AdManagerRequest {
+            fetchRequest(request, reason: reason)
+        } else {
+            refreshController.scheduleNext()
         }
-        guard !Audienzz.shared.isAppBackgrounded else {
-            // Nothing is remembered here. Coming back to the foreground clears the `.appBackground`
-            // reason, which makes the controller reschedule, and a banner that never loaded re-arms
-            // its first load — one owner for the recovery instead of a second timer racing the page
-            // impression.
-            AULogEvent.logDebug("[AUBannerView] auction blocked \(configId) — app is backgrounded")
-            return false
+    }
+
+    /// GAM supplies no request identifier. A superseded Google load must drain before reusing the
+    /// view, so its terminal callback cannot be mistaken for the replacement's result.
+    @nonobjc @discardableResult
+    func completeGoogleLoad(retryableFailure: Bool) -> Bool {
+        guard let load = googleLoad else { return false }
+        googleLoad = nil
+        let current = load.auction == auctionGeneration && screenActive && !refreshController.isDestroyed
+        if current {
+            lastRefreshTime = Date()
+            refreshController.onRequestCompleted(generationAtRequest: load.refresh, success: !retryableFailure)
+        } else {
+            resumeEligibleWork()
         }
-        return true
+        return current
     }
 
     /// The base-class entry point. Everything that knows why it is loading calls
@@ -276,7 +285,12 @@ extension AUBannerView {
     /// schedules a request.
     @nonobjc @discardableResult
     func fetchRequest(_ gamRequest: AdManagerRequest, reason: AURefreshRequestReason) -> Bool {
-        guard canStartAuction() else { return false }
+        guard canStartAuction(reason), googleLoad == nil else {
+            if reason == .firstLoad || reason == .pageImpression { pendingLoadReason = reason }
+            return false
+        }
+        guard !refreshController.hasRequestInFlight else { return false }
+        pendingLoadReason = nil
         // Every new auction supersedes the previous one.
         auctionGeneration += 1
         let refreshGeneration = refreshController.onRequestStarted(reason)
@@ -295,17 +309,12 @@ extension AUBannerView {
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         let generationAtRequest = auctionGeneration
         makeRequestEvent()
+        var responseDelivered = false
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
+            guard !responseDelivered else { return }
+            responseDelivered = true
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
-            // Reported before the staleness check so the controller's in-flight slot is always
-            // released. A superseded completion is recognised by its generation and ignored there;
-            // returning early without reporting left the slot occupied forever, and nothing was
-            // ever scheduled again.
-            self.refreshController.onRequestCompleted(
-                generationAtRequest: refreshGeneration,
-                success: AUBannerView.completedAuction(resultCode)
-            )
             // Stale-response guard: the page was released (or re-activated) while this auction was
             // in flight, so its creative belongs to a screen the user has left. Dropping it here is
             // what stops `onLoadRequest` from loading GAM into a released slot.
@@ -316,7 +325,6 @@ extension AUBannerView {
                     "[AUBannerView] dropping superseded response (gen \(generationAtRequest) vs \(self.auctionGeneration), screenActive=\(self.screenActive))")
                 return
             }
-            self.lastRefreshTime = Date()
             let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
 
             // A prefetch-zone first load completes before the ad is on screen, so the banner is
@@ -362,28 +370,14 @@ extension AUBannerView {
             )
             self.isInitialAutorefresh = false
 
+            self.googleLoad = GoogleLoad(auction: generationAtRequest, refresh: refreshGeneration)
+            self.googleEventGeneration = generationAtRequest
             self.onLoadRequest?(gamRequest)
         }
         return true
     }
 
-    /// Whether the auction ran to a usable conclusion, which is what decides between waiting out
-    /// the normal interval and retrying with backoff.
-    ///
-    /// Only the transient transport failures count as a failure. Everything else — including
-    /// `prebidDemandNoBids`, and including a permanent misconfiguration such as an invalid config
-    /// id — is a completed auction: GAM is still loaded from the callback, so the slot is filled,
-    /// and retrying would buy nothing while issuing up to three extra requests per interval against
-    /// a low-fill slot. Requests without impressions are the exact problem this migration exists to
-    /// reduce.
-    static func completedAuction(_ resultCode: ResultCode) -> Bool {
-        switch resultCode {
-        case .prebidNetworkError, .prebidServerError, .prebidDemandTimedOut:
-            return false
-        default:
-            return true
-        }
-    }
+
 
     /// Reads a Prebid targeting keyword that may be a String or a single-element [String].
     static func keyword(_ key: String, in targeting: [AnyHashable: Any]) -> String? {
@@ -454,6 +448,7 @@ extension AUBannerView {
     /// `media_types` as a JSON array string (web-schema parity), derived from the ad subtype.
     static func mediaTypesJSON(subtype: String) -> String {
         switch subtype {
+        case "NATIVE": return "[\"native\"]"
         case AUAdSubtype.video: return "[\"video\"]"
         case AUAdSubtype.multiformat: return "[\"banner\",\"video\"]"
         default: return "[\"banner\"]"
@@ -577,14 +572,15 @@ extension AUBannerView {
     }
 
     func makeAdSubType() -> String {
-        if adUnit.adFormats.count >= 2 {
+        if demandFormats == [.native] { return "NATIVE" }
+        if demandFormats.count >= 2 {
             return "MULTIFORMAT"
-        } else if adUnit.adFormats.contains(where: { $0.rawValue == 1 })
-            && adUnit.adFormats.count == 1
+        } else if demandFormats.contains(where: { $0.rawValue == 1 })
+            && demandFormats.count == 1
         {
             return "HTML"
-        } else if adUnit.adFormats.contains(where: { $0.rawValue == 2 })
-            && adUnit.adFormats.count == 1
+        } else if demandFormats.contains(where: { $0.rawValue == 2 })
+            && demandFormats.count == 1
         {
             return "VIDEO"
         }

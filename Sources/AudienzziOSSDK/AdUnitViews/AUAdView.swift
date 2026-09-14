@@ -27,8 +27,44 @@ public class AUAdView: VisibleView {
     private(set) var configId: String
     private(set) var adSize: CGSize
     
-    public var adUnitConfiguration: AUAdUnitConfigurationType!
+    public var adUnitConfiguration: AUAdUnitConfigurationType! {
+        didSet {
+            configuredDemandRefresh?.destroy()
+            // GAM banners install their own full load lifecycle. Other configurable ad formats
+            // preserve their demand cadence through this SDK-owned controller.
+            if !(self is AUBannerView), let configuration = adUnitConfiguration as? AUAdUnitConfiguration {
+                configuredDemandRefresh = AUConfiguredDemandRefresh(view: self, configuration: configuration)
+            }
+        }
+    }
+    internal var configuredDemandRefresh: AUConfiguredDemandRefresh?
+
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        configuredDemandRefresh?.attachmentChanged()
+    }
+
+    public override func removeFromSuperview() {
+        super.removeFromSuperview()
+        configuredDemandRefresh?.destroy()
+    }
+
+    override func onRefreshBecameEligible() {
+        configuredDemandRefresh?.viewport(visible: true)
+    }
+
+    override func onRefreshBecameIneligible() {
+        configuredDemandRefresh?.viewport(visible: false)
+    }
     public var onLoadRequest: ((AnyObject) -> Void)?
+
+    /// For custom ad-server views whose terminal callbacks the SDK cannot observe automatically.
+    /// Call once after the ad server finishes loading. No-fill / invalid configuration use false;
+    /// only a transient ad-server failure uses true. Original GAM banners are wired automatically.
+    public func notifyAdLoadCompleted(retryableFailure: Bool = false) {
+        adLoadCompletion?(retryableFailure)
+    }
+    internal var adLoadCompletion: ((Bool) -> Void)?
     /// Fired after every ad load with the actual rendered size GAM chose to serve.
     /// Use this to update your container constraints when the served size differs
     /// from the initially declared slot size (e.g. GAM picks a 300×600 direct ad

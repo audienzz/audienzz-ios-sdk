@@ -582,9 +582,9 @@ public class Audienzz: NSObject {
         guard !reportedInThisForegroundVisit else {
             AULogEvent.logDebug(
                 "[Audienzz][pageImpression] foreground — app already reported \"\(name)\" this visit, skipping")
-            // That report already ran the sweep, which recreated the active page's banners and
-            // cleared their background block. It owns the recovery.
-            return true
+            // The report may have run before our foreground observer opened the auction gate.
+            // No impression is pending; unblock and recover any load that report could not start.
+            return false
         }
         pendingForegroundReimpression?.cancel()
         let work = DispatchWorkItem { [weak self] in

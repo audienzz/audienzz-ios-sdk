@@ -24,9 +24,22 @@ import GoogleMobileAds
  */
 @objcMembers
 public class AUBannerView: AUAdView {
-    internal var adUnit: BannerAdUnit!
+    internal var adUnit: AdUnit!
     internal var gamRequest: AnyObject?
     internal var eventHandler: AUBannerHandler?
+    internal struct GoogleLoad {
+        let auction: Int
+        let refresh: Int
+    }
+    internal var googleLoad: GoogleLoad?
+    internal var googleEventGeneration: Int?
+    internal var acceptsGoogleEvents: Bool {
+        googleEventGeneration == auctionGeneration && screenActive && !refreshController.isDestroyed
+    }
+    internal var pendingLoadReason: AURefreshRequestReason?
+
+
+    internal var demandFormats: Set<PrebidMobile.AdFormat> = [.banner]
 
     public var videoParameters: AUVideoParameters?
     public var bannerParameters: AUBannerParameters?
@@ -135,6 +148,9 @@ public class AUBannerView: AUAdView {
     /// the ad is built, and in the remote-config case asynchronously afterwards too.
     private func wireRefreshConfiguration() {
         guard let configuration = adUnitConfiguration as? AUAdUnitConfiguration else { return }
+        adLoadCompletion = { [weak self] retryable in
+            _ = self?.completeGoogleLoad(retryableFailure: retryable)
+        }
         configuration.autorefreshIntervalObserver = { [weak self] millis in
             self?.refreshController.setIntervalMillis(millis)
         }
@@ -143,7 +159,8 @@ public class AUBannerView: AUAdView {
             if paused {
                 self.refreshController.block(.publisher)
             } else {
-                self.refreshController.unblock(.publisher)
+                self.refreshController.unblock(.publisher, schedule: false)
+                self.resumeEligibleWork()
             }
         }
     }
@@ -157,7 +174,8 @@ public class AUBannerView: AUAdView {
         self.adUnit = BannerAdUnit(configId: configId, size: adSize)
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
 
-        self.adUnit.adFormats = Set(unwrapAdFormat(adFormats))
+        self.demandFormats = Set(unwrapAdFormat(adFormats))
+        (self.adUnit as? BannerAdUnit)?.adFormats = demandFormats
         wireRefreshConfiguration()
     }
 
@@ -170,7 +188,17 @@ public class AUBannerView: AUAdView {
         self.adUnit = BannerAdUnit(configId: configId, size: adSize)
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
 
-        self.adUnit.adFormats = Set(unwrapAdFormat(adFormats))
+        self.demandFormats = Set(unwrapAdFormat(adFormats))
+        (self.adUnit as? BannerAdUnit)?.adFormats = demandFormats
+        wireRefreshConfiguration()
+    }
+
+    /// Shared banner lifecycle for native demand rendered into a GAM banner.
+    internal init(configId: String, demandUnit: AdUnit, isLazyLoad: Bool) {
+        super.init(configId: configId, adSize: .zero, isLazyLoad: isLazyLoad)
+        self.adUnit = demandUnit
+        self.demandFormats = [.native]
+        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: demandUnit)
         wireRefreshConfiguration()
     }
 
@@ -215,7 +243,7 @@ public class AUBannerView: AUAdView {
     }
     
     public func addAdditionalSize(sizes: [CGSize]) {
-        adUnit.addAdditionalSize(sizes: sizes)
+        (adUnit as? BannerAdUnit)?.addAdditionalSize(sizes: sizes)
     }
     
     public func setImpOrtbConfig(ortbConfig: String){
@@ -253,16 +281,17 @@ public class AUBannerView: AUAdView {
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
     public func createAd(with gamRequest: AdManagerRequest, gamBanner: UIView, eventHandler: AUBannerEventHandler? = nil) {
-        if let parameters = bannerParameters {
-            adUnit.bannerParameters = parameters.makeBannerParameters()
-        } else {
-            let parameters = BannerParameters()
-            parameters.api = [Signals.Api.MRAID_1, Signals.Api.MRAID_2, Signals.Api.MRAID_3, Signals.Api.OMID_1]
-            adUnit.bannerParameters = parameters
+        if let bannerUnit = adUnit as? BannerAdUnit {
+            if let parameters = bannerParameters {
+                bannerUnit.bannerParameters = parameters.makeBannerParameters()
+            } else {
+                let parameters = BannerParameters()
+                parameters.api = [Signals.Api.MRAID_1, Signals.Api.MRAID_2, Signals.Api.MRAID_3, Signals.Api.OMID_1]
+                bannerUnit.bannerParameters = parameters
+            }
+            bannerUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters()
         }
         addSubview(gamBanner)
-
-        adUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters()
         
         let ppid = PPIDManager.shared.getPPID()
         
@@ -272,9 +301,13 @@ public class AUBannerView: AUAdView {
 
         self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
 
-        if let bannerEventHandler = eventHandler {
-            self.eventHandler = AUBannerHandler(auBannerView: self, gamView: bannerEventHandler.gamView)
+        // The event wrapper is optional; GAM completion ownership is not.
+        if let googleView = eventHandler?.gamView ?? (gamBanner as? AdManagerBannerView) {
+            self.eventHandler = AUBannerHandler(auBannerView: self, gamView: googleView)
         }
+        if window == nil { refreshController.block(.detached) }
+        Audienzz.shared.observeForegroundReimpression()
+        if Audienzz.shared.isAppBackgrounded { refreshController.block(.appBackground) }
 
         // Join the current page. The epoch stamp is what lets the coordinator tell this screen's
         // banners from a previous screen's on the next page impression.

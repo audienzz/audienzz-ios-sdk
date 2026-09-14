@@ -32,6 +32,9 @@ internal final class AUScreenAdCoordinator {
 
     /// Live banners. Weak so views deallocate freely and entries auto-prune.
     private let ads = NSHashTable<AUBannerView>.weakObjects()
+    private let configuredAds = NSHashTable<AUConfiguredDemandRefresh>.weakObjects()
+    func registerConfigured(_ ad: AUConfiguredDemandRefresh) { configuredAds.add(ad) }
+    func deregisterConfigured(_ ad: AUConfiguredDemandRefresh) { configuredAds.remove(ad) }
 
     /// The most recent `pageImpression` screen. A `UIViewController` host is held weakly (so it
     /// deallocates freely); a value token (e.g. a route-key `String`) is held strongly, since the
@@ -94,6 +97,7 @@ internal final class AUScreenAdCoordinator {
         epoch += 1
         setActiveScreen(screen)
         activeScreenName = name
+        for ad in configuredAds.allObjects { ad.pageChanged(screen) }
         let live = ads.allObjects
         AULogEvent.logDebug(
             "[AUScreenCoordinator] pageImpression \"\(name)\" epoch=\(epoch) — \(live.count) banner(s) registered")
@@ -121,6 +125,7 @@ internal final class AUScreenAdCoordinator {
     /// auctions for one banner. The caller decides which of the two owns the recovery.
     func resumeAfterForeground() {
         assertMain()
+        for ad in configuredAds.allObjects { ad.foreground() }
         for ad in ads.allObjects {
             ad.resumeAfterForeground()
         }
@@ -130,6 +135,7 @@ internal final class AUScreenAdCoordinator {
     /// in flight: a response landing while backgrounded produces a creative nobody can see.
     func blockForBackground() {
         assertMain()
+        for ad in configuredAds.allObjects { ad.background() }
         for ad in ads.allObjects {
             ad.blockForBackground()
         }

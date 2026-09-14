@@ -142,12 +142,12 @@ internal final class AURefreshController {
 
     /// Removes one block reason. Refresh resumes only when every reason has been cleared, so a
     /// visibility resume cannot undo a publisher pause.
-    func unblock(_ reason: AURefreshBlockReason) {
+    func unblock(_ reason: AURefreshBlockReason, schedule: Bool = true) {
         guard !isDestroyed else { return }
         guard let index = blocks.firstIndex(of: reason) else { return }
         blocks.remove(at: index)
         AULogEvent.logDebug("[AURefresh] \(label) unblocked from \(reason.rawValue) (remaining \(blocks.map(\.rawValue)))")
-        if blocks.isEmpty {
+        if schedule && blocks.isEmpty {
             scheduleNext()
         }
     }
@@ -166,6 +166,7 @@ internal final class AURefreshController {
     /// to; the caller passes that back on completion so a superseded response can be recognised.
     @discardableResult
     func onRequestStarted(_ reason: AURefreshRequestReason) -> Int {
+        generation += 1
         inFlightGeneration = generation
         scheduler.cancel()
         if reason != .loadRetry {
@@ -180,14 +181,9 @@ internal final class AURefreshController {
     /// A response from a superseded generation is ignored entirely — it must not restart the clock
     /// or schedule anything, since its page or eligibility no longer applies.
     func onRequestCompleted(generationAtRequest: Int, success: Bool) {
-        guard !isDestroyed else { return }
-        if inFlightGeneration == generationAtRequest {
-            inFlightGeneration = nil
-        }
-        guard generationAtRequest == generation else {
-            AULogEvent.logDebug("[AURefresh] \(label) ignoring completion from superseded generation \(generationAtRequest)")
-            return
-        }
+        guard !isDestroyed, generationAtRequest == generation,
+              inFlightGeneration == generationAtRequest else { return }
+        inFlightGeneration = nil
         lastCompletionAt = scheduler.now()
 
         if success {
