@@ -98,8 +98,7 @@ extension AUBannerView {
         let remaining = max(0, refreshInterval - elapsed)
 
         if remaining == 0 {
-            fetchRequest(request)
-            adUnitConfiguration?.resumeAutoRefresh()
+            fetchAndResume(request)
         } else {
             let workItem = DispatchWorkItem { [weak self] in
                 guard let self, let req = self.gamRequest as? AdManagerRequest else { return }
@@ -161,8 +160,7 @@ extension AUBannerView {
 
         if remaining == 0 {
             // Ad is stale — fetch demand immediately, then restart the periodic timer.
-            fetchRequest(request)
-            adUnitConfiguration?.resumeAutoRefresh()
+            fetchAndResume(request)
         } else {
             // Not yet stale — schedule the fetch for when the interval actually expires.
             let workItem = DispatchWorkItem { [weak self] in
@@ -253,8 +251,7 @@ extension AUBannerView {
             eventHandler?.gamView?.isHidden = true
             blankedForReload = true
         }
-        fetchRequest(request)
-        adUnitConfiguration?.resumeAutoRefresh()
+        fetchAndResume(request)
     }
 
     /// Force a fresh auction now, ignoring the stale-aware timing of `resumeSmartRefresh`.
@@ -274,8 +271,20 @@ extension AUBannerView {
             eventHandler?.gamView?.isHidden = true
             blankedForReload = true
         }
+        fetchAndResume(request)
+    }
+
+    /// Start an auction and, only if the gate admitted it, restart Prebid's refresh dispatcher.
+    ///
+    /// The dispatcher is independent of the fetch: resuming it after a rejected fetch left Prebid
+    /// auctioning on its own timer for a banner whose auction the SDK had just deliberately
+    /// deferred — backgrounded, or on a page the user has left.
+    @discardableResult
+    func fetchAndResume(_ request: AdManagerRequest) -> Bool {
+        guard canStartAuction() else { return false }
         fetchRequest(request)
         adUnitConfiguration?.resumeAutoRefresh()
+        return true
     }
 
     /// The one place an auction can start. Every entry point — first load, prefetch, viewport
@@ -328,8 +337,7 @@ extension AUBannerView {
                     self.adUnitConfiguration?.resumeAutoRefresh()
                 }
             } else {
-                self.fetchRequest(request)
-                self.adUnitConfiguration?.resumeAutoRefresh()
+                self.fetchAndResume(request)
             }
         }
         pendingDeferredRetry = work
