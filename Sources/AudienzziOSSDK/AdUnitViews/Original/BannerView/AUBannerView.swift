@@ -57,6 +57,22 @@ public class AUBannerView: AUAdView {
     /// Number of times this slot has (re)loaded — reported as `slot_reload`. First load = 0.
     internal var slotReloadCount: Int = 0
 
+    /// The single owner of periodic refresh for this banner. Prebid is never given an interval —
+    /// its `Dispatcher` is created only by `AdUnit.setAutoRefreshMillis`, which the SDK no longer
+    /// calls — so nothing else schedules a request.
+    internal private(set) lazy var refreshController: AURefreshController = AURefreshController(
+        label: configId
+    ) { [weak self] reason, generation in
+        self?.onRefreshDue(reason, generation)
+    }
+
+    /// Issues the request the controller asked for, re-checking that it is still wanted.
+    private func onRefreshDue(_ reason: AURefreshRequestReason, _ generation: Int) {
+        guard generation == refreshController.generation else { return }
+        guard let request = gamRequest as? AdManagerRequest else { return }
+        fetchRequest(request, reason: reason)
+    }
+
     /// Viewability tracker for the current creative; restarted on each `adImpression`.
     internal var viewabilityTracker: AUViewabilityTracker?
 
@@ -112,6 +128,26 @@ public class AUBannerView: AUAdView {
         return nil
     }
 
+    /// Route the publisher-facing refresh API into the controller.
+    ///
+    /// Installed at construction rather than at `createAd`, because both a publisher and
+    /// `AURemoteConfigBannerView` configure refresh on the view as soon as it exists — well before
+    /// the ad is built, and in the remote-config case asynchronously afterwards too.
+    private func wireRefreshConfiguration() {
+        guard let configuration = adUnitConfiguration as? AUAdUnitConfiguration else { return }
+        configuration.autorefreshIntervalObserver = { [weak self] millis in
+            self?.refreshController.setIntervalMillis(millis)
+        }
+        configuration.autorefreshPauseObserver = { [weak self] paused in
+            guard let self else { return }
+            if paused {
+                self.refreshController.block(.publisher)
+            } else {
+                self.refreshController.unblock(.publisher)
+            }
+        }
+    }
+
     /**
      Initialize banner view
      Lazy load is true by default.
@@ -122,6 +158,7 @@ public class AUBannerView: AUAdView {
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
 
         self.adUnit.adFormats = Set(unwrapAdFormat(adFormats))
+        wireRefreshConfiguration()
     }
 
     /**
@@ -134,6 +171,7 @@ public class AUBannerView: AUAdView {
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
 
         self.adUnit.adFormats = Set(unwrapAdFormat(adFormats))
+        wireRefreshConfiguration()
     }
 
     required init?(coder: NSCoder) {
@@ -145,14 +183,20 @@ public class AUBannerView: AUAdView {
     /// can be adopted into the current page instead of staying dormant.
     public override func didMoveToWindow() {
         super.didMoveToWindow()
-        guard window != nil else { return }
+        guard window != nil else {
+            // A detached view cannot render, so a refresh into it would be an impression-less
+            // request. Re-attaching clears only this reason.
+            onDetachedFromWindow()
+            return
+        }
+        onAttachedToWindow()
         AUScreenAdCoordinator.shared.adoptIfOnActiveScreen(self)
     }
 
     public override func removeFromSuperview() {
         super.removeFromSuperview()
         AUScreenAdCoordinator.shared.deregister(self)
-        adUnit?.stopAutoRefresh()
+        refreshController.destroy()
         self.adUnit = nil
         self.gamRequest = nil
         self.eventHandler = nil
@@ -164,7 +208,7 @@ public class AUBannerView: AUAdView {
     /// ad (e.g. the owning controller's `deinit`). Safe to call more than once.
     public func destroy() {
         AUScreenAdCoordinator.shared.deregister(self)
-        adUnit?.stopAutoRefresh()
+        refreshController.destroy()
         self.adUnit = nil
         self.gamRequest = nil
         self.eventHandler = nil
@@ -243,11 +287,12 @@ public class AUBannerView: AUAdView {
         // `recreateForPage` picks it up when its page comes back.
         guard screenActive else {
             AULogEvent.logDebug("[AUBannerView] \(configId) created for a non-active page — deferring first load")
+            refreshController.block(.pageInactive)
             return
         }
 
         if !self.isLazyLoad {
-            fetchRequest(gamRequest)
+            fetchRequest(gamRequest, reason: .firstLoad)
         } else {
             loadIfAlreadyVisible()
         }

@@ -40,15 +40,29 @@ public class AURemoteConfigBannerView: VisibleView {
         bannerView?.reloadAd()
     }
 
-    /// Pause Prebid smart-refresh on the underlying banner. Forwards to
-    /// `AUBannerView.pauseSmartRefresh()`. No-op until the banner has been built.
+    /// Publisher pause. Durable: nothing else clears it — a scroll back into view or a page
+    /// impression will not resume refresh until `resumeAutoRefresh()` is called.
+    ///
+    /// This used to forward to the viewport pause, so scrolling the banner back on screen silently
+    /// undid it. Use `pauseSmartRefresh()` for a visibility pause; that is what the bridges report.
     @objc public func stopAutoRefresh() {
+        bannerView?.adUnitConfiguration.stopAutoRefresh()
+    }
+
+    /// Clears the publisher pause. Refresh only actually resumes once nothing else is holding it
+    /// (the banner is on the active page, visible, and the app is in the foreground).
+    @objc public func resumeAutoRefresh() {
+        bannerView?.adUnitConfiguration.resumeAutoRefresh()
+    }
+
+    /// Viewport pause, for view layers that do their own visibility detection (React Native,
+    /// Flutter). Independent of the publisher pause above.
+    @objc public func pauseSmartRefresh() {
         bannerView?.pauseSmartRefresh()
     }
 
-    /// Resume Prebid smart-refresh on the underlying banner previously paused via
-    /// `stopAutoRefresh()`. Forwards to `AUBannerView.resumeSmartRefresh()`.
-    @objc public func resumeAutoRefresh() {
+    /// Viewport resume. Clears only the visibility reason.
+    @objc public func resumeSmartRefresh() {
         bannerView?.resumeSmartRefresh()
     }
 
@@ -132,16 +146,12 @@ public class AURemoteConfigBannerView: VisibleView {
         self.bannerView = bannerView
         if let pendingScreenKey { bannerView.hostScreenOverride = pendingScreenKey }
 
-        // M4: route refresh through adUnitConfiguration (not adUnit directly) so
-        // autorefreshEventModel is updated — otherwise the stale-aware smart
-        // refresh logic reads autorefreshTime == 0 and never engages, and
-        // analytics report isAutorefresh = false.
-        // M22: Prebid enforces a 30s floor (values below are silently rejected).
-        // Clamp positive values here so Prebid and the SDK's stale-aware refresh
-        // use the same effective cadence.
+        // Routed through `adUnitConfiguration`, which is what owns the interval: it stores the value
+        // for `AURefreshController` (and for analytics' `autorefresh_time`) and applies the 30s
+        // floor. The banner installs its observer in `createAd`, which has already run by the time
+        // the remote config arrives, so this reaches the controller.
         let configuredRefreshMs = Double((remoteConfig.config.refreshTimeSeconds ?? Self.defaultRefreshSeconds) * 1000)
-        let refreshMs = configuredRefreshMs > 0 ? max(configuredRefreshMs, 30_000) : configuredRefreshMs
-        bannerView.adUnitConfiguration.setAutoRefreshMillis(time: refreshMs)
+        bannerView.adUnitConfiguration.setAutoRefreshMillis(time: configuredRefreshMs)
         bannerView.smartRefresh = true
         bannerView.prefetchMarginPoints = CGFloat(remoteConfig.config.prefetchDistancePt ?? Self.defaultPrefetchDistancePt)
 

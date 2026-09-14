@@ -500,9 +500,10 @@ public class Audienzz: NSObject {
             // Drop any pending automatic re-impression: backgrounding again inside the scheduling
             // window would otherwise recreate the whole active page while backgrounded.
             self?.cancelPendingForegroundReimpression()
-            // A retry scheduled by the previous foreground session must not survive into the next
-            // one, where it would come due alongside that session's page impression.
-            AUScreenAdCoordinator.shared.cancelDeferredRetries()
+            // Hold every banner's refresh for the duration of the background, and retire whatever
+            // auction was in flight. A `DispatchWorkItem` scheduled on the main queue would fire on
+            // return regardless, and a response landing meanwhile buys a creative nobody sees.
+            AUScreenAdCoordinator.shared.blockForBackground()
         }
         // Clear the auction gate at willEnterForeground, not didBecomeActive. An app that reports
         // its page from `willEnterForeground` runs BEFORE activation: with the gate still closed its
@@ -527,25 +528,33 @@ public class Audienzz: NSObject {
         ) { [weak self] _ in
             guard let self else { return }
             self.isAppBackgrounded = false
-            // Decide ownership BEFORE releasing the retries. If an automatic impression is
-            // scheduled it recreates every banner on the active page, and the retries — which check
-            // for exactly that — stand down. If it is suppressed or impossible (no active screen,
-            // or the app already reported), nothing is pending and the retries run.
+            // Exactly one owner recovers each banner. A page impression — scheduled here, or already
+            // reported by the app during this visit — recreates every banner on the active page and
+            // clears their background block itself. Only when no impression is going to happen does
+            // the coordinator resume them directly; doing both is how one return used to produce two
+            // auctions per banner.
+            var impressionOwnsRecovery = false
             if self.didEnterBackground {
                 self.didEnterBackground = false
-                self.scheduleForegroundReimpression()
+                impressionOwnsRecovery = self.scheduleForegroundReimpression()
             }
-            AUScreenAdCoordinator.shared.retryDeferredAuctions()
+            if !impressionOwnsRecovery {
+                AUScreenAdCoordinator.shared.resumeAfterForeground()
+            }
         }
     }
 
     /// Schedules the automatic re-impression instead of firing it immediately, so an app that
     /// reports its own page impression on resume cancels it. That makes the outcome the same in
     /// both callback orders — exactly one page impression, not two.
-    private func scheduleForegroundReimpression() {
+    /// - Returns: `true` when a page impression owns this visit's recovery — either one is now
+    ///   scheduled, or the app already reported one itself. `false` means nothing else will recreate
+    ///   the banners, so the caller must resume them directly.
+    @discardableResult
+    private func scheduleForegroundReimpression() -> Bool {
         guard let (screen, name) = AUScreenAdCoordinator.shared.activeScreenAndName else {
             AULogEvent.logDebug("[Audienzz][pageImpression] foreground — no active screen yet, skipping")
-            return
+            return false
         }
         // Cancelling on an explicit report only covers the order "activation first". An app that
         // reports from `willEnterForeground` reports BEFORE activation, so also check whether this
@@ -559,7 +568,9 @@ public class Audienzz: NSObject {
         guard !reportedInThisForegroundVisit else {
             AULogEvent.logDebug(
                 "[Audienzz][pageImpression] foreground — app already reported \"\(name)\" this visit, skipping")
-            return
+            // That report already ran the sweep, which recreated the active page's banners and
+            // cleared their background block. It owns the recovery.
+            return true
         }
         pendingForegroundReimpression?.cancel()
         let work = DispatchWorkItem { [weak self] in
@@ -569,6 +580,7 @@ public class Audienzz: NSObject {
         }
         pendingForegroundReimpression = work
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.foregroundReimpressionDelay, execute: work)
+        return true
     }
 
     /// True while an automatic foreground page impression is scheduled. A banner whose auction the

@@ -95,8 +95,11 @@ public class AUAdView: VisibleView {
     public var smartRefresh: Bool = false
 
     // MARK: - Smart refresh internals
+
+    /// When the last request completed, or nil if none ever has. Read as "has this slot ever
+    /// loaded?" — the refresh *interval* is measured by `AURefreshController` on a monotonic clock,
+    /// not from this wall-clock stamp.
     internal var lastRefreshTime: Date?
-    internal var pendingSmartRefreshWorkItem: DispatchWorkItem?
 
     /// Whether this ad's host screen is the currently-active one. Defaults to `true` so ads in apps
     /// that never call `pageImpression` behave exactly as before. Flipped by `AUScreenAdCoordinator`
@@ -116,19 +119,6 @@ public class AUAdView: VisibleView {
     /// True once a first request has actually been issued, so re-activation can't double-auction.
     internal var initialLoadRequested: Bool = false
 
-    /// Set when the auction gate rejected a load that should run once the app is foreground again.
-    /// Rejecting outright made correctness depend on notification order — a publisher observing
-    /// `willEnterForeground` before the SDK does had its recreation rejected and nothing retried it.
-    internal var auctionDeferred: Bool = false
-
-    /// Scheduled retry for a deferred auction, cancellable across lifecycle transitions.
-    internal var pendingDeferredRetry: DispatchWorkItem?
-
-    /// Set when a page release stopped Prebid's refresh dispatcher. Prebid only auto-starts that
-    /// dispatcher on the FIRST-EVER fetch, so whichever load eventually replaces the interrupted
-    /// one has to restart refresh explicitly — including a lazy load that only happens later, when
-    /// the banner finally scrolls into view.
-    internal var needsRefreshRestart: Bool = false
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in

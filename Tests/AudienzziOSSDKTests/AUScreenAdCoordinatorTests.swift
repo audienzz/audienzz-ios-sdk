@@ -136,33 +136,46 @@ final class AUScreenAdCoordinatorTests: XCTestCase {
         XCTAssertTrue(article.canStartAuction())
     }
 
-    // ── Refresh restoration ─────────────────────────────────────────────────
+    // ── Refresh ownership across page transitions ───────────────────────────
 
-    func testLeavingAPageMarksRefreshForRestart() {
-        // Prebid only auto-starts its refresh dispatcher on the first-ever fetch, so every stop the
-        // SDK performs has to be paired with a restart by the next load — otherwise the slot loads
-        // once and then never refreshes again.
+    func testLeavingAPageBlocksRefreshOnTheReasonThePageOwns() {
+        // A released banner must be held by a reason only a page activation can clear. Holding it
+        // on the visibility reason instead — which an earlier revision did — meant a scroll back
+        // into view revived a banner on a screen the user had left.
         let article = banner(on: "Article")
         openPage("Article")
 
         openPage("Home")
 
-        XCTAssertTrue(article.needsRefreshRestart)
+        XCTAssertEqual(article.refreshController.blockReasons, [.pageInactive])
     }
 
-    func testReReportingTheSamePageMarksRefreshForRestart() {
-        // Re-reporting the page mid-first-auction takes the never-loaded branch, which starts a
-        // replacement. The dispatcher was stopped on the way in, so without the flag that
-        // replacement rendered and then never refreshed.
+    func testReturningToAPageClearsThePageBlock() {
+        // The mirror image: the activation is the only thing that lifts it, and it must actually
+        // lift it or the slot stays dormant for the rest of the process.
         let article = banner(on: "Article")
         openPage("Article")
-        article.needsRefreshRestart = false
+        openPage("Home")
 
         openPage("Article")
 
-        XCTAssertTrue(
-            article.needsRefreshRestart,
-            "a recreation that stops the dispatcher must also arrange for it to be restarted"
+        XCTAssertFalse(article.refreshController.isBlocked)
+    }
+
+    func testAViewportPauseDoesNotSurviveAsAPageBlock() {
+        // The two reasons are independent: leaving the page adds its own, and coming back clears
+        // only that one, leaving a genuine publisher pause in force.
+        let article = banner(on: "Article")
+        openPage("Article")
+        article.adUnitConfiguration.stopAutoRefresh()
+
+        openPage("Home")
+        openPage("Article")
+
+        XCTAssertEqual(
+            article.refreshController.blockReasons,
+            [.publisher],
+            "a page round trip must not clear a publisher pause"
         )
     }
 

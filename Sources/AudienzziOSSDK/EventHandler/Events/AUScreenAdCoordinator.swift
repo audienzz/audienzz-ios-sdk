@@ -113,12 +113,25 @@ internal final class AUScreenAdCoordinator {
         }
     }
 
-    /// Retry every auction the gate deferred while the app was backgrounded. Called on foreground,
-    /// so the order in which the SDK's and the publisher's lifecycle observers run stops mattering.
-    func retryDeferredAuctions() {
+    /// Restore refresh after the app returns to the foreground, for apps that never call
+    /// `pageImpression`.
+    ///
+    /// A page-scoped app gets a foreground page impression instead, and that impression recreates
+    /// every banner on the active page — doing both is how a single return used to produce two
+    /// auctions for one banner. The caller decides which of the two owns the recovery.
+    func resumeAfterForeground() {
         assertMain()
         for ad in ads.allObjects {
-            ad.retryDeferredAuction()
+            ad.resumeAfterForeground()
+        }
+    }
+
+    /// Hold refresh for every banner while the app is backgrounded, and retire whatever auction was
+    /// in flight: a response landing while backgrounded produces a creative nobody can see.
+    func blockForBackground() {
+        assertMain()
+        for ad in ads.allObjects {
+            ad.blockForBackground()
         }
     }
 
@@ -129,15 +142,6 @@ internal final class AUScreenAdCoordinator {
     /// Called from `AUBannerView.didMoveToWindow`, once the host *can* be resolved. If that host is
     /// the active screen the banner joins the current page and loads. Event-driven rather than a
     /// timing grace window, so it can never resurrect a previous page's ad.
-    /// Drop every scheduled deferred retry. Called on backgrounding, so a retry belonging to the
-    /// previous foreground session cannot come due during the next one.
-    func cancelDeferredRetries() {
-        assertMain()
-        for ad in ads.allObjects {
-            ad.cancelDeferredRetry()
-        }
-    }
-
     func adoptIfOnActiveScreen(_ ad: AUBannerView) {
         assertMain()
         guard let activeScreen, !ad.screenActive, ad.isHostedBy(activeScreen) else { return }

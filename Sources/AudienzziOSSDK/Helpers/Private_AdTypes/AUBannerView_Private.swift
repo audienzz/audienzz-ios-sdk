@@ -36,7 +36,7 @@ extension AUBannerView {
         #if DEBUG
         AULogEvent.logDebug("[AUBannerView] entered prefetch zone (\(Int(prefetchMarginPoints))pt margin), starting fetchDemand")
         #endif
-        fetchRequest(request)
+        fetchRequest(request, reason: .firstLoad)
         isLazyLoaded = true
     }
 
@@ -52,7 +52,7 @@ extension AUBannerView {
         #if DEBUG
         AULogEvent.logDebug("[AUBannerView] became visible (prefetch zone not reached), starting fetchDemand")
         #endif
-        fetchRequest(request)
+        fetchRequest(request, reason: .firstLoad)
         isLazyLoaded = true
     }
 
@@ -66,183 +66,106 @@ extension AUBannerView {
     /// screen AND ≤50% off the bottom). Gates refreshes only — the first load happens earlier
     /// via the prefetch / ≥20% path, so this never triggers the initial fetch.
     override func onRefreshBecameEligible() {
-        // Smart-refresh v2: never resume a banner whose screen isn't the active one — the screen
-        // coordinator owns pause/reload for inactive screens. Always true under the legacy model.
-        guard screenActive else { return }
-        guard smartRefresh, isLazyLoaded || !isLazyLoad,
-              let request = gamRequest as? AdManagerRequest else { return }
-
-        // Don't trigger smart refresh until the first demand fetch has completed.
-        // Without this guard, lastRefreshTime is nil → elapsed defaults to refreshInterval
-        // → remaining = 0 → immediate fetchRequest, duplicating the prefetch fetch.
-        // Mirrors Android's: if (lastRefreshTime == 0L) return
-        guard lastRefreshTime != nil else {
-            AULogEvent.logDebug("[AUBannerView] smartRefresh — eligible before first load, skipping")
-            return
-        }
-
-        pendingSmartRefreshWorkItem?.cancel()
-        pendingSmartRefreshWorkItem = nil
-
-        // autorefreshTime is stored in milliseconds (set via setAutoRefreshMillis).
-        // Convert to seconds for comparison with Date().timeIntervalSince() which returns seconds.
-        let refreshIntervalMs = (adUnitConfiguration as? AUAdUnitConfigurationEventProtocol)?
-            .autorefreshEventModel.autorefreshTime ?? 0
-        guard refreshIntervalMs > 0 else {
-            adUnitConfiguration?.resumeAutoRefresh()
-            return
-        }
-        let refreshInterval = refreshIntervalMs / 1000.0
-
-        let elapsed = lastRefreshTime.map { Date().timeIntervalSince($0) } ?? refreshInterval
-        let remaining = max(0, refreshInterval - elapsed)
-
-        if remaining == 0 {
-            fetchAndResume(request)
-        } else {
-            let workItem = DispatchWorkItem { [weak self] in
-                guard let self, let req = self.gamRequest as? AdManagerRequest else { return }
-                self.fetchRequest(req)
-                self.adUnitConfiguration?.resumeAutoRefresh()
-            }
-            pendingSmartRefreshWorkItem = workItem
-            DispatchQueue.main.asyncAfter(deadline: .now() + remaining, execute: workItem)
-        }
+        guard smartRefresh else { return }
+        clearViewportBlock()
     }
 
     /// Smart-refresh PAUSE. Fires when the ad leaves the eligible zone (top edge clipped by
     /// ≥1pt, or >50% off the bottom).
     override func onRefreshBecameIneligible() {
         guard smartRefresh else { return }
-        pendingSmartRefreshWorkItem?.cancel()
-        pendingSmartRefreshWorkItem = nil
-        adUnitConfiguration?.stopAutoRefresh()
+        refreshController.block(.notVisible)
     }
 
     // MARK: - Public smart-refresh API (Flutter / external callers)
 
-    /// Stale-aware smart-refresh resume.
+    /// Viewport resume, for view layers that do their own visibility detection (Flutter, React
+    /// Native) and cannot rely on the `UIScrollView` KVO in ``VisibleView``.
     ///
-    /// Intended for external view-layers (e.g. Flutter) that perform their own
-    /// viewport detection and cannot rely on the UIScrollView-based KVO in
-    /// ``VisibleView``.  Unlike the raw ``adUnitConfiguration?.resumeAutoRefresh()``
-    /// call (which always resets the full refresh interval to zero), this method:
-    ///
-    /// - Does nothing if the first demand fetch has not completed yet
-    ///   (``lastRefreshTime`` is nil — avoids a duplicate load on first visibility).
-    /// - Fires a new ``fetchRequest`` **immediately** when the ad is stale (elapsed
-    ///   time ≥ configured refresh interval).
-    /// - Schedules a delayed ``fetchRequest`` for the exact **remaining** time when
-    ///   the ad is not yet stale, then resumes Prebid's auto-refresh timer.
+    /// Clears **only** the visibility reason. A publisher pause or a released page is a separate,
+    /// durable reason and stays in force, so scrolling a released banner back into view cannot
+    /// revive it. The timing itself belongs to ``AURefreshController``: an overdue banner refreshes
+    /// at once and an in-date one waits out the remainder of its interval.
     ///
     /// Mirrors Android's `AudienzzAdViewHandler.resumeSmartRefresh()`.
     public func resumeSmartRefresh() {
-        guard screenActive else { return }
-        guard isLazyLoaded || !isLazyLoad,
-              let request = gamRequest as? GAMRequest else { return }
-        guard let lastTime = lastRefreshTime else {
-            AULogEvent.logDebug("[AUBannerView] resumeSmartRefresh — first load not yet complete, skipping")
-            return
-        }
-
-        pendingSmartRefreshWorkItem?.cancel()
-        pendingSmartRefreshWorkItem = nil
-
-        let refreshIntervalMs = (adUnitConfiguration as? AUAdUnitConfigurationEventProtocol)?
-            .autorefreshEventModel.autorefreshTime ?? 0
-        guard refreshIntervalMs > 0 else {
-            adUnitConfiguration?.resumeAutoRefresh()
-            return
-        }
-        let refreshInterval = refreshIntervalMs / 1000.0
-        let elapsed = Date().timeIntervalSince(lastTime)
-        let remaining = max(0, refreshInterval - elapsed)
-
-        if remaining == 0 {
-            // Ad is stale — fetch demand immediately, then restart the periodic timer.
-            fetchAndResume(request)
-        } else {
-            // Not yet stale — schedule the fetch for when the interval actually expires.
-            let workItem = DispatchWorkItem { [weak self] in
-                guard let self, let req = self.gamRequest as? GAMRequest else { return }
-                self.fetchRequest(req)
-                self.adUnitConfiguration?.resumeAutoRefresh()
-            }
-            pendingSmartRefreshWorkItem = workItem
-            DispatchQueue.main.asyncAfter(deadline: .now() + remaining, execute: workItem)
-        }
+        clearViewportBlock()
     }
 
-    /// Pause smart refresh: cancels any pending stale-aware work item and stops
-    /// the Prebid auto-refresh timer.
-    ///
-    /// Call this when the ad view leaves the viewport.
-    /// Mirrors Android's `AudienzzAdViewHandler.pauseSmartRefresh()`.
+    /// Viewport pause: this banner is off screen, so a refresh into it would be an impression-less
+    /// request. Mirrors Android's `AudienzzAdViewHandler.pauseSmartRefresh()`.
     public func pauseSmartRefresh() {
-        pendingSmartRefreshWorkItem?.cancel()
-        pendingSmartRefreshWorkItem = nil
-        adUnitConfiguration?.stopAutoRefresh()
+        refreshController.block(.notVisible)
     }
 
-    /// Page release: the ad's screen is no longer the active page, so stop everything. Cancels any
-    /// pending stale-aware refresh and stops Prebid's auto-refresh dispatcher, leaving the slot
-    /// dormant — no auctions, no GAM loads — until its page comes back and `recreateForPage()` runs.
-    ///
-    /// `screenActive` (set by the coordinator) is what keeps the viewport gate from resuming it in
-    /// the meantime, so a released banner scrolling through the viewport stays silent.
-    /// Stop Prebid's refresh dispatcher for a page transition, and remember that whichever load
-    /// comes next has to restart it.
-    ///
-    /// Prebid only auto-starts the dispatcher on its FIRST-EVER fetch, so every stop has to be
-    /// paired with a restart or the slot loads once and then never refreshes again. Pairing the two
-    /// here rather than at each call site is the point: the flag was previously set only on release,
-    /// so a same-page recreation stopped the dispatcher and nothing ever restarted it.
-    private func stopRefreshUntilNextLoad() {
-        adUnitConfiguration?.stopAutoRefresh()
-        needsRefreshRestart = true
+    /// Shared by the viewport gate and its external equivalent.
+    private func clearViewportBlock() {
+        refreshController.unblock(.notVisible)
+        if lastRefreshTime == nil, !refreshController.isBlocked {
+            // Never completed a first fetch, so there is no interval to resume — the controller only
+            // schedules once something has loaded. Re-arm the first load instead, which respects the
+            // lazy settings rather than auctioning a banner that isn't on screen yet.
+            rearmInitialLoad()
+        }
     }
 
-    func releaseForPage() {
+    /// Give a never-loaded banner its first load back, honouring the lazy settings. A lazy banner
+    /// only loads if it is actually on screen now; otherwise its trigger is simply re-armed.
+    func rearmInitialLoad() {
+        guard lastRefreshTime == nil, let request = gamRequest as? AdManagerRequest else { return }
+        if isLazyLoad {
+            isLazyLoaded = false
+            loadIfAlreadyVisible()
+        } else {
+            fetchRequest(request, reason: .firstLoad)
+        }
+    }
+
+    // MARK: - Page transitions
+
+    /// Retire the outstanding auction and any scheduled work, WITHOUT recording a block reason.
+    ///
+    /// Whether refresh is allowed afterwards is the caller's decision: a page release blocks
+    /// `.pageInactive`, backgrounding blocks `.appBackground`, and a page activation blocks nothing.
+    /// Routing this through `pauseSmartRefresh()` — as an earlier revision did — left the banner
+    /// blocked on a visibility reason that nothing would ever clear.
+    private func retireCurrentAuction() {
         // Bump first so an auction already in flight is recognised as stale by its completion.
         auctionGeneration += 1
-        cancelDeferredRetry()
-        pendingSmartRefreshWorkItem?.cancel()
-        pendingSmartRefreshWorkItem = nil
-        stopRefreshUntilNextLoad()
-        adUnit?.stopAutoRefresh()
+        refreshController.invalidatePending()
+    }
+
+    /// Page release: the ad's screen is no longer the active page, so stop everything. The slot is
+    /// left dormant — no auctions, no GAM loads — until its page comes back and `recreateForPage()`
+    /// runs. `screenActive` (set by the coordinator) and the `.pageInactive` block are what keep the
+    /// viewport gate from resuming it in the meantime.
+    func releaseForPage() {
+        refreshController.block(.pageInactive)
+        retireCurrentAuction()
     }
 
     /// Page (re)activation: this ad's screen is the incoming page, so serve a fresh creative.
-    /// Unlike `resumeSmartRefresh` (stale-aware), this always forces a new auction when the ad has
+    /// Unlike a viewport resume (stale-aware), this always forces a new auction when the ad has
     /// loaded before — that is the "new page impression → fresh ad" semantics, and it's what makes a
     /// back-navigation or a return from the background show a current creative rather than a stale
     /// one. A never-loaded banner is left for its normal lazy/prefetch first load.
     func recreateForPage() {
-        pendingSmartRefreshWorkItem?.cancel()
-        pendingSmartRefreshWorkItem = nil
         // A hard transition supersedes the outgoing auction even when the SAME page is re-reported,
         // so a response from the previous visit can't load a creative or overwrite this visit's
         // auction analytics.
-        auctionGeneration += 1
-        cancelDeferredRetry()
-        // Retire, don't merely invalidate: the replacement may be deferred (a lazy banner out of
-        // range), and an un-retired dispatcher keeps auctioning while every callback is dropped.
-        stopRefreshUntilNextLoad()
+        retireCurrentAuction()
+        // A live page is not an inactive one, and returning to the foreground is what this
+        // transition represents. The viewport and publisher reasons are deliberately untouched: a
+        // page impression does not make an off-screen banner visible, nor undo a publisher pause.
+        refreshController.unblock(.pageInactive)
+        refreshController.unblock(.appBackground)
         guard let request = gamRequest as? AdManagerRequest else { return }
         guard lastRefreshTime != nil else {
             // Never loaded: this banner's first load was deferred because its page wasn't active
             // (or its lazy trigger was consumed while released). Activation is its only remaining
             // chance — without this the slot stays blank forever.
             AULogEvent.logDebug("[AUBannerView] \(configId) — activating a never-loaded banner, starting first load")
-            // Refresh restoration is handled inside fetchRequest via `needsRefreshRestart`, so it
-            // applies to whichever load eventually runs — including a lazy one that only happens
-            // when the banner finally scrolls into view, long after this call returns.
-            if isLazyLoad {
-                isLazyLoaded = false
-                loadIfAlreadyVisible()
-            } else {
-                fetchRequest(request)
-            }
+            rearmInitialLoad()
             return
         }
         // Optionally blank the current creative (keeping the slot size — the container view keeps
@@ -251,10 +174,10 @@ extension AUBannerView {
             eventHandler?.gamView?.isHidden = true
             blankedForReload = true
         }
-        fetchAndResume(request)
+        fetchRequest(request, reason: .pageImpression)
     }
 
-    /// Force a fresh auction now, ignoring the stale-aware timing of `resumeSmartRefresh`.
+    /// Force a fresh auction now, ignoring the stale-aware timing of the viewport resume.
     ///
     /// Public entry point for a manual reload — e.g. the React Native / Flutter bridges reloading a
     /// banner when its screen (route/tab) becomes active again, or a publisher triggering a refresh
@@ -265,107 +188,98 @@ extension AUBannerView {
         // and without this a released banner on a kept-mounted route would come back to life.
         guard screenActive else { return }
         guard let request = gamRequest as? AdManagerRequest else { return }
-        pendingSmartRefreshWorkItem?.cancel()
-        pendingSmartRefreshWorkItem = nil
+        // This reload owns the replacement, so a pending periodic refresh or retry is retired rather
+        // than allowed to issue a second one for the same transition.
+        refreshController.invalidatePending()
         if Audienzz.shared.blankOnScreenReload {
             eventHandler?.gamView?.isHidden = true
             blankedForReload = true
         }
-        fetchAndResume(request)
+        fetchRequest(request, reason: .pageImpression)
     }
 
-    /// Start an auction and, only if the gate admitted it, restart Prebid's refresh dispatcher.
+    // MARK: - App lifecycle
+
+    /// The app went to the background. A main-run-loop timer cannot fire while backgrounded, but an
+    /// auction already in flight still delivers, and a request issued in the last moments before
+    /// backgrounding produces a creative nobody can see.
+    func blockForBackground() {
+        refreshController.block(.appBackground)
+        retireCurrentAuction()
+    }
+
+    /// The app came back to the foreground with no page impression to own the recovery.
     ///
-    /// The dispatcher is independent of the fetch: resuming it after a rejected fetch left Prebid
-    /// auctioning on its own timer for a banner whose auction the SDK had just deliberately
-    /// deferred — backgrounded, or on a page the user has left.
-    @discardableResult
-    func fetchAndResume(_ request: AdManagerRequest) -> Bool {
-        guard canStartAuction() else { return false }
-        fetchRequest(request)
-        adUnitConfiguration?.resumeAutoRefresh()
-        return true
+    /// A page-scoped app gets a foreground page impression instead, and that impression recreates
+    /// every banner on the active page — doing both is how a single return used to produce two
+    /// auctions. An app that never calls `pageImpression` has no such transition, so this restores
+    /// its refresh directly; otherwise backgrounding once would silently kill refresh for the rest
+    /// of the process.
+    func resumeAfterForeground() {
+        refreshController.unblock(.appBackground)
+        if lastRefreshTime == nil, !refreshController.isBlocked {
+            rearmInitialLoad()
+        }
+    }
+
+    /// Attach state. A detached view cannot render, so a refresh into it would be an
+    /// impression-less request; re-attaching clears only this reason.
+    func onAttachedToWindow() {
+        refreshController.unblock(.detached)
+    }
+
+    func onDetachedFromWindow() {
+        refreshController.block(.detached)
     }
 
     /// The one place an auction can start. Every entry point — first load, prefetch, viewport
-    /// resume, page activation, manual reload — funnels through `fetchRequest`, so this is the
-    /// single gate deciding whether auctioning is legitimate right now. Guarding the call sites
-    /// individually is what let earlier revisions leak an auction through whichever path was missed.
+    /// resume, page activation, manual reload, periodic refresh — funnels through `fetchRequest`, so
+    /// this is the single gate deciding whether auctioning is legitimate right now. Guarding the
+    /// call sites individually is what let earlier revisions leak an auction through whichever path
+    /// was missed.
     func canStartAuction() -> Bool {
+        guard !refreshController.isDestroyed else { return false }
         guard screenActive else {
+            // Kept alongside the controller's own reasons: page ownership is decided by the
+            // coordinator, and a banner can be built for an already-inactive page before any block
+            // has been recorded.
             AULogEvent.logDebug("[AUBannerView] auction blocked \(configId) — page released")
             return false
         }
+        guard !refreshController.isBlocked else {
+            AULogEvent.logDebug("[AUBannerView] auction blocked \(configId) — \(refreshController.blockReasons)")
+            return false
+        }
         guard !Audienzz.shared.isAppBackgrounded else {
-            AULogEvent.logDebug("[AUBannerView] auction deferred \(configId) — app is backgrounded")
-            auctionDeferred = true
+            // Nothing is remembered here. Coming back to the foreground clears the `.appBackground`
+            // reason, which makes the controller reschedule, and a banner that never loaded re-arms
+            // its first load — one owner for the recovery instead of a second timer racing the page
+            // impression.
+            AULogEvent.logDebug("[AUBannerView] auction blocked \(configId) — app is backgrounded")
             return false
         }
         return true
     }
 
-    /// Retry an auction the gate deferred. Called when the app reaches the foreground, so the
-    /// interleaving of the SDK's and the publisher's lifecycle observers stops mattering.
-    func retryDeferredAuction() {
-        guard auctionDeferred else { return }
-        // Deliberately delayed past the automatic foreground page impression. That impression
-        // recreates every banner on the active page, and a deferred banner is by definition on the
-        // active page (the check below), so retrying immediately auctioned once here and again when
-        // the impression landed. `auctionDeferred` is cleared by any auction that actually starts,
-        // so if the impression got there first this is a no-op.
-        cancelDeferredRetry()
-        let work = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.pendingDeferredRetry = nil
-            guard self.auctionDeferred, self.screenActive,
-                  !Audienzz.shared.isAppBackgrounded,
-                  let request = self.gamRequest as? AdManagerRequest else { return }
-            // An automatic page impression still to come owns this banner's recovery: it recreates
-            // every banner on the active page. Auctioning here as well is the duplicate, and
-            // choosing delays that "should" order these two correctly does not survive a variable
-            // gap between the notifications that start each clock (willEnterForeground here,
-            // didBecomeActive there).
-            guard !Audienzz.shared.hasPendingForegroundReimpression else {
-                AULogEvent.logDebug("[AUBannerView] \(self.configId) — a page impression will recreate this, standing down")
-                return
-            }
-            AULogEvent.logDebug("[AUBannerView] \(self.configId) — retrying deferred auction, no page impression claimed it")
-            if self.lastRefreshTime == nil, self.isLazyLoad {
-                self.isLazyLoaded = false
-                self.loadIfAlreadyVisible()
-                if self.isLazyLoaded {
-                    self.adUnitConfiguration?.resumeAutoRefresh()
-                }
-            } else {
-                self.fetchAndResume(request)
-            }
-        }
-        pendingDeferredRetry = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.deferredRetryDelay, execute: work)
-    }
-
-    /// A scheduled retry is only valid for the foreground session that scheduled it.
-    func cancelDeferredRetry() {
-        pendingDeferredRetry?.cancel()
-        pendingDeferredRetry = nil
-    }
-
-    /// Long enough that an automatic page impression, when one is coming, is already pending by the
-    /// time this fires — the standing-down check above is what actually guarantees exclusivity.
-    private static var deferredRetryDelay: TimeInterval { 0.6 }
-
+    /// The base-class entry point. Everything that knows why it is loading calls
+    /// `fetchRequest(_:reason:)` instead; this exists for the `AUAdView` override contract and for
+    /// the non-lazy first load in `createAd`.
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
-        guard canStartAuction() else { return }
-        // An auction is actually starting, so nothing is owed any more.
-        auctionDeferred = false
+        fetchRequest(gamRequest, reason: initialLoadRequested ? .periodicRefresh : .firstLoad)
+    }
+
+    /// Starts one auction, if the gate admits it.
+    ///
+    /// The `reason` is what ties the request into ``AURefreshController``'s lifecycle: it records
+    /// the request, hands back the generation to check on completion, and — depending on how the
+    /// request ends — schedules the next interval or a bounded retry. Nothing else in the SDK
+    /// schedules a request.
+    @nonobjc @discardableResult
+    func fetchRequest(_ gamRequest: AdManagerRequest, reason: AURefreshRequestReason) -> Bool {
+        guard canStartAuction() else { return false }
         // Every new auction supersedes the previous one.
         auctionGeneration += 1
-        // Restart refresh here rather than at the call sites. Prebid only auto-starts its
-        // dispatcher on the first-ever fetch, so after a release stopped it every later load has to
-        // restore it — including a lazy load that happens much later, when the banner finally
-        // scrolls into view. Doing this per-call-site missed exactly that path.
-        let restartRefresh = needsRefreshRestart
-        needsRefreshRestart = false
+        let refreshGeneration = refreshController.onRequestStarted(reason)
         initialLoadRequested = true
         // Re-read the PPID on every auction rather than trusting the one stamped at createAd.
         // A banner refreshes for the lifetime of its screen, so a publisher PPID set after the ad
@@ -381,12 +295,17 @@ extension AUBannerView {
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         let generationAtRequest = auctionGeneration
         makeRequestEvent()
-        if restartRefresh {
-            adUnitConfiguration?.resumeAutoRefresh()
-        }
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
             guard self.adUnit != nil else { return }
+            // Reported before the staleness check so the controller's in-flight slot is always
+            // released. A superseded completion is recognised by its generation and ignored there;
+            // returning early without reporting left the slot occupied forever, and nothing was
+            // ever scheduled again.
+            self.refreshController.onRequestCompleted(
+                generationAtRequest: refreshGeneration,
+                success: AUBannerView.completedAuction(resultCode)
+            )
             // Stale-response guard: the page was released (or re-activated) while this auction was
             // in flight, so its creative belongs to a screen the user has left. Dropping it here is
             // what stops `onLoadRequest` from loading GAM into a released slot.
@@ -400,17 +319,12 @@ extension AUBannerView {
             self.lastRefreshTime = Date()
             let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
 
-            // H12: Prebid starts its auto-refresh dispatcher synchronously on the
-            // first fetchDemand. When that first fetch is a prefetch-zone load
-            // (fired up to prefetchMarginPoints before the ad is on screen), the
-            // dispatcher would otherwise keep auto-refreshing while the ad isn't in the
-            // refresh-eligible zone. Under smart refresh, stop it whenever the ad isn't
-            // eligible; onRefreshBecameEligible resumes it (stale-aware) once the ad's top
-            // is fully on screen with ≥50% visible. This runs after the eligibility check
-            // has resolved the already-eligible case, so a banner that's fully on screen at
-            // load keeps refreshing normally.
+            // A prefetch-zone first load completes before the ad is on screen, so the banner is
+            // not refresh-eligible yet. Record that as a block reason rather than a stopped timer:
+            // the controller then simply never schedules, and `onRefreshBecameEligible` clears it
+            // once the ad's top is fully on screen with ≥50% visible.
             if self.smartRefresh, !self.isViewRefreshEligible {
-                self.adUnitConfiguration?.stopAutoRefresh()
+                self.refreshController.block(.notVisible)
             }
 
             AULogEvent.logDebug(
@@ -449,6 +363,25 @@ extension AUBannerView {
             self.isInitialAutorefresh = false
 
             self.onLoadRequest?(gamRequest)
+        }
+        return true
+    }
+
+    /// Whether the auction ran to a usable conclusion, which is what decides between waiting out
+    /// the normal interval and retrying with backoff.
+    ///
+    /// Only the transient transport failures count as a failure. Everything else — including
+    /// `prebidDemandNoBids`, and including a permanent misconfiguration such as an invalid config
+    /// id — is a completed auction: GAM is still loaded from the callback, so the slot is filled,
+    /// and retrying would buy nothing while issuing up to three extra requests per interval against
+    /// a low-fill slot. Requests without impressions are the exact problem this migration exists to
+    /// reduce.
+    static func completedAuction(_ resultCode: ResultCode) -> Bool {
+        switch resultCode {
+        case .prebidNetworkError, .prebidServerError, .prebidDemandTimedOut:
+            return false
+        default:
+            return true
         }
     }
 
