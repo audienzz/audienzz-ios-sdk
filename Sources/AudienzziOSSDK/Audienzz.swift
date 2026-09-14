@@ -458,9 +458,9 @@ public class Audienzz: NSObject {
     /// keep auctioning for a screen the user has left.
     internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
         AULogEvent.logDebug("[Audienzz][pageImpression] firing → \"\(name)\"")
-        // An explicit report always wins over a pending automatic foreground one, and is recorded
-        // so an activation arriving just afterwards doesn't schedule a duplicate.
-        lastPageImpressionAt = Date()
+        // An explicit report always wins over a pending automatic foreground one, and claims this
+        // foreground visit so an activation arriving afterwards doesn't schedule a duplicate.
+        reportedInThisForegroundVisit = true
         cancelPendingForegroundReimpression()
         // Armed on the first page impression, so there is always an active screen to re-fire for.
         observeForegroundReimpression()
@@ -493,6 +493,10 @@ public class Audienzz: NSObject {
         ) { [weak self] _ in
             self?.didEnterBackground = true
             self?.isAppBackgrounded = true
+            // A new foreground visit starts when we come back, and nothing has been reported for it
+            // yet. Whether the app reports one itself is a property of THAT visit, not of how long
+            // ago the last report happened.
+            self?.reportedInThisForegroundVisit = false
             // Drop any pending automatic re-impression: backgrounding again inside the scheduling
             // window would otherwise recreate the whole active page while backgrounded.
             self?.cancelPendingForegroundReimpression()
@@ -544,11 +548,17 @@ public class Audienzz: NSObject {
             return
         }
         // Cancelling on an explicit report only covers the order "activation first". An app that
-        // reports from `willEnterForeground` reports BEFORE activation, so also look back.
-        if let last = lastPageImpressionAt,
-           Date().timeIntervalSince(last) < Self.foregroundReimpressionDelay {
+        // reports from `willEnterForeground` reports BEFORE activation, so also check whether this
+        // visit has already been reported.
+        //
+        // Deliberately not an elapsed-time test. Age and ownership are different questions, and
+        // conflating them failed both ways: a slow willEnterForeground → didBecomeActive gap made a
+        // report from this visit look old enough to ignore (two impressions), and a quick
+        // background/return made a report from the PREVIOUS visit look recent enough to suppress
+        // this one (no impression at all).
+        guard !reportedInThisForegroundVisit else {
             AULogEvent.logDebug(
-                "[Audienzz][pageImpression] foreground — app already reported \"\(name)\", skipping")
+                "[Audienzz][pageImpression] foreground — app already reported \"\(name)\" this visit, skipping")
             return
         }
         pendingForegroundReimpression?.cancel()
@@ -590,7 +600,9 @@ public class Audienzz: NSObject {
     /// out right. Native owns foreground reporting; the bridges just listen.
     public var pageImpressionObserver: ((String) -> Void)?
 
-    private var lastPageImpressionAt: Date?
+    /// Whether the app reported a page impression itself during the current foreground visit.
+    /// Reset when the app backgrounds, so each visit is judged on its own.
+    private var reportedInThisForegroundVisit = false
     private var pendingForegroundReimpression: DispatchWorkItem?
     private var foregroundObserver: NSObjectProtocol?
     private var backgroundObserver: NSObjectProtocol?
