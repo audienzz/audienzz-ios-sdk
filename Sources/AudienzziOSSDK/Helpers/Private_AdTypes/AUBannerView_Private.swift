@@ -195,6 +195,8 @@ extension AUBannerView {
     func releaseForPage() {
         // Bump first so an auction already in flight is recognised as stale by its completion.
         auctionGeneration += 1
+        cancelDeferredRetry()
+        needsRefreshRestart = true
         pendingSmartRefreshWorkItem?.cancel()
         pendingSmartRefreshWorkItem = nil
         adUnitConfiguration?.stopAutoRefresh()
@@ -213,6 +215,7 @@ extension AUBannerView {
         // so a response from the previous visit can't load a creative or overwrite this visit's
         // auction analytics.
         auctionGeneration += 1
+        cancelDeferredRetry()
         // Retire, don't merely invalidate: the replacement may be deferred (a lazy banner out of
         // range), and an un-retired dispatcher keeps auctioning while every callback is dropped.
         adUnitConfiguration?.stopAutoRefresh()
@@ -222,19 +225,14 @@ extension AUBannerView {
             // (or its lazy trigger was consumed while released). Activation is its only remaining
             // chance — without this the slot stays blank forever.
             AULogEvent.logDebug("[AUBannerView] \(configId) — activating a never-loaded banner, starting first load")
-            // Prebid only auto-starts its dispatcher on the FIRST-EVER fetch
-            // (`isInitialFetchDemandCallMade`), and the release already stopped it — so whichever
-            // path actually fetches, refresh has to be restarted explicitly or the replacement
-            // creative loads and then never refreshes again.
+            // Refresh restoration is handled inside fetchRequest via `needsRefreshRestart`, so it
+            // applies to whichever load eventually runs — including a lazy one that only happens
+            // when the banner finally scrolls into view, long after this call returns.
             if isLazyLoad {
                 isLazyLoaded = false
                 loadIfAlreadyVisible()
-                if isLazyLoaded {
-                    adUnitConfiguration?.resumeAutoRefresh()
-                }
             } else {
                 fetchRequest(request)
-                adUnitConfiguration?.resumeAutoRefresh()
             }
             return
         }
@@ -295,10 +293,22 @@ extension AUBannerView {
         // active page (the check below), so retrying immediately auctioned once here and again when
         // the impression landed. `auctionDeferred` is cleared by any auction that actually starts,
         // so if the impression got there first this is a no-op.
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.deferredRetryDelay) { [weak self] in
-            guard let self, self.auctionDeferred, self.screenActive,
+        cancelDeferredRetry()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.pendingDeferredRetry = nil
+            guard self.auctionDeferred, self.screenActive,
                   !Audienzz.shared.isAppBackgrounded,
                   let request = self.gamRequest as? AdManagerRequest else { return }
+            // An automatic page impression still to come owns this banner's recovery: it recreates
+            // every banner on the active page. Auctioning here as well is the duplicate, and
+            // choosing delays that "should" order these two correctly does not survive a variable
+            // gap between the notifications that start each clock (willEnterForeground here,
+            // didBecomeActive there).
+            guard !Audienzz.shared.hasPendingForegroundReimpression else {
+                AULogEvent.logDebug("[AUBannerView] \(self.configId) — a page impression will recreate this, standing down")
+                return
+            }
             AULogEvent.logDebug("[AUBannerView] \(self.configId) — retrying deferred auction, no page impression claimed it")
             if self.lastRefreshTime == nil, self.isLazyLoad {
                 self.isLazyLoaded = false
@@ -311,9 +321,18 @@ extension AUBannerView {
                 self.adUnitConfiguration?.resumeAutoRefresh()
             }
         }
+        pendingDeferredRetry = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.deferredRetryDelay, execute: work)
     }
 
-    /// Past the automatic foreground page-impression delay, so that claims the retry first.
+    /// A scheduled retry is only valid for the foreground session that scheduled it.
+    func cancelDeferredRetry() {
+        pendingDeferredRetry?.cancel()
+        pendingDeferredRetry = nil
+    }
+
+    /// Long enough that an automatic page impression, when one is coming, is already pending by the
+    /// time this fires — the standing-down check above is what actually guarantees exclusivity.
     private static var deferredRetryDelay: TimeInterval { 0.6 }
 
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
@@ -322,6 +341,12 @@ extension AUBannerView {
         auctionDeferred = false
         // Every new auction supersedes the previous one.
         auctionGeneration += 1
+        // Restart refresh here rather than at the call sites. Prebid only auto-starts its
+        // dispatcher on the first-ever fetch, so after a release stopped it every later load has to
+        // restore it — including a lazy load that happens much later, when the banner finally
+        // scrolls into view. Doing this per-call-site missed exactly that path.
+        let restartRefresh = needsRefreshRestart
+        needsRefreshRestart = false
         initialLoadRequested = true
         // Re-read the PPID on every auction rather than trusting the one stamped at createAd.
         // A banner refreshes for the lifetime of its screen, so a publisher PPID set after the ad
@@ -337,6 +362,9 @@ extension AUBannerView {
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         let generationAtRequest = auctionGeneration
         makeRequestEvent()
+        if restartRefresh {
+            adUnitConfiguration?.resumeAutoRefresh()
+        }
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self else { return }
             guard self.adUnit != nil else { return }

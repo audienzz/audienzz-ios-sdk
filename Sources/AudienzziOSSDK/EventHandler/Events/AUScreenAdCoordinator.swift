@@ -129,6 +129,15 @@ internal final class AUScreenAdCoordinator {
     /// Called from `AUBannerView.didMoveToWindow`, once the host *can* be resolved. If that host is
     /// the active screen the banner joins the current page and loads. Event-driven rather than a
     /// timing grace window, so it can never resurrect a previous page's ad.
+    /// Drop every scheduled deferred retry. Called on backgrounding, so a retry belonging to the
+    /// previous foreground session cannot come due during the next one.
+    func cancelDeferredRetries() {
+        assertMain()
+        for ad in ads.allObjects {
+            ad.cancelDeferredRetry()
+        }
+    }
+
     func adoptIfOnActiveScreen(_ ad: AUBannerView) {
         assertMain()
         guard let activeScreen, !ad.screenActive, ad.isHostedBy(activeScreen) else { return }

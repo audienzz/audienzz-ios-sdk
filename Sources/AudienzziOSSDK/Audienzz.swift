@@ -436,8 +436,11 @@ public class Audienzz: NSObject {
         // Armed on the first page impression, so there is always an active screen to re-fire for.
         observeForegroundReimpression()
         AUEventsManager.shared.onScreenResumed(screenName: name)
-        pageImpressionObserver?(name)
         AUScreenAdCoordinator.shared.onScreenResumed(screen, name: name)
+        // Emitted only once the transition is complete. An observer is free to report another page
+        // — the bridges hand this to app code — and running it mid-transition let that nested
+        // report finish first, after which this call's sweep overwrote it with the older page.
+        pageImpressionObserver?(name)
     }
 
     // MARK: - Foreground re-impression
@@ -464,6 +467,9 @@ public class Audienzz: NSObject {
             // Drop any pending automatic re-impression: backgrounding again inside the scheduling
             // window would otherwise recreate the whole active page while backgrounded.
             self?.cancelPendingForegroundReimpression()
+            // A retry scheduled by the previous foreground session must not survive into the next
+            // one, where it would come due alongside that session's page impression.
+            AUScreenAdCoordinator.shared.cancelDeferredRetries()
         }
         // Clear the auction gate at willEnterForeground, not didBecomeActive. An app that reports
         // its page from `willEnterForeground` runs BEFORE activation: with the gate still closed its
@@ -519,6 +525,11 @@ public class Audienzz: NSObject {
         pendingForegroundReimpression = work
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.foregroundReimpressionDelay, execute: work)
     }
+
+    /// True while an automatic foreground page impression is scheduled. A banner whose auction the
+    /// gate deferred consults this: the impression recreates every banner on the active page, so it
+    /// owns the recovery and a deferred retry must stand down rather than auction as well.
+    internal var hasPendingForegroundReimpression: Bool { pendingForegroundReimpression != nil }
 
     internal func cancelPendingForegroundReimpression() {
         pendingForegroundReimpression?.cancel()

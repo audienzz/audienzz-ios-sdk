@@ -120,6 +120,15 @@ public class AUAdView: VisibleView {
     /// Rejecting outright made correctness depend on notification order — a publisher observing
     /// `willEnterForeground` before the SDK does had its recreation rejected and nothing retried it.
     internal var auctionDeferred: Bool = false
+
+    /// Scheduled retry for a deferred auction, cancellable across lifecycle transitions.
+    internal var pendingDeferredRetry: DispatchWorkItem?
+
+    /// Set when a page release stopped Prebid's refresh dispatcher. Prebid only auto-starts that
+    /// dispatcher on the FIRST-EVER fetch, so whichever load eventually replaces the interrupted
+    /// one has to restart refresh explicitly — including a lazy load that only happens later, when
+    /// the banner finally scrolls into view.
+    internal var needsRefreshRestart: Bool = false
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in
