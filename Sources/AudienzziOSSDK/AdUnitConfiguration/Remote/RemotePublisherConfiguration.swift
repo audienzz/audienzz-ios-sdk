@@ -81,6 +81,16 @@ public struct RemotePublisherConfiguration: Codable {
     /// A local override on `Audienzz.shared.smartRefreshV2Override` takes precedence over this.
     public let smartRefreshV2: Bool?
 
+    /// Master backend switch for Publisher Provided Identifiers. `false` suppresses every PPID,
+    /// including one the app supplied through `setPublisherPPID` — it is a per-publisher privacy
+    /// switch, not a preference. Absent/nil → enabled.
+    public let ppidEnabled: Bool?
+
+    /// Backend switch for the SDK-generated PPID only. `false` stops the SDK minting and rotating
+    /// its own UUID; a PPID the app supplied through `setPublisherPPID` is still sent, since that
+    /// is the publisher's own identifier rather than one the SDK invented. Absent/nil → enabled.
+    public let automaticPpidEnabled: Bool?
+
     enum CodingKeys: String, CodingKey {
         case id
         case prebidServer
@@ -88,5 +98,7 @@ public struct RemotePublisherConfiguration: Codable {
         case ortb
         case ios
         case smartRefreshV2
+        case ppidEnabled
+        case automaticPpidEnabled
     }
 }

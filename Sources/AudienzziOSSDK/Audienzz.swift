@@ -330,6 +330,35 @@ public class Audienzz: NSObject {
     /// Resolved smart-refresh-v2 flag: local override wins, else the backend publisher config, else
     /// `false` (legacy smart refresh). Read at use-time so it picks up the async remote config once
     /// it loads.
+    /// Whether any PPID may be sent. Backend-controlled; absent → enabled.
+    ///
+    /// There is deliberately no public setter. A PPID is always sent unless the backend turns it
+    /// off for that publisher, and the only thing an app decides is *which* identifier to use, via
+    /// `PPIDManager.setPublisherPPID`.
+    internal var isPpidEnabled: Bool {
+        backendPpidEnabled ?? AudienzzRemoteConfig.shared.publisherConfig?.ppidEnabled ?? true
+    }
+
+    /// Whether the SDK may mint its own PPID. Backend-controlled; absent → enabled.
+    internal var isAutomaticPpidEnabled: Bool {
+        backendAutomaticPpidEnabled
+            ?? AudienzzRemoteConfig.shared.publisherConfig?.automaticPpidEnabled
+            ?? true
+    }
+
+    private var backendPpidEnabled: Bool?
+    private var backendAutomaticPpidEnabled: Bool?
+
+    /// Applies the publisher config's PPID switches.
+    ///
+    /// The SDK reads them from its own remote config when it fetched that itself. The Flutter
+    /// bridge fetches the publisher config in Dart, so `publisherConfig` is nil there and the
+    /// resolved values have to be handed down instead. Not part of the documented app-facing API.
+    public func applyBackendPpidConfig(ppidEnabled: Bool?, automaticPpidEnabled: Bool?) {
+        backendPpidEnabled = ppidEnabled
+        backendAutomaticPpidEnabled = automaticPpidEnabled
+    }
+
     internal var isSmartRefreshV2Enabled: Bool {
         smartRefreshV2Override
             ?? AudienzzRemoteConfig.shared.publisherConfig?.smartRefreshV2

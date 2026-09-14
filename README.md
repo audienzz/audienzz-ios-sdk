@@ -553,9 +553,14 @@ This object is used to set targeting parameters for ad requests.
 
 A PPID is **always** sent with ad requests — the SDK generates one (a UUID,
 persisted locally and rotated every 12 months) whenever you haven't supplied
-your own. There is no enable/disable switch: a missing PPID costs frequency
-capping and cross-session targeting. It is suppressed only when consent is
-missing.
+your own. There is no enable/disable switch in the SDK: a missing PPID costs
+frequency capping and cross-session targeting. It is suppressed only when
+consent is missing, or when your publisher config turns it off:
+
+| Publisher config field | Effect when `false` | Absent |
+|---|---|---|
+| `ppidEnabled` | No PPID is sent at all, including one you supplied | Enabled |
+| `automaticPpidEnabled` | The SDK stops generating its own UUID; a PPID you supplied is still sent | Enabled |
 
 
 ### Targeting & Advanced Configuration

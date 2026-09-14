@@ -34,12 +34,13 @@ public class PPIDManager: NSObject, AULogEventType {
     }
 
     /// Returns the active PPID:
-    ///   1. Publisher-supplied PPID (if set via `setPublisherPPID`).
-    ///   2. SDK-generated UUID (persisted, rotated every 12 months).
-    ///   3. `nil` only when consent is missing.
+    ///   1. `nil` when consent is missing, or the backend has switched PPIDs off entirely.
+    ///   2. Publisher-supplied PPID (if set via `setPublisherPPID`).
+    ///   3. SDK-generated UUID (persisted, rotated every 12 months), unless the backend has
+    ///      switched automatic PPID off.
     ///
-    /// A PPID is always sent otherwise — there is no opt-out switch. A missing
-    /// PPID costs frequency capping and cross-session targeting, so the SDK
+    /// There is no app-facing opt-out: a PPID is sent unless the backend disables it for this
+    /// publisher. A missing PPID costs frequency capping and cross-session targeting, so the SDK
     /// generates and persists one rather than leaving the field empty.
     public func getPPID() -> String? {
         if AUTargeting.shared.purposeConsents?.isEmpty ?? false {
@@ -47,8 +48,22 @@ public class PPIDManager: NSObject, AULogEventType {
             return nil
         }
 
+        // Master switch: suppresses the publisher's own identifier too. It is a per-publisher
+        // privacy setting, so honouring it only for the generated UUID would miss the point.
+        guard Audienzz.shared.isPpidEnabled else {
+            LogEvent("PPID disabled by the publisher config")
+            return nil
+        }
+
         if let publisher = publisherPpid {
             return publisher
+        }
+
+        // The publisher's own identifier is theirs to send; this switch governs only the one the
+        // SDK would invent.
+        guard Audienzz.shared.isAutomaticPpidEnabled else {
+            LogEvent("Automatic PPID disabled by the publisher config")
+            return nil
         }
 
         let ppid = getPpid()
