@@ -106,7 +106,7 @@ final class RemoteConfigViewController: UIViewController {
     private func setupInterstitialButton() {
         let interstitialButton = UIButton(type: .system)
 
-        interstitialButton.setTitle("Load Interstitial", for: .normal)
+        interstitialButton.setTitle("Preload / show interstitial", for: .normal)
         interstitialButton.setTitleColor(.white, for: .normal)
         interstitialButton.setTitleColor(.white.withAlphaComponent(0.7), for: .highlighted)
 
@@ -170,16 +170,22 @@ final class RemoteConfigViewController: UIViewController {
     }
 
     @objc private func loadInterstitialTapped() {
-        interstitial = AURemoteConfigInterstitial(adConfigId: Constants.interstitialConfigId)
+        if let interstitial, interstitial.isReady {
+            _ = interstitial.showAtOpportunity(from: self, eligible: true)
+            return
+        }
+        if interstitial == nil {
+            interstitial = AURemoteConfigInterstitial(adConfigId: Constants.interstitialConfigId)
+        }
         interstitial?.delegate = self
         interstitial?.presentationViewController = self
         interstitial?.onPresentationError = { print("Interstitial presentation failed: \($0)") }
 
         print("Loading interstitial...")
-        interstitial?.load { result in
+        interstitial?.preload { result in
             switch result {
             case .success:
-                print("Interstitial loaded; native presents automatically.")
+                print("Interstitial ready. Tap again at the intended transition to show.")
             case .failure(let error):
                 print("Failed to load interstitial: \(error)")
             }

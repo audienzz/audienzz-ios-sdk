@@ -152,4 +152,91 @@ final class InterstitialLifecycleTests: XCTestCase {
         XCTAssertFalse(view.fullscreenDemand.finish(token))
         XCTAssertNil(view.fullscreenDemand.begin())
     }
+    func testPreloadCoalescesWithoutRememberingAnUnavailableOpportunity() {
+        var completions = 0
+        owner.preload { _ in completions += 1 }
+        owner.preload { _ in completions += 1 }
+        XCTAssertFalse(owner.showAtOpportunity(from: UIViewController(), eligible: true))
+        let ad = Ad()
+        response(.success(ad))
+        XCTAssertEqual(completions, 2)
+        XCTAssertEqual(ad.shows, 0)
+        owner.preload { _ in completions += 1 }
+        XCTAssertEqual(requests, 1)
+        XCTAssertEqual(completions, 3)
+        XCTAssertFalse(owner.showAtOpportunity(from: UIViewController(), eligible: false))
+        XCTAssertTrue(owner.isReady)
+        XCTAssertTrue(owner.showAtOpportunity(from: UIViewController(), eligible: true))
+        XCTAssertFalse(owner.showAtOpportunity(from: UIViewController(), eligible: true))
+        XCTAssertEqual(ad.shows, 1)
+    }
+
+    func testPreloadSurvivesInactiveOpportunityWithoutAnAutomaticForegroundShow() {
+        let ad = Ad()
+        owner.preload { _ in }
+        response(.success(ad))
+        owner.isForeground = { false }
+        XCTAssertFalse(owner.showAtOpportunity(from: UIViewController(), eligible: true))
+        XCTAssertTrue(owner.isReady)
+        owner.isForeground = { true }
+        XCTAssertEqual(ad.shows, 0)
+        XCTAssertTrue(owner.showAtOpportunity(from: UIViewController(), eligible: true))
+    }
+
+    func testExpiredPreloadDoesNotCreateRequestUntilExplicitPreload() {
+        owner.preload { _ in }
+        response(.success(Ad()))
+        time = 3600
+        XCTAssertFalse(owner.showAtOpportunity(from: UIViewController(), eligible: true))
+        XCTAssertEqual(requests, 1)
+        owner.preload { _ in }
+        XCTAssertEqual(requests, 2)
+    }
+
+    func testPreloadCancellationCompletesEveryWaiterOnce() {
+        var cancellations = 0
+        owner.preload { if case .failure = $0 { cancellations += 1 } }
+        owner.preload { if case .failure = $0 { cancellations += 1 } }
+        owner.destroy()
+        response(.success(Ad()))
+        XCTAssertEqual(cancellations, 2)
+        XCTAssertFalse(owner.isReady)
+    }
+
+    func testDeallocatedPreloadCompletesWaiters() {
+        var pending: ((Result<AUInterstitialPresenting, Error>) -> Void)?
+        var resultCount = 0
+        var instance: AURemoteConfigInterstitial? = AURemoteConfigInterstitial(adConfigId: "probe")
+        instance?.loadOverride = { pending = $0 }
+        instance?.preload { if case .failure = $0 { resultCount += 1 } }
+        instance = nil
+        pending?(.success(Ad()))
+        XCTAssertEqual(resultCount, 1)
+    }
+
+    func testAnotherPresentationSkipsOpportunityAndPreservesPreload() {
+        owner.preload { _ in }
+        response(.success(Ad()))
+        let second = AURemoteConfigInterstitial(adConfigId: "second")
+        let ad = Ad()
+        second.isForeground = { true }
+        second.loadOverride = { $0(.success(ad)) }
+        second.preload { _ in }
+        XCTAssertTrue(owner.showAtOpportunity(from: UIViewController(), eligible: true))
+        XCTAssertFalse(second.showAtOpportunity(from: UIViewController(), eligible: true))
+        XCTAssertTrue(second.isReady)
+        owner.finishPresentation()
+        XCTAssertTrue(second.showAtOpportunity(from: UIViewController(), eligible: true))
+        second.finishPresentation()
+        second.destroy()
+    }
+
+    func testLegacyCompletionCanStillDisableAutomaticPresentation() {
+        let ad = Ad()
+        owner.load { [unowned self] _ in owner.automaticallyShowOnLoad = false }
+        response(.success(ad))
+        XCTAssertEqual(ad.shows, 0)
+        XCTAssertTrue(owner.isReady)
+    }
+
 }

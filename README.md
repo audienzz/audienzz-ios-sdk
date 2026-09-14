@@ -825,23 +825,19 @@ bannerView.load(in: adContainerView, rootViewController: self)
 Use `AURemoteConfigInterstitial` to load an interstitial defined by a remote configuration ID.
 
 ```swift
-// 1. Initialize with the configuration ID
+// Retain one owner per placement outside transient page views.
 let interstitial = AURemoteConfigInterstitial(adConfigId: "YOUR_CONFIG_ID")
-
-// Retain this controller as a property while loading/presenting.
 interstitial.delegate = self
-interstitial.presentationViewController = self
 interstitial.onPresentationError = { print("Presentation failed: \($0)") }
-
-// Load at the intended transition. Native presents automatically once ready.
-interstitial.load { result in
-    switch result {
-    case .success:
-        print("Loaded; native owns the presentation")
-    case .failure(let error):
-        print("Failed to load interstitial: \(error)")
-    }
+interstitial.preload { result in
+    // Update readiness/error UI here; do not present from this callback.
+    if case .failure(let error) = result { print(error) }
 }
+
+// At a later eligible transition, after evaluating the publisher's frequency cap:
+let submitted = interstitial.showAtOpportunity(from: self, eligible: publisherAllowsAd)
+// false: skip this opportunity; no show will be replayed when loading finishes.
+// true: submitted to Google; delegate/error callbacks report the outcome.
 ```
 
 ## Sticky Ads
@@ -1050,8 +1046,16 @@ Android. Set `presentationViewController` and `delegate` before calling `load`; 
 preflight and Google presentation errors. `onLifecycleEvent` exposes correlated Google load/show
 milestones for publisher analytics.
 
-For deliberate preloading, set `automaticallyShowOnLoad = false`, then use `isReady` and
-`show(from:)` at the chosen transition. A ready/presenting ad is never replaced by another load.
+For new integrations, prefer `preload(completion:)` and `showAtOpportunity(from:eligible:)`.
+Preload never auto-shows, independently of the legacy `automaticallyShowOnLoad` property.
+Concurrent preloads share a result; a ready preload is preserved. An unready, inactive, ineligible
+or concurrent presentation skips this opportunity without scheduling a future show. Supply the
+publisher's current frequency-cap decision as `eligible`. Keep one owner per logical placement.
+`showAtOpportunity` returns whether presentation was submitted; delegate/error callbacks report
+its outcome. Call UIKit-facing APIs on the main thread. The presentation exclusion covers SDK
+remote interstitial owners; publishers must also account for other fullscreen content.
+
+Legacy `load` / `show(from:)` behavior remains available for existing integrations. A ready/presenting ad is never replaced by another load.
 An ad expires after one hour. No automatic presentation is replayed later if the app is inactive
 when loading finishes. `destroy()` cancels pending loads; destruction during a presentation is
 deferred until dismissal/failure.

@@ -10,6 +10,9 @@ public enum AURemoteConfigInterstitialError: Error {
 /// matching Android. Set automaticallyShowOnLoad=false to explicitly preload instead.
 @objcMembers
 public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
+    private static weak var activePresentation: AURemoteConfigInterstitial?
+    private var pendingPreloads: [AUInterstitialLoadCompletion] = []
+    private var isPreloading = false
     private let adConfigId: String
     private var interstitialAdUnit: InterstitialAdUnit?
     private var loadedAd: AUInterstitialPresenting?
@@ -39,6 +42,10 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         super.init()
     }
 
+    deinit {
+        pendingPreloads.forEach { $0.finish(.failure(AURemoteConfigInterstitialError.deallocated)) }
+    }
+
     public var isReady: Bool {
         loadedAd != nil && !presenting && loadedAt.map { now() - $0 < 3600 } == true
     }
@@ -46,6 +53,52 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     /// Completion reports loading, not presentation. Display failures go to onPresentationError
     /// and Google's delegate. Concurrent/redundant loads are rejected rather than replacing inventory.
     public func load(completion: @escaping (Result<Void, Error>) -> Void) {
+        startLoad(automaticallyShow: true, completion: completion)
+    }
+
+    /// Retain one preload. Concurrent calls share its result; no completion schedules a show.
+    public func preload(completion: @escaping (Result<Void, Error>) -> Void) {
+        if isReady { completion(.success(())); return }
+        if isPreloading {
+            pendingPreloads.append(AUInterstitialLoadCompletion(completion)); return
+        }
+        guard !loading, !presenting else { completion(.failure(AURemoteConfigInterstitialError.busy)); return }
+        isPreloading = true
+        pendingPreloads.append(AUInterstitialLoadCompletion(completion))
+        startLoad(automaticallyShow: false) { [weak self] result in
+            guard let self else { return }
+            let callbacks = self.pendingPreloads
+            self.pendingPreloads = []
+            self.isPreloading = false
+            callbacks.forEach { $0.finish(result) }
+        }
+    }
+
+    public func preloadWithCompletion(_ completion: @escaping (Error?) -> Void) {
+        preload { result in
+            switch result {
+            case .success: completion(nil)
+            case .failure(let error): completion(error)
+            }
+        }
+    }
+
+    /// Call on the main thread at an eligible transition, after checking publisher frequency caps.
+    /// An unavailable ad skips this opportunity. It never queues a show for load completion.
+    /// True means presentation was submitted; delegate/error callbacks report Google's outcome.
+    @discardableResult
+    public func showAtOpportunity(from controller: UIViewController, eligible: Bool) -> Bool {
+        let reason: String?
+        if !eligible { reason = "ineligible" }
+        else if !isReady { reason = "notReady" }
+        else if !isForeground() { reason = "inactive" }
+        else if Self.activePresentation != nil { reason = "anotherInterstitialPresenting" }
+        else { reason = nil }
+        if let reason { emit("opportunitySkipped", reason: reason); return false }
+        return present(from: controller)
+    }
+
+    private func startLoad(automaticallyShow: Bool, completion: @escaping (Result<Void, Error>) -> Void) {
         guard !loading, !presenting, !isReady else {
             completion(.failure(AURemoteConfigInterstitialError.busy)); return
         }
@@ -60,7 +113,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         emit("loadRequested")
         let receive: (Result<AUInterstitialPresenting, Error>) -> Void = { [weak self] result in
             guard let self else { pending.finish(.failure(AURemoteConfigInterstitialError.deallocated)); return }
-            self.didLoad(result, generation: token)
+            self.didLoad(result, generation: token, automaticallyShow: automaticallyShow)
         }
         if let loadOverride { loadOverride(receive); return }
         guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
@@ -83,7 +136,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         }
     }
 
-    private func didLoad(_ result: Result<AUInterstitialPresenting, Error>, generation token: Int) {
+    private func didLoad(_ result: Result<AUInterstitialPresenting, Error>, generation token: Int, automaticallyShow: Bool) {
         guard loading, token == generation else { return }
         loading = false
         let callback = completion
@@ -99,7 +152,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
             emit("loaded")
             callback?.finish(.success(()))
             // A legacy caller may show/destroy in its load callback. Do not show twice.
-            if automaticallyShowOnLoad, token == generation, loadedAd != nil, !presenting {
+            if automaticallyShow, automaticallyShowOnLoad, token == generation, loadedAd != nil, !presenting {
                 present(from: presentationViewController)
             }
         }
@@ -116,17 +169,20 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
 
     public func show(from rootViewController: UIViewController) { present(from: rootViewController) }
 
-    private func present(from rootViewController: UIViewController?) {
-        guard !presenting else { return } // Single-use, including reentrant publisher callbacks.
-        guard let ad = loadedAd else { reportPresentationError(AURemoteConfigInterstitialError.notReady); return }
+    @discardableResult
+    private func present(from rootViewController: UIViewController?) -> Bool {
+        guard !presenting, Self.activePresentation == nil else { return false } // Single-use, including reentrant publisher callbacks.
+        guard let ad = loadedAd else { reportPresentationError(AURemoteConfigInterstitialError.notReady); return false }
         emit("showAttempted")
-        guard isReady else { reportPresentationError(AURemoteConfigInterstitialError.expired); return }
-        guard isForeground() else { reportPresentationError(AURemoteConfigInterstitialError.inactive); return }
+        guard isReady else { reportPresentationError(AURemoteConfigInterstitialError.expired); return false }
+        guard isForeground() else { reportPresentationError(AURemoteConfigInterstitialError.inactive); return false }
         do { try ad.canPresent(from: rootViewController) }
-        catch { reportPresentationError(error); return }
+        catch { reportPresentationError(error); return false }
         presenting = true
+        Self.activePresentation = self
         presentationOwner = self
         ad.present(from: rootViewController)
+        return true
     }
 
     private func reportPresentationError(_ error: Error) {
@@ -150,10 +206,12 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         callback?.finish(.failure(AURemoteConfigInterstitialError.cancelled))
     }
 
-    private func emit(_ event: String, error: Error? = nil) {
-        var values: [String: Any] = ["event": event, "loadId": loadID, "configId": adConfigId]
+    private func emit(_ event: String, error: Error? = nil, reason: String? = nil) {
+        var values: [String: Any] = ["event": event, "loadId": loadID, "configId": adConfigId,
+            "timestampMillis": Int(Date().timeIntervalSince1970 * 1000)]
         if let loadedAt { values["loadAgeMillis"] = Int((now() - loadedAt) * 1000) }
         values["responseId"] = loadedAd?.responseID
+        if let reason { values["reason"] = reason }
         if let error = error as NSError? {
             values["errorCode"] = error.code; values["errorDomain"] = error.domain
             values["errorMessage"] = error.localizedDescription
@@ -163,6 +221,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
 
     internal func finishPresentation() {
         presenting = false
+        if Self.activePresentation === self { Self.activePresentation = nil }
         loadedAd = nil
         loadedAt = nil
         presentationOwner = nil
