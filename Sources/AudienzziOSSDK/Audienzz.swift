@@ -327,6 +327,20 @@ public class Audienzz: NSObject {
     /// to the backend value; `false`/`true` = force off/on regardless of the backend.
     public var smartRefreshV2Override: Bool?
 
+    /// Objective-C entry point for the override above.
+    ///
+    /// A Swift `Bool?` is not representable in Objective-C, so `smartRefreshV2Override` is absent
+    /// from the generated header and the React Native bridge — which is Objective-C — could not
+    /// build against it at all. Setting the tri-state from ObjC needs an explicit method.
+    @objc public func setSmartRefreshV2Override(_ enabled: Bool) {
+        smartRefreshV2Override = enabled
+    }
+
+    /// Clears the local override, deferring to the backend `smartRefreshV2` value again.
+    @objc public func clearSmartRefreshV2Override() {
+        smartRefreshV2Override = nil
+    }
+
     /// Resolved smart-refresh-v2 flag: local override wins, else the backend publisher config, else
     /// `false` (legacy smart refresh). Read at use-time so it picks up the async remote config once
     /// it loads.

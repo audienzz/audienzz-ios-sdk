@@ -27,6 +27,21 @@ class AUBannerRenderingConfiguration: AUAdUnitConfigurationType {
 }
 
 //MARK: - AUAdUnitConfigurationAutorefreshProtocol
+
+/// Rendering banners have exactly one refresh owner, and it is not this SDK.
+///
+/// Prebid's rendering `BannerView` schedules its own refresh through `AutoRefreshManager`, reading
+/// `refreshInterval` and gating every tick on `mayRefreshNow` — which already refuses to refresh
+/// while the ad is off screen, opened, or presenting a creative. There is nothing for
+/// ``AURefreshController`` to own here, and adding a second scheduler on top is exactly the
+/// arrangement the original-API migration removed.
+///
+/// These stay no-ops deliberately:
+/// - the interval is set through `AUBannerRenderingView.refreshInterval`, which writes Prebid's own
+///   `refreshInterval` (seconds). Routing it through here as well would give two sources of truth.
+/// - Prebid exposes `stopRefresh()` but no resume — it clears itself on the next bid request — so a
+///   pause/resume pair cannot be implemented against this API without tearing the view down. The
+///   bridges page-scope rendering banners by unmounting them instead.
 extension AUBannerRenderingConfiguration:
     AUAdUnitConfigurationAutorefreshProtocol
 {
