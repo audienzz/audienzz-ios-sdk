@@ -1,13 +1,18 @@
 import XCTest
 import UIKit
+import PrebidMobile
 import GoogleMobileAds
 @testable import AudienzziOSSDK
 
-final class InterstitialLifecycleTests: XCTestCase {
-    final class Ad: AUInterstitialPresenting {
+final class InterstitialLifecycleTests: AudienzzLifecycleTestCase {
+    final class Ad: NSObject, AUInterstitialPresenting, FullScreenPresentingAd {
         weak var delegate: FullScreenContentDelegate?
         var responseID: String? = "google-response"
-        var googleAd: FullScreenPresentingAd? { nil }
+        var googleAd: FullScreenPresentingAd? { self }
+        var fullScreenContentDelegate: FullScreenContentDelegate? {
+            get { delegate }
+            set { delegate = newValue }
+        }
         var shows = 0
         var preflightError: Error?
         func canPresent(from controller: UIViewController?) throws {
@@ -20,15 +25,22 @@ final class InterstitialLifecycleTests: XCTestCase {
     var requests = 0
     var time: TimeInterval = 0
     var events: [String] = []
+    private func stubDemand(_ instance: AURemoteConfigInterstitial) {
+        instance.configuration = { _ in ("probe", "/gam/remote-interstitial") }
+        instance.demand = { _, _, reply in reply(.prebidDemandFetchSuccess) }
+    }
     override func setUp() {
+        super.setUp()
         requests = 0; time = 0; events = []
         owner = AURemoteConfigInterstitial(adConfigId: "probe")
+        stubDemand(owner)
         owner.now = { [unowned self] in time }
         owner.isForeground = { true }
         owner.onLifecycleEvent = { [unowned self] in events.append($0["event"] as! String) }
         owner.loadOverride = { [unowned self] in requests += 1; response = $0 }
     }
     override func tearDown() {
+        defer { super.tearDown() }
         owner.finishPresentation()
         owner.destroy()
         owner = nil; response = nil
@@ -93,6 +105,7 @@ final class InterstitialLifecycleTests: XCTestCase {
         var completions = 0
         var pending: ((Result<AUInterstitialPresenting, Error>) -> Void)?
         var instance: AURemoteConfigInterstitial? = AURemoteConfigInterstitial(adConfigId: "probe")
+        stubDemand(instance!)
         instance?.loadOverride = { pending = $0 }
         instance?.load { _ in completions += 1 }
         instance?.destroy()
@@ -207,6 +220,7 @@ final class InterstitialLifecycleTests: XCTestCase {
         var pending: ((Result<AUInterstitialPresenting, Error>) -> Void)?
         var resultCount = 0
         var instance: AURemoteConfigInterstitial? = AURemoteConfigInterstitial(adConfigId: "probe")
+        stubDemand(instance!)
         instance?.loadOverride = { pending = $0 }
         instance?.preload { if case .failure = $0 { resultCount += 1 } }
         instance = nil
@@ -220,6 +234,7 @@ final class InterstitialLifecycleTests: XCTestCase {
         let second = AURemoteConfigInterstitial(adConfigId: "second")
         let ad = Ad()
         second.isForeground = { true }
+        stubDemand(second)
         second.loadOverride = { $0(.success(ad)) }
         second.preload { _ in }
         XCTAssertTrue(owner.showAtOpportunity(from: UIViewController(), eligible: true))
@@ -237,6 +252,65 @@ final class InterstitialLifecycleTests: XCTestCase {
         response(.success(ad))
         XCTAssertEqual(ad.shows, 0)
         XCTAssertTrue(owner.isReady)
+    }
+
+    func testRemoteAnalyticsUsesGoogleCallbacksAndStableAuctionIdentity() {
+        var logged: [AUEventDomain] = []
+        owner.analytics = { logged.append($0) }
+        owner.demand = { _, request, reply in
+            request.customTargeting = ["hb_bidder": "prebid-bidder"]
+            reply(.prebidDemandFetchSuccess)
+            reply(.prebidDemandFetchSuccess) // Duplicate response must not request another Google ad.
+        }
+        owner.preload { _ in }
+        XCTAssertEqual(requests, 1)
+        XCTAssertEqual(logged.map(\.type), [.bidRequest, .bidResponse, .bidWon])
+        XCTAssertEqual(logged.first?.mediaTypes, "[\"banner\",\"video\"]")
+        let auction = logged.first?.auctionId
+        let ad = Ad()
+        response(.success(ad))
+        XCTAssertFalse(logged.contains { $0.type == .adImpression })
+        XCTAssertTrue(owner.showAtOpportunity(from: UIViewController(), eligible: true))
+        ad.delegate?.adDidRecordImpression?(Ad()) // Foreign ad cannot supply an impression.
+        XCTAssertEqual(logged.count, 3)
+        ad.delegate?.adDidRecordImpression?(ad)
+        ad.delegate?.adDidRecordImpression?(ad)
+        ad.delegate?.adDidRecordClick?(ad)
+        XCTAssertEqual(logged.map(\.type), [.bidRequest, .bidResponse, .bidWon, .adImpression, .adClick])
+        XCTAssertEqual(Set(logged.compactMap(\.auctionId)), Set([auction!]))
+        XCTAssertTrue(logged.allSatisfy { $0.adUnitId == "/gam/remote-interstitial" })
+        XCTAssertTrue(logged.allSatisfy { $0.adType == "INTERSTITIAL" })
+        XCTAssertEqual(logged[2].bidderCode, "prebid-bidder")
+        XCTAssertNil(logged[3].bidderCode, "Prebid bid does not establish Google's render winner")
+        XCTAssertNil(logged[3].winnerBidderCode)
+        ad.delegate?.adDidDismissFullScreenContent?(ad)
+        ad.delegate?.adDidRecordImpression?(ad)
+        XCTAssertEqual(logged.count, 5)
+        owner.preload { _ in }
+        XCTAssertNotEqual(logged.last?.auctionId, auction)
+    }
+
+    func testNoBidStillLoadsGoogleWithoutInventingAnImpression() {
+        var logged: [AUEventDomain] = []
+        owner.analytics = { logged.append($0) }
+        owner.preload { _ in }
+        XCTAssertEqual(logged.map(\.type), [.bidRequest, .bidResponse, .noBid])
+        XCTAssertEqual(logged.last?.resultCode, "NO_BIDS")
+        XCTAssertEqual(requests, 1)
+        response(.failure(NSError(domain: "google", code: 1)))
+        XCTAssertEqual(logged.count, 3)
+    }
+
+    func testCancelledAuctionDropsLateAnalyticsAndGoogleLoad() {
+        var logged: [AUEventDomain] = []
+        var reply: ((ResultCode) -> Void)?
+        owner.analytics = { logged.append($0) }
+        owner.demand = { _, _, completion in reply = completion }
+        owner.preload { _ in }
+        owner.destroy()
+        reply?(.prebidDemandFetchSuccess)
+        XCTAssertEqual(logged.map(\.type), [.bidRequest])
+        XCTAssertEqual(requests, 0)
     }
 
 }

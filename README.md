@@ -1,3 +1,6 @@
+> **Upgrade notice:** Native remote interstitial `load()` now auto-presents by default.
+> Apps that prefetch must opt out before loading. See the [breaking-change migration](CHANGELOG.md).
+
 Audienzz iOS SDK
 ========
 ## Overview

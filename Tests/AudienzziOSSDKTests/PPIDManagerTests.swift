@@ -24,7 +24,7 @@ import XCTest
 /// Getting the default wrong is expensive in both directions: defaulting off silently drops every
 /// PPID (exactly what shipped before, costing frequency capping and cross-session targeting), and
 /// ignoring the master switch keeps sending an identifier for a publisher who has turned it off.
-final class PPIDManagerTests: XCTestCase {
+final class PPIDManagerTests: AudienzzLifecycleTestCase {
 
     private var manager: PPIDManager { PPIDManager.shared }
 

@@ -22,7 +22,7 @@ import XCTest
 /// Banners are matched by route key (`setScreen`), the same path the Flutter and React Native
 /// bridges take, which keeps these independent of the view hierarchy — a bridge banner lives in the
 /// single host view controller and can never be told apart by host identity.
-final class AUScreenAdCoordinatorTests: XCTestCase {
+final class AUScreenAdCoordinatorTests: AudienzzLifecycleTestCase {
 
     private var coordinator: AUScreenAdCoordinator { AUScreenAdCoordinator.shared }
 

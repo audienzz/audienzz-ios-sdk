@@ -25,7 +25,7 @@ import PrebidMobile
 /// `AdUnit.initDispatcher(refreshTime:)`, which is called only from `AdUnit.setAutoRefreshMillis`.
 /// So a nil `dispatcher` is proof that no Prebid timer exists, and `startDispatcher()` /
 /// `resumeAutoRefresh()` are both no-ops for the life of the ad unit.
-final class RefreshOwnershipTests: XCTestCase {
+final class RefreshOwnershipTests: AudienzzLifecycleTestCase {
 
     private func banner() -> AUBannerView {
         AUBannerView(

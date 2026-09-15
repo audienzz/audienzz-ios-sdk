@@ -22,7 +22,7 @@ import XCTest
 ///
 /// Time and scheduling are faked outright rather than waiting on the run loop, so every assertion is
 /// about the decision rather than about how long a test slept.
-final class AURefreshControllerTests: XCTestCase {
+final class AURefreshControllerTests: AudienzzLifecycleTestCase {
 
     /// Deterministic stand-in: one pending task, and a clock the test advances by hand.
     private final class FakeScheduler: AURefreshScheduler {

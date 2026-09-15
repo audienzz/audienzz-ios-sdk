@@ -23,7 +23,7 @@ import XCTest
 /// The app may report the visit itself, in which case the SDK must stand down. Deciding that from
 /// how long ago the last report happened failed in both directions, so these drive the real UIKit
 /// notifications and count impressions through the public observer.
-final class ForegroundReimpressionTests: XCTestCase {
+final class ForegroundReimpressionTests: AudienzzLifecycleTestCase {
 
     private var impressions: [String] = []
 
@@ -44,10 +44,6 @@ final class ForegroundReimpressionTests: XCTestCase {
         // The lifecycle observers are armed by the first page impression, and this also gives the
         // coordinator an active screen to re-report.
         Audienzz.shared.pageImpression("Article")
-        // Consume any background state left by an earlier test, then let its automatic impression
-        // drain before we start counting.
-        post(UIApplication.didBecomeActiveNotification)
-        settle()
 
         impressions = []
         Audienzz.shared.pageImpressionObserver = { [weak self] name in
@@ -56,8 +52,6 @@ final class ForegroundReimpressionTests: XCTestCase {
     }
 
     override func tearDown() {
-        Audienzz.shared.pageImpressionObserver = nil
-        settle()
         super.tearDown()
     }
 

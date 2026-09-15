@@ -2,7 +2,7 @@ import XCTest
 import PrebidMobile
 @testable import AudienzziOSSDK
 
-final class ConfiguredDemandRefreshTests: XCTestCase {
+final class ConfiguredDemandRefreshTests: AudienzzLifecycleTestCase {
     final class Clock: AURefreshScheduler {
         var time: TimeInterval = 0
         var action: (() -> Void)?
@@ -25,8 +25,7 @@ final class ConfiguredDemandRefreshTests: XCTestCase {
     var requests = 0
 
     override func setUp() {
-        NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-        NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        super.setUp()
         Audienzz.shared.pageImpression("configured")
         view = AUAdView(configId: "", isLazyLoad: false)
         configuration = AUAdUnitConfiguration(adUnit: NativeRequest(configId: ""))
@@ -37,6 +36,7 @@ final class ConfiguredDemandRefreshTests: XCTestCase {
         window.addSubview(view)
     }
     override func tearDown() {
+        defer { super.tearDown() }
         owner.destroy()
         window = nil; view = nil; owner = nil
     }

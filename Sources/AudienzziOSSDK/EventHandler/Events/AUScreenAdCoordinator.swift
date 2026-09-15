@@ -162,6 +162,21 @@ internal final class AUScreenAdCoordinator {
         ad.recreateForPage()
     }
 
+    #if DEBUG
+    func resetForTesting() {
+        assertMain()
+        // Destroy before clearing registration: this also retires work retained by a scheduler.
+        for ad in ads.allObjects { ad.destroy() }
+        for ad in configuredAds.allObjects { ad.destroy() }
+        ads.removeAllObjects()
+        configuredAds.removeAllObjects()
+        activeScreenVC = nil
+        activeScreenToken = nil
+        activeScreenName = nil
+        epoch = 0
+    }
+    #endif
+
     private func assertMain() {
         #if DEBUG
         dispatchPrecondition(condition: .onQueue(.main))

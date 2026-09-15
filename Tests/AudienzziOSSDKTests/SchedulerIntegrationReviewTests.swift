@@ -2,14 +2,12 @@ import XCTest
 import GoogleMobileAds
 @testable import AudienzziOSSDK
 
-final class SchedulerIntegrationReviewTests: XCTestCase {
+final class SchedulerIntegrationReviewTests: AudienzzLifecycleTestCase {
     var view: AUBannerView!
     var loads = 0
     func post(_ name: Notification.Name) { NotificationCenter.default.post(name: name, object: nil) }
     override func setUp() {
         super.setUp()
-        post(UIApplication.willEnterForegroundNotification)
-        post(UIApplication.didBecomeActiveNotification)
         Audienzz.shared.pageImpression("A")
         // Invalid config yields an immediate Prebid completion without any live ad request.
         view = AUBannerView(configId: "", adSize: CGSize(width: 320, height: 50), adFormats: [.banner], isLazyLoad: false)
@@ -18,10 +16,6 @@ final class SchedulerIntegrationReviewTests: XCTestCase {
     }
     override func tearDown() {
         view.destroy()
-        Audienzz.shared.cancelPendingForegroundReimpression()
-        post(UIApplication.willEnterForegroundNotification)
-        post(UIApplication.didBecomeActiveNotification)
-        Audienzz.shared.cancelPendingForegroundReimpression()
         super.tearDown()
     }
     func testPublisherReportBeforeGateOpensMustStillRecoverFirstLoad() {
@@ -104,13 +98,24 @@ final class SchedulerIntegrationReviewTests: XCTestCase {
         let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 640))
         window.addSubview(view)
         let google = AdManagerBannerView(adSize: adSizeFor(cgSize: CGSize(width: 320, height: 50)))
-        view.onLoadRequest = { [weak self] _ in self?.loads += 1 }
+        let first = expectation(description: "first Google handoff")
+        let retry = expectation(description: "Google handoff after transport failure")
+        view.onLoadRequest = { [weak self] _ in
+            guard let self else { return }
+            self.loads += 1
+            if self.loads == 1 { first.fulfill() }
+            else { retry.fulfill() }
+        }
         view.createAd(with: AdManagerRequest(), gamBanner: google)
-        RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+        wait(for: [first], timeout: 10)
+        // A completed Prebid auction must not trigger a retry while Google is outstanding.
+        RunLoop.main.run(until: Date().addingTimeInterval(2.1))
         XCTAssertEqual(loads, 1)
         let error = NSError(domain: GADErrorDomain, code: RequestError.networkError.rawValue)
         view.eventHandler?.bannerView(google, didFailToReceiveAdWithError: error)
-        RunLoop.main.run(until: Date().addingTimeInterval(2.1))
+        // The timer and Prebid completion are asynchronous. Wait for the production callback,
+        // rather than assuming both complete within 100 ms of the retry timer's deadline.
+        wait(for: [retry], timeout: 10)
         XCTAssertEqual(loads, 2)
         XCTAssertTrue(view.refreshController.hasRequestInFlight)
         withExtendedLifetime(window) {}

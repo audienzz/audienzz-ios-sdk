@@ -607,6 +607,25 @@ public class Audienzz: NSObject {
         pendingForegroundReimpression = nil
     }
 
+    #if DEBUG
+    /// Test isolation only: no page report is synthesized, so pre-page behavior remains testable.
+    @nonobjc internal func resetLifecycleForTesting() {
+        cancelPendingForegroundReimpression()
+        let center = NotificationCenter.default
+        [foregroundObserver, backgroundObserver, willForegroundObserver].compactMap { $0 }
+            .forEach { center.removeObserver($0) }
+        foregroundObserver = nil
+        backgroundObserver = nil
+        willForegroundObserver = nil
+        didEnterBackground = false
+        isAppBackgrounded = false
+        reportedInThisForegroundVisit = false
+        pageImpressionObserver = nil
+        AUScreenAdCoordinator.shared.resetForTesting()
+        observeForegroundReimpression()
+    }
+    #endif
+
     /// Delay before an automatic foreground re-impression fires, giving the app's own report a
     /// chance to cancel it.
     private static let foregroundReimpressionDelay: TimeInterval = 0.4

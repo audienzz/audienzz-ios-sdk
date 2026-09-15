@@ -22,6 +22,9 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     private var loadedAt: TimeInterval?
     private var completion: AUInterstitialLoadCompletion?
     private var loadID = UUID().uuidString
+    private let adViewID = UUID().uuidString
+    private var analyticsAdUnitPath: String?
+    private var recordedImpression = false
     // Google keeps its delegate weak. Keep the owner until the presentation terminates.
     private var presentationOwner: AURemoteConfigInterstitial?
 
@@ -36,6 +39,15 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     @nonobjc internal var now: () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }
     @nonobjc internal var isForeground: () -> Bool = { UIApplication.shared.applicationState == .active }
     @nonobjc internal var loadOverride: ((@escaping (Result<AUInterstitialPresenting, Error>) -> Void) -> Void)?
+
+    @nonobjc internal var configuration: (String) -> (placementID: String, adUnitPath: String)? = { id in
+        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: id) else { return nil }
+        return (config.prebidConfig.placementId, config.gamConfig.adUnitPath)
+    }
+    @nonobjc internal var demand: (InterstitialAdUnit, AdManagerRequest, @escaping (ResultCode) -> Void) -> Void = {
+        unit, request, completion in unit.fetchDemand(adObject: request, completion: completion)
+    }
+    @nonobjc internal var analytics: (AUEventDomain) -> Void = { AUEventsManager.shared.logEvent($0) }
 
     public init(adConfigId: String) {
         self.adConfigId = adConfigId
@@ -104,6 +116,8 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         }
         loadedAd = nil
         loadedAt = nil
+        analyticsAdUnitPath = nil
+        recordedImpression = false
         generation += 1
         let token = generation
         loading = true
@@ -115,21 +129,34 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
             guard let self else { pending.finish(.failure(AURemoteConfigInterstitialError.deallocated)); return }
             self.didLoad(result, generation: token, automaticallyShow: automaticallyShow)
         }
-        if let loadOverride { loadOverride(receive); return }
-        guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
+        guard let config = configuration(adConfigId) else {
             receive(.failure(AURemoteConfigInterstitialError.noRemoteConfig)); return
         }
-        let unit = InterstitialAdUnit(configId: config.prebidConfig.placementId)
+        let unit = InterstitialAdUnit(configId: config.placementID)
         interstitialAdUnit = unit
         unit.adFormats = [.banner, .video]
         let request = AdManagerRequest()
         request.publisherProvidedID = PPIDManager.shared.getPPID()
-        unit.fetchDemand(adObject: request) { [weak self] _ in
+        analyticsAdUnitPath = config.adUnitPath
+        let started = now()
+        recordAnalytics(.bidRequest)
+        var answered = false
+        demand(unit, request) { [weak self] result in
             guard let self else {
                 receive(.failure(AURemoteConfigInterstitialError.deallocated)); return
             }
-            guard self.loading, self.generation == token else { return }
-            AdManagerInterstitialAd.load(with: config.gamConfig.adUnitPath, request: request) { ad, error in
+            guard self.loading, self.generation == token, !answered else { return }
+            answered = true
+            let bidder = AUBannerView.keyword("hb_bidder", in: request.customTargeting ?? [:])
+            let won = result == .prebidDemandFetchSuccess && bidder?.isEmpty == false
+            let code = AUResulrCodeConverter.convertResultCodeName(result)
+            let elapsed = Int64(max(0, self.now() - started) * 1000)
+            self.recordAnalytics(.bidResponse, resultCode: code, elapsed: elapsed, bidder: won ? bidder : nil)
+            self.recordAnalytics(won ? .bidWon : .noBid,
+                resultCode: won ? nil : (result == .prebidDemandFetchSuccess ? "NO_BIDS" : code),
+                elapsed: elapsed, bidder: won ? bidder : nil)
+            if let loadOverride = self.loadOverride { loadOverride(receive); return }
+            AdManagerInterstitialAd.load(with: config.adUnitPath, request: request) { ad, error in
                 if let ad { receive(.success(AUGoogleInterstitial(ad))) }
                 else { receive(.failure(error ?? AURemoteConfigInterstitialError.notReady)) }
             }
@@ -206,6 +233,30 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         callback?.finish(.failure(AURemoteConfigInterstitialError.cancelled))
     }
 
+    /// Use the same clickstream sink/schema as other native ad units. Auction and render are
+    /// separate facts: a Prebid bid win alone cannot identify the eventual GAM render winner.
+    private func recordAnalytics(_ type: AUAnalyticsEventType, resultCode: String? = nil,
+                                 elapsed: Int64? = nil, bidder: String? = nil) {
+        guard let analyticsAdUnitPath else { return }
+        var event = AUEventDomain(type: type)
+        event.adUnitId = analyticsAdUnitPath
+        event.adViewId = adViewID
+        event.auctionId = loadID
+        event.adType = AUAdType.interstitial
+        event.adSubtype = AUAdSubtype.multiformat
+        event.apiType = AUEventApiType.original
+        event.resultCode = resultCode
+        event.timeToRespond = elapsed
+        if type == .bidRequest || type == .bidResponse || type == .bidWon || type == .noBid {
+            event.isAutorefresh = false
+            event.autorefreshTime = 0
+            event.isRefresh = false
+            event.mediaTypes = AUBannerView.mediaTypesJSON(subtype: AUAdSubtype.multiformat)
+            event.bidderCode = bidder
+        }
+        analytics(event)
+    }
+
     private func emit(_ event: String, error: Error? = nil, reason: String? = nil) {
         var values: [String: Any] = ["event": event, "loadId": loadID, "configId": adConfigId,
             "timestampMillis": Int(Date().timeIntervalSince1970 * 1000)]
@@ -237,11 +288,18 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         delegate?.adWillPresentFullScreenContent?(ad)
     }
     public func adDidRecordImpression(_ ad: FullScreenPresentingAd) {
-        guard owns(ad) else { return }
+        guard owns(ad), !recordedImpression else { return }
+        recordedImpression = true
+        recordAnalytics(.adImpression)
         emit("impression")
         delegate?.adDidRecordImpression?(ad)
     }
-    public func adDidRecordClick(_ ad: FullScreenPresentingAd) { guard owns(ad) else { return }; delegate?.adDidRecordClick?(ad) }
+    public func adDidRecordClick(_ ad: FullScreenPresentingAd) {
+        guard owns(ad) else { return }
+        recordAnalytics(.adClick)
+        emit("clicked")
+        delegate?.adDidRecordClick?(ad)
+    }
     public func adWillDismissFullScreenContent(_ ad: FullScreenPresentingAd) { guard owns(ad) else { return }; delegate?.adWillDismissFullScreenContent?(ad) }
     public func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         guard owns(ad) else { return }
