@@ -135,6 +135,7 @@ extension AUBannerView {
     /// runs. `screenActive` (set by the coordinator) and the `.pageInactive` block are what keep the
     /// viewport gate from resuming it in the meantime.
     func releaseForPage() {
+        creativePageGeneration += 1
         refreshController.block(.pageInactive)
         retireCurrentAuction()
     }
@@ -254,11 +255,14 @@ extension AUBannerView {
         }
     }
 
-    /// GAM supplies no request identifier. A superseded Google load must drain before reusing the
-    /// view, so its terminal callback cannot be mistaken for the replacement's result.
+    /// Serialize Google loads until a terminal callback or watchdog expiry. Google callbacks have
+    /// no request ID: after an expiry, a very late result cannot be distinguished from a newer one.
+    /// Unsolicited terminal events belong to the view and must still reach its publisher.
     @nonobjc @discardableResult
     func completeGoogleLoad(retryableFailure: Bool) -> Bool {
-        guard let load = googleLoad else { return false }
+        guard let load = googleLoad else { return acceptsGoogleEvents }
+        googleLoadTimeout?.cancel()
+        googleLoadTimeout = nil
         googleLoad = nil
         let current = load.auction == auctionGeneration && screenActive && !refreshController.isDestroyed
         if current {
@@ -268,6 +272,29 @@ extension AUBannerView {
             resumeEligibleWork()
         }
         return current
+    }
+
+    @nonobjc func watchGoogleLoad(_ load: GoogleLoad) {
+        googleLoadTimeout?.cancel()
+        let timeout = DispatchWorkItem { [weak self] in
+            guard let self, !self.refreshController.isDestroyed,
+                  self.googleLoad?.auction == load.auction else { return }
+            self.googleLoad = nil
+            self.googleLoadTimeout = nil
+            AULogEvent.logWarn("[AUBannerView] Google load timed out; releasing the wait for \(self.configId)")
+            // Missing completion is not a classified network failure: use the configured cadence,
+            // not fast retries. A page replacement already waiting for this load can proceed.
+            if load.auction == self.auctionGeneration {
+                self.lastRefreshTime = Date()
+                self.refreshController.onRequestCompleted(generationAtRequest: load.refresh, success: true)
+                if self.blankedForReload {
+                    self.blankedForReload = false
+                    self.eventHandler?.gamView.isHidden = false
+                }
+            } else { self.resumeEligibleWork() }
+        }
+        googleLoadTimeout = timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + googleLoadTimeoutSeconds, execute: timeout)
     }
 
     /// The base-class entry point. Everything that knows why it is loading calls
@@ -301,9 +328,6 @@ extension AUBannerView {
         // request. Mirrors Android's AudienzzAdViewHandler.buildRequest().
         gamRequest.publisherProvidedID = PPIDManager.shared.getPPID()
 
-        // New auction → reset render-winner state until the bid result / GAM app event report back.
-        prebidLineItemWon = false
-        prebidWinningBidder = nil
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
@@ -358,6 +382,8 @@ extension AUBannerView {
                 self.lastPrebidCreativeSize = nil
             }
 
+            self.prebidLineItemWon = false
+            self.prebidWinningBidder = nil
             self.makeResultEvents(
                 resultCode: resultCode,
                 timeToRespond: timeToRespond,
@@ -370,8 +396,12 @@ extension AUBannerView {
             )
             self.isInitialAutorefresh = false
 
-            self.googleLoad = GoogleLoad(auction: generationAtRequest, refresh: refreshGeneration)
-            self.googleEventGeneration = generationAtRequest
+            let load = GoogleLoad(auction: generationAtRequest, refresh: refreshGeneration)
+            self.googleLoad = load
+            self.googleEventPageGeneration = self.creativePageGeneration
+            self.renderAuctionId = self.currentAuctionId
+            self.eventHandler?.ensureListeners()
+            self.watchGoogleLoad(load)
             self.onLoadRequest?(gamRequest)
         }
         return true
@@ -535,7 +565,7 @@ extension AUBannerView {
             ec.creativeId = "0"
         }
         // Always carry the SDK-minted auction id, even on a direct fill with no Prebid economics.
-        ec.auctionId = ec.auctionId ?? currentAuctionId
+        ec.auctionId = ec.auctionId ?? renderAuctionId
         // Currency (and, on a direct fill with no Prebid bid, cpm) come from the GMA paid event,
         // which fires around impression — so they populate on adImpression/adClick/viewability.
         ec.currency = ec.currency ?? lastPaidCurrency

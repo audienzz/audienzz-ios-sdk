@@ -32,9 +32,13 @@ public class AUBannerView: AUAdView {
         let refresh: Int
     }
     internal var googleLoad: GoogleLoad?
-    internal var googleEventGeneration: Int?
+    internal var googleLoadTimeout: DispatchWorkItem?
+    internal var googleLoadTimeoutSeconds: TimeInterval = 120
+    internal var creativePageGeneration = 0
+    internal var renderAuctionId: String?
+    internal var googleEventPageGeneration: Int?
     internal var acceptsGoogleEvents: Bool {
-        googleEventGeneration == auctionGeneration && screenActive && !refreshController.isDestroyed
+        googleEventPageGeneration == creativePageGeneration && screenActive && !refreshController.isDestroyed
     }
     internal var pendingLoadReason: AURefreshRequestReason?
 
@@ -224,6 +228,9 @@ public class AUBannerView: AUAdView {
     public override func removeFromSuperview() {
         super.removeFromSuperview()
         AUScreenAdCoordinator.shared.deregister(self)
+        googleLoadTimeout?.cancel()
+        googleLoadTimeout = nil
+        googleLoad = nil
         refreshController.destroy()
         self.adUnit = nil
         self.gamRequest = nil
@@ -236,6 +243,9 @@ public class AUBannerView: AUAdView {
     /// ad (e.g. the owning controller's `deinit`). Safe to call more than once.
     public func destroy() {
         AUScreenAdCoordinator.shared.deregister(self)
+        googleLoadTimeout?.cancel()
+        googleLoadTimeout = nil
+        googleLoad = nil
         refreshController.destroy()
         self.adUnit = nil
         self.gamRequest = nil
@@ -277,6 +287,18 @@ public class AUBannerView: AUAdView {
         self.eventHandler = nil
     }
 
+    /// Containers are supported. Multiple banners require an explicit event handler so we
+    /// cannot silently observe the wrong slot. Custom renderers use notifyAdLoadCompleted.
+    internal static func singleGoogleBanner(in root: UIView) -> AdManagerBannerView? {
+        var matches: [AdManagerBannerView] = []
+        func visit(_ view: UIView) {
+            if let banner = view as? AdManagerBannerView { matches.append(banner); return }
+            view.subviews.forEach(visit)
+        }
+        visit(root)
+        return matches.count == 1 ? matches[0] : nil
+    }
+
     /**
      Function for prepare and make request for ad. If Lazy load enabled request will be send only when view will appear on screen.
      */
@@ -302,8 +324,13 @@ public class AUBannerView: AUAdView {
         self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
 
         // The event wrapper is optional; GAM completion ownership is not.
-        if let googleView = eventHandler?.gamView ?? (gamBanner as? AdManagerBannerView) {
-            self.eventHandler = AUBannerHandler(auBannerView: self, gamView: googleView)
+        if let googleView = eventHandler?.gamView ?? Self.singleGoogleBanner(in: gamBanner) {
+            if self.eventHandler?.gamView !== googleView {
+                self.eventHandler = AUBannerHandler(auBannerView: self, gamView: googleView)
+            }
+            self.eventHandler?.ensureListeners()
+        } else {
+            AULogEvent.logWarn("[AUBannerView] No unique Google banner found; supply AUBannerEventHandler or call notifyAdLoadCompleted for custom renderers")
         }
         if window == nil { refreshController.block(.detached) }
         Audienzz.shared.observeForegroundReimpression()

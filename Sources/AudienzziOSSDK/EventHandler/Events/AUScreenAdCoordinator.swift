@@ -28,7 +28,7 @@ import UIKit
 /// self-adopts if it later moves into a window under the active screen (see `AUBannerView`).
 internal final class AUScreenAdCoordinator {
     static let shared = AUScreenAdCoordinator()
-    private init() {}
+    internal init() {}
 
     /// Live banners. Weak so views deallocate freely and entries auto-prune.
     private let ads = NSHashTable<AUBannerView>.weakObjects()

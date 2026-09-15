@@ -64,6 +64,12 @@ class AUBannerHandler: NSObject,
         self.gamView.adUnitID
     }
 
+    func ensureListeners() {
+        if gamView.delegate !== self { bannerDelegate = gamView.delegate; gamView.delegate = self }
+        if gamView.appEventDelegate !== self { eventDelegate = gamView.appEventDelegate; gamView.appEventDelegate = self }
+        if gamView.adSizeDelegate !== self { sizeDelegate = gamView.adSizeDelegate; gamView.adSizeDelegate = self }
+    }
+
     private func addListener() {
         self.gamView.delegate = self
         self.gamView.appEventDelegate = self

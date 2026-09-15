@@ -85,4 +85,43 @@ final class ConfiguredDemandRefreshTests: XCTestCase {
         XCTAssertTrue(owner.controller.hasRequestInFlight)
         XCTAssertTrue(owner.finish(replacement))
     }
+    func testConstructionBeforeAnyPageBindsFirstReportAndCanLeaveAndReturn() {
+        owner.destroy()
+        let coordinator = AUScreenAdCoordinator()
+        XCTAssertNil(coordinator.activeScreenAndName)
+        owner = AUConfiguredDemandRefresh(view: view, configuration: configuration, scheduler: clock, coordinator: coordinator)
+        view.configuredDemandRefresh = owner
+        owner.attachmentChanged()
+        configuration.setAutoRefreshMillis(time: 30_000)
+        load()
+        XCTAssertEqual(requests, 1)
+        coordinator.onScreenResumed("first" as NSString, name: "first")
+        XCTAssertEqual(requests, 2)
+        clock.advance(30)
+        XCTAssertEqual(requests, 3)
+        coordinator.onScreenResumed("other" as NSString, name: "other")
+        clock.advance(60)
+        XCTAssertEqual(requests, 3)
+        coordinator.onScreenResumed("first" as NSString, name: "first")
+        XCTAssertEqual(requests, 4)
+    }
+
+    func testUnscopedNativeViewAdoptsOnlyItsActualController() {
+        owner.destroy()
+        let coordinator = AUScreenAdCoordinator()
+        owner = AUConfiguredDemandRefresh(view: view, configuration: configuration, scheduler: clock, coordinator: coordinator)
+        view.configuredDemandRefresh = owner
+        let own = UIViewController(); let other = UIViewController()
+        window.addSubview(own.view)
+        own.view.addSubview(view)
+        load()
+        XCTAssertEqual(requests, 1)
+        coordinator.onScreenResumed(other, name: "other")
+        clock.advance(30)
+        XCTAssertEqual(requests, 1)
+        coordinator.onScreenResumed(own, name: "own")
+        owner.attachmentChanged()
+        XCTAssertEqual(requests, 2)
+    }
+
 }

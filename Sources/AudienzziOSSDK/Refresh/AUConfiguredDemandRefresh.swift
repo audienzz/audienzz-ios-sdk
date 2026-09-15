@@ -7,6 +7,7 @@ import UIKit
 /// GAM display/native banners use AUBannerView's full Google completion lifecycle instead.
 internal final class AUConfiguredDemandRefresh {
     private weak var view: AUAdView?
+    private let coordinator: AUScreenAdCoordinator
     private let scheduler: AURefreshScheduler
     private var operation: (() -> Void)?
     private var completed = false
@@ -19,10 +20,11 @@ internal final class AUConfiguredDemandRefresh {
         self?.operation?()
     }
 
-    init(view: AUAdView, configuration: AUAdUnitConfiguration, scheduler: AURefreshScheduler = AUMainQueueRefreshScheduler()) {
+    init(view: AUAdView, configuration: AUAdUnitConfiguration, scheduler: AURefreshScheduler = AUMainQueueRefreshScheduler(), coordinator: AUScreenAdCoordinator = .shared) {
+        self.coordinator = coordinator
         self.scheduler = scheduler
         self.view = view
-        if let (page, _) = AUScreenAdCoordinator.shared.activeScreenAndName {
+        if let (page, _) = coordinator.activeScreenAndName {
             hadPage = true
             if let vc = page as? UIViewController { pageViewController = vc } else { pageToken = page }
         }
@@ -36,7 +38,7 @@ internal final class AUConfiguredDemandRefresh {
         if view.window == nil { controller.block(.detached) }
         if Audienzz.shared.isAppBackgrounded { controller.block(.appBackground) }
         Audienzz.shared.observeForegroundReimpression()
-        AUScreenAdCoordinator.shared.registerConfigured(self)
+        coordinator.registerConfigured(self)
     }
 
     /// The view retains only a weak-self operation; no timer or callback keeps its owner alive.
@@ -71,6 +73,9 @@ internal final class AUConfiguredDemandRefresh {
     }
 
     func attachmentChanged() {
+        if !hadPage, let (page, _) = coordinator.activeScreenAndName {
+            pageChanged(page)
+        }
         if view?.window == nil { controller.block(.detached) }
         else { controller.unblock(.detached, schedule: false); resume() }
     }
@@ -88,6 +93,22 @@ internal final class AUConfiguredDemandRefresh {
     }
 
     func pageChanged(_ page: AnyObject) {
+        // Before the first report these slots are unscoped. Bind them once to that first page;
+        // later reports must match the captured owner, just as for slots created after a report.
+        if !hadPage {
+            if let pageVC = page as? UIViewController {
+                var responder: UIResponder? = view?.next
+                while let current = responder, !(current is UIViewController) { responder = current.next }
+                guard responder === pageVC else {
+                    active = false
+                    controller.invalidatePending()
+                    controller.block(.pageInactive)
+                    return
+                }
+            }
+            hadPage = true
+            if let vc = page as? UIViewController { pageViewController = vc } else { pageToken = page }
+        }
         let ownPage = pageToken ?? pageViewController
         active = hadPage && (ownPage === page ||
             ((ownPage as? NSObject)?.isEqual(page) == true))
@@ -112,6 +133,6 @@ internal final class AUConfiguredDemandRefresh {
     func destroy() {
         controller.destroy()
         operation = nil
-        AUScreenAdCoordinator.shared.deregisterConfigured(self)
+        coordinator.deregisterConfigured(self)
     }
 }
