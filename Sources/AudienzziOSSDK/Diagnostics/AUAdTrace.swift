@@ -65,7 +65,35 @@ internal enum AUAdTrace {
         visible: Bool? = nil,
         detail: String? = nil
     ) {
-        var line = "[AUAdTrace] placement=\(placement) load=\(load) event=\(event.rawValue)"
+        emit(placement: placement, identity: "owner=\(load)", event: event,
+             reason: reason, visible: visible, detail: detail)
+    }
+
+    /// - Parameter delivery: identifies one Google load for the life of that creative — slot
+    ///   instance plus auction — so request, result and impression can be paired even when a later
+    ///   auction is already running. A bare counter could not: it collided between two banners on
+    ///   the same placement and restarted whenever a slot was replaced.
+    static func log(
+        placement: String,
+        delivery: String?,
+        event: AUAdTraceEvent,
+        reason: String? = nil,
+        visible: Bool? = nil,
+        detail: String? = nil
+    ) {
+        emit(placement: placement, identity: "delivery=\(delivery ?? "none")", event: event,
+             reason: reason, visible: visible, detail: detail)
+    }
+
+    private static func emit(
+        placement: String,
+        identity: String,
+        event: AUAdTraceEvent,
+        reason: String?,
+        visible: Bool?,
+        detail: String?
+    ) {
+        var line = "[AUAdTrace] placement=\(placement) \(identity) event=\(event.rawValue)"
         if let reason { line += " reason=\(reason)" }
         if let visible { line += " visible=\(visible)" }
         if let detail { line += " detail=\(detail)" }

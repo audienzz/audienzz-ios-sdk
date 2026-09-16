@@ -66,6 +66,16 @@ public class VisibleView: UIView {
     /// the initial load still uses the prefetch / ≥20% path.
     internal var isViewRefreshEligible: Bool { isRefreshEligible }
 
+    /// Recomputes both verdicts from the current geometry, firing the usual transitions.
+    ///
+    /// The cached flags are only as current as the last signal that happened to be observed, and
+    /// no observable signal covers every way a view can move — `layer.position`, for one, changes
+    /// nothing KVO reports. Callers about to spend a request use this so the decision is made from
+    /// geometry rather than from whatever the last event left behind.
+    internal func refreshVisibilityNow() {
+        checkIfFrameIsVisible()
+    }
+
     // MARK: - Prefetch margin
 
     /// Distance in points before the view enters the viewport that triggers
@@ -216,6 +226,37 @@ public class VisibleView: UIView {
     /// sits inside a hidden container, under a faded-out parent, clipped away by an ancestor's
     /// bounds, or scrolled off sideways. Android has always clipped against every ancestor through
     /// `getGlobalVisibleRect` and rejected non-visible views outright; this brings iOS level.
+    /// Whether the slot is close enough to the viewport to be worth buying an ad for.
+    ///
+    /// Clipping ancestors are honoured, but with the margin applied to them as well — a
+    /// `UIScrollView` clips by default, so testing their raw bounds treated every slot below the
+    /// fold as clipped away and defeated the lookahead entirely. A clipper that has collapsed to
+    /// nothing is a different matter: expanding an empty rect would happily admit the ad, so it is
+    /// rejected outright.
+    private func isWithinPrefetchZone(
+        frameInWindow: CGRect,
+        window: UIWindow,
+        expandedBounds: CGRect
+    ) -> Bool {
+        if isConcealed() { return false }
+        let margin = max(0, prefetchMarginPoints)
+        var region = frameInWindow
+        var ancestor: UIView? = superview
+        while let current = ancestor, current !== window {
+            if current.clipsToBounds {
+                let bounds = current.bounds
+                // Collapsed, not merely scrolled: nothing inside it can come into view.
+                if bounds.width <= 0 || bounds.height <= 0 { return false }
+                let lookahead = window.convert(bounds, from: current)
+                    .insetBy(dx: -margin, dy: -margin)
+                region = region.intersection(lookahead)
+                if region.isNull || region.isEmpty { return false }
+            }
+            ancestor = current.superview
+        }
+        return region.intersects(margin > 0 ? expandedBounds : window.bounds)
+    }
+
     /// Whether the ad or anything above it is hidden or transparent. Geometry is not consulted:
     /// being outside the viewport is not concealment.
     private func isConcealed() -> Bool {
@@ -261,8 +302,16 @@ public class VisibleView: UIView {
 
     // MARK: - Visibility check
 
+    /// Guards the transition hooks, which can call back in here. A recomputation that is already
+    /// running has the current answer, so a nested one has nothing to add and could otherwise
+    /// recurse through resume -> recompute -> resume.
+    private var isEvaluatingVisibility = false
+
     private func checkIfFrameIsVisible() {
         guard let window = self.window else { return }
+        if isEvaluatingVisibility { return }
+        isEvaluatingVisibility = true
+        defer { isEvaluatingVisibility = false }
 
         let frameInWindow = window.convert(self.bounds, from: self)
 
@@ -293,13 +342,11 @@ public class VisibleView: UIView {
                 dx: -prefetchMarginPoints,
                 dy: -prefetchMarginPoints
             )
-            // Concealment only — deliberately NOT the clipped rect. A UIScrollView clips by
-            // default, so requiring an unclipped rect meant a slot below the fold was "clipped
-            // away" and never prefetched until it physically entered the viewport, which is the
-            // one thing the prefetch margin exists to avoid.
-            let withinPrefetchZone = !isConcealed() && (prefetchMarginPoints > 0
-                ? frameInWindow.intersects(expandedBounds)
-                : frameInWindow.intersects(window.bounds))
+            let withinPrefetchZone = isWithinPrefetchZone(
+                frameInWindow: frameInWindow,
+                window: window,
+                expandedBounds: expandedBounds
+            )
             if withinPrefetchZone {
                 hasFiredPrefetchZone = true
                 #if DEBUG

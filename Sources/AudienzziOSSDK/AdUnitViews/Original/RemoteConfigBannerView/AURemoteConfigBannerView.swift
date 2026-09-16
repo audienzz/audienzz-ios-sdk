@@ -241,7 +241,14 @@ public class AURemoteConfigBannerView: VisibleView {
                 print("[AURemoteConfigBannerView] Failed to unwrap GAM request")
                 return
             }
-            AUAdTrace.log(placement: self.adConfigId, load: generation, event: .googleRequested)
+            // The delivery's own identity, not the owner's. Every other google.* line for this
+            // load carries it, and mixing the two made a request impossible to pair with its
+            // completion — the owner's counter was the same on every refresh.
+            AUAdTrace.log(
+                placement: self.adConfigId,
+                delivery: self.bannerView?.pendingDeliveryId,
+                event: .googleRequested
+            )
             gamBanner.load(request)
         }
 

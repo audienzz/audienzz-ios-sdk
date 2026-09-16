@@ -215,6 +215,10 @@ extension AUBannerView {
     /// of the process.
     func resumeAfterForeground() {
         guard !Audienzz.shared.hasPendingForegroundReimpression else { return }
+        // Re-sync the cached verdict here as well as at request time. If the request-time gate held
+        // a refresh because of a signal nothing observed, the block is cleared by whichever
+        // recovery event comes next rather than waiting for a visibility event that may not exist.
+        refreshVisibilityNow()
         refreshController.unblock(.appBackground, schedule: false)
         resumeEligibleWork()
     }
@@ -222,6 +226,7 @@ extension AUBannerView {
     /// Attach state. A detached view cannot render, so a refresh into it would be an
     /// impression-less request; re-attaching clears only this reason.
     func onAttachedToWindow() {
+        refreshVisibilityNow()
         refreshController.unblock(.detached, schedule: false)
         resumeEligibleWork()
     }
@@ -266,6 +271,9 @@ extension AUBannerView {
         googleLoad = nil
         let current = load.auction == auctionGeneration && screenActive && !refreshController.isDestroyed
         if current {
+            // This creative is the one on screen from now on; its impression belongs to it, not to
+            // whatever auction happens to be running when the impression lands.
+            renderedDeliveryId = pendingDeliveryId
             lastRefreshTime = Date()
             refreshController.onRequestCompleted(generationAtRequest: load.refresh, success: !retryableFailure)
         } else {
@@ -320,8 +328,9 @@ extension AUBannerView {
         pendingLoadReason = nil
         // Every new auction supersedes the previous one.
         auctionGeneration += 1
-        AUAdTrace.log(placement: tracePlacement ?? configId, load: auctionGeneration, event: .loadAccepted,
-                      reason: reason.rawValue, visible: isViewRefreshEligible)
+        pendingDeliveryId = "\(traceSlotId)-\(auctionGeneration)"
+        AUAdTrace.log(placement: tracePlacement ?? configId, delivery: pendingDeliveryId,
+                      event: .loadAccepted, reason: reason.rawValue, visible: isViewRefreshEligible)
         let refreshGeneration = refreshController.onRequestStarted(reason)
         initialLoadRequested = true
         // Re-read the PPID on every auction rather than trusting the one stamped at createAd.

@@ -1,5 +1,6 @@
 import XCTest
 import UIKit
+import GoogleMobileAds
 @testable import AudienzziOSSDK
 
 /// What the viewport gates count as "on screen".
@@ -234,6 +235,21 @@ final class VisibilityGateSignalTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(ad.eligible, false, "an ad with no size shows nothing")
     }
 
+    func testASlotInsideACollapsedClippingContainerDoesNotPrefetch() {
+        window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        let collapsed = UIView(frame: CGRect(x: 0, y: 100, width: 390, height: 0))
+        collapsed.clipsToBounds = true
+        window.addSubview(collapsed)
+        window.isHidden = false
+        let ad = VisibilityGateTests.ProbeView(frame: CGRect(x: 0, y: 0, width: 320, height: 50))
+        ad.prefetchMarginPoints = 200
+        collapsed.addSubview(ad)
+        settle()
+
+        XCTAssertEqual(ad.prefetchCount, 0,
+                       "nothing inside a collapsed container can come into view")
+    }
+
     func testASlotBelowTheFoldInsideAScrollViewStillPrefetches() {
         // A UIScrollView clips by default. Requiring an unclipped rect meant the prefetch margin
         // never applied to the one arrangement it exists for.
@@ -249,5 +265,50 @@ final class VisibilityGateSignalTests: AudienzzLifecycleTestCase {
 
         XCTAssertEqual(ad.prefetchCount, 1,
                        "a slot 56pt below the fold is inside a 200pt prefetch margin")
+    }
+}
+
+/// The gate that runs when a refresh is about to be spent.
+///
+/// Exercised through `onRefreshDue` rather than through the geometry helper it calls: a test that
+/// calls the helper itself still passes when the call site goes back to reading the cached flag,
+/// which is exactly what it is supposed to catch.
+@MainActor
+final class RefreshTimeVisibilityTests: AudienzzLifecycleTestCase {
+
+    private func spin(_ seconds: TimeInterval = 0.3) {
+        RunLoop.main.run(until: Date().addingTimeInterval(seconds))
+    }
+
+    func testARefreshIsNotSpentOnAnAdMovedOffscreenByItsLayer() {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.isHidden = false
+        // Empty config id: Prebid completes demand immediately, so no network is involved.
+        let banner = AUBannerView(configId: "", adSize: CGSize(width: 320, height: 50),
+                                  adFormats: [.banner], isLazyLoad: false)
+        banner.frame = CGRect(x: 0, y: 100, width: 320, height: 50)
+        banner.smartRefresh = true
+        window.addSubview(banner)
+        banner.adUnitConfiguration.setAutoRefreshMillis(time: 30_000)
+
+        var loads = 0
+        banner.onLoadRequest = { _ in loads += 1 }
+        banner.createAd(with: AdManagerRequest(), gamBanner: UIView())
+        spin()
+        XCTAssertTrue(banner.isViewRefreshEligible, "control — the ad starts on screen")
+        let afterFirstLoad = loads
+
+        // layer.position moves the ad without emitting anything observable, so the cached verdict
+        // stays "eligible" and only a fresh read can tell.
+        banner.layer.position = CGPoint(x: banner.layer.position.x, y: -5000)
+        XCTAssertTrue(banner.isViewRefreshEligible, "nothing fired — the cached flag is stale")
+
+        banner.onRefreshDue(.periodicRefresh, banner.refreshController.generation)
+        spin()
+
+        XCTAssertEqual(loads, afterFirstLoad,
+                       "a refresh must not be spent on an ad that is no longer on screen")
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.notVisible),
+                      "and it must record why it held")
     }
 }

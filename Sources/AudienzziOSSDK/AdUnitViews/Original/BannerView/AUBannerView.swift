@@ -46,6 +46,18 @@ public class AUBannerView: AUAdView {
     /// owner overrides it with its ad config id so both halves of the trace name the same slot.
     internal var tracePlacement: String?
 
+    /// Distinguishes two banners serving the same placement, and survives every auction this
+    /// banner runs. Auction counters alone collide across slots and restart on replacement.
+    internal let traceSlotId = String(UUID().uuidString.prefix(8))
+
+    /// Identity of the delivery currently being fetched, and of the one currently rendered.
+    ///
+    /// Held separately because they diverge: while a refresh is in flight the previous creative is
+    /// still on screen, so its impression belongs to the delivery that produced it — reading the
+    /// live auction counter labelled it as the new one.
+    internal var pendingDeliveryId: String?
+    internal var renderedDeliveryId: String?
+
 
     internal var demandFormats: Set<PrebidMobile.AdFormat> = [.banner]
 
@@ -88,7 +100,9 @@ public class AUBannerView: AUAdView {
     }
 
     /// Issues the request the controller asked for, re-checking that it is still wanted.
-    private func onRefreshDue(_ reason: AURefreshRequestReason, _ generation: Int) {
+    /// Internal rather than private so a test can exercise the request-time gate itself, instead
+    /// of the geometry helper it calls.
+    internal func onRefreshDue(_ reason: AURefreshRequestReason, _ generation: Int) {
         guard generation == refreshController.generation else { return }
         guard let request = gamRequest as? AdManagerRequest else { return }
         // Re-read the geometry rather than trusting the cached verdict. The viewport flag is only
@@ -96,6 +110,12 @@ public class AUBannerView: AUAdView {
         // moment where being wrong costs money — so a periodic refresh confirms the ad is still
         // eligible at the instant it would be spent. A first load is deliberately exempt: it is
         // allowed to prefetch before the ad is on screen.
+        if reason == .periodicRefresh, smartRefresh {
+            // Recompute before reading. `isViewRefreshEligible` is a cached flag, so consulting it
+            // directly asked the last observed event rather than the current geometry — and a view
+            // moved by `layer.position` reports no observable event at all.
+            refreshVisibilityNow()
+        }
         if reason == .periodicRefresh, smartRefresh, !isViewRefreshEligible {
             AULogEvent.logDebug("[AUBannerView] \(configId) — refresh due but no longer visible; holding")
             refreshController.block(.notVisible)
