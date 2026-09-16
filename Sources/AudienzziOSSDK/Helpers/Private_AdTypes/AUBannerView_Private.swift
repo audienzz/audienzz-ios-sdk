@@ -320,6 +320,8 @@ extension AUBannerView {
         pendingLoadReason = nil
         // Every new auction supersedes the previous one.
         auctionGeneration += 1
+        AUAdTrace.log(placement: configId, load: auctionGeneration, event: .loadAccepted,
+                      reason: reason.rawValue, visible: isViewRefreshEligible)
         let refreshGeneration = refreshController.onRequestStarted(reason)
         initialLoadRequested = true
         // Re-read the PPID on every auction rather than trusting the one stamped at createAd.

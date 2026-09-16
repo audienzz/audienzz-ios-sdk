@@ -99,6 +99,10 @@ class AUBannerHandler: NSObject,
 
     // MARK: - GADBannerViewDelegate
     func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+        auBannerView.map {
+            AUAdTrace.log(placement: $0.configId, load: $0.auctionGeneration,
+                          event: .googleLoaded, visible: $0.isViewRefreshEligible)
+        }
         guard auBannerView?.completeGoogleLoad(retryableFailure: false) == true else { return }
         LogEvent("bannerViewDidReceiveAd")
         restoreFromBlankIfNeeded()
@@ -137,6 +141,10 @@ class AUBannerHandler: NSObject,
         let retryable = failure.domain == GADErrorDomain &&
             [RequestError.networkError.rawValue, RequestError.serverError.rawValue,
              RequestError.timeout.rawValue, RequestError.internalError.rawValue].contains(failure.code)
+        auBannerView.map {
+            AUAdTrace.log(placement: $0.configId, load: $0.auctionGeneration,
+                          event: .googleFailed, detail: retryable ? "retryable" : "terminal")
+        }
         guard auBannerView?.completeGoogleLoad(retryableFailure: retryable) == true else { return }
         LogEvent("didFailToReceiveAdWithError")
         LogEvent(error.localizedDescription)
@@ -149,6 +157,10 @@ class AUBannerHandler: NSObject,
 
     /// Tells the delegate that an impression has been recorded for an ad.
     func bannerViewDidRecordImpression(_ bannerView: BannerView) {
+        auBannerView.map {
+            AUAdTrace.log(placement: $0.configId, load: $0.auctionGeneration,
+                          event: .googleImpression, visible: $0.isViewRefreshEligible)
+        }
         guard auBannerView?.acceptsGoogleEvents == true else { return }
         LogEvent("bannerViewDidRecordImpression")
         AUEventsManager.shared.adImpression(
