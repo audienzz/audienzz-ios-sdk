@@ -176,3 +176,78 @@ final class VisibilityGateTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(ad.prefetchCount, 1, "revealing it defers the load rather than losing it")
     }
 }
+
+/// Signals that change what the user sees without touching the properties the gate first observed.
+@MainActor
+final class VisibilityGateSignalTests: AudienzzLifecycleTestCase {
+
+    private var window: UIWindow!
+    private var page: UIView!
+
+    private func settle() {
+        RunLoop.main.run(until: Date().addingTimeInterval(0.15))
+    }
+
+    private func makeAd() -> VisibilityGateTests.ProbeView {
+        window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        page = UIView(frame: window.bounds)
+        window.addSubview(page)
+        window.isHidden = false
+        let ad = VisibilityGateTests.ProbeView(frame: CGRect(x: 0, y: 100, width: 320, height: 50))
+        ad.directional = true
+        ad.prefetchMarginPoints = 0
+        page.addSubview(ad)
+        settle()
+        return ad
+    }
+
+    func testATransformThatMovesTheAdOffscreenMakesItIneligible() {
+        let ad = makeAd()
+        XCTAssertEqual(ad.eligible, true)
+
+        // A transform moves the ad without changing its frame.
+        ad.transform = CGAffineTransform(translationX: 0, y: -2000)
+        settle()
+
+        XCTAssertEqual(ad.eligible, false, "a transformed-away ad is not on screen")
+    }
+
+    func testTurningOnClippingOnAnAncestorMakesItIneligible() {
+        let ad = makeAd()
+        page.frame = CGRect(x: 0, y: 0, width: 390, height: 10)
+        settle()
+        // The ad now hangs outside its parent's bounds but the parent does not clip yet.
+        page.clipsToBounds = true
+        settle()
+
+        XCTAssertEqual(ad.eligible, false,
+                       "enabling clipping changes what is shown without changing any geometry")
+    }
+
+    func testCollapsingTheAdToZeroSizeMakesItIneligible() {
+        let ad = makeAd()
+        XCTAssertEqual(ad.eligible, true)
+
+        ad.frame = CGRect(x: 0, y: 100, width: 320, height: 0)
+        settle()
+
+        XCTAssertEqual(ad.eligible, false, "an ad with no size shows nothing")
+    }
+
+    func testASlotBelowTheFoldInsideAScrollViewStillPrefetches() {
+        // A UIScrollView clips by default. Requiring an unclipped rect meant the prefetch margin
+        // never applied to the one arrangement it exists for.
+        window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        let scroll = UIScrollView(frame: window.bounds)
+        scroll.contentSize = CGSize(width: 390, height: 3000)
+        window.addSubview(scroll)
+        window.isHidden = false
+        let ad = VisibilityGateTests.ProbeView(frame: CGRect(x: 0, y: 900, width: 320, height: 50))
+        ad.prefetchMarginPoints = 200
+        scroll.addSubview(ad)
+        settle()
+
+        XCTAssertEqual(ad.prefetchCount, 1,
+                       "a slot 56pt below the fold is inside a 200pt prefetch margin")
+    }
+}

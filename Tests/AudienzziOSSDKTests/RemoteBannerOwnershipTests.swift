@@ -21,14 +21,29 @@ final class RemoteBannerOwnershipTests: AudienzzLifecycleTestCase {
       "config": { "adType": "banner", "refreshTimeSeconds": 30, "prefetchDistancePt": 200 },
       "gamConfig": { "adUnitPath": "/1234/unit", "adSizes": ["320x50"] },
       "prebidConfig": { "placementId": "placement", "adSizes": ["320x50"] }
+    },
+    {
+      "id": "adaptive-banner",
+      "config": { "adType": "banner", "refreshTimeSeconds": 30, "prefetchDistancePt": 200 },
+      "gamConfig": {
+        "adUnitPath": "/1234/adaptive",
+        "adSizes": ["320x50"],
+        "adaptiveBannerConfig": { "enabled": true, "widthStrategy": "FULL_WIDTH" }
+      },
+      "prebidConfig": { "placementId": "placement", "adSizes": ["320x50"] }
     }]
     """
 
     private func seedConfig(_ present: Bool) {
-        let configs = present
-            ? try? JSONDecoder().decode([RemoteAdConfiguration].self,
-                                        from: Data(Self.configJSON.utf8))
-            : nil
+        var configs: [RemoteAdConfiguration]?
+        if present {
+            do {
+                configs = try JSONDecoder().decode([RemoteAdConfiguration].self,
+                                                   from: Data(Self.configJSON.utf8))
+            } catch {
+                XCTFail("fixture does not decode: \(error)")
+            }
+        }
         AudienzzRemoteConfig.shared.setAdUnitConfigsForTesting(configs)
     }
 
@@ -140,6 +155,50 @@ final class RemoteBannerOwnershipTests: AudienzzLifecycleTestCase {
         view.destroy()
         view.destroy()
         XCTAssertEqual(banners().count, 0)
+    }
+
+    // MARK: - The banner we are holding may stop being usable
+
+    func testLoadingAgainAfterThePublisherClearedTheContainerRebuildsTheBanner() {
+        let view = makeView()
+        load(view)
+        XCTAssertEqual(banners().count, 1)
+
+        // A publisher clearing the slot detaches and destroys our banner without telling us.
+        container.subviews.forEach { $0.removeFromSuperview() }
+
+        load(view)
+
+        XCTAssertEqual(banners().count, 1,
+                       "coalescing against a banner that is no longer in the container left the "
+                        + "slot permanently empty")
+    }
+
+    func testARepeatAfterDestroyRebuildsRatherThanCoalescing() {
+        let view = makeView()
+        load(view)
+        view.destroy()
+        load(view)
+        XCTAssertEqual(banners().count, 1)
+    }
+
+    // MARK: - Adaptive sizing
+
+    func testAWiderContainerIsANewLoadNotARepeat() {
+        // An adaptive banner derives its size from the container, so the caller passing nil twice
+        // is not the same request twice. Keying on the requested size treated it as a repeat and
+        // left the banner pinned to the width it was first built for.
+        let view = AURemoteConfigBannerView(adConfigId: "adaptive-banner")
+        container.frame = CGRect(x: 0, y: 0, width: 500, height: 250)
+        view.load(in: container, size: nil, rootViewController: host, delegate: nil)
+        guard let first = banners().first else { return XCTFail("no banner built") }
+
+        container.frame = CGRect(x: 0, y: 0, width: 700, height: 250)
+        view.load(in: container, size: nil, rootViewController: host, delegate: nil)
+
+        XCTAssertEqual(banners().count, 1)
+        XCTAssertFalse(banners().contains(first),
+                       "a container that resized must not keep the banner built for the old width")
     }
 
     // MARK: - The publisher's own container

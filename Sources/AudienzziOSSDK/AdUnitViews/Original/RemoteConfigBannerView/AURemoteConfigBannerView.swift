@@ -41,7 +41,9 @@ public class AURemoteConfigBannerView: VisibleView {
         let adConfigId: String
         let container: ObjectIdentifier
         let rootViewController: ObjectIdentifier
-        let size: CGSize
+        /// The size actually resolved for this load, not the size the caller asked for. Adaptive
+        /// banners derive theirs from the container, so `nil` twice is not the same request twice.
+        let resolvedSize: CGSize
     }
     private var activeLoadKey: LoadKey?
 
@@ -112,30 +114,15 @@ public class AURemoteConfigBannerView: VisibleView {
         rootViewController: UIViewController,
         delegate: GoogleMobileAds.BannerViewDelegate? = nil
     ) {
-        let requestedKey = LoadKey(
-            adConfigId: adConfigId,
-            container: ObjectIdentifier(container),
-            rootViewController: ObjectIdentifier(rootViewController),
-            size: size ?? .zero
-        )
-        // An identical repeat is a no-op, not a second banner. React Native re-runs this whenever
-        // any prop changes, and a publisher may call it from a layout pass that fires more than
-        // once; each of those used to leave another live banner behind.
-        if activeLoadKey == requestedKey, bannerView != nil {
-            AUAdTrace.log(placement: adConfigId, load: loadGeneration, event: .loadCoalesced)
-            return
-        }
-        // Anything else is an intentional replacement: retire first, then build.
-        retireCurrentBanner(reason: bannerView == nil ? "first load" : "replaced")
-
+        // Resolved before the coalescing decision, because it is what a repeat has to match. A
+        // container that has since been laid out wider produces a different adaptive size, and
+        // treating that as a repeat left the banner pinned to the size it was first built for.
         guard let remoteConfig = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
+            // Deliberately before any retirement: a momentarily missing config must not destroy a
+            // banner that is working.
             AULogEvent.logDebug("[AURemoteConfigBannerView] Remote config is nil")
             return
         }
-        activeLoadKey = requestedKey
-        loadGeneration += 1
-        let generation = loadGeneration
-        AUAdTrace.log(placement: adConfigId, load: generation, event: .loadAccepted)
 
         let gadSize: AdSize
 
@@ -161,6 +148,31 @@ public class AURemoteConfigBannerView: VisibleView {
                 gadSize = adSizeFor(cgSize: size ?? .zero)
             }
         }
+
+        let requestedKey = LoadKey(
+            adConfigId: adConfigId,
+            container: ObjectIdentifier(container),
+            rootViewController: ObjectIdentifier(rootViewController),
+            resolvedSize: gadSize.size
+        )
+        // An identical repeat is a no-op, not a second banner. React Native re-runs this whenever
+        // any prop changes, and a publisher may call it from a layout pass that fires more than
+        // once; each of those used to leave another live banner behind.
+        //
+        // "Identical" also requires the banner we are holding to still be usable. A publisher that
+        // clears the container's children detaches and destroys ours without telling us, and
+        // coalescing against that corpse left the slot permanently empty.
+        if activeLoadKey == requestedKey, let current = bannerView, current.superview === container,
+           !current.refreshController.isDestroyed {
+            AUAdTrace.log(placement: adConfigId, load: loadGeneration, event: .ownerCoalesced)
+            return
+        }
+        // Anything else is an intentional replacement: retire first, then build.
+        retireCurrentBanner(reason: bannerView == nil ? "first load" : "replaced")
+        activeLoadKey = requestedKey
+        loadGeneration += 1
+        let generation = loadGeneration
+        AUAdTrace.log(placement: adConfigId, load: generation, event: .ownerAccepted)
 
         let gamBanner = AdManagerBannerView(adSize: gadSize)
         gamBanner.rootViewController = rootViewController
@@ -190,6 +202,9 @@ public class AURemoteConfigBannerView: VisibleView {
             isLazyLoad: true
         )
         self.bannerView = bannerView
+        // So the delivery trace reports the ad config the publisher configured, not the Prebid
+        // placement id, and matches the owner lines above.
+        bannerView.tracePlacement = adConfigId
         if let pendingScreenKey { bannerView.hostScreenOverride = pendingScreenKey }
 
         // Routed through `adUnitConfiguration`, which is what owns the interval: it stores the value
@@ -299,7 +314,7 @@ public class AURemoteConfigBannerView: VisibleView {
         ownedConstraints.removeAll()
         activeLoadKey = nil
         guard let banner = bannerView else { return }
-        AUAdTrace.log(placement: adConfigId, load: loadGeneration, event: .retired, detail: reason)
+        AUAdTrace.log(placement: adConfigId, load: loadGeneration, event: .ownerRetired, detail: reason)
         banner.onLoadRequest = nil
         banner.onAdSizeChanged = nil
         // destroy() stops the refresh controller and deregisters from the coordinator; the

@@ -29,10 +29,17 @@ import Foundation
 ///
 /// Deliberately carries no targeting, PPID, creative markup, user identifier or ad content.
 internal enum AUAdTraceEvent: String {
-    /// A load was accepted and owns the placement from here on.
-    case loadAccepted = "load.accepted"
+    /// A placement owner accepted a load and owns the slot from here on. `load=` on these three
+    /// lines is the OWNER's generation, a different counter from the per-delivery one below —
+    /// which is why they carry their own `owner.` prefix rather than sharing the `load.` one.
+    case ownerAccepted = "owner.accepted"
     /// A repeat of the active load; no second banner was built.
-    case loadCoalesced = "load.coalesced"
+    case ownerCoalesced = "owner.coalesced"
+    /// The owner released its banner.
+    case ownerRetired = "owner.retired"
+    /// One delivery started. `load=` from here on is the banner's auction generation, and every
+    /// google.* line for that delivery repeats it.
+    case loadAccepted = "load.accepted"
     /// Handed to the Google ad server. Exactly one impression can follow.
     case googleRequested = "google.requested"
     /// Google returned a creative.
@@ -41,9 +48,6 @@ internal enum AUAdTraceEvent: String {
     case googleFailed = "google.failed"
     /// Google recorded the impression — the only terminal state that earns.
     case googleImpression = "google.impression"
-    /// The banner was replaced or disposed. A `google.requested` with no `google.impression`
-    /// before this line is a delivery that could never have earned.
-    case retired = "retired"
 }
 
 internal enum AUAdTrace {

@@ -42,6 +42,10 @@ public class AUBannerView: AUAdView {
     }
     internal var pendingLoadReason: AURefreshRequestReason?
 
+    /// Placement name used in the delivery trace. Defaults to the Prebid config id; a remote-config
+    /// owner overrides it with its ad config id so both halves of the trace name the same slot.
+    internal var tracePlacement: String?
+
 
     internal var demandFormats: Set<PrebidMobile.AdFormat> = [.banner]
 
@@ -87,6 +91,16 @@ public class AUBannerView: AUAdView {
     private func onRefreshDue(_ reason: AURefreshRequestReason, _ generation: Int) {
         guard generation == refreshController.generation else { return }
         guard let request = gamRequest as? AdManagerRequest else { return }
+        // Re-read the geometry rather than trusting the cached verdict. The viewport flag is only
+        // as current as the last signal that happened to be observed, and a request is the one
+        // moment where being wrong costs money — so a periodic refresh confirms the ad is still
+        // eligible at the instant it would be spent. A first load is deliberately exempt: it is
+        // allowed to prefetch before the ad is on screen.
+        if reason == .periodicRefresh, smartRefresh, !isViewRefreshEligible {
+            AULogEvent.logDebug("[AUBannerView] \(configId) — refresh due but no longer visible; holding")
+            refreshController.block(.notVisible)
+            return
+        }
         fetchRequest(request, reason: reason)
     }
 

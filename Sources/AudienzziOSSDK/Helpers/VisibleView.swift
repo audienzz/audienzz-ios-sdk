@@ -199,6 +199,11 @@ public class VisibleView: UIView {
         // geometry rather than by a flag and emits no scroll event either.
         contentOffsetObservations.append(view.observe(\.bounds, options: [.new], changeHandler: recheck))
         contentOffsetObservations.append(view.observe(\.frame, options: [.new], changeHandler: recheck))
+        // A transform moves the ad without changing its frame, and toggling clipsToBounds changes
+        // what an ancestor shows without changing any geometry at all. Neither emits any of the
+        // signals above.
+        contentOffsetObservations.append(view.observe(\.transform, options: [.new], changeHandler: recheck))
+        contentOffsetObservations.append(view.observe(\.clipsToBounds, options: [.new], changeHandler: recheck))
     }
 
     /// Below this an ad is not meaningfully on screen, and neither is anything behind it.
@@ -211,14 +216,24 @@ public class VisibleView: UIView {
     /// sits inside a hidden container, under a faded-out parent, clipped away by an ancestor's
     /// bounds, or scrolled off sideways. Android has always clipped against every ancestor through
     /// `getGlobalVisibleRect` and rejected non-visible views outright; this brings iOS level.
+    /// Whether the ad or anything above it is hidden or transparent. Geometry is not consulted:
+    /// being outside the viewport is not concealment.
+    private func isConcealed() -> Bool {
+        if isHidden || alpha <= Self.minimumVisibleAlpha { return true }
+        var ancestor: UIView? = superview
+        while let current = ancestor {
+            if current.isHidden || current.alpha <= Self.minimumVisibleAlpha { return true }
+            ancestor = current.superview
+        }
+        return false
+    }
+
     private func unconcealedRectInWindow(frameInWindow: CGRect, window: UIWindow) -> CGRect? {
-        if isHidden || alpha <= Self.minimumVisibleAlpha { return nil }
-        if window.isHidden || window.alpha <= Self.minimumVisibleAlpha { return nil }
+        if isConcealed() { return nil }
 
         var clipped = frameInWindow
         var ancestor: UIView? = superview
         while let current = ancestor, current !== window {
-            if current.isHidden || current.alpha <= Self.minimumVisibleAlpha { return nil }
             if current.clipsToBounds {
                 clipped = clipped.intersection(window.convert(current.bounds, from: current))
                 if clipped.isNull || clipped.isEmpty { return nil }
@@ -251,7 +266,18 @@ public class VisibleView: UIView {
 
         let frameInWindow = window.convert(self.bounds, from: self)
 
-        if frameInWindow.size.width == 0 && frameInWindow.size.height == 0 {
+        // A zero-size ad shows nothing. Returning early here left its last verdict standing, so a
+        // banner collapsed to nothing stayed "eligible" and kept refreshing. Both flags start
+        // false, so this is still a no-op before the first layout pass.
+        if frameInWindow.size.width <= 0 || frameInWindow.size.height <= 0 {
+            if isCurrentlyVisible {
+                isCurrentlyVisible = false
+                onBecameHidden()
+            }
+            if isRefreshEligible {
+                isRefreshEligible = false
+                onRefreshBecameIneligible()
+            }
             return
         }
 
@@ -267,11 +293,11 @@ public class VisibleView: UIView {
                 dx: -prefetchMarginPoints,
                 dy: -prefetchMarginPoints
             )
-            // A concealed slot has no position worth buying an ad for. The concealment observation
-            // re-runs this the moment it is revealed, so the load is deferred rather than lost.
-            // Being outside the viewport is emphatically not concealment — that is the case the
-            // prefetch margin exists for.
-            let withinPrefetchZone = unconcealed != nil && (prefetchMarginPoints > 0
+            // Concealment only — deliberately NOT the clipped rect. A UIScrollView clips by
+            // default, so requiring an unclipped rect meant a slot below the fold was "clipped
+            // away" and never prefetched until it physically entered the viewport, which is the
+            // one thing the prefetch margin exists to avoid.
+            let withinPrefetchZone = !isConcealed() && (prefetchMarginPoints > 0
                 ? frameInWindow.intersects(expandedBounds)
                 : frameInWindow.intersects(window.bounds))
             if withinPrefetchZone {

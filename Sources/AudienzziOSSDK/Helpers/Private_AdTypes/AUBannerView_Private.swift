@@ -320,7 +320,7 @@ extension AUBannerView {
         pendingLoadReason = nil
         // Every new auction supersedes the previous one.
         auctionGeneration += 1
-        AUAdTrace.log(placement: configId, load: auctionGeneration, event: .loadAccepted,
+        AUAdTrace.log(placement: tracePlacement ?? configId, load: auctionGeneration, event: .loadAccepted,
                       reason: reason.rawValue, visible: isViewRefreshEligible)
         let refreshGeneration = refreshController.onRequestStarted(reason)
         initialLoadRequested = true
