@@ -92,6 +92,12 @@ public class AudienzzRemoteConfig: NSObject {
         adUnitConfigs?.first(where: { $0.id == adConfigId })
     }
 
+    /// Seeds the config store without a network fetch, so ad-unit behaviour can be tested against
+    /// a real configuration. `nil` models the window before any config has arrived.
+    @nonobjc internal func setAdUnitConfigsForTesting(_ configs: [RemoteAdConfiguration]?) {
+        adUnitConfigs = configs
+    }
+
     // MARK: - Sticky Wrapper Helpers (ObjC-visible)
 
     /// Returns the backend-configured sticky max-height for an ad config, or 600 if absent.

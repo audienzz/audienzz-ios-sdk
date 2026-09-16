@@ -22,7 +22,33 @@ public class AURemoteConfigBannerView: VisibleView {
 
     /// Screen token applied to the underlying `AUBannerView` once it's built (see `setScreen`).
     private var pendingScreenKey: AnyObject?
-    private weak var bannerView: AUBannerView?
+
+    /// Held strongly: this class owns the banner's lifetime.
+    ///
+    /// It used to be `weak`, which meant the only thing keeping a banner alive was the container's
+    /// subview list — so a second `load(in:)` simply added another one. Both stayed registered with
+    /// the page coordinator and both kept their own refresh interval running, doubling the requests
+    /// for a single placement while only the newest was visible.
+    private var bannerView: AUBannerView?
+
+    /// Exactly the constraints this class activated, so retiring a banner cannot deactivate a
+    /// constraint the publisher put on their own container or on its other children.
+    private var ownedConstraints: [NSLayoutConstraint] = []
+
+    /// Identifies what an accepted load was for, so an identical repeat can be coalesced and a
+    /// genuinely different one recognised as an intentional replacement.
+    private struct LoadKey: Equatable {
+        let adConfigId: String
+        let container: ObjectIdentifier
+        let rootViewController: ObjectIdentifier
+        let size: CGSize
+    }
+    private var activeLoadKey: LoadKey?
+
+    /// Bumped by every accepted load and every retirement. Asynchronous callbacks captured by a
+    /// previous banner (`onLoadRequest`, `onAdSizeChanged`) compare against it and stand down, so a
+    /// retired banner can neither drive the current GAM view nor resize the current container.
+    private var loadGeneration: Int = 0
 
     /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
     /// destination, or a custom route). Pass the same token reported to
@@ -86,10 +112,30 @@ public class AURemoteConfigBannerView: VisibleView {
         rootViewController: UIViewController,
         delegate: GoogleMobileAds.BannerViewDelegate? = nil
     ) {
+        let requestedKey = LoadKey(
+            adConfigId: adConfigId,
+            container: ObjectIdentifier(container),
+            rootViewController: ObjectIdentifier(rootViewController),
+            size: size ?? .zero
+        )
+        // An identical repeat is a no-op, not a second banner. React Native re-runs this whenever
+        // any prop changes, and a publisher may call it from a layout pass that fires more than
+        // once; each of those used to leave another live banner behind.
+        if activeLoadKey == requestedKey, bannerView != nil {
+            AUAdTrace.log(placement: adConfigId, load: loadGeneration, event: .loadCoalesced)
+            return
+        }
+        // Anything else is an intentional replacement: retire first, then build.
+        retireCurrentBanner(reason: bannerView == nil ? "first load" : "replaced")
+
         guard let remoteConfig = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
             AULogEvent.logDebug("[AURemoteConfigBannerView] Remote config is nil")
             return
         }
+        activeLoadKey = requestedKey
+        loadGeneration += 1
+        let generation = loadGeneration
+        AUAdTrace.log(placement: adConfigId, load: generation, event: .loadAccepted)
 
         let gadSize: AdSize
 
@@ -172,11 +218,15 @@ public class AURemoteConfigBannerView: VisibleView {
 
         gamBanner.frame = CGRect(origin: .zero, size: gadSize.size)
 
-        bannerView.onLoadRequest = { gamRequest in
+        bannerView.onLoadRequest = { [weak self] gamRequest in
+            // A retired banner's demand callback must not drive a GAM view that is no longer the
+            // one on screen.
+            guard let self, self.loadGeneration == generation else { return }
             guard let request = gamRequest as? Request else {
                 print("[AURemoteConfigBannerView] Failed to unwrap GAM request")
                 return
             }
+            AUAdTrace.log(placement: self.adConfigId, load: generation, event: .googleRequested)
             gamBanner.load(request)
         }
 
@@ -194,20 +244,23 @@ public class AURemoteConfigBannerView: VisibleView {
         containerWidthConstraint.priority = .defaultLow
         let containerHeightConstraint = container.heightAnchor.constraint(equalToConstant: gadSize.size.height)
 
-        NSLayoutConstraint.activate([
+        let created = [
             bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             bannerView.topAnchor.constraint(equalTo: container.topAnchor),
             bannerWidthConstraint,
             bannerHeightConstraint,
             containerWidthConstraint,
             containerHeightConstraint
-        ])
+        ]
+        NSLayoutConstraint.activate(created)
+        ownedConstraints = created
 
         // When GAM serves an ad at a different size than the initially declared slot
         // (e.g. a 300×600 direct campaign against a 300×250 Prebid bid), update the
         // bannerView and container constraints to match the actual rendered size so
         // the ad is neither clipped nor surrounded by blank space.
-        bannerView.onAdSizeChanged = { [weak container] newSize in
+        bannerView.onAdSizeChanged = { [weak self, weak container] newSize in
+            guard let self, self.loadGeneration == generation else { return }
             bannerWidthConstraint.constant = newSize.width
             bannerHeightConstraint.constant = newSize.height
             containerWidthConstraint.constant = newSize.width
@@ -229,7 +282,32 @@ public class AURemoteConfigBannerView: VisibleView {
         load(in: container, size: size, rootViewController: rootViewController, delegate: delegate)
     }
 
+    /// Releases the banner this view owns. Safe to call more than once, and safe to call when no
+    /// banner was ever built. Leaves every other child of the container untouched.
+    @objc public func destroy() {
+        retireCurrentBanner(reason: "disposed")
+    }
+
     // MARK: - Private
+
+    /// Retires the current banner: stops its refresh, deregisters it from the page coordinator,
+    /// removes only the views and constraints this class created, and invalidates any callback a
+    /// previous load left outstanding.
+    private func retireCurrentBanner(reason: String) {
+        loadGeneration += 1
+        NSLayoutConstraint.deactivate(ownedConstraints)
+        ownedConstraints.removeAll()
+        activeLoadKey = nil
+        guard let banner = bannerView else { return }
+        AUAdTrace.log(placement: adConfigId, load: loadGeneration, event: .retired, detail: reason)
+        banner.onLoadRequest = nil
+        banner.onAdSizeChanged = nil
+        // destroy() stops the refresh controller and deregisters from the coordinator; the
+        // removal takes only our own subview out of a container we do not own.
+        banner.destroy()
+        banner.removeFromSuperview()
+        bannerView = nil
+    }
 
     private static let defaultRefreshSeconds = 30
     private static let defaultPrefetchDistancePt = 200
