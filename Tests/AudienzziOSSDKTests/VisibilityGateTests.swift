@@ -280,6 +280,58 @@ final class RefreshTimeVisibilityTests: AudienzzLifecycleTestCase {
         RunLoop.main.run(until: Date().addingTimeInterval(seconds))
     }
 
+    /// Builds a loaded, smart-refresh banner on the active page.
+    private func loadedBanner(in window: UIWindow) -> AUBannerView {
+        let banner = AUBannerView(configId: "", adSize: CGSize(width: 320, height: 50),
+                                  adFormats: [.banner], isLazyLoad: false)
+        banner.frame = CGRect(x: 0, y: 100, width: 320, height: 50)
+        banner.smartRefresh = true
+        window.addSubview(banner)
+        banner.adUnitConfiguration.setAutoRefreshMillis(time: 30_000)
+        banner.createAd(with: AdManagerRequest(), gamBanner: UIView())
+        spin()
+        banner.notifyAdLoadCompleted()
+        return banner
+    }
+
+    func testAPageImpressionClearsAHoldTakenFromAStaleVerdict() {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.isHidden = false
+        let banner = loadedBanner(in: window)
+
+        // Moved away by the layer, so the request-time gate holds the refresh.
+        banner.layer.position = CGPoint(x: banner.layer.position.x, y: -5000)
+        banner.onRefreshDue(.periodicRefresh, banner.refreshController.generation)
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.notVisible))
+
+        // Moved back the same way — again nothing observable fires. The automatic foreground
+        // page impression owns recovery, so `resumeAfterForeground` stands down and this is the
+        // only path left that can clear the hold.
+        banner.layer.position = CGPoint(x: banner.layer.position.x, y: 125)
+        banner.recreateForPage()
+        spin()
+
+        XCTAssertFalse(banner.refreshController.blockReasons.contains(.notVisible),
+                       "a hold taken from a verdict that is no longer true must not outlive the "
+                        + "page transition")
+    }
+
+    func testAPageImpressionDoesNotClearAHoldForAnAdThatIsStillAway() {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.isHidden = false
+        let banner = loadedBanner(in: window)
+
+        banner.layer.position = CGPoint(x: banner.layer.position.x, y: -5000)
+        banner.onRefreshDue(.periodicRefresh, banner.refreshController.generation)
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.notVisible))
+
+        banner.recreateForPage()
+        spin()
+
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.notVisible),
+                      "a page impression does not make an off-screen banner visible")
+    }
+
     func testARefreshIsNotSpentOnAnAdMovedOffscreenByItsLayer() {
         let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
         window.isHidden = false

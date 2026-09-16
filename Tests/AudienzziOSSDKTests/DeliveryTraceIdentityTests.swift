@@ -70,4 +70,24 @@ final class DeliveryTraceIdentityTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(banner.renderedDeliveryId, rendered,
                        "the displayed creative's identity must not follow the running auction")
     }
+
+    func testAFailedReplacementDoesNotBecomeTheRenderedDelivery() {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.isHidden = false
+        let banner = makeBanner(in: window)
+        banner.createAd(with: AdManagerRequest(), gamBanner: UIView())
+        spin()
+        banner.notifyAdLoadCompleted()                 // creative A is on screen
+        let creativeA = banner.renderedDeliveryId
+        XCTAssertNotNil(creativeA)
+
+        banner.reloadAd()                              // delivery B starts
+        spin()
+        XCTAssertNotEqual(banner.pendingDeliveryId, creativeA)
+        banner.notifyAdLoadCompleted(retryableFailure: true)   // Google errors; B never loads
+
+        XCTAssertEqual(banner.renderedDeliveryId, creativeA,
+                       "creative A is still displayed, so its impression belongs to A — not to a "
+                        + "replacement that never arrived")
+    }
 }

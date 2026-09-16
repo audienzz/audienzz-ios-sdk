@@ -103,7 +103,7 @@ class AUBannerHandler: NSObject,
             AUAdTrace.log(placement: $0.tracePlacement ?? $0.configId, delivery: $0.pendingDeliveryId,
                           event: .googleLoaded, visible: $0.isViewRefreshEligible)
         }
-        guard auBannerView?.completeGoogleLoad(retryableFailure: false) == true else { return }
+        guard auBannerView?.completeGoogleLoad(received: true, retryableFailure: false) == true else { return }
         LogEvent("bannerViewDidReceiveAd")
         restoreFromBlankIfNeeded()
 
@@ -145,7 +145,7 @@ class AUBannerHandler: NSObject,
             AUAdTrace.log(placement: $0.tracePlacement ?? $0.configId, delivery: $0.pendingDeliveryId,
                           event: .googleFailed, detail: retryable ? "retryable" : "terminal")
         }
-        guard auBannerView?.completeGoogleLoad(retryableFailure: retryable) == true else { return }
+        guard auBannerView?.completeGoogleLoad(received: false, retryableFailure: retryable) == true else { return }
         LogEvent("didFailToReceiveAdWithError")
         LogEvent(error.localizedDescription)
         restoreFromBlankIfNeeded()

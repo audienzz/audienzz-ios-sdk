@@ -157,6 +157,14 @@ extension AUBannerView {
         if !Audienzz.shared.isAppBackgrounded {
             refreshController.unblock(.appBackground, schedule: false)
         }
+        // A page impression does not make an off-screen banner visible — but it must not inherit a
+        // hold that was recorded from a verdict which is no longer true. The automatic foreground
+        // impression owns recovery and returns early from `resumeAfterForeground`, so without this
+        // a banner held at request time and since moved back stayed blocked with its replacement
+        // pending. Geometry decides, and only clears the reason it can speak for.
+        if isRefreshEligibleNow {
+            refreshController.unblock(.notVisible, schedule: false)
+        }
         guard let request = gamRequest as? AdManagerRequest else { return }
         guard lastRefreshTime != nil else {
             // Never loaded: this banner's first load was deferred because its page wasn't active
@@ -264,16 +272,19 @@ extension AUBannerView {
     /// no request ID: after an expiry, a very late result cannot be distinguished from a newer one.
     /// Unsolicited terminal events belong to the view and must still reach its publisher.
     @nonobjc @discardableResult
-    func completeGoogleLoad(retryableFailure: Bool) -> Bool {
+    func completeGoogleLoad(received: Bool, retryableFailure: Bool) -> Bool {
         guard let load = googleLoad else { return acceptsGoogleEvents }
         googleLoadTimeout?.cancel()
         googleLoadTimeout = nil
         googleLoad = nil
         let current = load.auction == auctionGeneration && screenActive && !refreshController.isDestroyed
         if current {
-            // This creative is the one on screen from now on; its impression belongs to it, not to
-            // whatever auction happens to be running when the impression lands.
-            renderedDeliveryId = pendingDeliveryId
+            // Only a creative Google actually returned becomes the one on screen. A failed
+            // replacement leaves the previous creative displayed, so promoting on every terminal
+            // callback attributed that creative's impression to a delivery that never loaded.
+            if received {
+                renderedDeliveryId = pendingDeliveryId
+            }
             lastRefreshTime = Date()
             refreshController.onRequestCompleted(generationAtRequest: load.refresh, success: !retryableFailure)
         } else {
