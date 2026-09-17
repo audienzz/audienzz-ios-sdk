@@ -40,7 +40,7 @@ final class DeliveryTraceIdentityTests: AudienzzLifecycleTestCase {
         spin()
         guard let first = banner.pendingDeliveryId else { return XCTFail("no delivery started") }
         // The Google load has to terminate before a replacement is admitted.
-        banner.notifyAdLoadCompleted()
+        banner.notifyAdLoadCompleted(rendered: true)
 
         banner.reloadAd()
         spin()
@@ -58,7 +58,7 @@ final class DeliveryTraceIdentityTests: AudienzzLifecycleTestCase {
         banner.createAd(with: AdManagerRequest(), gamBanner: UIView())
         spin()
         // The Google load for the first delivery terminates: that creative is now on screen.
-        banner.notifyAdLoadCompleted()
+        banner.notifyAdLoadCompleted(rendered: true)
         let rendered = banner.renderedDeliveryId
         XCTAssertNotNil(rendered)
 
@@ -71,13 +71,31 @@ final class DeliveryTraceIdentityTests: AudienzzLifecycleTestCase {
                        "the displayed creative's identity must not follow the running auction")
     }
 
+    func testAManuallyReportedNoFillDoesNotBecomeTheRenderedDelivery() {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.isHidden = false
+        let banner = makeBanner(in: window)
+        banner.createAd(with: AdManagerRequest(), gamBanner: UIView())
+        spin()
+        banner.notifyAdLoadCompleted(rendered: true)
+        let creativeA = banner.renderedDeliveryId
+
+        banner.reloadAd()
+        spin()
+        // A no-fill: the documented call for it reports no failure, but nothing rendered either.
+        banner.notifyAdLoadCompleted()
+
+        XCTAssertEqual(banner.renderedDeliveryId, creativeA,
+                       "a no-fill ends the request without replacing the creative on screen")
+    }
+
     func testAFailedReplacementDoesNotBecomeTheRenderedDelivery() {
         let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
         window.isHidden = false
         let banner = makeBanner(in: window)
         banner.createAd(with: AdManagerRequest(), gamBanner: UIView())
         spin()
-        banner.notifyAdLoadCompleted()                 // creative A is on screen
+        banner.notifyAdLoadCompleted(rendered: true)                 // creative A is on screen
         let creativeA = banner.renderedDeliveryId
         XCTAssertNotNil(creativeA)
 

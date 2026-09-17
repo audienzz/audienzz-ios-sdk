@@ -62,12 +62,20 @@ public class AUAdView: VisibleView {
     public var onLoadRequest: ((AnyObject) -> Void)?
 
     /// For custom ad-server views whose terminal callbacks the SDK cannot observe automatically.
-    /// Call once after the ad server finishes loading. No-fill / invalid configuration use false;
-    /// only a transient ad-server failure uses true. Original GAM banners are wired automatically.
-    public func notifyAdLoadCompleted(retryableFailure: Bool = false) {
-        adLoadCompletion?(retryableFailure)
+    /// Call once after the ad server finishes loading. Original GAM banners are wired
+    /// automatically and must not report through this.
+    ///
+    /// - Parameters:
+    ///   - rendered: whether the ad server returned a creative that is now on screen. A no-fill is
+    ///     `false`: it ends the request, but nothing was rendered, and reporting it as rendered
+    ///     attributed the previous creative's impression to a delivery that never arrived.
+    ///   - retryableFailure: `true` only for a transient ad-server failure. A no-fill and a
+    ///     permanent misconfiguration are both `false` — they end the request and wait out the
+    ///     normal interval rather than retrying.
+    public func notifyAdLoadCompleted(rendered: Bool = false, retryableFailure: Bool = false) {
+        adLoadCompletion?(rendered, retryableFailure)
     }
-    internal var adLoadCompletion: ((Bool) -> Void)?
+    internal var adLoadCompletion: ((Bool, Bool) -> Void)?
     /// Fired after every ad load with the actual rendered size GAM chose to serve.
     /// Use this to update your container constraints when the served size differs
     /// from the initially declared slot size (e.g. GAM picks a 300×600 direct ad

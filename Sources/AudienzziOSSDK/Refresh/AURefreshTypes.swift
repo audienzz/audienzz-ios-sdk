@@ -36,8 +36,18 @@ internal enum AURefreshBlockReason: String, CaseIterable {
     /// The banner is not in a window / has been torn down.
     case detached
 
-    /// The banner is out of the refresh-eligible zone of the viewport.
+    /// Native geometry says the banner is out of the refresh-eligible zone. Owned exclusively by
+    /// the SDK's own viewport gate, which is the only thing that may clear it.
     case notVisible
+
+    /// A host that does its own visibility detection says the banner cannot be seen.
+    ///
+    /// Kept separate from ``notVisible`` because the two answer different questions and neither
+    /// can speak for the other. Native geometry cannot see a Flutter or React Native overlay
+    /// drawn above the platform view, so a page transition that recomputed geometry and cleared a
+    /// single shared reason released a host pause it knew nothing about, and the covered banner
+    /// immediately bought another ad.
+    case hostReportedHidden
 }
 
 /// Why a request is being issued. Carried through the request lifecycle for logging and analytics,

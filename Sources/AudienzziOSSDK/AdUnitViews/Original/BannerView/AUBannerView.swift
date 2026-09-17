@@ -110,11 +110,16 @@ public class AUBannerView: AUAdView {
         // moment where being wrong costs money — so a periodic refresh confirms the ad is still
         // eligible at the instant it would be spent. A first load is deliberately exempt: it is
         // allowed to prefetch before the ad is on screen.
-        // Computed from geometry, not from the cached flag: that flag is only as current as the
-        // last observed event, and a view moved by `layer.position` emits none. The read-only form
-        // is used deliberately — the hook-firing one resumes work, which is the wrong thing to do
-        // while deciding whether work is allowed.
-        if reason == .periodicRefresh, smartRefresh, !isRefreshEligibleNow {
+        // Recompute through the transition, not through a read-only check. A bare read told the
+        // truth about geometry but left the cached verdict saying "eligible" while a hold was
+        // recorded against it — so returning on an observed signal produced no false-to-true
+        // transition, nothing cleared the hold, and the banner stayed paused on screen. Going
+        // through `refreshVisibilityNow()` moves both together, which is the property that makes
+        // the hold releasable by the same path that would have prevented it.
+        if reason == .periodicRefresh, smartRefresh {
+            refreshVisibilityNow()
+        }
+        if reason == .periodicRefresh, smartRefresh, !isViewRefreshEligible {
             AULogEvent.logDebug("[AUBannerView] \(configId) — refresh due but no longer visible; holding")
             refreshController.block(.notVisible)
             return
@@ -184,10 +189,8 @@ public class AUBannerView: AUAdView {
     /// the ad is built, and in the remote-config case asynchronously afterwards too.
     private func wireRefreshConfiguration() {
         guard let configuration = adUnitConfiguration as? AUAdUnitConfiguration else { return }
-        adLoadCompletion = { [weak self] retryable in
-            // A publisher reporting a completion that is not a failure means their ad server
-            // finished with a creative; a failure means it did not.
-            _ = self?.completeGoogleLoad(received: !retryable, retryableFailure: retryable)
+        adLoadCompletion = { [weak self] rendered, retryable in
+            _ = self?.completeGoogleLoad(received: rendered, retryableFailure: retryable)
         }
         configuration.autorefreshIntervalObserver = { [weak self] millis in
             self?.refreshController.setIntervalMillis(millis)

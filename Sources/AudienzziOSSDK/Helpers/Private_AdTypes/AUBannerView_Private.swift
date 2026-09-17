@@ -87,13 +87,14 @@ extension AUBannerView {
     ///
     /// Mirrors Android's `AudienzzAdViewHandler.resumeSmartRefresh()`.
     public func resumeSmartRefresh() {
-        clearViewportBlock()
+        refreshController.unblock(.hostReportedHidden, schedule: false)
+        resumeEligibleWork()
     }
 
     /// Viewport pause: this banner is off screen, so a refresh into it would be an impression-less
     /// request. Mirrors Android's `AudienzzAdViewHandler.pauseSmartRefresh()`.
     public func pauseSmartRefresh() {
-        refreshController.block(.notVisible)
+        refreshController.block(.hostReportedHidden)
     }
 
     /// Shared by the viewport gate and its external equivalent.
@@ -157,14 +158,13 @@ extension AUBannerView {
         if !Audienzz.shared.isAppBackgrounded {
             refreshController.unblock(.appBackground, schedule: false)
         }
-        // A page impression does not make an off-screen banner visible — but it must not inherit a
-        // hold that was recorded from a verdict which is no longer true. The automatic foreground
-        // impression owns recovery and returns early from `resumeAfterForeground`, so without this
-        // a banner held at request time and since moved back stayed blocked with its replacement
-        // pending. Geometry decides, and only clears the reason it can speak for.
-        if isRefreshEligibleNow {
-            refreshController.unblock(.notVisible, schedule: false)
-        }
+        // A hold recorded from a verdict that has since stopped being true must not outlive the
+        // transition: the automatic foreground impression owns recovery and returns early from
+        // `resumeAfterForeground`, so this is the only path left that can release it. Recomputing
+        // rather than unblocking directly is what keeps the cached verdict and the hold in step —
+        // and it can only ever clear `.notVisible`, never a host-reported pause the SDK cannot
+        // see behind.
+        refreshVisibilityNow()
         guard let request = gamRequest as? AdManagerRequest else { return }
         guard lastRefreshTime != nil else {
             // Never loaded: this banner's first load was deferred because its page wasn't active
@@ -253,7 +253,12 @@ extension AUBannerView {
               !Audienzz.shared.hasPendingForegroundReimpression else { return false }
         // Prefetch may precede attachment and periodic-refresh visibility. Other gates still apply.
         return !refreshController.blockReasons.contains {
-            reason != .firstLoad || ($0 != .detached && $0 != .notVisible)
+            // A first load may prefetch before the ad is visible or attached. The host-reported
+            // reason is exempt on the same terms as the native one: they are two ways of saying
+            // the same thing, and splitting them must not quietly change when a Flutter or React
+            // Native banner takes its first load.
+            reason != .firstLoad
+                || ($0 != .detached && $0 != .notVisible && $0 != .hostReportedHidden)
         }
     }
 

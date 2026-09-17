@@ -66,22 +66,6 @@ public class VisibleView: UIView {
     /// the initial load still uses the prefetch / ≥20% path.
     internal var isViewRefreshEligible: Bool { isRefreshEligible }
 
-    /// Refresh eligibility computed from the current geometry, firing nothing.
-    ///
-    /// The read-only counterpart to ``refreshVisibilityNow()``, for callers that need the truth
-    /// without the transition hooks — those hooks resume work, which is the wrong thing to do in
-    /// the middle of deciding whether work is allowed.
-    internal var isRefreshEligibleNow: Bool {
-        guard let window = self.window else { return false }
-        let frameInWindow = window.convert(self.bounds, from: self)
-        guard frameInWindow.width > 0, frameInWindow.height > 0 else { return false }
-        let unconcealed = unconcealedRectInWindow(frameInWindow: frameInWindow, window: window)
-        guard let onScreen = onScreenRect(unconcealed: unconcealed, window: window) else { return false }
-        return usesDirectionalRefreshGate
-            ? computeRefreshEligible(frameInWindow: frameInWindow, onScreen: onScreen)
-            : onScreen.height / frameInWindow.height >= 0.2
-    }
-
     /// Recomputes both verdicts from the current geometry, firing the usual transitions.
     ///
     /// The cached flags are only as current as the last signal that happened to be observed, and

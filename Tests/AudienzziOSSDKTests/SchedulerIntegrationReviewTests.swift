@@ -12,7 +12,7 @@ final class SchedulerIntegrationReviewTests: AudienzzLifecycleTestCase {
         // Invalid config yields an immediate Prebid completion without any live ad request.
         view = AUBannerView(configId: "", adSize: CGSize(width: 320, height: 50), adFormats: [.banner], isLazyLoad: false)
         view.setScreen("A")
-        view.onLoadRequest = { [weak self] _ in self?.loads += 1; self?.view.notifyAdLoadCompleted() }
+        view.onLoadRequest = { [weak self] _ in self?.loads += 1; self?.view.notifyAdLoadCompleted(rendered: true) }
     }
     override func tearDown() {
         view.destroy()
@@ -125,17 +125,19 @@ final class SchedulerIntegrationReviewTests: AudienzzLifecycleTestCase {
         view.destroy()
         view = AUBannerView(configId: "", adSize: CGSize(width: 320, height: 50), adFormats: [.banner], isLazyLoad: true)
         view.setScreen("A")
+        // A host reporting the ad hidden, which is a different reason from the one the SDK's own
+        // viewport gate records — and a first load is exempt from both.
         view.pauseSmartRefresh()
         view.onLoadRequest = { [weak self] _ in
             self?.loads += 1
-            self?.view.notifyAdLoadCompleted()
+            self?.view.notifyAdLoadCompleted(rendered: true)
         }
         view.createAd(with: AdManagerRequest(), gamBanner: UIView())
         XCTAssertEqual(loads, 0)
         view.onEnteredPrefetchZone()
         RunLoop.main.run(until: Date().addingTimeInterval(0.1))
         XCTAssertEqual(loads, 1)
-        XCTAssertTrue(view.refreshController.blockReasons.contains(.notVisible))
+        XCTAssertTrue(view.refreshController.blockReasons.contains(.hostReportedHidden))
         XCTAssertTrue(view.refreshController.blockReasons.contains(.detached))
     }
     final class GoogleDelegate: NSObject, BannerViewDelegate {

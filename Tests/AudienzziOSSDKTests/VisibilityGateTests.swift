@@ -290,7 +290,7 @@ final class RefreshTimeVisibilityTests: AudienzzLifecycleTestCase {
         banner.adUnitConfiguration.setAutoRefreshMillis(time: 30_000)
         banner.createAd(with: AdManagerRequest(), gamBanner: UIView())
         spin()
-        banner.notifyAdLoadCompleted()
+        banner.notifyAdLoadCompleted(rendered: true)
         return banner
     }
 
@@ -330,6 +330,56 @@ final class RefreshTimeVisibilityTests: AudienzzLifecycleTestCase {
 
         XCTAssertTrue(banner.refreshController.blockReasons.contains(.notVisible),
                       "a page impression does not make an off-screen banner visible")
+    }
+
+    func testAHoldTakenAtRequestTimeIsReleasedByAnOrdinaryReturn() {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.isHidden = false
+        let banner = loadedBanner(in: window)
+
+        banner.layer.position = CGPoint(x: banner.layer.position.x, y: -5000)
+        banner.onRefreshDue(.periodicRefresh, banner.refreshController.generation)
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.notVisible))
+
+        // Back on screen through an ordinary, observed frame change. If the hold were recorded
+        // without moving the cached verdict, there would be no false-to-true transition here and
+        // nothing would ever release it.
+        banner.frame = CGRect(x: 0, y: 100, width: 320, height: 50)
+        spin()
+
+        XCTAssertFalse(banner.refreshController.blockReasons.contains(.notVisible),
+                       "an ordinary return must release a hold taken at request time")
+    }
+
+    func testAPageImpressionDoesNotReleaseAHostReportedPause() {
+        // Flutter and React Native report visibility themselves; native geometry cannot see an
+        // overlay drawn above the platform view. A page transition recomputes geometry, and must
+        // not read that as permission to resume something it cannot see behind.
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.isHidden = false
+        let banner = loadedBanner(in: window)
+
+        banner.pauseSmartRefresh()
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.hostReportedHidden))
+
+        banner.recreateForPage()
+        spin()
+
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.hostReportedHidden),
+                      "only the host that reported the pause may clear it")
+    }
+
+    func testTheHostResumeClearsItsOwnPause() {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.isHidden = false
+        let banner = loadedBanner(in: window)
+
+        banner.pauseSmartRefresh()
+        banner.resumeSmartRefresh()
+        spin()
+
+        XCTAssertFalse(banner.refreshController.isBlocked,
+                       "the host's own resume must release it")
     }
 
     func testARefreshIsNotSpentOnAnAdMovedOffscreenByItsLayer() {

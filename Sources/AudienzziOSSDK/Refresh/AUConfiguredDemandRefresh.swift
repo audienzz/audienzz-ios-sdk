@@ -46,7 +46,7 @@ internal final class AUConfiguredDemandRefresh {
         self.operation = operation
         guard !controller.isDestroyed, !controller.hasRequestInFlight else { return nil }
         let blocked = controller.blockReasons.contains {
-            completed || ($0 != .detached && $0 != .notVisible)
+            completed || ($0 != .detached && $0 != .notVisible && $0 != .hostReportedHidden)
         }
         guard active, !blocked, !Audienzz.shared.isAppBackgrounded,
               !Audienzz.shared.hasPendingForegroundReimpression else {
