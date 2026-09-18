@@ -160,7 +160,9 @@ The correct prefetch mechanism depends on the scroll container your ad lives in:
 
 **Why they differ:** In a plain `UIScrollView` all views are laid out in the hierarchy upfront. The SDK observes `contentOffset` via KVO and can detect "this view is now within N pt of the visible area" at exactly the right scroll position.
 
-In a `UITableView` or `UICollectionView`, cells are created and laid out on-demand — just before they scroll into view. By the time `createAd()` is called from `cellForRow(at:)`, the cell is already within ~a row height of the viewport regardless of `prefetchMarginPoints`.
+In a `UITableView` or `UICollectionView`, cells are created and laid out on-demand — just before they scroll into view. By the time `createAd()` is called from `cellForRow(at:)`, the cell is already within ~a row height of the viewport.
+
+**More precisely, the margin saturates rather than stops working.** Raising it above the dequeue distance changes nothing — the lead time is capped by when UIKit creates the cell, so 200, 600 and 2000 pt behave identically. Lowering it still works: `prefetchMarginPoints = 0` inside a cell does exactly what it says, and suppresses auctions for cells the reader dequeues but never scrolls to. One consequence worth knowing: at a saturated margin, `isLazyLoad = true` and `isLazyLoad = false` fetch at effectively the same moment.
 
 By default, lazy loading starts **200 pt before** the view enters the viewport. You can customise this with `prefetchMarginPoints`:
 
@@ -184,7 +186,7 @@ bannerView.prefetchMarginPoints = 0
 
 #### UITableView / UICollectionView cells
 
-Use `isLazyLoad = false` to load immediately when the cell is created, and control how many cells ahead are pre-created with the table/collection prefetch APIs:
+To start the auction earlier in a cell, the only real lever is making the cell exist earlier — the table/collection prefetch APIs. Setting `isLazyLoad = false` is equivalent in timing to leaving lazy loading on with the default margin; use it when you want the intent to be explicit:
 
 ```swift
 // In cellForRow(at:) — load immediately on cell creation
@@ -192,12 +194,38 @@ let bannerView = AUBannerView(
     configId: PREBID_CONFIG_ID,
     adSize: CGSize(width: 320, height: 50),
     adFormats: [.banner],
-    isLazyLoad: false  // Load immediately — prefetchMarginPoints has no effect in cells
+    isLazyLoad: false  // Load on cell creation — same timing as a saturated prefetch margin
 )
 
 // UICollectionView: enable prefetching so cells are created further ahead of the viewport
 collectionView.isPrefetchingEnabled = true
 ```
+
+#### React Native and other cross-platform hosts
+
+The saturation above applies to **native** `UITableView`/`UICollectionView` only. React Native's `FlatList` is JS-level windowing over a plain `RCTScrollView` — not a `UITableView` or `UICollectionView` — so the ad view is mounted well ahead of the viewport and the distance-based margin applies normally. There, `prefetchMarginPoints` is the effective lever, and the 200 pt default is usually what binds.
+
+If raising it does not move the auction earlier, the ad component is not mounting early enough: raise the list's `windowSize` / `initialNumToRender` rather than the margin. Saturation does return if the list recycles native views (e.g. FlashList) or if `removeClippedSubviews` is enabled on iOS, where it is off by default.
+
+#### Remote-config banners
+
+`AURemoteConfigBannerView` resolves both delivery settings **publisher override → ad config → SDK default**:
+
+| Setting | Publisher override | Ad config field | Default |
+|---|---|---|---|
+| Lazy loading | `setLazyLoadOverride(_:)` | `lazyLoad` | `false` — auction starts at `load(...)` |
+| Prefetch margin | `setPrefetchMarginPointsOverride(_:)` | `prefetchDistancePt` | `200` pt |
+
+```swift
+let banner = AURemoteConfigBannerView(adConfigId: "118")
+banner.lazyLoadOverride = true              // defer the auction to the viewport
+banner.prefetchMarginPointsOverride = 600   // …starting 600 pt ahead
+banner.load(in: container, rootViewController: self)
+```
+
+Set them **before** `load(...)`; the values are read when the banner is built. Changing one and loading again replaces the banner rather than coalescing, so the change takes effect. `clearLazyLoadOverride()` / `clearPrefetchMarginPointsOverride()` hand control back to the ad config.
+
+> **Default is eager.** A remote-config banner auctions as soon as `load(...)` runs, wherever the slot sits. Set `lazyLoad: true` on the ad config to defer a placement to the viewport without an app release.
 
 ## Smart Refresh
 
@@ -365,7 +393,7 @@ Ad view used for displaying banner and video ads.
 | `bannerParameters` | `AUBannerParameters?`       | Banner ad parameters (optional).                 |
 | `adUnitConfiguration` | `AUAdUnitConfigurationType!`| Ad unit configuration object.                 |
 | `onLoadRequest`    | `((AnyObject) -> Void)?`    | Callback triggered when a GAM request is ready.  |
-| `prefetchMarginPoints` | `CGFloat`              | Distance in points before the view enters the viewport that starts the Prebid demand fetch. Only effective when `isLazyLoad = true`. **Default:** `200`. No effect inside `UITableView`/`UICollectionView` cells — use `isLazyLoad = false` there. |
+| `prefetchMarginPoints` | `CGFloat`              | Distance in points before the view enters the viewport that starts the Prebid demand fetch. Only effective when `isLazyLoad = true`. **Default:** `200`. Inside `UITableView`/`UICollectionView` cells the margin saturates — raising it has no effect, lowering it (e.g. `0`) still does. See [Prefetch Margin](#prefetch-margin). |
 | `smartRefresh`     | `Bool`                      | When `true`, pauses auto-refresh while the ad is off-screen and force-refreshes when it returns to viewport if the refresh interval has elapsed. **Default:** `false`. |
 
 **Constructors:**

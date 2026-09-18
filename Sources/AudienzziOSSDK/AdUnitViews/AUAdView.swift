@@ -134,7 +134,8 @@ public class AUAdView: VisibleView {
     // prefetchMarginPoints is declared and implemented in VisibleView.
     // See VisibleView.prefetchMarginPoints for the full KDoc.
     // Defaults to 200 pt. Set to 0 for exact-visibility loading.
-    // Not effective in UITableView / UICollectionView — use isLazyLoad = false there.
+    // Inside UITableView/UICollectionView cells the margin saturates: raising it above the
+    // dequeue distance has no effect, lowering it (e.g. 0) still does. See the README.
 
     /// Pause auto-refresh when the ad scrolls off-screen and resume when it returns.
     /// Defaults to `false`. When `true`, pairs with the refresh interval to avoid refreshing
