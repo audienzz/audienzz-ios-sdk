@@ -414,3 +414,54 @@ final class RefreshTimeVisibilityTests: AudienzzLifecycleTestCase {
                       "and it must record why it held")
     }
 }
+
+/// A slot that is added to the hierarchy before it has a size.
+///
+/// `UITableView`/`UICollectionView` configure a cell's contents before laying it out, so the ad
+/// exists with a 0x0 frame at the moment the first visibility check runs. Nothing about that view
+/// scrolls, so scroll observation alone never looked again and the slot stayed blank for as long as
+/// the cell was on screen.
+@MainActor
+final class DeferredLayoutLoadTests: AudienzzLifecycleTestCase {
+
+    private func settle() {
+        RunLoop.main.run(until: Date().addingTimeInterval(0.15))
+    }
+
+    func testASlotSizedAfterItIsAddedStillPrefetches() {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        let cell = UIView(frame: CGRect(x: 0, y: 100, width: 390, height: 250))
+        window.addSubview(cell)
+        window.isHidden = false
+
+        let ad = VisibilityGateTests.ProbeView(frame: .zero)   // no size yet
+        ad.prefetchMarginPoints = 0
+        cell.addSubview(ad)
+        settle()
+        XCTAssertEqual(ad.prefetchCount, 0, "nothing to prefetch for while it has no size")
+
+        // The layout pass the cell performs after configuring its contents.
+        ad.frame = CGRect(x: 0, y: 0, width: 320, height: 50)
+        settle()
+
+        XCTAssertEqual(ad.prefetchCount, 1,
+                       "being sized is what makes the slot real; it must not wait for a scroll")
+    }
+
+    func testAZeroSizedSuperviewThatDoesNotClipDoesNotHideTheAd() {
+        // Counter-intuitive, and the ancestor walk depends on it: a UIView with empty bounds still
+        // draws its subviews unless it clips. An ad inside an unlaid-out, non-clipping cell is
+        // genuinely on screen, so refusing to prefetch there would lose a real impression.
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        let cell = UIView(frame: .zero)
+        window.addSubview(cell)
+        window.isHidden = false
+
+        let ad = VisibilityGateTests.ProbeView(frame: CGRect(x: 0, y: 0, width: 320, height: 50))
+        ad.prefetchMarginPoints = 0
+        cell.addSubview(ad)
+        settle()
+
+        XCTAssertEqual(ad.prefetchCount, 1, "the ad is drawn and visible, so it may prefetch")
+    }
+}
