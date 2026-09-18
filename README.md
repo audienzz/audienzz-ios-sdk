@@ -162,7 +162,13 @@ The correct prefetch mechanism depends on the scroll container your ad lives in:
 
 In a `UITableView` or `UICollectionView`, cells are created and laid out on-demand — just before they scroll into view. By the time `createAd()` is called from `cellForRow(at:)`, the cell is already within ~a row height of the viewport.
 
-**More precisely, the margin saturates rather than stops working.** Raising it above the dequeue distance changes nothing — the lead time is capped by when UIKit creates the cell, so 200, 600 and 2000 pt behave identically. Lowering it still works: `prefetchMarginPoints = 0` inside a cell does exactly what it says, and suppresses auctions for cells the reader dequeues but never scrolls to. One consequence worth knowing: at a saturated margin, `isLazyLoad = true` and `isLazyLoad = false` fetch at effectively the same moment.
+**More precisely, the margin saturates rather than stops working.** Raising it above the dequeue distance changes nothing — the lead time is capped by when UIKit creates the cell, so 200, 600 and 2000 pt behave identically. Lowering it still works: `prefetchMarginPoints = 0` inside a cell does exactly what it says, and suppresses auctions for cells the reader dequeues but never scrolls to.
+
+Lazy and eager loading **converge** in a cell, but they are not equivalent. They coincide only when the container dequeues the cell inside the margin *and* the ad is eligible at that moment. They diverge when:
+
+- the margin is `0` or smaller than the dequeue distance — lazy then waits and eager does not;
+- the table or collection view is configured to prefetch further ahead, which can put a dequeued cell outside the margin;
+- the slot is not yet eligible when the cell appears — lazy re-evaluates, eager has already requested.
 
 By default, lazy loading starts **200 pt before** the view enters the viewport. You can customise this with `prefetchMarginPoints`:
 
@@ -186,7 +192,7 @@ bannerView.prefetchMarginPoints = 0
 
 #### UITableView / UICollectionView cells
 
-To start the auction earlier in a cell, the only real lever is making the cell exist earlier — the table/collection prefetch APIs. Setting `isLazyLoad = false` is equivalent in timing to leaving lazy loading on with the default margin; use it when you want the intent to be explicit:
+To start the auction earlier in a cell, the main lever is making the cell exist earlier — the table/collection prefetch APIs. `isLazyLoad = false` additionally removes the viewport condition entirely, which matters when the cell is dequeued outside the margin or is not yet eligible:
 
 ```swift
 // In cellForRow(at:) — load immediately on cell creation
@@ -213,7 +219,7 @@ If raising it does not move the auction earlier, the ad component is not mountin
 
 | Setting | Publisher override | Ad config field | Default |
 |---|---|---|---|
-| Lazy loading | `setLazyLoadOverride(_:)` | `lazyLoad` | `false` — auction starts at `load(...)` |
+| Lazy loading | `setLazyLoadOverride(_:)` | `lazyLoad` | `true` — the auction waits for the viewport |
 | Prefetch margin | `setPrefetchMarginPointsOverride(_:)` | `prefetchDistancePt` | `200` pt |
 
 ```swift
@@ -225,7 +231,7 @@ banner.load(in: container, rootViewController: self)
 
 Set them **before** `load(...)`; the values are read when the banner is built. Changing one and loading again replaces the banner rather than coalescing, so the change takes effect. `clearLazyLoadOverride()` / `clearPrefetchMarginPointsOverride()` hand control back to the ad config.
 
-> **Default is eager.** A remote-config banner auctions as soon as `load(...)` runs, wherever the slot sits. Set `lazyLoad: true` on the ad config to defer a placement to the viewport without an app release.
+> **Default is lazy.** A remote-config banner waits until the slot comes within the prefetch margin. This is deliberate: a publisher who builds several below-fold placements on entering an article would otherwise buy fills the reader may never approach, and an unrendered fill cannot become an impression. Set `lazyLoad: false` on the ad config, or `lazyLoadOverride = false`, for slots that are always on screen.
 
 ## Smart Refresh
 

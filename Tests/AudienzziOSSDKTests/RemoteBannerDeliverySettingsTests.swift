@@ -23,6 +23,12 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
       "prebidConfig": { "placementId": "placement", "adSizes": ["320x50"] }
     },
     {
+      "id": "configured-eager",
+      "config": { "adType": "banner", "refreshTimeSeconds": 30, "lazyLoad": false },
+      "gamConfig": { "adUnitPath": "/1234/unit", "adSizes": ["320x50"] },
+      "prebidConfig": { "placementId": "placement", "adSizes": ["320x50"] }
+    },
+    {
       "id": "configured-lazy",
       "config": { "adType": "banner", "refreshTimeSeconds": 30, "lazyLoad": true, "prefetchDistancePt": 600 },
       "gamConfig": { "adUnitPath": "/1234/unit", "adSizes": ["320x50"] },
@@ -71,8 +77,8 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
 
     func testAnAdConfigThatSaysNothingGetsTheSdkDefaults() {
         let view = AURemoteConfigBannerView(adConfigId: "unconfigured")
-        XCTAssertFalse(view.resolvedLazyLoad(for: config("unconfigured")),
-                       "remote-config banners auction at load() unless something asks otherwise")
+        XCTAssertTrue(view.resolvedLazyLoad(for: config("unconfigured")),
+                      "remote-config banners wait for the viewport unless something asks otherwise")
         XCTAssertEqual(view.resolvedPrefetchMarginPoints(for: config("unconfigured")), 200)
     }
 
@@ -114,11 +120,26 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(built?.prefetchMarginPoints, 750)
     }
 
-    func testAnUnconfiguredPlacementBuildsAnEagerBanner() {
+    func testAnUnconfiguredPlacementBuildsALazyBanner() {
         let view = AURemoteConfigBannerView(adConfigId: "unconfigured")
         view.load(in: container, size: CGSize(width: 320, height: 50), rootViewController: host)
+        XCTAssertTrue(banner()?.isLazyLoad ?? false,
+                      "with nothing configured the banner must wait for the viewport")
+    }
+
+    func testAPublisherCanStillChooseEagerLoading() {
+        let view = AURemoteConfigBannerView(adConfigId: "unconfigured")
+        view.lazyLoadOverride = false
+        view.load(in: container, size: CGSize(width: 320, height: 50), rootViewController: host)
         XCTAssertFalse(banner()?.isLazyLoad ?? true,
-                       "with nothing configured the banner must not wait for the viewport")
+                       "eager loading must remain reachable as an explicit choice")
+    }
+
+    func testAnAdConfigCanStillChooseEagerLoading() {
+        let view = AURemoteConfigBannerView(adConfigId: "configured-eager")
+        view.load(in: container, size: CGSize(width: 320, height: 50), rootViewController: host)
+        XCTAssertFalse(banner()?.isLazyLoad ?? true,
+                       "a placement must be switchable to eager from the backend alone")
     }
 
     // MARK: - Changing a setting is not coalesced away
@@ -128,16 +149,16 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
         let size = CGSize(width: 320, height: 50)
         view.load(in: container, size: size, rootViewController: host)
         let first = banner()
-        XCTAssertEqual(first?.isLazyLoad, false)
+        XCTAssertEqual(first?.isLazyLoad, true)
 
         // Same container, same size — identical in every respect except the delivery setting.
-        view.lazyLoadOverride = true
+        view.lazyLoadOverride = false
         view.load(in: container, size: size, rootViewController: host)
 
         let second = banner()
         XCTAssertNotNil(second)
         XCTAssertFalse(second === first, "the load must not be coalesced into the old banner")
-        XCTAssertEqual(second?.isLazyLoad, true)
+        XCTAssertEqual(second?.isLazyLoad, false)
         XCTAssertEqual(container.subviews.compactMap { $0 as? AUBannerView }.count, 1,
                        "the predecessor must be retired, not left alongside")
     }
