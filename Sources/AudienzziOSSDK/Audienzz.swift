@@ -463,6 +463,22 @@ public class Audienzz: NSObject {
         notifyScreenResumed(name as AnyObject, name: name)
     }
 
+    /// Report a screen whose identity and analytics name are different things.
+    ///
+    /// `pageId` identifies the *page instance* and is matched by value against a banner's
+    /// `setScreen(_:)`; `name` is what analytics records. They are separated because a name legit-
+    /// imately repeats — two article screens are both "article" — while ownership must not. Passing
+    /// the name as both, which ``pageImpression(_:)-(String)`` does, makes the second article's page
+    /// impression recreate the first article's banners instead of releasing them.
+    ///
+    /// Host bridges mint the id per route instance. A native app with distinct view controllers
+    /// should keep using ``pageImpression(_:name:)`` and let identity be the controller.
+    @objc(pageImpressionWithPageId:name:)
+    public func pageImpression(pageId: String, name: String) {
+        AULogEvent.logDebug("[Audienzz][pageImpression] pageId=\"\(pageId)\" name=\"\(name)\"")
+        notifyScreenResumed(pageId as NSString, name: name)
+    }
+
     /// Single sink for the manual page-impression API: page impression + the page-scoped ad
     /// coordinator. Takes any screen token (a `UIViewController` or a name).
     ///
