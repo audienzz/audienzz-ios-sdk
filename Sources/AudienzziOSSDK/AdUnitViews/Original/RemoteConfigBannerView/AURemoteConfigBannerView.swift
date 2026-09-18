@@ -64,6 +64,15 @@ public class AURemoteConfigBannerView: VisibleView {
     /// Screen token applied to the underlying `AUBannerView` once it's built (see `setScreen`).
     private var pendingScreenKey: AnyObject?
 
+    /// Publisher state requested before the inner banner existed.
+    ///
+    /// Remote config arrives asynchronously, so a host can legitimately stop or cover this banner
+    /// while `bannerView` is still nil. Forwarding through an optional silently dropped those
+    /// calls, and the banner built afterwards held neither — so a banner the publisher had stopped
+    /// went on refreshing, and a reported cover was never applied.
+    private var pendingPublisherStop = false
+    private var pendingHostCover = false
+
     /// Held strongly: this class owns the banner's lifetime.
     ///
     /// It used to be `weak`, which meant the only thing keeping a banner alive was the container's
@@ -119,23 +128,27 @@ public class AURemoteConfigBannerView: VisibleView {
     /// This used to forward to the viewport pause, so scrolling the banner back on screen silently
     /// undid it. Use `pauseSmartRefresh()` for a visibility pause; that is what the bridges report.
     @objc public func stopAutoRefresh() {
+        pendingPublisherStop = true
         bannerView?.adUnitConfiguration.stopAutoRefresh()
     }
 
     /// Clears the publisher pause. Refresh only actually resumes once nothing else is holding it
     /// (the banner is on the active page, visible, and the app is in the foreground).
     @objc public func resumeAutoRefresh() {
+        pendingPublisherStop = false
         bannerView?.adUnitConfiguration.resumeAutoRefresh()
     }
 
     /// Viewport pause, for view layers that do their own visibility detection (React Native,
     /// Flutter). Independent of the publisher pause above.
     @objc public func pauseSmartRefresh() {
+        pendingHostCover = true
         bannerView?.pauseSmartRefresh()
     }
 
     /// Viewport resume. Clears only the visibility reason.
     @objc public func resumeSmartRefresh() {
+        pendingHostCover = false
         bannerView?.resumeSmartRefresh()
     }
 
@@ -276,6 +289,10 @@ public class AURemoteConfigBannerView: VisibleView {
             gamView: gamBanner
         )
 
+        // Before createAd: a stop requested while config was resolving must be in place before the
+        // banner can issue its first request.
+        applyPendingPublisherState(to: bannerView)
+
         bannerView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
 
         gamBanner.frame = CGRect(origin: .zero, size: gadSize.size)
@@ -376,6 +393,19 @@ public class AURemoteConfigBannerView: VisibleView {
         banner.destroy()
         banner.removeFromSuperview()
         bannerView = nil
+    }
+
+    /// Applies whatever the host asked for while the inner banner was still being built.
+    ///
+    /// The stop goes on first, before `createAd` can request: installing it afterwards would let an
+    /// eager banner issue one request the publisher had already stopped.
+    private func applyPendingPublisherState(to banner: AUBannerView) {
+        if pendingPublisherStop {
+            banner.adUnitConfiguration.stopAutoRefresh()
+        }
+        if pendingHostCover {
+            banner.pauseSmartRefresh()
+        }
     }
 
     /// Resolved lazy-load setting: publisher override, then the ad config, then the SDK default.
