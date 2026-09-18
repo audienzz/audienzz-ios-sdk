@@ -25,6 +25,12 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     private let adViewID = UUID().uuidString
     private var analyticsAdUnitPath: String?
     private var recordedImpression = false
+    /// Backstop for "at most one discard per load". The primary guarantee is that every discard
+    /// site clears ``loadedAd`` immediately after reporting, so the nil check already rejects a
+    /// second report; this flag keeps that true if a future release path forgets to clear it. It
+    /// is deliberately not independently covered by a test — no reachable sequence currently
+    /// exercises it alone.
+    private var discardReported = false
     // Google keeps its delegate weak. Keep the owner until the presentation terminates.
     private var presentationOwner: AURemoteConfigInterstitial?
 
@@ -114,10 +120,15 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         guard !loading, !presenting, !isReady else {
             completion(.failure(AURemoteConfigInterstitialError.busy)); return
         }
+        // Reaching here with inventory in hand means it aged out: the guard above already
+        // established that nothing is presenting, so `isReady` can only be false because the
+        // hour-long GAM lifetime elapsed. That response was filled and never seen.
+        reportDiscardIfUnused("expired")
         loadedAd = nil
         loadedAt = nil
         analyticsAdUnitPath = nil
         recordedImpression = false
+        discardReported = false
         generation += 1
         let token = generation
         loading = true
@@ -175,6 +186,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         case .success(let ad):
             loadedAd = ad
             loadedAt = now()
+            discardReported = false
             ad.delegate = self
             emit("loaded")
             callback?.finish(.success(()))
@@ -214,23 +226,58 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
 
     private func reportPresentationError(_ error: Error) {
         emit("showFailed", error: error)
+        reportDiscardIfUnused("presentationFailed")
         loadedAd = nil
         loadedAt = nil
         onPresentationError?(error as NSError)
     }
 
     /// Cancels a preload. An on-screen ad keeps its owner until its terminal delegate callback.
-    public func destroy() {
+    @objc public func destroy() {
+        destroy(reason: "disposed")
+    }
+
+    /// As ``destroy()``, but records *why* held inventory is being released.
+    ///
+    /// A bridge that tears an owner down in order to build its successor knows that is a
+    /// replacement; from inside this class it is indistinguishable from an ordinary disposal.
+    /// Only the discard reason changes — teardown is identical.
+    @objc public func destroy(reason: String) {
         guard !presenting else { emit("disposeDeferred"); return }
         generation += 1
         loading = false
         let callback = completion
         completion = nil
         emit("disposed")
+        reportDiscardIfUnused(reason)
         loadedAd = nil
         loadedAt = nil
         interstitialAdUnit = nil
         callback?.finish(.failure(AURemoteConfigInterstitialError.cancelled))
+    }
+
+    /// Reports, at most once per load, that inventory which loaded successfully was released
+    /// without ever recording an impression.
+    ///
+    /// This is the event that makes the load-to-impression gap visible from inside the SDK:
+    /// `loaded` without a matching `impression` is otherwise silent, and expiry in particular was
+    /// only ever evaluated lazily inside `isReady`, so an ad could age out with nothing recorded
+    /// anywhere.
+    ///
+    /// It deliberately does not fire for a load that failed (there was no inventory) or for
+    /// inventory that already recorded an impression (it was used).
+    ///
+    /// It is a diagnostic, not a billing record. It counts what this SDK handed to, and took back
+    /// from, the ad server — not Ad Manager's responses-served or render rate, which are measured
+    /// server-side across demand sources this SDK cannot see. Use it to find *which* placements
+    /// and *which* reasons dominate, then confirm magnitude in Ad Manager reporting.
+    ///
+    /// A terminal event is not guaranteed: if the process is killed while inventory is held,
+    /// nothing is emitted for it, so these counts are a lower bound.
+    private func reportDiscardIfUnused(_ reason: String) {
+        guard loadedAd != nil, !recordedImpression, !discardReported else { return }
+        discardReported = true
+        emit("discardedWithoutImpression", reason: reason)
     }
 
     /// Use the same clickstream sink/schema as other native ad units. Auction and render are
@@ -270,7 +317,8 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         onLifecycleEvent?(values)
     }
 
-    internal func finishPresentation() {
+    internal func finishPresentation(discardReason: String? = nil) {
+        if let discardReason { reportDiscardIfUnused(discardReason) }
         presenting = false
         if Self.activePresentation === self { Self.activePresentation = nil }
         loadedAd = nil
@@ -304,13 +352,15 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     public func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         guard owns(ad) else { return }
         emit("dismissed")
-        finishPresentation()
+        // Presented and dismissed with no impression callback in between: the creative was on
+        // screen but Google never counted it. Distinct from a presentation that failed outright.
+        finishPresentation(discardReason: "dismissedWithoutImpression")
         delegate?.adDidDismissFullScreenContent?(ad)
     }
     public func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         guard owns(ad) else { return }
         emit("showFailed", error: error)
-        finishPresentation()
+        finishPresentation(discardReason: "presentationFailed")
         onPresentationError?(error as NSError)
         delegate?.ad?(ad, didFailToPresentFullScreenContentWithError: error)
     }
