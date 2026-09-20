@@ -10,7 +10,7 @@ The implementation includes lazy loading functionality to optimize application p
 
 > ### ⚠️ Important
 >
-> - **Screen tracking is automatic.** The SDK tracks screens for you (navigation pushes, tab changes, presented controllers) — no per-screen code. It powers analytics page impressions and screen-aware Smart Refresh. Opt out with `Audienzz.shared.autoScreenTracking = false`, or report screens it can't see (e.g. SwiftUI) with `onScreenResumed("routeKey")`. See [Screen tracking](#step-2--screen-tracking-automatic).
+> - **You report every screen.** Call `Audienzz.shared.pageImpression(...)` on every screen, sheet or popup that can show an ad — including ad-free destinations, because reporting those is what releases the previous screen's banners. There is no automatic tracking: it was removed so that every platform behaves the same way, and so that a screen the SDK cannot see (SwiftUI, a custom router) is not a special case. See [Screen reporting](#step-2--screen-reporting).
 > - **Smart Refresh v2 is opt-in.** The screen-aware refresh model (directional viewport gate + pause/reload on screen navigation) is **off by default** — the classic viewport-aware refresh runs unless you enable it via the backend `smartRefreshV2` flag or `Audienzz.shared.smartRefreshV2Override = true`. See [Smart Refresh](#smart-refresh).
 
 ## How screens & ads work (read this first)
@@ -19,19 +19,21 @@ The SDK is **screen-aware**: it knows which screen is active and which ads belon
 each ad's lifecycle (page impressions + smart refresh) for you. Understanding this model is the key
 to integrating correctly.
 
-- **A screen** is a `UIViewController` — navigation pushes, tab changes, and presented controllers
-  are tracked **automatically** (see [Screen tracking](#step-2--screen-tracking-automatic)); you
-  write no per-screen code. Opt out with `Audienzz.shared.autoScreenTracking = false`.
+- **A screen** is whatever you report: a `UIViewController`, a SwiftUI destination, a sheet. You
+  tell the SDK when one becomes current with `Audienzz.shared.pageImpression(...)` — see
+  [Screen reporting](#step-2--screen-reporting).
 - **An ad belongs to the screen it is placed in.** Each banner resolves its host view controller by
   walking the responder chain, and screens are matched by **object identity**, so two tabs, or two
   instances of the same screen class, are distinct. The host is pinned once resolved, so the
-  association never drifts.
+  association never drifts. When the responder chain cannot distinguish your screens (SwiftUI, or
+  several screens in one controller), tag each banner with the same key you report:
+  `banner.setScreen("home")`.
 - **Lifecycle:** when a screen becomes active, its banners (re)load; when you leave it, they pause;
   returning reloads them (with Smart Refresh v2). This stops off-screen slots from auctioning and
   gives each visit a fresh, viewable ad.
-- **Screens the SDK can't infer** (SwiftUI, a custom navigation model) — report them by route key:
-  `Audienzz.shared.onScreenResumed("home")`, and (for screen-aware reload) tag each banner on that
-  screen with the same key via `banner.setScreen("home")`. See [Screen tracking](#step-2--screen-tracking-automatic).
+- **Report ad-free destinations too.** A settings screen with no ads still has to be reported —
+  that report is what releases the banners of the screen the reader just left. Skipping it leaves
+  them auctioning for a screen nobody is looking at.
 
 ## Underlying Technologies
 
@@ -261,7 +263,7 @@ Smart Refresh v2 refines the model in two ways. It is **off by default**; when d
 
 **1. Directional visibility gate.** A refresh runs only while the ad's **top edge is fully on screen** and **at least 50% of the ad is visible**. It pauses the moment the top scrolls off (even 1px) or more than half the ad drops below the fold — a stricter, less "wasteful" rule than a plain visible-percentage threshold. The **initial load is unaffected** (the ad still loads as early as possible via lazy/prefetch).
 
-**2. Screen-aware pause & reload.** Refresh is matched to the screen (view controller) the ad lives on. When you open a new screen, the previous screen's banners **pause**; when you navigate back — a new page impression — that screen's banners **reload** with a fresh ad. This is driven by [automatic screen tracking](#step-2--screen-tracking-automatic), so no per-screen or per-ad wiring is needed.
+**2. Screen-aware pause & reload.** Refresh is matched to the screen (view controller) the ad lives on. When you open a new screen, the previous screen's banners **pause**; when you navigate back — a new page impression — that screen's banners **reload** with a fresh ad. This is driven by your `pageImpression(...)` calls, so no per-ad wiring is needed.
 
 The scroll-off/scroll-back timer is unchanged (stale-aware, respecting your refresh interval); only **screen navigation** forces an immediate reload.
 
@@ -286,7 +288,7 @@ viewability tracking yourself. The only integration step is one call per ad-bear
 
 | Event | When it fires |
 |---|---|
-| `pageImpression` | A screen showing ads appears/resumes (you trigger this via `onScreenResumed`) |
+| `pageImpression` | A screen showing ads appears/resumes (you trigger this via `pageImpression`) |
 | `bidRequest` | A Prebid bid request is sent for a slot (also on each auto-refresh) |
 | `bidResponse` | Prebid returns a result |
 | `bidWon` | A Prebid bid wins — carries `cpm`, `currency`, `creative_id`, `auction_id`, `ad_id`, `bidder_code` |
@@ -303,55 +305,60 @@ Banner, interstitial and rewarded ads on the Original API are all covered.
 Analytics is keyed on your **Company ID** (provided by Audienzz), supplied when you initialize the
 SDK. Nothing is reported until initialization succeeds. See [Initialize SDK](#initialize-sdk).
 
-### Step 2 — Screen tracking (automatic)
+### Step 2 — Screen reporting
 
-**You don't need to write any per-screen code.** Once the SDK is configured it observes view-
-controller appearance and fires a `pageImpression` (with a fresh page-impression id that tags all ad
-events on that visit). Navigation pushes/pops, tab changes, and presented controllers are each
-tracked as distinct screens, and container controllers (navigation/tab/split/page) and alerts are
-filtered out. This same signal drives screen-aware
+**You report every screen.** Call `pageImpression` when a screen becomes current. Each call fires a
+`pageImpression` analytics event with a fresh page-impression id that tags every ad event of that
+visit, and it is the same signal that drives screen-aware
 [Smart Refresh v2](#smart-refresh-v2-screen-aware--opt-in): entering a screen reloads its banners,
 leaving pauses them.
 
-That's it — no `viewWillAppear`/`viewDidAppear` wiring.
-
-**Opt out / manual control.** Set `Audienzz.shared.autoScreenTracking = false` **before** you call
-`configureSDK`/`configureWithRemoteSDK` to disable it and drive screens yourself:
-
 ```swift
-Audienzz.shared.autoScreenTracking = false
-// then, in each ad-bearing controller:
+// A view controller — the analytics name is derived from it unless you give one.
 override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    Audienzz.shared.onScreenResumed(self)
+    Audienzz.shared.pageImpression(self)
 }
+
+// A screen with no controller to point at (a SwiftUI destination, a custom router).
+Audienzz.shared.pageImpression("home")
+
+// A controller, but your own analytics name for it.
+Audienzz.shared.pageImpression(self, name: "article/detail")
 ```
 
-**Screens auto-tracking can't see** (SwiftUI destinations, or a custom navigation model) are reported
-by an opaque route key — this works whether or not auto-tracking is on:
+**Call it for ad-free destinations too.** A settings screen that carries no ads still ends the
+previous screen's visit; without that report the banners you just navigated away from keep
+auctioning.
 
-```swift
-Audienzz.shared.onScreenResumed("home")   // route id / name as the screen identity
-```
+**There is no automatic screen tracking.** The `viewDidAppear` observer that used to do this was
+removed: it could not see SwiftUI destinations or custom routers, so those were a separate
+integration anyway, and having two mechanisms meant a screen could be counted twice or not at all.
+Every platform now behaves identically — the app always reports.
 
-For analytics that's all you need. To also get **screen-aware Smart Refresh** (pause/reload on
-navigation) for a banner on such a screen, tag the banner with the same key so the SDK knows which
-screen it belongs to — otherwise it resolves to the host view controller and won't match a route key:
+> **Migrating.** `Audienzz.shared.onScreenResumed(...)` is now `pageImpression(...)` with the same
+> arguments, and `Audienzz.shared.autoScreenTracking` is removed. If you relied on automatic
+> tracking, add a `pageImpression` call to each screen; nothing reports itself any more.
+
+For analytics a report is all you need. To also get **screen-aware Smart Refresh** (pause/reload on
+navigation) for a banner on a screen the responder chain cannot identify, tag the banner with the
+same key you report — otherwise it resolves to the host view controller and won't match a route key:
 
 ```swift
 let banner = AUBannerView(configId: "…", adSize: …, adFormats: [.banner])
 banner.setScreen("home")                  // AURemoteConfigBannerView.setScreen("home") likewise
 // …on that screen's appearance:
-Audienzz.shared.onScreenResumed("home")   // reloads banners tagged "home"; pauses the rest
+Audienzz.shared.pageImpression("home")    // reloads banners tagged "home"; pauses the rest
 ```
 
-The key is matched **by value**, so the string reported to `onScreenResumed` and the one passed to
+The key is matched **by value**, so the string reported to `pageImpression` and the one passed to
 `setScreen` just have to be equal.
 
 Notes:
-- While auto-tracking is on, manual `onScreenResumed(_ viewController:)` calls are **ignored** (auto
-  already covers them) to avoid double-counting; the string-key overload is always applied.
-- `setScreen` isn't needed for `UIViewController`-hosted banners (those are matched automatically).
+- A sheet or popover that covers a screen is a screen: report it, and report the screen underneath
+  again when it is dismissed.
+- `setScreen` isn't needed for `UIViewController`-hosted banners (those are matched by the responder
+  chain), only where several screens share one controller.
 - There is **no `onPause`/teardown counterpart**. If no screen is ever reported, ad events still send
   with a fallback page-impression id; they just aren't tied to a named screen.
 
@@ -861,21 +868,56 @@ bannerView.load(in: adContainerView, rootViewController: self)
 
 Use `AURemoteConfigInterstitial` to load an interstitial defined by a remote configuration ID.
 
+Three verbs, and the verb decides whether anything is presented:
+
+| Method | What it does |
+| --- | --- |
+| `prefetch(completion:)` | Obtains and retains one ad. Never presents. |
+| `show(from:eligible:)` | Presents ready inventory at this opportunity, or reports why it could not. Never schedules a presentation for later. |
+| `prefetchAndShow(from:completion:)` | Presents when the load completes, or presents inventory already in hand. |
+
 ```swift
 // Retain one owner per placement outside transient page views.
 let interstitial = AURemoteConfigInterstitial(adConfigId: "YOUR_CONFIG_ID")
 interstitial.delegate = self
 interstitial.onPresentationError = { print("Presentation failed: \($0)") }
-interstitial.preload { result in
-    // Update readiness/error UI here; do not present from this callback.
+interstitial.prefetch { result in
+    // Update readiness/error UI here; this callback can never present anything.
     if case .failure(let error) = result { print(error) }
 }
 
 // At a later eligible transition, after evaluating the publisher's frequency cap:
-let submitted = interstitial.showAtOpportunity(from: self, eligible: publisherAllowsAd)
-// false: skip this opportunity; no show will be replayed when loading finishes.
+let submitted = interstitial.show(from: self, eligible: publisherAllowsAd)
+// false: this opportunity was skipped — nothing is replayed when loading finishes.
 // true: submitted to Google; delegate/error callbacks report the outcome.
 ```
+
+If you want the ad shown as soon as it arrives, ask for that by name:
+
+```swift
+interstitial.prefetchAndShow(from: self) { result in
+    if case .failure(let error) = result { print(error) }
+}
+```
+
+### Migrating from `load` / `preload` / `showAtOpportunity`
+
+`load(completion:)` is **removed**. It meant "prepare inventory" in one release and "prepare and
+then present" in the next, so a method call no longer tells you whether the reader will be
+interrupted. Map by what your code actually relied on:
+
+| Before | Now |
+| --- | --- |
+| `load { … }` used only to prepare inventory | `prefetch { … }`, then `show(from:)` at your opportunity |
+| `load { … }` relied on for immediate display | `prefetchAndShow(from:) { … }` |
+| `automaticallyShowOnLoad = false` + `load { … }` | `prefetch { … }` |
+| `preload { … }` | `prefetch { … }` |
+| `showAtOpportunity(from:eligible:)` | `show(from:eligible:)` |
+| `show(from:)` | `show(from:)` — same call; it now reports a skipped opportunity instead of presenting blindly |
+
+`automaticallyShowOnLoad` is removed with it: the behaviour it selected is now the difference
+between two method names. Objective-C callers use `prefetchWithCompletion:` and
+`prefetchAndShowWithCompletionFrom:completion:`.
 
 ## Sticky Ads
 
@@ -1080,25 +1122,27 @@ The shared configuration's other consumers (custom native, multiformat, instream
 
 ### Remote interstitial presentation behavior
 
-`AURemoteConfigInterstitial` now **shows automatically after a successful load**, matching native
-Android. Set `presentationViewController` and `delegate` before calling `load`; do not also call
-`show` from the completion. The completion reports loading; `onPresentationError` reports both
-preflight and Google presentation errors. `onLifecycleEvent` exposes correlated Google load/show
-milestones for publisher analytics.
+Set `presentationViewController` and `delegate` before prefetching. A `prefetch` completion reports
+loading only and can never present; `onPresentationError` reports preflight and Google presentation
+errors, and — because it has no return value to inspect — the guards that cancel a
+`prefetchAndShow`. `onLifecycleEvent` exposes correlated Google load/show milestones for publisher
+analytics, including `opportunitySkipped` with a `reason`.
 
-For new integrations, prefer `preload(completion:)` and `showAtOpportunity(from:eligible:)`.
-Preload never auto-shows, independently of the legacy `automaticallyShowOnLoad` property.
-Concurrent preloads share a result; a ready preload is preserved. An unready, inactive, ineligible
-or concurrent presentation skips this opportunity without scheduling a future show. Supply the
-publisher's current frequency-cap decision as `eligible`. Keep one owner per logical placement.
-`showAtOpportunity` returns whether presentation was submitted; delegate/error callbacks report
-its outcome. Call UIKit-facing APIs on the main thread. The presentation exclusion covers SDK
-remote interstitial owners; publishers must also account for other fullscreen content.
+Repeated prefetches for one owner coalesce onto the request in flight and reuse valid ready
+inventory, so a second call costs nothing. Repeated presentation calls cannot show twice or start a
+parallel request. Supply the publisher's current frequency-cap decision as `eligible`; an unready,
+inactive, ineligible or concurrent presentation skips that opportunity **without scheduling a
+future show** — that is what `prefetchAndShow` is for, and it has to be asked for by name. Keep one
+owner per logical placement. `show` returns whether presentation was submitted; delegate/error
+callbacks report its outcome. Call UIKit-facing APIs on the main thread. The presentation exclusion
+covers SDK remote interstitial owners; publishers must also account for other fullscreen content.
 
-Legacy `load` / `show(from:)` behavior remains available for existing integrations. A ready/presenting ad is never replaced by another load.
-An ad expires after one hour. No automatic presentation is replayed later if the app is inactive
-when loading finishes. `destroy()` cancels pending loads; destruction during a presentation is
-deferred until dismissal/failure.
+A ready or presenting ad is never replaced by another load. An ad expires after one hour, and no
+presentation is replayed later if the app was inactive when loading finished. `destroy()` cancels
+pending loads; destruction during a presentation is deferred until dismissal/failure.
+
+Remote interstitial requests carry the same global GAM targeting as the other original API paths
+(`AUTargeting.shared.addGlobalTargeting`), alongside the PPID.
 
 Fullscreen `AUInterstitialView` and `AURewardedView` demand is one-shot and independent of page,
 attachment, viewport and banner refresh. Their shared configuration cannot turn on a periodic

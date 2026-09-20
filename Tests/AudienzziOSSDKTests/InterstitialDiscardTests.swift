@@ -37,7 +37,6 @@ final class InterstitialDiscardTests: AudienzzLifecycleTestCase {
         owner.demand = { _, _, reply in reply(.prebidDemandFetchSuccess) }
         owner.now = { [unowned self] in time }
         owner.isForeground = { true }
-        owner.automaticallyShowOnLoad = false
         owner.loadOverride = { [unowned self] in response = $0 }
         owner.onLifecycleEvent = { [unowned self] in events.append($0) }
     }
@@ -60,7 +59,7 @@ final class InterstitialDiscardTests: AudienzzLifecycleTestCase {
     }
 
     private func hold() {
-        owner.preload { _ in }
+        owner.prefetch { _ in }
         response(.success(Ad()))
         XCTAssertTrue(owner.isReady, "fixture must actually hold inventory")
     }
@@ -72,7 +71,7 @@ final class InterstitialDiscardTests: AudienzzLifecycleTestCase {
         XCTAssertTrue(discards.isEmpty, "control: held inventory is not a discard")
 
         time += 3601
-        owner.preload { _ in }   // observing the expiry is what releases it
+        owner.prefetch { _ in }   // observing the expiry is what releases it
 
         XCTAssertEqual(discards.count, 1)
         XCTAssertEqual(discards.first?["reason"] as? String, "expired")
@@ -99,9 +98,9 @@ final class InterstitialDiscardTests: AudienzzLifecycleTestCase {
         ad.presentError = NSError(domain: "test", code: 1)
         owner.destroy()
         events = []
-        owner.preload { _ in }
+        owner.prefetch { _ in }
         response(.success(ad))
-        owner.showAtOpportunity(from: UIViewController(), eligible: true)
+        owner.show(from: UIViewController(), eligible: true)
 
         XCTAssertTrue(names().contains("showFailed"))
         XCTAssertEqual(discards.count, 1)
@@ -110,9 +109,9 @@ final class InterstitialDiscardTests: AudienzzLifecycleTestCase {
 
     func testPresentedAndDismissedWithNoImpressionReportsADiscard() {
         let ad = Ad()
-        owner.preload { _ in }
+        owner.prefetch { _ in }
         response(.success(ad))
-        XCTAssertTrue(owner.showAtOpportunity(from: UIViewController(), eligible: true))
+        XCTAssertTrue(owner.show(from: UIViewController(), eligible: true))
         owner.adWillPresentFullScreenContent(ad)
         owner.adDidDismissFullScreenContent(ad)
 
@@ -124,9 +123,9 @@ final class InterstitialDiscardTests: AudienzzLifecycleTestCase {
 
     func testInventoryThatRecordedAnImpressionIsNeverADiscard() {
         let ad = Ad()
-        owner.preload { _ in }
+        owner.prefetch { _ in }
         response(.success(ad))
-        XCTAssertTrue(owner.showAtOpportunity(from: UIViewController(), eligible: true))
+        XCTAssertTrue(owner.show(from: UIViewController(), eligible: true))
         owner.adWillPresentFullScreenContent(ad)
         owner.adDidRecordImpression(ad)
         owner.adDidDismissFullScreenContent(ad)
@@ -136,7 +135,7 @@ final class InterstitialDiscardTests: AudienzzLifecycleTestCase {
     }
 
     func testALoadFailureIsNotAnUnusedSuccessfulLoad() {
-        owner.preload { _ in }
+        owner.prefetch { _ in }
         response(.failure(NSError(domain: "test", code: 3)))
         owner.destroy()
 

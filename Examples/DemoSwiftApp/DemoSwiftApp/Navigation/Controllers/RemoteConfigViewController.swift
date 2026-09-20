@@ -171,7 +171,7 @@ final class RemoteConfigViewController: UIViewController {
 
     @objc private func loadInterstitialTapped() {
         if let interstitial, interstitial.isReady {
-            _ = interstitial.showAtOpportunity(from: self, eligible: true)
+            _ = interstitial.show(from: self, eligible: true)
             return
         }
         if interstitial == nil {
@@ -182,7 +182,7 @@ final class RemoteConfigViewController: UIViewController {
         interstitial?.onPresentationError = { print("Interstitial presentation failed: \($0)") }
 
         print("Loading interstitial...")
-        interstitial?.preload { result in
+        interstitial?.prefetch { result in
             switch result {
             case .success:
                 print("Interstitial ready. Tap again at the intended transition to show.")

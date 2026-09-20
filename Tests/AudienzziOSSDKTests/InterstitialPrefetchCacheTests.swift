@@ -37,7 +37,6 @@ final class InterstitialPrefetchCacheTests: AudienzzLifecycleTestCase {
         owner.demand = { _, _, reply in reply(.prebidDemandFetchSuccess) }
         owner.now = { [unowned self] in time }
         owner.isForeground = { true }
-        owner.automaticallyShowOnLoad = false
         owner.loadOverride = { [unowned self] in requests += 1; response = $0 }
     }
 
@@ -49,7 +48,7 @@ final class InterstitialPrefetchCacheTests: AudienzzLifecycleTestCase {
     }
 
     private func prefetch() {
-        owner.preload { [unowned self] _ in completions += 1 }
+        owner.prefetch { [unowned self] _ in completions += 1 }
     }
 
     func testFourPrefetchesInARowBuyOneAd() {

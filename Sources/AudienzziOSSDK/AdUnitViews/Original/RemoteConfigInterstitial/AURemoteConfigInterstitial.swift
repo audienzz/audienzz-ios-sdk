@@ -6,13 +6,46 @@ public enum AURemoteConfigInterstitialError: Error {
     case noRemoteConfig, deallocated, busy, cancelled, notReady, expired, inactive
 }
 
-/// Remote fullscreen inventory. By default a successful load immediately presents once,
-/// matching Android. Set automaticallyShowOnLoad=false to explicitly preload instead.
+/// Remote fullscreen inventory.
+///
+/// Three verbs, and each says exactly what it does:
+///
+///  * ``prefetch(completion:)`` obtains and retains one ad. It never presents.
+///  * ``show(from:eligible:)`` presents ready inventory at the publisher's current opportunity.
+///    If nothing is ready, the app is not active, or the publisher says this opportunity is not
+///    eligible, that outcome is reported and NOTHING is scheduled — the reader will not be shown
+///    an interstitial later, out of context.
+///  * ``prefetchAndShow(from:completion:)`` asks for presentation when the load completes, or
+///    presents inventory that is already in hand. This is the only entry point that presents
+///    something the publisher did not explicitly time, and it is opted into by name.
+///
+/// Repeated prefetches for the same owner coalesce onto the load in flight and reuse valid ready
+/// inventory; repeated presentation calls cannot show twice or start a parallel request.
+///
+/// **Migration.** `load(completion:)` is gone because its meaning changed under publishers: it
+/// used to load and wait for an explicit show, and later presented on completion by default.
+/// Rather than leave a method whose behaviour depends on which version you compiled against, both
+/// behaviours now have their own name.
+///
+/// | Before | Now |
+/// | --- | --- |
+/// | `load { … }` used only to prepare inventory | `prefetch { … }`, then `show(from:)` at your opportunity |
+/// | `load { … }` relied on for immediate display | `prefetchAndShow(from:) { … }` |
+/// | `automaticallyShowOnLoad = false` + `load` | `prefetch` |
+/// | `preload { … }` | `prefetch { … }` |
+/// | `showAtOpportunity(from:eligible:)` | `show(from:eligible:)` |
+/// | `show(from:)` | `show(from:)` — unchanged, now reports a skipped opportunity |
+///
+/// Deciding *when* an interstitial is appropriate stays with the publisher: pass your frequency
+/// cap / placement decision as `eligible`.
 @objcMembers
 public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     private static weak var activePresentation: AURemoteConfigInterstitial?
     private var pendingPreloads: [AUInterstitialLoadCompletion] = []
     private var isPreloading = false
+    /// Set by ``prefetchAndShow(from:completion:)`` only. An ordinary prefetch can never set it,
+    /// which is what guarantees a prefetch cannot surprise the reader with a presentation.
+    private var showWhenLoaded = false
     private let adConfigId: String
     private var interstitialAdUnit: InterstitialAdUnit?
     private var loadedAd: AUInterstitialPresenting?
@@ -36,7 +69,6 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
 
     public weak var delegate: FullScreenContentDelegate?
     public weak var presentationViewController: UIViewController?
-    public var automaticallyShowOnLoad = true
     /// Includes preflight errors (inactive app, expired or absent ad) that have no Google ad callback.
     public var onPresentationError: ((NSError) -> Void)?
     /// Per-load diagnostics; forward to publisher analytics as needed.
@@ -68,22 +100,86 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         loadedAd != nil && !presenting && loadedAt.map { now() - $0 < 3600 } == true
     }
 
-    /// Completion reports loading, not presentation. Display failures go to onPresentationError
-    /// and Google's delegate. Concurrent/redundant loads are rejected rather than replacing inventory.
-    public func load(completion: @escaping (Result<Void, Error>) -> Void) {
-        startLoad(automaticallyShow: true, completion: completion)
+    /// Obtain and retain one ad, without displaying it.
+    ///
+    /// Concurrent calls share the load in flight; a call made while valid inventory is already in
+    /// hand succeeds immediately without spending another request. No completion here can lead to
+    /// a presentation.
+    public func prefetch(completion: @escaping (Result<Void, Error>) -> Void) {
+        requestLoad(showWhenLoaded: false, from: nil, completion: completion)
     }
 
-    /// Retain one preload. Concurrent calls share its result; no completion schedules a show.
-    public func preload(completion: @escaping (Result<Void, Error>) -> Void) {
-        if isReady { completion(.success(())); return }
+    public func prefetchWithCompletion(_ completion: @escaping (Error?) -> Void) {
+        prefetch { completion($0.errorOrNil) }
+    }
+
+    /// Ask for presentation as soon as the load completes, or present inventory already in hand.
+    ///
+    /// Subject to the same guards as ``show(from:eligible:)``: a backgrounded app, expired
+    /// inventory or another interstitial already on screen still cancel the presentation. Like
+    /// ``prefetch(completion:)``, repeated calls coalesce rather than starting a second request.
+    public func prefetchAndShow(from controller: UIViewController,
+                                completion: @escaping (Result<Void, Error>) -> Void) {
+        requestLoad(showWhenLoaded: true, from: controller, completion: completion)
+    }
+
+    /// Objective-C form; named apart from ``prefetchAndShow(from:completion:)`` so a bare closure
+    /// is never ambiguous between the two.
+    public func prefetchAndShowWithCompletion(from controller: UIViewController,
+                                              completion: @escaping (Error?) -> Void) {
+        prefetchAndShow(from: controller) { completion($0.errorOrNil) }
+    }
+
+    /// Present ready inventory at this opportunity. Never schedules a later presentation.
+    @discardableResult
+    public func show(from controller: UIViewController) -> Bool {
+        show(from: controller, eligible: true)
+    }
+
+    /// Call on the main thread at an eligible transition, after checking publisher frequency caps.
+    /// An unavailable ad skips this opportunity rather than queueing a show for load completion —
+    /// that is what ``prefetchAndShow(from:completion:)`` is for, and it has to be asked for.
+    /// True means presentation was submitted; delegate/error callbacks report Google's outcome.
+    @discardableResult
+    public func show(from controller: UIViewController, eligible: Bool) -> Bool {
+        if let reason = skipReason(eligible: eligible) {
+            emit("opportunitySkipped", reason: reason)
+            return false
+        }
+        return present(from: controller)
+    }
+
+    /// Why this opportunity cannot be taken, or nil when it can.
+    private func skipReason(eligible: Bool) -> String? {
+        if !eligible { return "ineligible" }
+        if !isReady { return "notReady" }
+        if !isForeground() { return "inactive" }
+        if Self.activePresentation != nil { return "anotherInterstitialPresenting" }
+        return nil
+    }
+
+    /// The single loading path behind both ``prefetch(completion:)`` and
+    /// ``prefetchAndShow(from:completion:)``. Whether a presentation follows is a property of the
+    /// request, not a second loading system.
+    private func requestLoad(showWhenLoaded: Bool,
+                             from controller: UIViewController?,
+                             completion: @escaping (Result<Void, Error>) -> Void) {
+        if let controller { presentationViewController = controller }
+        if showWhenLoaded { self.showWhenLoaded = true }
+        if isReady {
+            completion(.success(()))
+            // Already in hand: this is the same request, answered instantly. Presenting here is
+            // what makes a second prefetchAndShow reuse inventory instead of buying more.
+            if showWhenLoaded { presentWhenLoaded() }
+            return
+        }
         if isPreloading {
             pendingPreloads.append(AUInterstitialLoadCompletion(completion)); return
         }
         guard !loading, !presenting else { completion(.failure(AURemoteConfigInterstitialError.busy)); return }
         isPreloading = true
         pendingPreloads.append(AUInterstitialLoadCompletion(completion))
-        startLoad(automaticallyShow: false) { [weak self] result in
+        startLoad { [weak self] result in
             guard let self else { return }
             let callbacks = self.pendingPreloads
             self.pendingPreloads = []
@@ -92,31 +188,32 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         }
     }
 
-    public func preloadWithCompletion(_ completion: @escaping (Error?) -> Void) {
-        preload { result in
-            switch result {
-            case .success: completion(nil)
-            case .failure(let error): completion(error)
-            }
+    /// Present what was just loaded, under the same guards an explicit show would apply.
+    ///
+    /// Unlike ``show(from:eligible:)`` there is no return value for the caller to inspect, so a
+    /// guard that cancels the presentation is also reported on ``onPresentationError`` — this is
+    /// the presentation the publisher asked for when they called ``prefetchAndShow(from:completion:)``.
+    private func presentWhenLoaded() {
+        showWhenLoaded = false
+        if let reason = skipReason(eligible: true) {
+            emit("opportunitySkipped", reason: reason)
+            reportPresentationError(Self.presentationError(for: reason, holdingInventory: loadedAd != nil))
+            return
+        }
+        present(from: presentationViewController)
+    }
+
+    private static func presentationError(for reason: String,
+                                          holdingInventory: Bool) -> AURemoteConfigInterstitialError {
+        switch reason {
+        case "notReady": return holdingInventory ? .expired : .notReady
+        case "inactive": return .inactive
+        case "anotherInterstitialPresenting": return .busy
+        default: return .notReady
         }
     }
 
-    /// Call on the main thread at an eligible transition, after checking publisher frequency caps.
-    /// An unavailable ad skips this opportunity. It never queues a show for load completion.
-    /// True means presentation was submitted; delegate/error callbacks report Google's outcome.
-    @discardableResult
-    public func showAtOpportunity(from controller: UIViewController, eligible: Bool) -> Bool {
-        let reason: String?
-        if !eligible { reason = "ineligible" }
-        else if !isReady { reason = "notReady" }
-        else if !isForeground() { reason = "inactive" }
-        else if Self.activePresentation != nil { reason = "anotherInterstitialPresenting" }
-        else { reason = nil }
-        if let reason { emit("opportunitySkipped", reason: reason); return false }
-        return present(from: controller)
-    }
-
-    private func startLoad(automaticallyShow: Bool, completion: @escaping (Result<Void, Error>) -> Void) {
+    private func startLoad(completion: @escaping (Result<Void, Error>) -> Void) {
         guard !loading, !presenting, !isReady else {
             completion(.failure(AURemoteConfigInterstitialError.busy)); return
         }
@@ -138,7 +235,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         emit("loadRequested")
         let receive: (Result<AUInterstitialPresenting, Error>) -> Void = { [weak self] result in
             guard let self else { pending.finish(.failure(AURemoteConfigInterstitialError.deallocated)); return }
-            self.didLoad(result, generation: token, automaticallyShow: automaticallyShow)
+            self.didLoad(result, generation: token)
         }
         guard let config = configuration(adConfigId) else {
             receive(.failure(AURemoteConfigInterstitialError.noRemoteConfig)); return
@@ -146,7 +243,12 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         let unit = InterstitialAdUnit(configId: config.placementID)
         interstitialAdUnit = unit
         unit.adFormats = [.banner, .video]
-        let request = AdManagerRequest()
+        // The same request policy as every other original GAM path here: global targeting from the
+        // shared manager (which also carries the SDK's own au_sdk / au_v keys), then the PPID.
+        // Constructing a bare request meant a publisher's configured targeting never reached remote
+        // interstitials at all, so targeted line items could not be selected for them.
+        let request = AUTargeting.shared.customTargetingManager
+            .applyToGamRequest(request: AdManagerRequest())
         request.publisherProvidedID = PPIDManager.shared.getPPID()
         analyticsAdUnitPath = config.adUnitPath
         let started = now()
@@ -174,13 +276,16 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         }
     }
 
-    private func didLoad(_ result: Result<AUInterstitialPresenting, Error>, generation token: Int, automaticallyShow: Bool) {
+    private func didLoad(_ result: Result<AUInterstitialPresenting, Error>, generation token: Int) {
         guard loading, token == generation else { return }
         loading = false
         let callback = completion
         completion = nil
         switch result {
         case .failure(let error):
+            // Nothing to present, and the request is over: a later prefetch must not inherit a
+            // presentation that was asked for on behalf of a load that failed.
+            showWhenLoaded = false
             emit("loadFailed", error: error)
             callback?.finish(.failure(error))
         case .success(let ad):
@@ -189,24 +294,18 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
             discardReported = false
             ad.delegate = self
             emit("loaded")
+            // Consumed here rather than inside the presentation, so that a completion which
+            // presents or destroys cannot leave the request standing and have an unrelated later
+            // prefetch inherit it.
+            let presentOnCompletion = showWhenLoaded
+            showWhenLoaded = false
             callback?.finish(.success(()))
-            // A legacy caller may show/destroy in its load callback. Do not show twice.
-            if automaticallyShow, automaticallyShowOnLoad, token == generation, loadedAd != nil, !presenting {
-                present(from: presentationViewController)
+            // A caller may show/destroy inside its own completion. Do not show twice.
+            if presentOnCompletion, token == generation, loadedAd != nil, !presenting {
+                presentWhenLoaded()
             }
         }
     }
-
-    public func loadWithCompletion(_ completion: @escaping (Error?) -> Void) {
-        load { result in
-            switch result {
-            case .success: completion(nil)
-            case .failure(let error): completion(error)
-            }
-        }
-    }
-
-    public func show(from rootViewController: UIViewController) { present(from: rootViewController) }
 
     @discardableResult
     private func present(from rootViewController: UIViewController?) -> Bool {
@@ -246,6 +345,8 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         guard !presenting else { emit("disposeDeferred"); return }
         generation += 1
         loading = false
+        showWhenLoaded = false
+        isPreloading = false
         let callback = completion
         completion = nil
         emit("disposed")
@@ -386,6 +487,14 @@ private final class AUGoogleInterstitial: AUInterstitialPresenting {
     func present(from controller: UIViewController?) { ad.present(from: controller) }
 }
 
+
+private extension Result where Success == Void {
+    /// ObjC convenience: the completions exposed to Objective-C report an optional error.
+    var errorOrNil: Error? {
+        if case .failure(let error) = self { return error }
+        return nil
+    }
+}
 
 private final class AUInterstitialLoadCompletion {
     private var callback: ((Result<Void, Error>) -> Void)?
