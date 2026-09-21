@@ -170,6 +170,61 @@ final class InterstitialLifecycleTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(error?.domain, "google.test")
         XCTAssertEqual(error?.code, 7)
     }
+    /// A call that is REJECTED must leave nothing behind. Remembering the presentation on the way
+    /// out let an unrelated later `prefetch` present on its back, which is the one thing a prefetch
+    /// promises never to do.
+    func testRejectedPrefetchAndShowLeavesNoPresentationIntent() {
+        let first = Ad()
+        owner.prefetchAndShow(from: UIViewController()) { _ in }
+        response(.success(first))
+        XCTAssertEqual(first.shows, 1, "control: the first request really did present")
+
+        // Asked for again while that ad is on screen: rejected.
+        var rejected = false
+        owner.prefetchAndShow(from: UIViewController()) { if case .failure = $0 { rejected = true } }
+        XCTAssertTrue(rejected)
+
+        owner.finishPresentation()
+
+        let second = Ad()
+        owner.prefetch { _ in }
+        response(.success(second))
+        XCTAssertEqual(second.shows, 0,
+                       "a plain prefetch must not inherit a rejected request's presentation")
+        XCTAssertTrue(owner.isReady)
+    }
+
+    /// The completion of `prefetchAndShow` may present the ad itself. The outer call must then do
+    /// nothing — it must NOT treat "already presenting" as a failed presentation, because clearing
+    /// `loadedAd` orphans the ad that is on screen and every delegate callback, dismissal included,
+    /// is then ignored.
+    func testCompletionThatShowsCachedInventoryKeepsOwnershipOfTheOnScreenAd() {
+        let ad = Ad()
+        owner.prefetch { _ in }
+        response(.success(ad))
+        XCTAssertTrue(owner.isReady, "control: inventory is in hand before the request")
+
+        var presentationErrors = 0
+        owner.onPresentationError = { _ in presentationErrors += 1 }
+        owner.prefetchAndShow(from: UIViewController()) { [unowned self] _ in
+            owner.show(from: UIViewController())
+        }
+        XCTAssertEqual(ad.shows, 1)
+        XCTAssertEqual(presentationErrors, 0,
+                       "the ad IS on screen; that is not a presentation failure")
+
+        // The owner still owns it, so Google's terminal callback is observed.
+        owner.adDidDismissFullScreenContent(ad)
+        XCTAssertFalse(owner.isReady)
+
+        // And loading is not blocked afterwards.
+        let next = Ad()
+        owner.prefetch { _ in }
+        response(.success(next))
+        XCTAssertTrue(owner.isReady)
+        XCTAssertEqual(requests, 2)
+    }
+
     func testNoAutomaticPresentationAfterPublisherCancelsInLoadedCallback() {
         let ad = Ad()
         owner.prefetchAndShow(from: UIViewController()) { [unowned self] _ in owner.destroy() }

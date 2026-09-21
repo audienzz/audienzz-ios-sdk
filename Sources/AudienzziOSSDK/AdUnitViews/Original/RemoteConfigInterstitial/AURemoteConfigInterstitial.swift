@@ -164,9 +164,12 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     private func requestLoad(showWhenLoaded: Bool,
                              from controller: UIViewController?,
                              completion: @escaping (Result<Void, Error>) -> Void) {
-        if let controller { presentationViewController = controller }
-        if showWhenLoaded { self.showWhenLoaded = true }
+        // The presentation intent is recorded ONLY on a path that accepts the request. Recording
+        // it up front meant a call rejected because something was already on screen left the
+        // intent behind, and the next ordinary `prefetch` presented on its back — the one thing a
+        // prefetch promises never to do.
         if isReady {
+            if let controller { presentationViewController = controller }
             completion(.success(()))
             // Already in hand: this is the same request, answered instantly. Presenting here is
             // what makes a second prefetchAndShow reuse inventory instead of buying more.
@@ -174,9 +177,14 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
             return
         }
         if isPreloading {
+            // Joins the load in flight, and may add a presentation to it.
+            if let controller { presentationViewController = controller }
+            if showWhenLoaded { self.showWhenLoaded = true }
             pendingPreloads.append(AUInterstitialLoadCompletion(completion)); return
         }
         guard !loading, !presenting else { completion(.failure(AURemoteConfigInterstitialError.busy)); return }
+        if let controller { presentationViewController = controller }
+        if showWhenLoaded { self.showWhenLoaded = true }
         isPreloading = true
         pendingPreloads.append(AUInterstitialLoadCompletion(completion))
         startLoad { [weak self] result in
@@ -195,6 +203,11 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     /// the presentation the publisher asked for when they called ``prefetchAndShow(from:completion:)``.
     private func presentWhenLoaded() {
         showWhenLoaded = false
+        // The completion of a prefetchAndShow is allowed to present the ad itself. It then already
+        // is on screen: nothing to do, and emphatically not a failed presentation — reporting one
+        // clears `loadedAd`, which is what `owns(_:)` matches Google's callbacks against, so the
+        // dismissal of the ad the reader is looking at would never be seen.
+        guard !presenting else { return }
         if let reason = skipReason(eligible: true) {
             emit("opportunitySkipped", reason: reason)
             reportPresentationError(Self.presentationError(for: reason, holdingInventory: loadedAd != nil))
@@ -325,6 +338,20 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
 
     private func reportPresentationError(_ error: Error) {
         emit("showFailed", error: error)
+        // Never take the owner away from an ad that is on screen. `owns(_:)` matches Google's
+        // delegate callbacks against `loadedAd`, so clearing it mid-presentation makes every
+        // terminal callback — dismissal included — unrecognisable, and this owner stays
+        // "presenting" forever. Release on the terminal callback instead.
+        //
+        // A backstop, like ``discardReported``: the callers that could reach here while
+        // presenting are already guarded (``presentWhenLoaded()`` returns early, ``present(from:)``
+        // rejects a reentrant call), so no reachable sequence exercises this branch alone and no
+        // test discriminates it. It is kept because the invariant it protects — an on-screen ad
+        // keeps its owner — is what every Google callback is matched against.
+        guard !presenting else {
+            onPresentationError?(error as NSError)
+            return
+        }
         reportDiscardIfUnused("presentationFailed")
         loadedAd = nil
         loadedAt = nil
