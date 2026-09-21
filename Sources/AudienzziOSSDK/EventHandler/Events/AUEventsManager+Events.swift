@@ -92,12 +92,13 @@ extension AUEventsManager {
     func bidRequest(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                     adType: String, adSubtype: String, apiType: String,
                     isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
-                    mediaTypes: String? = nil, auctionId: String? = nil) {
+                    mediaTypes: String? = nil, auctionId: String? = nil,
+                    slotReload: Int? = nil) {
         var e = AUEventDomain(type: .bidRequest)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
-        e.mediaTypes = mediaTypes; e.auctionId = auctionId
+        e.mediaTypes = mediaTypes; e.auctionId = auctionId; e.slotReload = slotReload
         logEvent(e)
     }
 
@@ -132,12 +133,17 @@ extension AUEventsManager {
     func noBid(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                adType: String, adSubtype: String, apiType: String,
                isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool, resultCode: String?,
-               mediaTypes: String? = nil, auctionId: String? = nil) {
+               mediaTypes: String? = nil, auctionId: String? = nil,
+               slotReload: Int? = nil) {
         var e = AUEventDomain(type: .noBid)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
         e.resultCode = resultCode; e.mediaTypes = mediaTypes; e.auctionId = auctionId
+        // A no-bid is AUCTION-level: Prebid reports that nothing usable came back, not which
+        // bidders were asked or which of them declined. `bidder_code` is therefore left nil — the
+        // collector receives no key at all — rather than inventing one or reusing the last winner.
+        e.slotReload = slotReload
         logEvent(e)
     }
 

@@ -498,7 +498,8 @@ extension AUBannerView {
             autorefreshTime: Int(autorefreshM.autorefreshEventModel.autorefreshTime),
             isRefresh: !isInitialAutorefresh,
             mediaTypes: Self.mediaTypesJSON(subtype: makeAdSubType()),
-            auctionId: currentAuctionId
+            auctionId: currentAuctionId,
+            slotReload: emittedSlotReload
         )
     }
 
@@ -543,7 +544,7 @@ extension AUBannerView {
                 // creative_id = bidder-specific targeting key when present, else "0"; ad_id = hb_adid.
                 cpm: priceBucket.flatMap { Double($0) }, currency: nil, creativeId: creativeId ?? "0",
                 auctionId: currentAuctionId, adId: adId ?? "0",
-                timeToRespond: timeToRespond, slotReload: slotReloadCount)
+                timeToRespond: timeToRespond, slotReload: emittedSlotReload)
         }
 
         AUEventsManager.shared.bidResponse(
@@ -570,11 +571,42 @@ extension AUBannerView {
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
                 resultCode: codeName, mediaTypes: Self.mediaTypesJSON(subtype: subtype),
-                auctionId: currentAuctionId
+                auctionId: currentAuctionId, slotReload: emittedSlotReload
             )
         }
         // Count this load; next auction/refresh reports the incremented value.
         slotReloadCount += 1
+    }
+
+    /// Promote the pending auction's economics to "what is on screen".
+    ///
+    /// Called when Google confirms the creative was received, which is the moment the replacement
+    /// actually becomes the thing the reader sees. Until then the previous creative keeps its own
+    /// identity, so a late impression or viewability callback for it is reported under its own
+    /// auction — and a replacement that never arrives changes nothing at all.
+    @nonobjc func commitDisplayedCreative() {
+        var ec = lastRenderEconomics ?? AURenderEconomics()
+        ec.auctionId = ec.auctionId ?? currentAuctionId
+        // The reported flag is binary and belongs to the creative, not to the slot's current count.
+        ec.slotReload = ec.slotReload ?? emittedSlotReload
+        displayedEconomics = ec
+        displayedPrebidBidder = prebidWinningBidder
+        displayedPrebidLineItemWon = prebidLineItemWon
+        // The GMA paid event fires around this creative's impression; whatever was captured for the
+        // previous one must not be attributed to this one.
+        lastPaidCurrency = nil
+        lastPaidCpm = nil
+    }
+
+    /// The Prebid line item's GAM app event can arrive either side of `bannerViewDidReceiveAd`.
+    /// When it lands after, the displayed snapshot is corrected in place — this is the creative on
+    /// screen, so the attribution belongs to it and not to whatever auction is running by then.
+    @nonobjc func notePrebidLineItemRendered() {
+        prebidLineItemWon = true
+        if displayedEconomics != nil {
+            displayedPrebidLineItemWon = true
+            displayedPrebidBidder = displayedPrebidBidder ?? prebidWinningBidder
+        }
     }
 
     /// Economics reported on the banner's render events (adImpression / adClick / viewability.*).
@@ -582,9 +614,10 @@ extension AUBannerView {
     /// Prebid line item only when its GAM app event fired, else the ad server. Shared by the handler
     /// (impression/click) and the viewability closures so all render events agree.
     @nonobjc func resolvedRenderEconomics() -> AURenderEconomics {
-        var ec = lastRenderEconomics ?? AURenderEconomics()
-        let isPrebidRender = prebidLineItemWon
-        ec.bidderCode = isPrebidRender ? (prebidWinningBidder ?? AD_SERVER_BIDDER) : AD_SERVER_BIDDER
+        // The DISPLAYED creative's snapshot, not the newest auction's. See `displayedEconomics`.
+        var ec = displayedEconomics ?? AURenderEconomics()
+        let isPrebidRender = displayedPrebidLineItemWon
+        ec.bidderCode = isPrebidRender ? (displayedPrebidBidder ?? AD_SERVER_BIDDER) : AD_SERVER_BIDDER
         if !isPrebidRender {
             // The ad server (Google/direct) rendered — the Prebid bid's creative id would make the
             // enricher misclassify a direct-sold impression as RTB. Report the GAM creative id when

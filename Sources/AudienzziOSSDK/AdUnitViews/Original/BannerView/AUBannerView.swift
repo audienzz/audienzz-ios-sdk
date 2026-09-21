@@ -87,8 +87,34 @@ public class AUBannerView: AUAdView {
     /// aren't available on the original API without the Prebid fork.
     internal var lastPaidCurrency: String?
     internal var lastPaidCpm: Double?
-    /// Number of times this slot has (re)loaded — reported as `slot_reload`. First load = 0.
+    /// How many times this slot has (re)loaded. Internal only.
+    ///
+    /// What is REPORTED is ``emittedSlotReload``, a binary flag. The counter itself used to be the
+    /// reported value, so a slot that refreshed four times emitted `slot_reload` 0,1,2,3 — the
+    /// collector's contract is "first load or not".
     internal var slotReloadCount: Int = 0
+
+    /// `slot_reload` as the collector defines it: `0` for a slot's first load, `1` for every load
+    /// after it. Serialized as a string, like the other `attributes` values.
+    internal var emittedSlotReload: Int { slotReloadCount > 0 ? 1 : 0 }
+
+    /// Economics of the creative CURRENTLY ON SCREEN, snapshotted when Google confirmed it rendered.
+    ///
+    /// Render events must describe the creative the reader is actually looking at. Reading the most
+    /// recent auction instead meant that as soon as a replacement's Prebid response arrived — or as
+    /// soon as it failed and cleared these fields — a late impression, click or viewability
+    /// callback belonging to the creative still on screen was reported under the replacement's
+    /// auction id, cpm, creative and bidder.
+    internal var displayedEconomics: AURenderEconomics?
+
+    /// The Prebid seat that won the auction behind the DISPLAYED creative, and whether that seat's
+    /// GAM line item is what actually rendered.
+    ///
+    /// Snapshotted alongside ``displayedEconomics`` rather than read live, because starting the
+    /// next auction resets the live values — which would silently re-attribute a creative that is
+    /// still on screen.
+    internal var displayedPrebidBidder: String?
+    internal var displayedPrebidLineItemWon: Bool = false
 
     /// The single owner of periodic refresh for this banner. Prebid is never given an interval —
     /// its `Dispatcher` is created only by `AdUnit.setAutoRefreshMillis`, which the SDK no longer

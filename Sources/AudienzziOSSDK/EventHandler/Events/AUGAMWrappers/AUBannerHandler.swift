@@ -105,6 +105,9 @@ class AUBannerHandler: NSObject,
         }
         guard auBannerView?.completeGoogleLoad(received: true, retryableFailure: false) == true else { return }
         LogEvent("bannerViewDidReceiveAd")
+        // This is the moment the replacement becomes what the reader sees, so it is the moment its
+        // economics become the ones render events describe.
+        auBannerView?.commitDisplayedCreative()
         restoreFromBlankIfNeeded()
 
         if let gamBannerView = bannerView as? AdManagerBannerView {
@@ -228,7 +231,7 @@ class AUBannerHandler: NSObject,
         // A Prebid line item's creative fires this app event when it wins the GAM auction;
         // its absence by impression time means the ad server (Google) rendered.
         if name.caseInsensitiveCompare(PREBID_APP_EVENT) == .orderedSame {
-            auBannerView?.prebidLineItemWon = true
+            auBannerView?.notePrebidLineItemRendered()
         }
         eventDelegate?.adView?(banner, didReceiveAppEvent: name, with: info)
     }

@@ -54,8 +54,13 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     private var generation = 0
     private var loadedAt: TimeInterval?
     private var completion: AUInterstitialLoadCompletion?
-    private var loadID = UUID().uuidString
-    private let adViewID = UUID().uuidString
+    /// Auction identity for this load, shared by every event of the load.
+    ///
+    /// Lower-cased through the same helper the banner path uses: the two were producing different
+    /// casings for the same kind of identifier, so a single run's `auction_id` column mixed
+    /// `CE4A378A-…` with `a58d608a-…` and could not be joined case-sensitively.
+    private var loadID = AUUniqHelper.makeUniqID()
+    private let adViewID = AUUniqHelper.makeUniqID()
     private var analyticsAdUnitPath: String?
     private var recordedImpression = false
     /// Backstop for "at most one discard per load". The primary guarantee is that every discard
@@ -244,7 +249,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         loading = true
         let pending = AUInterstitialLoadCompletion(completion)
         self.completion = pending
-        loadID = UUID().uuidString
+        loadID = AUUniqHelper.makeUniqID()
         emit("loadRequested")
         let receive: (Result<AUInterstitialPresenting, Error>) -> Void = { [weak self] result in
             guard let self else { pending.finish(.failure(AURemoteConfigInterstitialError.deallocated)); return }
