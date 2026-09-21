@@ -385,6 +385,21 @@ public class Audienzz: NSObject {
     /// refresh.
     public var blankOnScreenReload: Bool = false
 
+    /// Emit one greppable `AUDZ …` line per decision the SDK makes about a slot: which page became
+    /// current, which page a slot belongs to, when an auction started, and why one did not.
+    ///
+    /// Off by default. Turn it on **before** configuring the SDK when you need a log you can
+    /// capture on a device and hand to someone else — it is not `#if DEBUG`-gated, so it survives a
+    /// release or TestFlight build, which is exactly the build a tester is usually running.
+    /// Route it somewhere other than the console with ``AUDiagnostics/sink``.
+    ///
+    /// The Android, Flutter and React Native SDKs emit the same line format, so one flow can be
+    /// compared across platforms.
+    public var diagnosticsEnabled: Bool {
+        get { AUDiagnostics.isEnabled }
+        set { AUDiagnostics.isEnabled = newValue }
+    }
+
     public var timeoutMillis: Int {
         // Assigning Prebid's `timeoutMillis` also updates `timeoutMillisDynamic`
         // (via its didSet), so the auction picks up the value AND the getter
@@ -488,6 +503,10 @@ public class Audienzz: NSObject {
     /// keep auctioning for a screen the user has left.
     internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
         AULogEvent.logDebug("[Audienzz][pageImpression] firing → \"\(name)\"")
+        AUDiagnostics.log("page", "impression", [
+            ("id", AUScreenAdCoordinator.diagnosticToken(for: screen)),
+            ("name", name),
+        ])
         // An explicit report always wins over a pending automatic foreground one, and claims this
         // foreground visit so an activation arriving afterwards doesn't schedule a duplicate.
         reportedInThisForegroundVisit = true

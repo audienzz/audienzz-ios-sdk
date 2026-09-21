@@ -433,6 +433,12 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     }
 
     private func emit(_ event: String, error: Error? = nil, reason: String? = nil) {
+        // The interstitial funnel already names every step; diagnostics just mirrors it into the
+        // same greppable stream as banners, so one capture shows both.
+        AUDiagnostics.log("interstitial", event, [
+            ("config", adConfigId), ("loadId", loadID), ("reason", reason),
+            ("error", (error as NSError?).map { "\($0.domain)/\($0.code)" }),
+        ])
         var values: [String: Any] = ["event": event, "loadId": loadID, "configId": adConfigId,
             "timestampMillis": Int(Date().timeIntervalSince1970 * 1000)]
         if let loadedAt { values["loadAgeMillis"] = Int((now() - loadedAt) * 1000) }

@@ -67,6 +67,15 @@ internal final class AUScreenAdCoordinator {
     }
 
     func register(_ ad: AUBannerView) {
+        // The ownership question, answered at birth: which page was current when this slot was
+        // created. A slot whose page is not the active one — reported here as owner=… active=… —
+        // is the shape of every "my banner never loads" report.
+        AUDiagnostics.log("slot", "create", [
+            ("config", ad.configId),
+            ("owner", ad.hostScreenOverride.map { "\($0)" } ?? "hostViewController"),
+            ("activePage", activeScreenName ?? "none"),
+            ("epoch", epoch),
+        ])
         assertMain()
         ads.add(ad)
     }
@@ -92,6 +101,16 @@ internal final class AUScreenAdCoordinator {
     /// everything else is released (auction and refresh stopped, slot left dormant until its page
     /// comes back). A banner created *before* this page impression carries a stale epoch and is
     /// reported as an integration error rather than silently kept alive.
+    /// How a screen token is named in an `AUDZ` line.
+    ///
+    /// A route key is its own string; a view controller has none, so its object identity stands in.
+    /// The point is only that two visits to the same screen, and two screens of the same class,
+    /// are distinguishable when reading a captured log back.
+    static func diagnosticToken(for screen: AnyObject) -> String {
+        if let key = screen as? NSString { return key as String }
+        return "\(type(of: screen))#\(UInt(bitPattern: ObjectIdentifier(screen).hashValue) % 100000)"
+    }
+
     func onScreenResumed(_ screen: AnyObject, name: String) {
         assertMain()
         epoch += 1
@@ -101,6 +120,12 @@ internal final class AUScreenAdCoordinator {
         let live = ads.allObjects
         AULogEvent.logDebug(
             "[AUScreenCoordinator] pageImpression \"\(name)\" epoch=\(epoch) — \(live.count) banner(s) registered")
+        AUDiagnostics.log("page", "transition", [
+            ("id", Self.diagnosticToken(for: screen)),
+            ("name", name),
+            ("epoch", epoch),
+            ("slots", live.count),
+        ])
         for ad in live {
             let hostName = ad.resolveHostViewController().map { String(describing: type(of: $0)) }
                 ?? (ad.hostScreenOverride.map { "\($0)" } ?? "none")
@@ -108,10 +133,17 @@ internal final class AUScreenAdCoordinator {
                 ad.screenActive = true
                 ad.pageEpoch = epoch
                 AULogEvent.logDebug("[AUScreenCoordinator]   \(ad.configId) host=\(hostName) — ACTIVE, recreating")
+                AUDiagnostics.log("slot", "recreate", [
+                    ("config", ad.configId), ("host", hostName), ("page", name), ("epoch", epoch),
+                ])
                 ad.recreateForPage()
             } else {
                 ad.screenActive = false
                 AULogEvent.logDebug("[AUScreenCoordinator]   \(ad.configId) host=\(hostName) — INACTIVE, releasing")
+                AUDiagnostics.log("slot", "release", [
+                    ("config", ad.configId), ("host", hostName),
+                    ("reason", "otherPage"), ("page", name),
+                ])
                 ad.releaseForPage()
             }
         }

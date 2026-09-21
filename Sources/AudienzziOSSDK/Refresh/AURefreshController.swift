@@ -130,6 +130,10 @@ internal final class AURefreshController {
         if !blocks.contains(reason) {
             blocks.append(reason)
             AULogEvent.logDebug("[AURefresh] \(label) blocked by \(reason.rawValue) (now \(blocks.map(\.rawValue)))")
+            AUDiagnostics.log("refresh", "block", [
+                ("slot", label), ("reason", reason.rawValue),
+                ("held", blocks.map(\.rawValue).joined(separator: "+")),
+            ])
         }
         scheduler.cancel()
         // Deliberately NOT a generation bump. A request in flight when the banner scrolls out of
@@ -147,6 +151,10 @@ internal final class AURefreshController {
         guard let index = blocks.firstIndex(of: reason) else { return }
         blocks.remove(at: index)
         AULogEvent.logDebug("[AURefresh] \(label) unblocked from \(reason.rawValue) (remaining \(blocks.map(\.rawValue)))")
+        AUDiagnostics.log("refresh", "unblock", [
+            ("slot", label), ("reason", reason.rawValue),
+            ("held", blocks.isEmpty ? "none" : blocks.map(\.rawValue).joined(separator: "+")),
+        ])
         if schedule && blocks.isEmpty {
             scheduleNext()
         }
@@ -157,6 +165,7 @@ internal final class AURefreshController {
         guard !isDestroyed, !blocks.isEmpty else { return }
         blocks.removeAll()
         AULogEvent.logDebug("[AURefresh] \(label) unblocked from all reasons")
+        AUDiagnostics.log("refresh", "unblock", [("slot", label), ("reason", "all"), ("held", "none")])
         scheduleNext()
     }
 
@@ -168,6 +177,9 @@ internal final class AURefreshController {
     func onRequestStarted(_ reason: AURefreshRequestReason) -> Int {
         generation += 1
         inFlightGeneration = generation
+        AUDiagnostics.log("auction", "start", [
+            ("slot", label), ("reason", reason.rawValue), ("gen", generation),
+        ])
         scheduler.cancel()
         if reason != .loadRetry {
             consecutiveFailures = 0
@@ -182,9 +194,20 @@ internal final class AURefreshController {
     /// or schedule anything, since its page or eligibility no longer applies.
     func onRequestCompleted(generationAtRequest: Int, success: Bool) {
         guard !isDestroyed, generationAtRequest == generation,
-              inFlightGeneration == generationAtRequest else { return }
+              inFlightGeneration == generationAtRequest else {
+            // Worth a line: a response landing for a superseded generation is normal after a page
+            // transition, but if you are reading a log wondering where a creative went, this is it.
+            AUDiagnostics.log("auction", "discarded", [
+                ("slot", label), ("gen", generationAtRequest), ("current", generation),
+            ])
+            return
+        }
         inFlightGeneration = nil
         lastCompletionAt = scheduler.now()
+        AUDiagnostics.log("auction", "end", [
+            ("slot", label), ("gen", generationAtRequest),
+            ("result", success ? "filled" : "failed"),
+        ])
 
         if success {
             consecutiveFailures = 0
