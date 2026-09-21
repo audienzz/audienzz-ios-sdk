@@ -225,7 +225,10 @@ If raising it does not move the auction earlier, the ad component is not mountin
 | Prefetch margin | `setPrefetchMarginPointsOverride(_:)` | `prefetchDistancePt` | `200` pt |
 
 ```swift
-let banner = AURemoteConfigBannerView(adConfigId: "118")
+// A view-controller property, retained for the whole time the slot is used:
+private let banner = AURemoteConfigBannerView(adConfigId: "118")
+
+// Configure before calling load(in:rootViewController:):
 banner.lazyLoadOverride = true              // defer the auction to the viewport
 banner.prefetchMarginPointsOverride = 600   // …starting 600 pt ahead
 banner.load(in: container, rootViewController: self)
@@ -840,28 +843,45 @@ func application(_ application: UIApplication, didFinishLaunchingWithOptions lau
 ### Banner Ad (Remote Config)
 
 Use `AURemoteConfigBannerView` to load a banner defined by a remote configuration ID.
+Keep the remote banner as a **view-controller property**. `load(in:)` mounts its inner ad in the
+container; it does not retain the remote owner. A temporary local owner is released before the
+asynchronous Google load can run.
 
 ```swift
-// 1. Initialize the view with the configuration ID
-let bannerView = AURemoteConfigBannerView(adConfigId: "YOUR_CONFIG_ID")
+final class ArticleViewController: UIViewController {
+    // Connect this outlet to the container in your storyboard/layout.
+    @IBOutlet private weak var adContainerView: UIView!
+    private let banner = AURemoteConfigBannerView(adConfigId: "YOUR_CONFIG_ID")
 
-// 2. Load the ad into a container view
-// The SDK handles fetching configuration, setting up Prebid/GAM, and rendering.
-bannerView.load(in: adContainerView, rootViewController: self)
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        Audienzz.shared.pageImpression(self) // before creating/loading this page's ads
+        banner.load(in: adContainerView, rootViewController: self)
+    }
+
+    deinit {
+        banner.destroy()
+    }
+}
 ```
 
+Identical `load` calls reuse the existing banner; `pageImpression` owns reactivation on return.
+The SDK updates the container height when the creative size changes, so do not add a new height
+constraint from each `bannerViewDidReceiveAd` callback. Report the new page on every destination,
+including screens without ads, so banners from the previous page are released.
+
 **Fixed Size Banner:**
-To enforce a specific size for a fixed banner (e.g., 320x50), pass the desired size to the `load` method. This will override any adaptive settings from the remote configuration:
+For a configuration without adaptive sizing, pass the desired fixed size (e.g., 320x50) to `load`:
 
 ```swift
-bannerView.load(in: adContainerView, size: CGSize(width: 320, height: 50), rootViewController: self)
+banner.load(in: adContainerView, size: CGSize(width: 320, height: 50), rootViewController: self)
 ```
 
 **Adaptive Banner:**
 If the remote configuration has adaptive banners enabled, simply omit the `size` parameter. The SDK will automatically calculate the optimal banner height based on the container view's width and the adaptive strategy defined in the backend configuration (e.g., `fullWidth` or `customWidth`):
 
 ```swift
-bannerView.load(in: adContainerView, rootViewController: self)
+banner.load(in: adContainerView, rootViewController: self)
 ```
 
 ### Interstitial Ad (Remote Config)

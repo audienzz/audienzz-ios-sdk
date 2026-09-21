@@ -29,6 +29,10 @@ final class RemoteConfigViewController: UIViewController {
     private let fixedBannerContainer = UIView()
     private let adaptiveBannerContainer = UIView()
 
+    // load(in:) mounts the inner ad, not its remote-config owner. Keep each owner for the
+    // screen's lifetime so its asynchronous Google-load and sizing callbacks remain valid.
+    private let fixedBanner = AURemoteConfigBannerView(adConfigId: Constants.fixedBannerConfigId)
+    private let adaptiveBanner = AURemoteConfigBannerView(adConfigId: Constants.inlineAdaptiveConfigId)
     private var interstitial: AURemoteConfigInterstitial?
 
     private let loremLabel: UILabel = {
@@ -58,7 +62,6 @@ final class RemoteConfigViewController: UIViewController {
         super.viewDidLoad()
         setupLayout()
         setupUI()
-        loadBanners()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -66,6 +69,14 @@ final class RemoteConfigViewController: UIViewController {
         // Track the screen visit for analytics (fires `pageImpression` and a fresh page-impression
         // id that ties this screen's ad events together). Call it before ads load.
         Audienzz.shared.pageImpression(self)
+        // Identical loads coalesce. On a return visit pageImpression reactivates the existing ads.
+        loadBanners()
+    }
+
+    deinit {
+        fixedBanner.destroy()
+        adaptiveBanner.destroy()
+        interstitial?.destroy()
     }
 
     // MARK: - Layout
@@ -146,11 +157,7 @@ final class RemoteConfigViewController: UIViewController {
     }
 
     private func loadFixedBanner() {
-        let banner = AURemoteConfigBannerView(
-            adConfigId: Constants.fixedBannerConfigId
-        )
-
-        banner.load(
+        fixedBanner.load(
             in: fixedBannerContainer,
             rootViewController: self,
             delegate: self
@@ -158,11 +165,7 @@ final class RemoteConfigViewController: UIViewController {
     }
 
     private func loadAdaptiveBanner() {
-        let banner = AURemoteConfigBannerView(
-            adConfigId: Constants.inlineAdaptiveConfigId
-        )
-
-        banner.load(
+        adaptiveBanner.load(
             in: adaptiveBannerContainer,
             rootViewController: self,
             delegate: self
@@ -210,17 +213,15 @@ extension RemoteConfigViewController: FullScreenContentDelegate {
 extension RemoteConfigViewController: BannerViewDelegate {
     func bannerViewDidReceiveAd(_ bannerView: BannerView) {
         print("bannerViewDidReceiveAd \(bannerView.frame.size)")
-        adaptiveBannerContainer.heightAnchor.constraint(
-            equalToConstant: bannerView.frame.height
-        ).isActive = true
+        // The remote banner owns its container's height and updates it when Google changes size.
     }
 }
 
 /// A separate screen with a remote-config banner, pushed from the Remote Config screen. Navigating
-/// here and back exercises screen-navigation pause/resume/reload and ad↔screen matching. Screen
-/// tracking is automatic — no `pageImpression` calls here.
+/// here and back exercises screen-navigation pause/resume/reload and ad↔screen matching. Each
+/// screen reports its own page before loading ads; screen tracking is explicit.
 final class RemoteConfigAdScreenViewController: UIViewController {
-    private var banner: AURemoteConfigBannerView?
+    private let banner = AURemoteConfigBannerView(adConfigId: "46")
     private let bannerContainer = UIView()
 
     override func viewDidLoad() {
@@ -250,8 +251,15 @@ final class RemoteConfigAdScreenViewController: UIViewController {
             label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
         ])
 
-        let b = AURemoteConfigBannerView(adConfigId: "46")
-        banner = b
-        b.load(in: bannerContainer, rootViewController: self)
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        Audienzz.shared.pageImpression(self)
+        banner.load(in: bannerContainer, rootViewController: self)
+    }
+
+    deinit {
+        banner.destroy()
     }
 }

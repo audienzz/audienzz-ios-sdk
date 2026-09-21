@@ -164,7 +164,10 @@ public class AURemoteConfigBannerView: VisibleView {
     }
 
     // MARK: - Public API
-    /// High-level entry point for SDK users.
+    /// High-level entry point for SDK users. Retain this owner (for example, as a view-controller
+    /// property) for as long as the ad is used. The container retains the inner banner, not this
+    /// owner; a local variable going out of scope would disable its Google-load and size callbacks.
+    /// Report `pageImpression` before the first load and call `destroy()` when permanently finished.
     @MainActor
     public func load(
         in container: UIView,
