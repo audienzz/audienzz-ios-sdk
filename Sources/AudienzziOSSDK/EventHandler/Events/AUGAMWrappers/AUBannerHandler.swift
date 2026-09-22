@@ -89,12 +89,9 @@ class AUBannerHandler: NSObject,
     }
 
     /// Reveals the GAM banner again after a `blankOnScreenReload` blanking, once the fresh ad
-    /// arrives (or fails). No-op unless this reload blanked the slot.
+    /// arrives (or fails). No-op unless this slot blanked itself.
     private func restoreFromBlankIfNeeded() {
-        if auBannerView?.blankedForReload == true {
-            auBannerView?.blankedForReload = false
-            gamView?.isHidden = false
-        }
+        auBannerView?.restoreFromBlankIfNeeded()
     }
 
     // MARK: - GADBannerViewDelegate

@@ -139,6 +139,11 @@ extension AUBannerView {
         creativePageGeneration += 1
         refreshController.block(.pageInactive)
         retireCurrentAuction()
+        // The creative is retired here, so blank it here too. Blanking only once the replacement
+        // auction starts meant the outgoing creative was still on screen when the page came back —
+        // the user saw the *previous* ad, then a blank, then the new one. Clearing it on the way out
+        // means the slot is already empty on the way in.
+        blankForReloadIfNeeded()
     }
 
     /// Page (re)activation: this ad's screen is the incoming page, so serve a fresh creative.
@@ -174,13 +179,14 @@ extension AUBannerView {
             rearmInitialLoad()
             return
         }
-        // Optionally blank the current creative (keeping the slot size — the container view keeps
-        // its frame) so the refresh is visually obvious; restored when the fresh ad is received.
-        if Audienzz.shared.blankOnScreenReload {
-            eventHandler?.gamView?.isHidden = true
-            blankedForReload = true
+        // Usually already blank from `releaseForPage`; this covers a page re-reported without an
+        // intervening release.
+        blankForReloadIfNeeded()
+        if !fetchRequest(request, reason: .pageImpression) {
+            // No replacement is coming, so showing the previous creative beats an empty slot that
+            // nothing will ever fill.
+            restoreFromBlankIfNeeded()
         }
-        fetchRequest(request, reason: .pageImpression)
     }
 
     /// Force a fresh auction now, ignoring the stale-aware timing of the viewport resume.
@@ -197,11 +203,30 @@ extension AUBannerView {
         // This reload owns the replacement, so a pending periodic refresh or retry is retired rather
         // than allowed to issue a second one for the same transition.
         retireCurrentAuction()
-        if Audienzz.shared.blankOnScreenReload {
-            eventHandler?.gamView?.isHidden = true
-            blankedForReload = true
+        blankForReloadIfNeeded()
+        if !fetchRequest(request, reason: .pageImpression) {
+            restoreFromBlankIfNeeded()
         }
-        fetchRequest(request, reason: .pageImpression)
+    }
+
+    /// Hide the current creative while its replacement is on the way, keeping the slot's size (the
+    /// container view keeps its frame).
+    ///
+    /// Hides the GAM view *inside* the container rather than the container itself: the visibility
+    /// gate measures this view's own `isHidden`/`alpha` and geometry, so blanking the container
+    /// would make the slot ineligible for the very auction that is meant to refill it.
+    func blankForReloadIfNeeded() {
+        guard Audienzz.shared.blankOnScreenReload, !blankedForReload else { return }
+        guard let gamView = eventHandler?.gamView, !gamView.isHidden else { return }
+        gamView.isHidden = true
+        blankedForReload = true
+    }
+
+    /// Reveal a creative hidden by `blankForReloadIfNeeded`. No-op unless this slot blanked itself.
+    func restoreFromBlankIfNeeded() {
+        guard blankedForReload else { return }
+        blankedForReload = false
+        eventHandler?.gamView?.isHidden = false
     }
 
     // MARK: - App lifecycle
@@ -311,10 +336,7 @@ extension AUBannerView {
             if load.auction == self.auctionGeneration {
                 self.lastRefreshTime = Date()
                 self.refreshController.onRequestCompleted(generationAtRequest: load.refresh, success: true)
-                if self.blankedForReload {
-                    self.blankedForReload = false
-                    self.eventHandler?.gamView.isHidden = false
-                }
+                self.restoreFromBlankIfNeeded()
             } else { self.resumeEligibleWork() }
         }
         googleLoadTimeout = timeout
