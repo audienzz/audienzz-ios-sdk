@@ -13,7 +13,9 @@ DEST="${1:-platform=iOS Simulator,name=iPhone 17}"
 WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 
-for entry in Package.swift Package.resolved Sources Tests; do
+# The podspec is linked so a test can read it: it and AUSDKVersion are two independent literals
+# that must agree, and nothing else enforces that.
+for entry in Package.swift Package.resolved Sources Tests AudienzziOSSDK.podspec; do
     ln -s "$REPO/$entry" "$WORKDIR/$entry"
 done
 
