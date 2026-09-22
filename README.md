@@ -1,8 +1,109 @@
-> **Upgrade notice:** Native remote interstitial `load()` now auto-presents by default.
-> Apps that prefetch must opt out before loading. See the [breaking-change migration](CHANGELOG.md).
+> **Upgrade notice:** the remote interstitial's `load()` / `preload()` / `showAtOpportunity()`
+> are **removed**, replaced by `prefetch` / `show` / `prefetchAndShow`. See
+> [Migrating](#migrating-from-load--preload--showatopportunity) and the [CHANGELOG](CHANGELOG.md).
 
 Audienzz iOS SDK
 ========
+
+## Quick integration (remote config + `pageImpression`)
+
+The recommended path: your ad units come from the Audienzz publisher config, and you tell the SDK
+which screen is current. Five steps.
+
+### 1. Install
+
+Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git`.
+CocoaPods: `pod 'AudienzziOSSDK'`.
+
+Add your GAM/AdMob app ID to `Info.plist` under `GADApplicationIdentifier`.
+
+### 2. Initialize once, in `AppDelegate`
+
+```swift
+import AudienzziOSSDK
+import GoogleMobileAds
+
+func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+) -> Bool {
+    AudienzzRemoteConfig.shared.configureRemote(
+        remoteUrl: URL(string: "https://api.adnz.co/api/ws-sdk-config/public/v1/")!,
+        publisherId: "YOUR_PUBLISHER_ID"   // provided by Audienzz
+    )
+
+    Task {
+        try await Audienzz.shared.configureWithRemoteSDK()
+        MobileAds.shared.start()
+        AudienzzGAMUtils.shared.initializeGAM()
+    }
+    return true
+}
+```
+
+**In the `AppDelegate`, not in a view controller.** An SDK initialized by whichever screen happens
+to open first is not initialized at all when the reader starts somewhere else, and every ad on that
+launch stays empty.
+
+Run your CMP **before** this and forward the result through `AUTargeting.shared` — see
+[Consent](#consent). Initializing first requests ads without the consent signals.
+
+### 3. Report every screen
+
+```swift
+override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    Audienzz.shared.pageImpression(self)
+}
+```
+
+This is the one thing the SDK cannot do for you, and everything else follows from it: it groups a
+visit's ad events, and it is what releases the *previous* screen's banners.
+
+**Report ad-free screens too.** A settings page with no ads still has to be reported — skipping it
+leaves the previous screen's banners auctioning for a screen nobody is looking at.
+
+### 4. Place a banner
+
+Keep the banner as a **property** of the view controller; `load(in:)` mounts its inner ad in the
+container but does not retain the owner.
+
+```swift
+private let banner = AURemoteConfigBannerView(adConfigId: "YOUR_CONFIG_ID")
+
+override func viewDidLoad() {
+    super.viewDidLoad()
+    banner.load(in: bannerContainer, rootViewController: self)
+}
+```
+
+### 5. Show an interstitial
+
+Three verbs, and the distinction between them is deliberate:
+
+```swift
+let interstitial = AURemoteConfigInterstitial(adConfigId: "YOUR_CONFIG_ID")
+interstitial.presentationViewController = self
+
+// Obtain and retain one ad. Never presents.
+interstitial.prefetch { result in /* .success means ready, nothing is on screen */ }
+
+// Present what is in hand, at a moment you chose. Returns false if nothing is ready —
+// it does NOT present later, when the reader has moved on.
+interstitial.show(from: self)
+
+// The one call that presents something you did not explicitly time.
+interstitial.prefetchAndShow(from: self) { _ in }
+```
+
+### That's it
+
+You do not have to wait for initialization before creating ads. An auction that would start before
+Prebid is ready is deferred and taken as soon as it is ready — so a banner built during launch fills
+normally rather than losing its one request.
+
+---
+
 ## Overview
 
 A mobile advertising SDK that combines header bidding capabilities from Prebid Mobile with Google's advertising ecosystem through a unified interface.
