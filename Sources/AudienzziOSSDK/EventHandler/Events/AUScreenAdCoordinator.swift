@@ -87,6 +87,18 @@ internal final class AUScreenAdCoordinator {
         ads.remove(ad)
     }
 
+    /// Prebid is configured — let every live banner take the first load it deferred.
+    ///
+    /// Driven from the registry rather than per-banner closures, so a banner deallocated while
+    /// waiting is simply no longer here.
+    func resumeAllAfterPrebidConfigured() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.resumeAllAfterPrebidConfigured() }
+            return
+        }
+        ads.allObjects.forEach { $0.resumeEligibleWork() }
+    }
+
     /// True when `ad` lives on the active screen, or when no screen has resumed yet (so a freshly-
     /// created banner starts active rather than paused). Used to initialize a banner's `screenActive`.
     func isActiveScreen(for ad: AUBannerView) -> Bool {

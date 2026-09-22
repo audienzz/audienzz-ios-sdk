@@ -683,9 +683,36 @@ public class Audienzz: NSObject {
     private var backgroundObserver: NSObjectProtocol?
     private var willForegroundObserver: NSObjectProtocol?
 
+    /// Whether Prebid has been given its account id — i.e. whether an auction can carry demand.
+    ///
+    /// The remote flow `await`s the publisher config before assigning it, so there is a real window
+    /// on a cold start where an auction would go out with an empty account id. Prebid answers
+    /// `.prebidInvalidAccountId` and the SDK still loads GAM, so the slot fills — but that first
+    /// impression, usually the above-the-fold one, carries no header-bidding demand at all.
+    internal var isPrebidConfigured: Bool {
+        prebidConfiguredOverride ?? prebidConfigured
+    }
+
+    private var prebidConfigured = false
+
+    /// Test seam. A unit test never runs the real initialization, so without this every banner test
+    /// would sit behind the not-configured gate.
+    internal var prebidConfiguredOverride: Bool?
+
+    /// Prebid is configured: let every banner that deferred its first load take it now.
+    ///
+    /// Resuming through the coordinator's registry rather than a queue of closures means a banner
+    /// deallocated while waiting is simply no longer there.
+    private func markPrebidConfigured() {
+        guard !prebidConfigured else { return }
+        prebidConfigured = true
+        AUScreenAdCoordinator.shared.resumeAllAfterPrebidConfigured()
+    }
+
     private func setupPrebid(_ companyId: String, appVolume: Float = 0) {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
+        markPrebidConfigured()
         Prebid.shared.customStatusEndpoint = customStatusEndpoint
         Targeting.shared.omidPartnerName = "Google"
         let v = MobileAds.shared.versionNumber
@@ -701,6 +728,7 @@ public class Audienzz: NSObject {
     ) {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
+        markPrebidConfigured()
         Prebid.shared.customStatusEndpoint = prebidStatusUrl
         Targeting.shared.omidPartnerName = "Google"
         let v = MobileAds.shared.versionNumber

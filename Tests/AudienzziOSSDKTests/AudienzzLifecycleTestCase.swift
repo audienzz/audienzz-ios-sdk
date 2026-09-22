@@ -7,8 +7,13 @@ class AudienzzLifecycleTestCase: XCTestCase {
     override func setUp() {
         super.setUp()
         Audienzz.shared.resetLifecycleForTesting()
+        // A unit test never runs the real initialization, and an unconfigured Prebid now defers
+        // every auction — see `Audienzz.prebidConfiguredOverride`. Suites that exercise the gate
+        // itself set it to false for the duration of the test.
+        Audienzz.shared.prebidConfiguredOverride = true
     }
     override func tearDown() {
+        Audienzz.shared.prebidConfiguredOverride = nil
         Audienzz.shared.resetLifecycleForTesting()
         super.tearDown()
     }

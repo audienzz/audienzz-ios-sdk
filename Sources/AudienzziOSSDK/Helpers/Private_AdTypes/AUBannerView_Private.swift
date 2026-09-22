@@ -276,6 +276,18 @@ extension AUBannerView {
     @nonobjc func canStartAuction(_ reason: AURefreshRequestReason = .firstLoad) -> Bool {
         guard !refreshController.isDestroyed, screenActive, !Audienzz.shared.isAppBackgrounded,
               !Audienzz.shared.hasPendingForegroundReimpression else { return false }
+        // Prebid gets its account id only once the publisher config has been fetched, and the
+        // remote flow awaits that. An above-the-fold banner fires its first load immediately, so it
+        // routinely wins that race — and Prebid then answers `.prebidInvalidAccountId` while the
+        // SDK goes on to load GAM, filling the slot with no header-bidding demand behind it. The
+        // ad is not lost (unlike Android, where Prebid never calls back at all), but the most
+        // valuable impression of the session is. Deferring records the pending reason; configuring
+        // Prebid resumes it.
+        guard Audienzz.shared.isPrebidConfigured else {
+            AULogEvent.logDebug(
+                "[AUBannerView] \(configId) — Prebid not configured yet, deferring \(reason.rawValue)")
+            return false
+        }
         // Prefetch may precede attachment and periodic-refresh visibility. Other gates still apply.
         return !refreshController.blockReasons.contains {
             // A first load may prefetch before the ad is visible or attached. The host-reported

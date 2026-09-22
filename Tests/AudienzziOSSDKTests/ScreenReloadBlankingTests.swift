@@ -15,6 +15,7 @@
 
 import XCTest
 import GoogleMobileAds
+import PrebidMobile
 @testable import AudienzziOSSDK
 
 /// Leaving a page clears its creative, so returning to the page never shows the previous ad.
@@ -119,5 +120,70 @@ final class ScreenReloadBlankingTests: AudienzzLifecycleTestCase {
         view.restoreFromBlankIfNeeded()
 
         XCTAssertTrue(gamView.isHidden)
+    }
+}
+
+/// A banner must not auction before Prebid has its account id.
+///
+/// The failure this prevents is quieter on iOS than on Android. Android's Prebid never calls back
+/// at all, so the slot stayed empty for the session; iOS answers `.prebidInvalidAccountId` and the
+/// SDK still loads GAM, so the slot fills — but with no header-bidding demand behind it. The ad is
+/// not lost, the auction is, and it is the above-the-fold impression that loses it.
+final class PrebidConfiguredGateTests: AudienzzLifecycleTestCase {
+
+    private func banner() -> AUBannerView {
+        AUBannerView(
+            configId: "config",
+            adSize: CGSize(width: 320, height: 50),
+            adFormats: [.banner]
+        )
+    }
+
+    func testAnAuctionIsRefusedWhilePrebidIsUnconfigured() {
+        Audienzz.shared.prebidConfiguredOverride = false
+        let view = banner()
+
+        XCTAssertFalse(view.canStartAuction(.firstLoad))
+    }
+
+    func testAnAuctionIsAdmittedOncePrebidIsConfigured() {
+        Audienzz.shared.prebidConfiguredOverride = true
+        let view = banner()
+
+        XCTAssertTrue(view.canStartAuction(.firstLoad))
+    }
+
+    func testTheGateAppliesToEveryReasonNotJustTheFirstLoad() {
+        // A periodic refresh landing in the same window would waste an auction just as a first load
+        // would; the first-load exemptions are about visibility and attachment, not about this.
+        Audienzz.shared.prebidConfiguredOverride = false
+        let view = banner()
+
+        XCTAssertFalse(view.canStartAuction(.periodicRefresh))
+        XCTAssertFalse(view.canStartAuction(.pageImpression))
+    }
+
+    func testARefusedFirstLoadIsRememberedSoItCanBeResumed() {
+        // Refusing is only safe because the reason is recorded — otherwise the deferred load would
+        // simply be dropped, which is the bug in a different costume.
+        Audienzz.shared.prebidConfiguredOverride = false
+        let view = banner()
+        let request = AdManagerRequest()
+
+        XCTAssertFalse(view.fetchRequest(request, reason: .firstLoad))
+        XCTAssertEqual(view.pendingLoadReason, .firstLoad)
+    }
+
+    func testTheCoordinatorResumeReachesRegisteredBannersWithoutCrashing() {
+        // The resume path runs over a weak registry that may contain banners in any state; it must
+        // be safe to call at any time, since initialization decides when it happens.
+        Audienzz.shared.prebidConfiguredOverride = false
+        let view = banner()
+        AUScreenAdCoordinator.shared.register(view)
+
+        Audienzz.shared.prebidConfiguredOverride = true
+        AUScreenAdCoordinator.shared.resumeAllAfterPrebidConfigured()
+
+        XCTAssertTrue(view.canStartAuction(.firstLoad))
     }
 }
