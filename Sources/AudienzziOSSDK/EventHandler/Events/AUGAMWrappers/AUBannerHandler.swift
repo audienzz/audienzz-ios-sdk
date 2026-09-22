@@ -127,6 +127,9 @@ class AUBannerHandler: NSObject,
             if actualSize != .zero {
                 gamBannerView.resize(adSizeFor(cgSize: actualSize))
                 auBannerView?.onAdSizeChanged?(actualSize)
+                // The GAM banner just resized itself in place; re-center it so a creative
+                // narrower than the host doesn't drift to the leading edge (AUAdView.layoutSubviews).
+                auBannerView?.setNeedsLayout()
             }
         }
         pendingGAMSize = nil

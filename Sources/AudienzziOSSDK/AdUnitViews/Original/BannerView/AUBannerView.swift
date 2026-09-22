@@ -377,6 +377,11 @@ public class AUBannerView: AUAdView {
             bannerUnit.videoParameters = self.videoParameters?.unwrap() ?? defaultVideoParameters()
         }
         addSubview(gamBanner)
+        // Keep the GAM banner centered in this host; a creative narrower than the host
+        // (full-width/tablet slot, or a multisize slot filled smaller) would otherwise
+        // render at the leading edge. See AUAdView.layoutSubviews.
+        centeredAdSubview = gamBanner
+        setNeedsLayout()
         
         let ppid = PPIDManager.shared.getPPID()
         
