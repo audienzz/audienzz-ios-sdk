@@ -371,6 +371,7 @@ extension AUBannerView {
                       event: .loadAccepted, reason: reason.rawValue, visible: isViewRefreshEligible)
         let refreshGeneration = refreshController.onRequestStarted(reason)
         initialLoadRequested = true
+        let gamRequest = requestContext.nextRequest(from: gamRequest)
         // Re-read the PPID on every auction rather than trusting the one stamped at createAd.
         // A banner refreshes for the lifetime of its screen, so a publisher PPID set after the ad
         // was built, a 12-month rotation, or consent arriving late would otherwise never reach the

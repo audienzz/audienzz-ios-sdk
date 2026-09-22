@@ -59,6 +59,9 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     /// Lower-cased through the same helper the banner path uses: the two were producing different
     /// casings for the same kind of identifier, so a single run's `auction_id` column mixed
     /// `CE4A378A-…` with `a58d608a-…` and could not be joined case-sensitively.
+    /// Stable logical placement, shared with replacement native ads.
+    public lazy var requestContext = AUAdRequestContext()
+
     private var loadID = AUUniqHelper.makeUniqID()
     private let adViewID = AUUniqHelper.makeUniqID()
     private var analyticsAdUnitPath: String?
@@ -282,8 +285,9 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         // shared manager (which also carries the SDK's own au_sdk key), then the PPID.
         // Constructing a bare request meant a publisher's configured targeting never reached remote
         // interstitials at all, so targeted line items could not be selected for them.
-        let request = AUTargeting.shared.customTargetingManager
+        let template = AUTargeting.shared.customTargetingManager
             .applyToGamRequest(request: AdManagerRequest())
+        let request = requestContext.nextRequest(from: template)
         request.publisherProvidedID = PPIDManager.shared.getPPID()
         analyticsAdUnitPath = config.adUnitPath
         let started = now()

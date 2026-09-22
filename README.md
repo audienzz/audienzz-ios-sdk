@@ -1165,3 +1165,9 @@ Remote interstitial requests carry the same global GAM targeting as the other or
 Fullscreen `AUInterstitialView` and `AURewardedView` demand is one-shot and independent of page,
 attachment, viewport and banner refresh. Their shared configuration cannot turn on a periodic
 fullscreen timer. A page report never replaces their prefetched inventory.
+
+### Automatic request counters
+
+Original and remote banners/interstitials automatically include `au_page_seq`, `au_slot` and
+`au_refresh` in GAM custom targeting. See [the request targeting contract](docs/ad-request-targeting.md)
+for page resets, automatic slot ordering and request-count semantics. No new publisher parameter is required.

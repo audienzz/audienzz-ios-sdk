@@ -15,6 +15,9 @@ import GoogleMobileAds
  */
 @objcMembers
 public class AURemoteConfigBannerView: VisibleView {
+    /// Stable logical placement, shared with replacement native ads.
+    public lazy var requestContext = AUAdRequestContext()
+
     internal var adConfigId: String
 
     public var bannerParameters: AUBannerParameters?
@@ -264,6 +267,7 @@ public class AURemoteConfigBannerView: VisibleView {
             adFormats: [.banner],
             isLazyLoad: resolvedLazyLoad(for: remoteConfig)
         )
+        bannerView.requestContext = requestContext
         self.bannerView = bannerView
         // So the delivery trace reports the ad config the publisher configured, not the Prebid
         // placement id, and matches the owner lines above.

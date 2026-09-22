@@ -22,6 +22,9 @@ typealias PrebidAdFormat = PrebidMobile.AdFormat
 
 @objcMembers
 public class AUAdView: VisibleView {
+    /// SDK-owned logical slot identity; adapters retain it across native replacements.
+    public lazy var requestContext = AUAdRequestContext()
+
     var isLazyLoaded: Bool = false
     private(set) var isLazyLoad: Bool
     private(set) var configId: String

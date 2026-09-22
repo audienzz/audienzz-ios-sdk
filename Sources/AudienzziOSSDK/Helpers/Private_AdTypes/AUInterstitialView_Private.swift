@@ -36,6 +36,7 @@ extension AUInterstitialView {
 
     internal override func fetchRequest(_ gamRequest: AdManagerRequest) {
         guard adUnit != nil, let generation = fullscreenDemand.begin() else { return }
+        let gamRequest = requestContext.nextRequest(from: gamRequest)
         prebidWinningBidder = nil
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()

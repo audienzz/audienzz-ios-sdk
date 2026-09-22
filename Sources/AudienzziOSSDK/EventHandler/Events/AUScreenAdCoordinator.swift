@@ -55,6 +55,7 @@ internal final class AUScreenAdCoordinator {
     /// Monotonic page counter. A banner stamps it at `createAd`; a banner whose stamp is older than
     /// the current epoch belongs to a page the user has left.
     private(set) var epoch: Int = 0
+    let requestLedger = AUAdRequestLedger()
 
     private func setActiveScreen(_ screen: AnyObject) {
         if let vc = screen as? UIViewController {
@@ -78,6 +79,7 @@ internal final class AUScreenAdCoordinator {
         ])
         assertMain()
         ads.add(ad)
+        if isActiveScreen(for: ad) { ad.requestContext.register() }
     }
 
     func deregister(_ ad: AUBannerView) {
@@ -116,8 +118,9 @@ internal final class AUScreenAdCoordinator {
         epoch += 1
         setActiveScreen(screen)
         activeScreenName = name
-        for ad in configuredAds.allObjects { ad.pageChanged(screen) }
         let live = ads.allObjects
+        requestLedger.beginPage(epoch, retained: live.filter { $0.isHostedBy(screen) }.map { $0.requestContext })
+        for ad in configuredAds.allObjects { ad.pageChanged(screen) }
         AULogEvent.logDebug(
             "[AUScreenCoordinator] pageImpression \"\(name)\" epoch=\(epoch) — \(live.count) banner(s) registered")
         AUDiagnostics.log("page", "transition", [
@@ -206,6 +209,7 @@ internal final class AUScreenAdCoordinator {
         activeScreenToken = nil
         activeScreenName = nil
         epoch = 0
+        requestLedger.beginPage(0, retained: [])
     }
     #endif
 
