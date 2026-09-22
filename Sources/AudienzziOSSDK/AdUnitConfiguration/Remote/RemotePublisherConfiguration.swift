@@ -86,11 +86,6 @@ public struct RemotePublisherConfiguration: Codable {
     /// switch, not a preference. Absent/nil → enabled.
     public let ppidEnabled: Bool?
 
-    /// Backend switch for the SDK-generated PPID only. `false` stops the SDK minting and rotating
-    /// its own UUID; a PPID the app supplied through `setPublisherPPID` is still sent, since that
-    /// is the publisher's own identifier rather than one the SDK invented. Absent/nil → enabled.
-    public let automaticPpidEnabled: Bool?
-
     enum CodingKeys: String, CodingKey {
         case id
         case prebidServer
@@ -99,6 +94,5 @@ public struct RemotePublisherConfiguration: Codable {
         case ios
         case smartRefreshV2
         case ppidEnabled
-        case automaticPpidEnabled
     }
 }

@@ -17,13 +17,13 @@ import XCTest
 @testable import AudienzziOSSDK
 
 /// A PPID is sent unless the backend turns it off for this publisher — there is no app-facing
-/// opt-out. Two switches arrive in the publisher config and they mean different things: the master
-/// one is a privacy setting and suppresses the publisher's own identifier too, while the automatic
-/// one governs only the identifier the SDK would invent.
+/// opt-out. One switch decides it: `ppidEnabled`, a top-level boolean on `GET /publishers/{id}`.
+/// Absent means enabled. The app only decides *which* identifier is used, by supplying its own
+/// through `setPublisherPPID`; with none supplied the SDK generates and persists a UUID.
 ///
 /// Getting the default wrong is expensive in both directions: defaulting off silently drops every
 /// PPID (exactly what shipped before, costing frequency capping and cross-session targeting), and
-/// ignoring the master switch keeps sending an identifier for a publisher who has turned it off.
+/// ignoring the switch keeps sending an identifier for a publisher who has turned it off.
 final class PPIDManagerTests: AudienzzLifecycleTestCase {
 
     private var manager: PPIDManager { PPIDManager.shared }
@@ -31,17 +31,17 @@ final class PPIDManagerTests: AudienzzLifecycleTestCase {
     override func setUp() {
         super.setUp()
         manager.setPublisherPPID(nil)
-        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: nil, automaticPpidEnabled: nil)
+        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: nil)
     }
 
     override func tearDown() {
         manager.setPublisherPPID(nil)
-        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: nil, automaticPpidEnabled: nil)
+        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: nil)
         super.tearDown()
     }
 
     func testGeneratesAPPIDWhenTheBackendSaysNothing() {
-        // Absent switches mean enabled. This is the default every publisher gets.
+        // An absent switch means enabled. This is the default every publisher gets.
         XCTAssertNotNil(manager.getPPID())
     }
 
@@ -67,39 +67,53 @@ final class PPIDManagerTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(manager.getPPID(), generated)
     }
 
-    func testTheMasterSwitchSuppressesTheGeneratedPPID() {
-        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: false, automaticPpidEnabled: nil)
+    func testTheSwitchSuppressesTheGeneratedPPID() {
+        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: false)
 
         XCTAssertNil(manager.getPPID())
     }
 
-    func testTheMasterSwitchSuppressesAPublisherSuppliedPPIDToo() {
+    func testTheSwitchSuppressesAPublisherSuppliedPPIDToo() {
         // It is a per-publisher privacy switch, so honouring it only for the SDK's own identifier
         // would miss the point entirely.
         manager.setPublisherPPID("hashed-email")
-        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: false, automaticPpidEnabled: nil)
+        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: false)
 
         XCTAssertNil(manager.getPPID())
     }
 
-    func testTheAutomaticSwitchSuppressesOnlyTheGeneratedPPID() {
-        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: nil, automaticPpidEnabled: false)
-
-        XCTAssertNil(manager.getPPID())
-    }
-
-    func testAPublisherSuppliedPPIDSurvivesTheAutomaticSwitch() {
-        // The publisher's own identifier is theirs to send; this switch governs only the one the
-        // SDK would invent.
-        manager.setPublisherPPID("hashed-email")
-        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: nil, automaticPpidEnabled: false)
-
-        XCTAssertEqual(manager.getPPID(), "hashed-email")
-    }
-
-    func testSwitchesExplicitlySetToTrueBehaveAsEnabled() {
-        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: true, automaticPpidEnabled: true)
+    func testTheSwitchExplicitlySetToTrueBehavesAsEnabled() {
+        Audienzz.shared.applyBackendPpidConfig(ppidEnabled: true)
 
         XCTAssertNotNil(manager.getPPID())
+    }
+
+    /// `automaticPpidEnabled` is gone from the model. The backend never sent it, but a payload
+    /// carrying it must still decode — an unknown key is not an error for `Codable`, and this
+    /// pins that nobody reintroduces it as a second gate.
+    func testAPublisherConfigCarryingAutomaticPpidEnabledStillDecodesAndIsIgnored() throws {
+        let json = """
+        {
+          "id": 35,
+          "prebidServer": {
+            "url": "https://ib.adnxs.com/openrtb2/prebid",
+            "accountId": 3927,
+            "statusUrl": "https://ib.adnxs.com/status"
+          },
+          "ppidEnabled": true,
+          "automaticPpidEnabled": false
+        }
+        """.data(using: .utf8)!
+
+        let config = try JSONDecoder().decode(RemotePublisherConfiguration.self, from: json)
+
+        XCTAssertEqual(config.ppidEnabled, true)
+
+        // Re-encoding is what discriminates: a model that still carried the field would decode
+        // this payload just as happily and write the key straight back out.
+        let reencoded = try JSONSerialization.jsonObject(
+            with: try JSONEncoder().encode(config)
+        ) as? [String: Any]
+        XCTAssertNil(reencoded?["automaticPpidEnabled"])
     }
 }

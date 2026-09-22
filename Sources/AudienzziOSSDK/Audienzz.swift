@@ -353,24 +353,15 @@ public class Audienzz: NSObject {
         backendPpidEnabled ?? AudienzzRemoteConfig.shared.publisherConfig?.ppidEnabled ?? true
     }
 
-    /// Whether the SDK may mint its own PPID. Backend-controlled; absent → enabled.
-    internal var isAutomaticPpidEnabled: Bool {
-        backendAutomaticPpidEnabled
-            ?? AudienzzRemoteConfig.shared.publisherConfig?.automaticPpidEnabled
-            ?? true
-    }
-
     private var backendPpidEnabled: Bool?
-    private var backendAutomaticPpidEnabled: Bool?
 
-    /// Applies the publisher config's PPID switches.
+    /// Applies the publisher config's PPID switch.
     ///
-    /// The SDK reads them from its own remote config when it fetched that itself. The Flutter
+    /// The SDK reads it from its own remote config when it fetched that itself. The Flutter
     /// bridge fetches the publisher config in Dart, so `publisherConfig` is nil there and the
-    /// resolved values have to be handed down instead. Not part of the documented app-facing API.
-    public func applyBackendPpidConfig(ppidEnabled: Bool?, automaticPpidEnabled: Bool?) {
+    /// resolved value has to be handed down instead. Not part of the documented app-facing API.
+    public func applyBackendPpidConfig(ppidEnabled: Bool?) {
         backendPpidEnabled = ppidEnabled
-        backendAutomaticPpidEnabled = automaticPpidEnabled
     }
 
     internal var isSmartRefreshV2Enabled: Bool {
