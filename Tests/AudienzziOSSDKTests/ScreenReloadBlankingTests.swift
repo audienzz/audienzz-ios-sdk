@@ -113,10 +113,24 @@ final class ScreenReloadBlankingTests: AudienzzLifecycleTestCase {
 
     // ── parity with Android: a blank is never left with nothing coming ──────
 
-    func testARefusedAuctionReleasesTheBlank() {
-        // Android reveals inside its fetch gate, so EVERY refusal releases the blank. iOS used to
-        // reveal only at the two callers that checked the result, which left any other refused
-        // path (a resume, a rearm) holding a blank slot that nothing would refill.
+    func testARefusedAuctionWithNothingOwedReleasesTheBlank() {
+        // A refusal that records no pending reason means no replacement is coming, so the previous
+        // creative beats an empty slot that nothing will ever fill.
+        let (view, gamView) = loadedBanner()
+        Audienzz.shared.prebidConfiguredOverride = false
+        view.blankForReloadIfNeeded()
+        XCTAssertTrue(gamView.isHidden)
+
+        XCTAssertFalse(view.fetchRequest(AdManagerRequest(), reason: .periodicRefresh))
+
+        XCTAssertNil(view.pendingLoadReason)
+        XCTAssertFalse(gamView.isHidden, "nothing is owed, so the slot must not stay blank")
+    }
+
+    func testADeferredPageImpressionKeepsTheBlank() {
+        // The off-screen case: a slot below the fold is refused on return but keeps a pending
+        // reason, and its replacement runs once it is scrolled to. Revealing because the auction
+        // could not start *yet* is what left every off-screen slot showing the previous visit's ad.
         let (view, gamView) = loadedBanner()
         Audienzz.shared.prebidConfiguredOverride = false
         view.blankForReloadIfNeeded()
@@ -124,7 +138,8 @@ final class ScreenReloadBlankingTests: AudienzzLifecycleTestCase {
 
         XCTAssertFalse(view.fetchRequest(AdManagerRequest(), reason: .pageImpression))
 
-        XCTAssertFalse(gamView.isHidden, "a refused auction must not leave the slot blank")
+        XCTAssertEqual(view.pendingLoadReason, .pageImpression)
+        XCTAssertTrue(gamView.isHidden, "a deferral is not a cancellation — the blank must hold")
     }
 
     func testLeavingAPageStillBlanksEvenThoughRetiringReveals() {

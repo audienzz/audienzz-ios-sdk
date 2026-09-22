@@ -373,14 +373,17 @@ extension AUBannerView {
     func fetchRequest(_ gamRequest: AdManagerRequest, reason: AURefreshRequestReason) -> Bool {
         guard canStartAuction(reason), googleLoad == nil else {
             if reason == .firstLoad || reason == .pageImpression { pendingLoadReason = reason }
-            // No replacement is starting, so showing the previous creative beats an empty slot that
-            // nothing will ever fill. At the choke point rather than at the callers: every refusal
-            // has to release the blank, not just the two paths that happen to check the result.
-            restoreFromBlankIfNeeded()
+            // Reveal only when nothing is owed. A deferral is not a cancellation: a slot below the
+            // fold returning to a page is refused here (.notVisible) but keeps a pending reason, and
+            // its replacement runs the moment it is scrolled into view. Revealing because the
+            // auction could not start *yet* is what put the previous visit's creative back on screen
+            // in every off-screen slot.
+            if pendingLoadReason == nil { restoreFromBlankIfNeeded() }
             return false
         }
         guard !refreshController.hasRequestInFlight else {
-            restoreFromBlankIfNeeded()
+            // The in-flight request reveals on its own completion; revealing now would flash the
+            // outgoing creative in the middle of its own replacement.
             return false
         }
         pendingLoadReason = nil
