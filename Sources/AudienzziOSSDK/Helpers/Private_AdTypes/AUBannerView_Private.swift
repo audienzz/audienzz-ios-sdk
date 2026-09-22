@@ -129,6 +129,11 @@ extension AUBannerView {
         auctionGeneration += 1
         refreshController.invalidatePending()
         pendingLoadReason = nil
+        // A cancelled replacement will never reach the Google callback that reveals its blank, so
+        // without this the slot sits empty with nothing on the way to refill it. A caller that is
+        // retiring in order to replace — a page release, a page activation — blanks again straight
+        // after. Mirrors Android's retireCurrentAuction().
+        restoreFromBlankIfNeeded()
     }
 
     /// Page release: the ad's screen is no longer the active page, so stop everything. The slot is
@@ -182,11 +187,7 @@ extension AUBannerView {
         // Usually already blank from `releaseForPage`; this covers a page re-reported without an
         // intervening release.
         blankForReloadIfNeeded()
-        if !fetchRequest(request, reason: .pageImpression) {
-            // No replacement is coming, so showing the previous creative beats an empty slot that
-            // nothing will ever fill.
-            restoreFromBlankIfNeeded()
-        }
+        fetchRequest(request, reason: .pageImpression)
     }
 
     /// Force a fresh auction now, ignoring the stale-aware timing of the viewport resume.
@@ -204,9 +205,7 @@ extension AUBannerView {
         // than allowed to issue a second one for the same transition.
         retireCurrentAuction()
         blankForReloadIfNeeded()
-        if !fetchRequest(request, reason: .pageImpression) {
-            restoreFromBlankIfNeeded()
-        }
+        fetchRequest(request, reason: .pageImpression)
     }
 
     /// Hide the current creative while its replacement is on the way, keeping the slot's size (the
@@ -220,6 +219,7 @@ extension AUBannerView {
         guard let gamView = eventHandler?.gamView, !gamView.isHidden else { return }
         gamView.isHidden = true
         blankedForReload = true
+        AUDiagnostics.log("slot", "blank", [("config", configId)])
     }
 
     /// Reveal a creative hidden by `blankForReloadIfNeeded`. No-op unless this slot blanked itself.
@@ -227,6 +227,7 @@ extension AUBannerView {
         guard blankedForReload else { return }
         blankedForReload = false
         eventHandler?.gamView?.isHidden = false
+        AUDiagnostics.log("slot", "reveal", [("config", configId)])
     }
 
     // MARK: - App lifecycle
@@ -372,9 +373,16 @@ extension AUBannerView {
     func fetchRequest(_ gamRequest: AdManagerRequest, reason: AURefreshRequestReason) -> Bool {
         guard canStartAuction(reason), googleLoad == nil else {
             if reason == .firstLoad || reason == .pageImpression { pendingLoadReason = reason }
+            // No replacement is starting, so showing the previous creative beats an empty slot that
+            // nothing will ever fill. At the choke point rather than at the callers: every refusal
+            // has to release the blank, not just the two paths that happen to check the result.
+            restoreFromBlankIfNeeded()
             return false
         }
-        guard !refreshController.hasRequestInFlight else { return false }
+        guard !refreshController.hasRequestInFlight else {
+            restoreFromBlankIfNeeded()
+            return false
+        }
         pendingLoadReason = nil
         // Every new auction supersedes the previous one.
         auctionGeneration += 1

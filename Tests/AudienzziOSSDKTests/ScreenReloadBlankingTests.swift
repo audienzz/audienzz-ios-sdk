@@ -111,6 +111,46 @@ final class ScreenReloadBlankingTests: AudienzzLifecycleTestCase {
         XCTAssertFalse(gamView.isHidden)
     }
 
+    // ── parity with Android: a blank is never left with nothing coming ──────
+
+    func testARefusedAuctionReleasesTheBlank() {
+        // Android reveals inside its fetch gate, so EVERY refusal releases the blank. iOS used to
+        // reveal only at the two callers that checked the result, which left any other refused
+        // path (a resume, a rearm) holding a blank slot that nothing would refill.
+        let (view, gamView) = loadedBanner()
+        Audienzz.shared.prebidConfiguredOverride = false
+        view.blankForReloadIfNeeded()
+        XCTAssertTrue(gamView.isHidden)
+
+        XCTAssertFalse(view.fetchRequest(AdManagerRequest(), reason: .pageImpression))
+
+        XCTAssertFalse(gamView.isHidden, "a refused auction must not leave the slot blank")
+    }
+
+    func testLeavingAPageStillBlanksEvenThoughRetiringReveals() {
+        // releaseForPage retires (which now reveals) and then deliberately blanks again, so the
+        // return trip still shows no stale creative. Order matters; this pins it.
+        let (view, gamView) = loadedBanner()
+
+        view.releaseForPage()
+
+        XCTAssertTrue(gamView.isHidden)
+    }
+
+    func testRetiringAnAuctionOnItsOwnReleasesTheBlank() {
+        // A cancelled replacement never reaches the Google callback that would reveal it. Android
+        // has had this inside retireCurrentAuction all along; iOS did not. Driven with the flag
+        // turned off for the release, so the retire is NOT followed by a deliberate re-blank.
+        let (view, gamView) = loadedBanner()
+        view.blankForReloadIfNeeded()
+        XCTAssertTrue(gamView.isHidden)
+
+        Audienzz.shared.blankOnScreenReload = false
+        view.releaseForPage()
+
+        XCTAssertFalse(gamView.isHidden)
+    }
+
     func testAnAlreadyHiddenGAMViewIsNotAdoptedAsOurOwnBlank() {
         // Otherwise the next reveal would show an ad the publisher deliberately hid.
         let (view, gamView) = loadedBanner()
