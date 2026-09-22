@@ -262,7 +262,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         interstitialAdUnit = unit
         unit.adFormats = [.banner, .video]
         // The same request policy as every other original GAM path here: global targeting from the
-        // shared manager (which also carries the SDK's own au_sdk / au_v keys), then the PPID.
+        // shared manager (which also carries the SDK's own au_sdk key), then the PPID.
         // Constructing a bare request meant a publisher's configured targeting never reached remote
         // interstitials at all, so targeted line items could not be selected for them.
         let request = AUTargeting.shared.customTargetingManager
