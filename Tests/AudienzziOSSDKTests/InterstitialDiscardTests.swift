@@ -33,7 +33,7 @@ final class InterstitialDiscardTests: AudienzzLifecycleTestCase {
         super.setUp()
         events = []; time = 0
         owner = AURemoteConfigInterstitial(adConfigId: "probe")
-        owner.configuration = { _ in ("probe", "/gam/remote-interstitial") }
+        owner.configuration = { _ in ("probe", "/gam/remote-interstitial", [CGSize(width: 320, height: 480)]) }
         owner.demand = { _, _, reply in reply(.prebidDemandFetchSuccess) }
         owner.now = { [unowned self] in time }
         owner.isForeground = { true }

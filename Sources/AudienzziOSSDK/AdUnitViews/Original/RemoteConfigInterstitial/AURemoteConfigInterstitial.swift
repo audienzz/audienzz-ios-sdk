@@ -83,9 +83,14 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     @nonobjc internal var isForeground: () -> Bool = { UIApplication.shared.applicationState == .active }
     @nonobjc internal var loadOverride: ((@escaping (Result<AUInterstitialPresenting, Error>) -> Void) -> Void)?
 
-    @nonobjc internal var configuration: (String) -> (placementID: String, adUnitPath: String)? = { id in
+    @nonobjc internal var configuration: (String) -> (placementID: String, adUnitPath: String, adSizes: [CGSize])? = { id in
         guard let config = AudienzzRemoteConfig.shared.remoteConfig(for: id) else { return nil }
-        return (config.prebidConfig.placementId, config.gamConfig.adUnitPath)
+        // The sizes the backend configured for this placement, largest first — the same source the
+        // remote banner uses for its Prebid ad unit.
+        let sizes = config.prebidConfig.adSizes
+            .compactMap { CGSize.from(string: $0) }
+            .sorted { ($0.width * $0.height) > ($1.width * $1.height) }
+        return (config.prebidConfig.placementId, config.gamConfig.adUnitPath, sizes)
     }
     @nonobjc internal var demand: (InterstitialAdUnit, AdManagerRequest, @escaping (ResultCode) -> Void) -> Void = {
         unit, request, completion in unit.fetchDemand(adObject: request, completion: completion)
@@ -261,6 +266,18 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         let unit = InterstitialAdUnit(configId: config.placementID)
         interstitialAdUnit = unit
         unit.adFormats = [.banner, .video]
+        // Without this Prebid sends an interstitial impression with no `banner.format` at all,
+        // which downstream reads as a 1x1 slot — so a 320x480 interstitial asked the exchange for
+        // a size it was never going to fill. Bidders size their response to the format they are
+        // given, so the request has to describe the ad. Prebid merges these into `banner.format`
+        // for interstitials just as it does for banners.
+        if !config.adSizes.isEmpty {
+            unit.bannerParameters.adSizes = config.adSizes
+        } else {
+            AULogEvent.logWarn(
+                "[AURemoteConfigInterstitial] no prebid adSizes in remote config for " +
+                "\(adConfigId) — the bid request will carry no banner format")
+        }
         // The same request policy as every other original GAM path here: global targeting from the
         // shared manager (which also carries the SDK's own au_sdk key), then the PPID.
         // Constructing a bare request meant a publisher's configured targeting never reached remote

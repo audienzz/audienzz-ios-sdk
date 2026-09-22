@@ -26,7 +26,7 @@ final class InterstitialLifecycleTests: AudienzzLifecycleTestCase {
     var time: TimeInterval = 0
     var events: [String] = []
     private func stubDemand(_ instance: AURemoteConfigInterstitial) {
-        instance.configuration = { _ in ("probe", "/gam/remote-interstitial") }
+        instance.configuration = { _ in ("probe", "/gam/remote-interstitial", [CGSize(width: 320, height: 480)]) }
         instance.demand = { _, _, reply in reply(.prebidDemandFetchSuccess) }
     }
     override func setUp() {
