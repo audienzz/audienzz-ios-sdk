@@ -233,6 +233,8 @@ public class AURemoteConfigBannerView: VisibleView {
             AUAdTrace.log(placement: adConfigId, load: loadGeneration, event: .ownerCoalesced)
             return
         }
+        // Preserve the last permitted creative, including a load still waiting for Google.
+        if bannerView != nil, !requestContext.hasBannerRequestBudget { return }
         // Anything else is an intentional replacement: retire first, then build.
         retireCurrentBanner(reason: bannerView == nil ? "first load" : "replaced")
         activeLoadKey = requestedKey

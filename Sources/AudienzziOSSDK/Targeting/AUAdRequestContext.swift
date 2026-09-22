@@ -28,10 +28,23 @@ public final class AUAdRequestContext: NSObject {
         AUScreenAdCoordinator.shared.requestLedger.reserve(self)
     }
 
+    /// Banner-only budget for this logical slot and page. Native replacement does not reset it.
+    public var hasBannerRequestBudget: Bool {
+        AUScreenAdCoordinator.shared.requestLedger.hasBannerRequestBudget(self)
+    }
+
+    @nonobjc internal func nextBannerRequest(from template: AdManagerRequest) -> AdManagerRequest? {
+        guard let snapshot = AUScreenAdCoordinator.shared.requestLedger.nextBannerRequest(self) else { return nil }
+        return copyRequest(template, snapshot: snapshot)
+    }
+
     /// Copy the publisher's request: a later page or refresh must not mutate an in-flight request.
     @nonobjc internal func nextRequest(from template: AdManagerRequest) -> AdManagerRequest {
+        copyRequest(template, snapshot: AUScreenAdCoordinator.shared.requestLedger.nextRequest(self))
+    }
+
+    @nonobjc private func copyRequest(_ template: AdManagerRequest, snapshot: AUAdRequestSnapshot) -> AdManagerRequest {
         let request = template.copy() as! AdManagerRequest
-        let snapshot = AUScreenAdCoordinator.shared.requestLedger.nextRequest(self)
         var targeting = request.customTargeting ?? [:]
         snapshot.targeting.forEach { targeting[$0.key] = $0.value }
         request.customTargeting = targeting
@@ -83,6 +96,16 @@ internal final class AUAdRequestLedger {
         context.bridgeIdentifier = identifier
         bridgeSlots[identifier] = context
         return context
+    }
+
+    // One initial request (au_refresh=0), then ten additional attempts, including retries.
+    func hasBannerRequestBudget(_ context: AUAdRequestContext) -> Bool {
+        (entries[ObjectIdentifier(context)]?.requests ?? 0) < 11
+    }
+
+    func nextBannerRequest(_ context: AUAdRequestContext) -> AUAdRequestSnapshot? {
+        guard hasBannerRequestBudget(context) else { return nil }
+        return nextRequest(context)
     }
 
     func nextRequest(_ context: AUAdRequestContext) -> AUAdRequestSnapshot {

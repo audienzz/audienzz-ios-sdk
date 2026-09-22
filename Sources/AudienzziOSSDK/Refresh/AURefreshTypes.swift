@@ -26,6 +26,9 @@ internal enum AURefreshBlockReason: String, CaseIterable {
     /// The publisher asked for refresh to stop (`stopAutoRefresh`).
     case publisher
 
+    /// This slot spent its initial request plus ten refreshes. Only a new page resets the budget.
+    case refreshLimit
+
     /// The banner's page is not the active one, so it holds no inventory.
     case pageInactive
 

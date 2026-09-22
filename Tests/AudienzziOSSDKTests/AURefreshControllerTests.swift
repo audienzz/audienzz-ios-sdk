@@ -99,6 +99,23 @@ final class AURefreshControllerTests: AudienzzLifecycleTestCase {
         controller.onRequestCompleted(generationAtRequest: generation, success: success)
     }
 
+    func testRefreshLimitKeepsLastRequestValidAndLeavesNoTimerOverSevenDays() {
+        completeARequest()
+        XCTAssertTrue(scheduler.hasPending) // the cancellation probe must have an action to run
+        let final = controller.onRequestStarted(.periodicRefresh)
+        controller.block(.refreshLimit)
+        XCTAssertTrue(controller.hasRequestInFlight)
+        controller.onRequestCompleted(generationAtRequest: final, success: false)
+        XCTAssertFalse(controller.hasRequestInFlight)
+        XCTAssertFalse(scheduler.hasPending)
+        controller.block(.notVisible); controller.unblock(.notVisible)
+        controller.block(.publisher); controller.unblock(.publisher)
+        scheduler.advance(7 * 24 * 60 * 60)
+        scheduler.fireIgnoringCancellation()
+        XCTAssertFalse(scheduler.hasPending)
+        XCTAssertEqual(requests, [])
+    }
+
     // MARK: - The interval
 
     func testNothingIsScheduledBeforeTheFirstLoadCompletes() {

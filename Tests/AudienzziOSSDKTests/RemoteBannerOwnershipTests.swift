@@ -79,6 +79,20 @@ final class RemoteBannerOwnershipTests: AudienzzLifecycleTestCase {
         view.load(in: container, size: size, rootViewController: host, delegate: nil)
     }
 
+    func testAtTheRefreshLimitAnAdaptiveReplacementKeepsTheCurrentBanner() throws {
+        let owner = makeView()
+        load(owner)
+        let current = try XCTUnwrap(banners().first)
+        while owner.requestContext.hasBannerRequestBudget {
+            _ = AUScreenAdCoordinator.shared.requestLedger.nextBannerRequest(owner.requestContext)
+        }
+        load(owner, size: CGSize(width: 300, height: 250))
+        XCTAssertEqual(banners().count, 1)
+        XCTAssertTrue(banners().first === current)
+        XCTAssertFalse(current.refreshController.isDestroyed)
+        owner.destroy()
+    }
+
     // MARK: - After loading
 
     func testRepeatedIdenticalLoadsServeOnePlacementWithOneBanner() {

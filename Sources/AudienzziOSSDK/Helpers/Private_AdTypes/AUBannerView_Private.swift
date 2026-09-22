@@ -152,6 +152,9 @@ extension AUBannerView {
     /// back-navigation or a return from the background show a current creative rather than a stale
     /// one. A never-loaded banner is left for its normal lazy/prefetch first load.
     func recreateForPage() {
+        if requestContext.hasBannerRequestBudget {
+            refreshController.unblock(.refreshLimit, schedule: false)
+        }
         // A hard transition supersedes the outgoing auction even when the SAME page is re-reported,
         // so a response from the previous visit can't load a creative or overwrite this visit's
         // auction analytics.
@@ -196,6 +199,8 @@ extension AUBannerView {
     /// on demand. Unlike `recreateForPage()` (driven by the page coordinator), this
     /// works for any banner that has completed its initial setup. No-op before the first `createAd`.
     public func reloadAd() {
+        // Do not retire the last permitted auction or hide the creative when no replacement can run.
+        guard requestContext.hasBannerRequestBudget else { return }
         // Never re-auction a banner the page sweep has released — the bridges broadcast reloads,
         // and without this a released banner on a kept-mounted route would come back to life.
         guard screenActive else { return }
@@ -363,6 +368,12 @@ extension AUBannerView {
             return false
         }
         guard !refreshController.hasRequestInFlight else { return false }
+        // Shared across native replacements; reserve before touching the current creative/auction.
+        guard let gamRequest = requestContext.nextBannerRequest(from: gamRequest) else {
+            pendingLoadReason = nil
+            refreshController.block(.refreshLimit)
+            return false
+        }
         pendingLoadReason = nil
         // Every new auction supersedes the previous one.
         auctionGeneration += 1
@@ -371,7 +382,8 @@ extension AUBannerView {
                       event: .loadAccepted, reason: reason.rawValue, visible: isViewRefreshEligible)
         let refreshGeneration = refreshController.onRequestStarted(reason)
         initialLoadRequested = true
-        let gamRequest = requestContext.nextRequest(from: gamRequest)
+        // A block cancels successors, but deliberately preserves this final request's generation.
+        if !requestContext.hasBannerRequestBudget { refreshController.block(.refreshLimit) }
         // Re-read the PPID on every auction rather than trusting the one stamped at createAd.
         // A banner refreshes for the lifetime of its screen, so a publisher PPID set after the ad
         // was built, a 12-month rotation, or consent arriving late would otherwise never reach the
