@@ -36,16 +36,16 @@ final class AUEventQueue {
     /// Injectable only so tests can drive the size, timer and backoff paths without waiting out the
     /// real intervals. Production always uses `.default`.
     struct Config {
-        /// Sized against what a real screen produces. One ad slot emits roughly six events per
-        /// auction (bidRequest, bidResponse/noBid, bidWon, adImpression, viewability start/success),
-        /// so a four-slot screen is ~25 events per page impression — about one request per screen
-        /// visit rather than the several that a batch of 20 forced.
-        var maxBatchSize = 50
-        /// The ceiling on how long an event waits when traffic is too thin to fill a batch. At 5s a
-        /// trickle of one or two events still cost a request every five seconds, which is most of
-        /// what made the old behaviour chatty. Backgrounding still flushes immediately, so this
-        /// delays delivery rather than risking it — and now the buffer is on disk while it waits.
-        var flushIntervalMs = 30_000
+        /// A ceiling on POST size, not a target: one ad slot emits roughly six events per auction
+        /// (bidRequest, bidResponse/noBid, bidWon, adImpression, viewability start/success), so a
+        /// busy screen reaches it well inside the flush interval. Kept moderate deliberately — a
+        /// larger batch is a larger unit to lose or resend when a send fails.
+        var maxBatchSize = 20
+        /// The ceiling on how long an event waits when traffic is too thin to fill a batch. This is
+        /// what actually governs how chatty the SDK is: at 5s a trickle of one or two events still
+        /// cost a request every five seconds. Backgrounding still flushes immediately, so this
+        /// delays delivery rather than risking it — and the buffer is on disk while it waits.
+        var flushIntervalMs = 15_000
         var maxQueueSize = 500
         var maxRetries = 3
         var retryBaseDelayMs = 2000
