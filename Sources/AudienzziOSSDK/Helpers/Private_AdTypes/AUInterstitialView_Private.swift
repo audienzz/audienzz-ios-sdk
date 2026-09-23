@@ -40,8 +40,8 @@ extension AUInterstitialView {
         // frameworks are backend-controlled and win over bannerParameters, videoParameters and
         // impOrtbConfig alike.
         capabilities.apply(to: adUnit)
-        let gamRequest = requestContext.nextRequest(from: gamRequest)
-        let stampedTargeting = AUAdRequestContext.stampedTargeting(of: gamRequest)
+        let gamRequest = requestContext.nextRequest(from: AUAuctionTargeting.request(from: gamRequest))
+        let prebidGuard = AUAuctionTargeting.PrebidGuard(gamRequest)
         prebidWinningBidder = nil
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
@@ -52,8 +52,8 @@ extension AUInterstitialView {
                 "Audienzz demand fetch for GAM \(resultCode.name())"
             )
             guard let self = self, self.fullscreenDemand.finish(generation) else { return }
-            // Prebid removed every `hb_` key, hb_refresh_count included, before it bid.
-            AUAdRequestContext.restore(stampedTargeting, into: gamRequest)
+            // Prebid removed every `hb_` key before it bid — the publisher's and hb_refresh_count too.
+            prebidGuard.restore(into: gamRequest)
             let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
             let rawTargeting = gamRequest.customTargeting as? [AnyHashable: Any] ?? [:]
             self.makeResultEvents(

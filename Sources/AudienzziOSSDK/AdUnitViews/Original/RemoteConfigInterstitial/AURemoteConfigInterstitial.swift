@@ -305,7 +305,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         let template = AUTargeting.shared.customTargetingManager
             .applyToGamRequest(request: AdManagerRequest())
         let request = requestContext.nextRequest(from: template)
-        let stampedTargeting = AUAdRequestContext.stampedTargeting(of: request)
+        let prebidGuard = AUAuctionTargeting.PrebidGuard(request)
         request.publisherProvidedID = PPIDManager.shared.getPPID()
         analyticsAdUnitPath = config.adUnitPath
         let started = now()
@@ -317,8 +317,8 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
             }
             guard self.loading, self.generation == token, !answered else { return }
             answered = true
-            // Prebid removed every `hb_` key, hb_refresh_count included, before it bid.
-            AUAdRequestContext.restore(stampedTargeting, into: request)
+            // Prebid removed every `hb_` key before it bid — the publisher's and hb_refresh_count too.
+            prebidGuard.restore(into: request)
             let bidder = AUBannerView.keyword("hb_bidder", in: request.customTargeting ?? [:])
             let won = result == .prebidDemandFetchSuccess && bidder?.isEmpty == false
             let code = AUResulrCodeConverter.convertResultCodeName(result)

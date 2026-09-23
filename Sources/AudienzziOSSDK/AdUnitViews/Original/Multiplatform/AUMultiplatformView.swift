@@ -71,7 +71,8 @@ public class AUMultiplatformView: AUAdView {
             gamRequest.publisherProvidedID = ppid
         }
         
-        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
+        // Kept as the publisher passed it; targeting is assembled per request (AUAuctionTargeting).
+        self.gamRequest = gamRequest
         self.gadUnitID = adUnitID
 
         if !self.isLazyLoad {

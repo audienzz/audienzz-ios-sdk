@@ -403,7 +403,9 @@ public class AUBannerView: AUAdView {
             gamRequest.publisherProvidedID = ppid
         }
 
-        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
+        // Kept as the publisher passed it. Global targeting and the SDK's keys are added to a copy
+        // for every auction (AUAuctionTargeting), so they stay current and this object is untouched.
+        self.gamRequest = gamRequest
 
         // The event wrapper is optional; GAM completion ownership is not.
         if let googleView = eventHandler?.gamView ?? Self.singleGoogleBanner(in: gamBanner) {
