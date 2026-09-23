@@ -75,7 +75,7 @@ final class HbRefreshCountTests: AudienzzLifecycleTestCase {
 
     func testInterstitialViewRequestsKeepTheCounterThroughPrebid() {
         Audienzz.shared.pageImpression("interstitial")
-        let view = AUInterstitialView(configId: "probe", adFormats: [.banner], isLazyLoad: false)
+        let view = AUInterstitialView(configId: "probe", isLazyLoad: false)
         defer { view.destroy() }
         view.demand = { _, request, reply in Self.fakePrebid(request); reply(.prebidDemandFetchSuccess) }
         var sent: AdManagerRequest?

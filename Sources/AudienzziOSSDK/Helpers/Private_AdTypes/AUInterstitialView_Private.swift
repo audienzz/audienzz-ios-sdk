@@ -36,6 +36,10 @@ extension AUInterstitialView {
 
     internal override func fetchRequest(_ gamRequest: AdManagerRequest) {
         guard adUnit != nil, let generation = fullscreenDemand.begin() else { return }
+        // Per accepted request, after anything the publisher set on the unit: formats and API
+        // frameworks are backend-controlled and win over bannerParameters, videoParameters and
+        // impOrtbConfig alike.
+        capabilities.apply(to: adUnit)
         let gamRequest = requestContext.nextRequest(from: gamRequest)
         let stampedTargeting = AUAdRequestContext.stampedTargeting(of: gamRequest)
         prebidWinningBidder = nil

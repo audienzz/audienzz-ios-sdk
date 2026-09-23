@@ -246,7 +246,7 @@ final class InterstitialLifecycleTests: AudienzzLifecycleTestCase {
     }
     func testPagesAndAttachmentDoNotOwnFullscreenDemand() {
         Audienzz.shared.pageImpression("interstitial-A")
-        let view = AUInterstitialView(configId: "probe", adFormats: [.banner], isLazyLoad: false)
+        let view = AUInterstitialView(configId: "probe", isLazyLoad: false)
         XCTAssertNil(view.configuredDemandRefresh)
         let token = view.fullscreenDemand.begin()!
         XCTAssertNil(view.fullscreenDemand.begin())
@@ -260,7 +260,7 @@ final class InterstitialLifecycleTests: AudienzzLifecycleTestCase {
         view.removeFromSuperview()
     }
     func testDestroyedFullscreenDemandRejectsLateCompletion() {
-        let view = AUInterstitialView(configId: "probe", adFormats: [.banner], isLazyLoad: false)
+        let view = AUInterstitialView(configId: "probe", isLazyLoad: false)
         let token = view.fullscreenDemand.begin()!
         view.destroy()
         XCTAssertFalse(view.fullscreenDemand.finish(token))

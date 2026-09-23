@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased — breaking: interstitial formats and API frameworks are backend-controlled
+
+- `prebidConfig.format` (`banner` / `video` / `bannerAndVideo`, default `bannerAndVideo`) and
+  `prebidConfig.apis` (default `[3, 5, 6, 7]`) now decide what every interstitial requests.
+  Validated, and resolved once per accepted load. See `docs/interstitial-capabilities.md`.
+- **Removed:** `AUInterstitialView(configId:adFormats:)`, `(configId:adFormats:isLazyLoad:)` and
+  `(configId:adFormats:isLazyLoad:minWidthPerc:minHeightPerc:)`. Use `(configId:)`,
+  `(configId:isLazyLoad:)` and `(configId:isLazyLoad:minWidthPerc:minHeightPerc:)`.
+- An interstitial's `bannerParameters.api`, `videoParameters.api` and `impOrtbConfig` `api` /
+  format keys are ignored; their other settings are kept.
+- Remote interstitials now always declare `banner.api` (they sent none) and request playable video
+  parameters when video is asked for; their analytics subtype follows the requested format.
+
 ## Unreleased — breaking interstitial presentation change
 
 **Before upgrading from 0.3.2: audit every `AURemoteConfigInterstitial.load()` call.**

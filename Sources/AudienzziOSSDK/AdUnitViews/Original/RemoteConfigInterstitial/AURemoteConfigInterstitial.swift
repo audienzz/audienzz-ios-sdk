@@ -95,6 +95,16 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
             .sorted { ($0.width * $0.height) > ($1.width * $1.height) }
         return (config.prebidConfig.placementId, config.gamConfig.adUnitPath, sizes)
     }
+    /// The formats and API frameworks the bid request advertises, from the ad config alone.
+    ///
+    /// Read once per ACCEPTED load, never in between: a config that changes while an ad is ready,
+    /// loading or on screen affects only the next load that is actually started, so it cannot
+    /// discard inventory, interrupt a presentation or cause a request of its own.
+    @nonobjc internal var capabilities: (String) -> AUInterstitialCapabilities = { id in
+        AUInterstitialCapabilities.resolve(AudienzzRemoteConfig.shared.remoteConfig(for: id)?.prebidConfig)
+    }
+    /// What the load in hand was requested with; its analytics describe that, not today's config.
+    private var loadCapabilities = AUInterstitialCapabilities.default
     @nonobjc internal var demand: (InterstitialAdUnit, AdManagerRequest, @escaping (ResultCode) -> Void) -> Void = {
         unit, request, completion in unit.fetchDemand(adObject: request, completion: completion)
     }
@@ -268,19 +278,21 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         }
         let unit = InterstitialAdUnit(configId: config.placementID)
         interstitialAdUnit = unit
-        unit.adFormats = [.banner, .video]
         // Without this Prebid sends an interstitial impression with no `banner.format` at all,
         // which downstream reads as a 1x1 slot — so a 320x480 interstitial asked the exchange for
         // a size it was never going to fill. Bidders size their response to the format they are
         // given, so the request has to describe the ad. Prebid merges these into `banner.format`
         // for interstitials just as it does for banners.
         //
-        // Built from AUBannerParameters, like every other original ad unit here, so the impression
-        // also declares the supported API frameworks (MRAID 1/2/3, OMID 1 — the same list Android
-        // sends). A bare Prebid unit has none, and Prebid then omits `banner.api` entirely.
+        // Built from AUBannerParameters, like every other original ad unit here. The formats and
+        // `api` list are then set from the backend below; a bare Prebid unit has no `api`, and
+        // Prebid then omitted `banner.api` entirely.
         let parameters = AUBannerParameters()
         if !config.adSizes.isEmpty { parameters.adSizes = config.adSizes }
         unit.bannerParameters = parameters.makeBannerParameters()
+        // Formats and API frameworks: backend-controlled, resolved for this load only.
+        loadCapabilities = capabilities(adConfigId)
+        loadCapabilities.apply(to: unit)
         if config.adSizes.isEmpty {
             AULogEvent.logWarn(
                 "[AURemoteConfigInterstitial] no prebid adSizes in remote config for " +
@@ -452,7 +464,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         event.adViewId = adViewID
         event.auctionId = loadID
         event.adType = AUAdType.interstitial
-        event.adSubtype = AUAdSubtype.multiformat
+        event.adSubtype = loadCapabilities.adSubtype
         event.apiType = AUEventApiType.original
         event.resultCode = resultCode
         event.timeToRespond = elapsed
@@ -460,7 +472,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
             event.isAutorefresh = false
             event.autorefreshTime = 0
             event.isRefresh = false
-            event.mediaTypes = AUBannerView.mediaTypesJSON(subtype: AUAdSubtype.multiformat)
+            event.mediaTypes = AUBannerView.mediaTypesJSON(subtype: loadCapabilities.adSubtype)
             event.bidderCode = bidder
         }
         analytics(event)

@@ -33,7 +33,7 @@ extension ExamplesViewController {
 
         let gamRequest = GAMRequest()
 
-        interstitialView = AUInterstitialView(configId: placementId, adFormats: [.banner])
+        interstitialView = AUInterstitialView(configId: placementId)
         interstitialView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
                                         size: CGSize(width: 320, height: 50))
         interstitialView.backgroundColor = .systemPink
@@ -75,7 +75,7 @@ extension ExamplesViewController {
         videoParameters.playbackMethod = [AUVideoPlaybackMethod(type: .AutoPlaySoundOff)]
         videoParameters.placement = AUPlacement.InBanner
 
-        let interstitialVideoView = AUInterstitialView(configId: placementId, adFormats: [.video])
+        let interstitialVideoView = AUInterstitialView(configId: placementId)
         interstitialVideoView.frame = CGRect(origin: CGPoint(x: 0, y: getPositionY(lazyAdContainerView)),
                                         size: CGSize(width: 320, height: 50))
         interstitialVideoView.backgroundColor = .yellow
@@ -117,7 +117,6 @@ extension ExamplesViewController {
         videoParameters.placement = AUPlacement.InBanner
 
         let interstitialVideoView = AUInterstitialView(configId: placementId,
-                                                       adFormats: [.banner, .video],
                                                        isLazyLoad: true,
                                                        minWidthPerc: 60,
                                                        minHeightPerc: 70)

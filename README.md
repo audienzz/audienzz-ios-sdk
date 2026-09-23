@@ -186,7 +186,7 @@ Follow these steps to get your first ad showing:
    - Initialize GAM helpers: `AudienzzGAMUtils.shared.initializeGAM()`
 4. Create an ad unit in your UI
    - Banner: `AUBannerView(configId:..., adSize:..., adFormats:[.banner])`
-   - Interstitial: `AUInterstitialView(configId:..., adFormats:[.banner] or [.video])`
+   - Interstitial: `AUInterstitialView(configId:..., isLazyLoad:...)` — formats and API frameworks are backend-controlled, see [docs/interstitial-capabilities.md](docs/interstitial-capabilities.md)
 5. Bridge to GAM and load
    - Use `createAd(with: AdManagerRequest, ...)`
    - In `onLoadRequest`, call the corresponding GAM `load` API
@@ -535,9 +535,11 @@ Ad view used for displaying interstitial (full-screen) ads.
 
 | Name                         | Parameters                                                       | Description                                                                                                         |
 |------------------------------|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-| `AUInterstitialView` | `configId: String`, `adFormats: [AUAdFormat]`, `isLazyLoad: Bool` | Creates a new `AUInterstitialView` with specified ad formats. ConfigId - refers to prebid config id      |
-| `AUInterstitialView` | `configId: String`, `adFormats: [AUAdFormat]`, `isLazyLoad: Bool`, `minWidthPerc: Int`, `minHeightPerc: Int` | Creates a new `AUInterstitialView` with a minimum size in percentage. ConfigId - refers to prebid config id |
-| `AUInterstitialView` | `configId: String`, `adFormats: [AUAdFormat]`                                               | Creates a new `AUInterstitialView`. ConfigId - refers to prebid config id                                   |
+| `AUInterstitialView` | `configId: String`, `isLazyLoad: Bool` | Creates a new `AUInterstitialView`. ConfigId - refers to prebid config id      |
+| `AUInterstitialView` | `configId: String`, `isLazyLoad: Bool`, `minWidthPerc: Int`, `minHeightPerc: Int` | Creates a new `AUInterstitialView` with a minimum size in percentage. ConfigId - refers to prebid config id |
+| `AUInterstitialView` | `configId: String`                                               | Creates a new `AUInterstitialView` (lazy). ConfigId - refers to prebid config id                                   |
+
+An interstitial's formats and API frameworks are not arguments: they are backend-controlled (`prebidConfig.format` / `prebidConfig.apis`), and a hand-built `AUInterstitialView` requests banner + video with MRAID 1/2/3 + OMID 1. The `api` of its `bannerParameters` / `videoParameters` is ignored. See [docs/interstitial-capabilities.md](docs/interstitial-capabilities.md).
 
 **Methods:**
 
@@ -845,10 +847,9 @@ audienzzBannerView.onAdSizeChanged = { [weak self] newSize in
 Here is minimum example of configuring and loading interstitial ad:
 
 ```swift
-// Create an interstitial ad view with specified ad formats
+// Create an interstitial ad view. Its formats and API frameworks are backend-controlled.
 let audienzzInterstitialView = AUInterstitialView(
     configId: PREBID_CONFIG_ID,        // Prebid configuration ID provided by Audienzz
-    adFormats: [.banner],              // Specify that this ad unit supports banner format (for interstitial)
     isLazyLoad: true                   // Enable lazy loading for better performance
 )
 
