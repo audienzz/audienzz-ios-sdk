@@ -58,6 +58,24 @@ final class GamOnlyBannerTests: AudienzzLifecycleTestCase {
         RunLoop.main.run(until: Date().addingTimeInterval(0.3))
     }
 
+    /// The remote-config owner installs `onLoadRequest` only after `createAd`. A GAM-only eager
+    /// banner handed its request over synchronously inside `createAd` — to a callback nobody had
+    /// installed yet — so Google was never asked while the SDK waited for its response.
+    func testAnEagerGamOnlyLoadReachesACallbackInstalledAfterCreateAd() {
+        let banner = AUBannerView(configId: "placement", adSize: CGSize(width: 320, height: 50),
+                                  adFormats: [.banner], isLazyLoad: false)
+        defer { banner.destroy() }
+        banner.headerBiddingEnabled = false
+        banner.hostScreenOverride = "article" as NSString
+        banner.frame = CGRect(x: 0, y: 100, width: 320, height: 50)
+        window.addSubview(banner)
+        var sent = 0
+        banner.createAd(with: AdManagerRequest(), gamBanner: UIView())
+        banner.onLoadRequest = { _ in sent += 1 }
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        XCTAssertEqual(sent, 1, "the first load must reach Google")
+    }
+
     func testHeaderBiddingOffNeverReachesPrebid() {
         makeBanner(headerBidding: false)
         XCTAssertEqual(demandCalls, 0, "a GAM-only auction must not ask Prebid for anything")

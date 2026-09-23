@@ -273,10 +273,9 @@ public class AURemoteConfigBannerView: VisibleView {
         // banner can issue its first request.
         applyPendingPublisherState(to: bannerView)
 
-        bannerView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
-
         gamBanner.frame = CGRect(origin: .zero, size: gadSize.size)
 
+        // Installed BEFORE createAd, which may issue the first request itself (an eager banner).
         bannerView.onLoadRequest = { [weak self] gamRequest in
             // A retired banner's demand callback must not drive a GAM view that is no longer the
             // one on screen.
@@ -295,6 +294,8 @@ public class AURemoteConfigBannerView: VisibleView {
             )
             gamBanner.load(request)
         }
+
+        bannerView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
 
         let bannerWidthConstraint = bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width)
         let bannerHeightConstraint = bannerView.heightAnchor.constraint(equalToConstant: gadSize.size.height)

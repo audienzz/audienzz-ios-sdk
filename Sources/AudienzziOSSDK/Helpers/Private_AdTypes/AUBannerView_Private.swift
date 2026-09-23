@@ -418,7 +418,16 @@ extension AUBannerView {
             isInitialAutorefresh = false
             // Counted here because makeResultEvents, which counts a header-bid load, never runs.
             slotReloadCount += 1
-            startGoogleLoad(gamRequest, auction: generationAtRequest, refresh: refreshGeneration)
+            // Handed over on the next turn of the main loop, as a Prebid completion is. Doing it
+            // synchronously ran `onLoadRequest` inside `createAd`, before a caller that installs it
+            // afterwards had done so (the remote-config owner, and bridges): Google was never
+            // asked, and the SDK waited on a response that could not come. Guarded like a Prebid
+            // completion against the page or auction having moved on meanwhile.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.adUnit != nil,
+                      generationAtRequest == self.auctionGeneration, self.screenActive else { return }
+                self.startGoogleLoad(gamRequest, auction: generationAtRequest, refresh: refreshGeneration)
+            }
             return true
         }
         makeRequestEvent()
