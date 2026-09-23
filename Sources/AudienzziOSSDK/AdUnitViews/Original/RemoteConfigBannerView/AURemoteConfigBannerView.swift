@@ -38,7 +38,7 @@ public class AURemoteConfigBannerView: VisibleView {
     public var lazyLoadOverride: Bool?
 
     /// Publisher override for the prefetch margin, in points. `nil` (default) defers to the ad
-    /// config's `prefetchDistancePt`, which itself falls back to 200 pt. Only has an effect while
+    /// config's `prefetchDistanceDp`, which itself falls back to 200 pt. Only has an effect while
     /// lazy loading is on.
     public var prefetchMarginPointsOverride: CGFloat?
 
@@ -59,7 +59,7 @@ public class AURemoteConfigBannerView: VisibleView {
         prefetchMarginPointsOverride = points
     }
 
-    /// Clears the local override, deferring to the ad config's `prefetchDistancePt` again.
+    /// Clears the local override, deferring to the ad config's `prefetchDistanceDp` again.
     @objc public func clearPrefetchMarginPointsOverride() {
         prefetchMarginPointsOverride = nil
     }

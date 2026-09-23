@@ -30,7 +30,7 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
     },
     {
       "id": "configured-lazy",
-      "config": { "adType": "banner", "refreshTimeSeconds": 30, "lazyLoad": true, "prefetchDistancePt": 600 },
+      "config": { "adType": "banner", "refreshTimeSeconds": 30, "lazyLoad": true, "prefetchDistanceDp": 600 },
       "gamConfig": { "adUnitPath": "/1234/unit", "adSizes": ["320x50"] },
       "prebidConfig": { "placementId": "placement", "adSizes": ["320x50"] }
     }]
@@ -170,5 +170,42 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
         let first = banner()
         view.load(in: container, size: size, rootViewController: host)
         XCTAssertTrue(banner() === first, "nothing changed, so the banner must be reused")
+    }
+
+    // MARK: - The backend payload
+
+    private static func decodeConfig(_ config: String) throws -> RemoteAdConfiguration {
+        let json = """
+        {"id": "x", "config": \(config),
+         "gamConfig": {"adUnitPath": "/1234/unit", "adSizes": ["320x50"]},
+         "prebidConfig": {"placementId": "placement", "adSizes": ["320x50"]}}
+        """
+        return try JSONDecoder().decode(RemoteAdConfiguration.self, from: Data(json.utf8))
+    }
+
+    /// The backend sends one key for every platform. Android, Flutter and React Native read
+    /// `prefetchDistanceDp`; iOS read `prefetchDistancePt`, so a margin set in the backend
+    /// silently never reached iOS.
+    func testDeliverySettingsDecodeFromTheKeysEveryPlatformReads() throws {
+        let decoded = try Self.decodeConfig(
+            #"{"adType": "banner", "lazyLoad": false, "prefetchDistanceDp": 50}"#)
+        XCTAssertEqual(decoded.config.prefetchDistancePt, 50)
+        XCTAssertEqual(decoded.config.lazyLoad, false)
+    }
+
+    func testTheOldIosOnlyKeyIsNotRead() throws {
+        let decoded = try Self.decodeConfig(#"{"adType": "banner", "prefetchDistancePt": 50}"#)
+        XCTAssertNil(decoded.config.prefetchDistancePt,
+                     "one backend key for all platforms, not a second iOS-only one")
+    }
+
+    /// The 24h cache re-encodes the decoded struct; the margin must survive the round trip.
+    func testTheMarginSurvivesTheLocalCache() throws {
+        let decoded = try Self.decodeConfig(
+            #"{"adType": "banner", "lazyLoad": true, "prefetchDistanceDp": 50}"#)
+        let cached = try JSONDecoder().decode(RemoteAdConfiguration.self,
+                                              from: JSONEncoder().encode(decoded))
+        XCTAssertEqual(cached.config.prefetchDistancePt, 50)
+        XCTAssertEqual(cached.config.lazyLoad, true)
     }
 }

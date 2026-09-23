@@ -18,13 +18,13 @@ final class RemoteBannerOwnershipTests: AudienzzLifecycleTestCase {
     private static let configJSON = """
     [{
       "id": "remote-banner",
-      "config": { "adType": "banner", "refreshTimeSeconds": 30, "prefetchDistancePt": 200 },
+      "config": { "adType": "banner", "refreshTimeSeconds": 30, "prefetchDistanceDp": 200 },
       "gamConfig": { "adUnitPath": "/1234/unit", "adSizes": ["320x50"] },
       "prebidConfig": { "placementId": "placement", "adSizes": ["320x50"] }
     },
     {
       "id": "adaptive-banner",
-      "config": { "adType": "banner", "refreshTimeSeconds": 30, "prefetchDistancePt": 200 },
+      "config": { "adType": "banner", "refreshTimeSeconds": 30, "prefetchDistanceDp": 200 },
       "gamConfig": {
         "adUnitPath": "/1234/adaptive",
         "adSizes": ["320x50"],
