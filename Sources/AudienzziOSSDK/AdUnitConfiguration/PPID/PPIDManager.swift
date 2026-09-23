@@ -19,26 +19,12 @@ public class PPIDManager: NSObject, AULogEventType {
     
     // MARK: - Properties
 
-    /// PPID is on by default — a UUID is generated automatically if the publisher
-    /// doesn't supply one. Set to false to opt out entirely.
-    private var automaticPpidEnabled: Bool = true
     /// Publisher-supplied PPID (e.g. hashed email). When set, always wins over the
     /// SDK-generated UUID. Cleared by passing nil.
     private var publisherPpid: String? = nil
     private let userDefaults = UserDefaults.standard
 
     // MARK: - Public Methods
-
-    /// Check if automatic PPID is enabled
-    public func getAutomaticPpidEnabled() -> Bool {
-        return automaticPpidEnabled
-    }
-
-    /// Enable or disable automatic PPID. Defaults to `true` — a UUID is generated
-    /// automatically unless the publisher opts out by passing `false`.
-    public func setAutomaticPpidEnabled(_ enabled: Bool) {
-        automaticPpidEnabled = enabled
-    }
 
     /// Provide a publisher-owned PPID (e.g. a hashed e-mail address).
     /// When set this always takes precedence over the SDK-generated UUID.
@@ -48,15 +34,30 @@ public class PPIDManager: NSObject, AULogEventType {
     }
 
     /// Returns the active PPID:
-    ///   1. Publisher-supplied PPID (if set).
-    ///   2. SDK-generated UUID (persisted, rotated every 12 months).
-    ///   3. `nil` if automatic PPID is disabled or consent is missing.
+    ///   1. `nil` when the backend has switched PPIDs off for this publisher.
+    ///   2. Publisher-supplied PPID (if set via `setPublisherPPID`).
+    ///   3. SDK-generated UUID, persisted and rotated every 12 months.
+    ///
+    /// **`ppidEnabled` in the publisher config is the only thing that suppresses a PPID.** It is a
+    /// top-level boolean on `GET /publishers/{id}`, and absent means enabled. A missing PPID costs
+    /// frequency capping and cross-session targeting, so the SDK generates and persists one rather
+    /// than leaving the field empty.
+    ///
+    /// Two gates were removed to make that true:
+    ///
+    ///  * An empty TCF `purposeConsents` string used to suppress the PPID. That check fired on
+    ///    *unknown* consent (no CMP yet) but not on an explicit denial such as `0000000000`, which
+    ///    is a nonempty string — so it suppressed the ambiguous case and allowed the clear one.
+    ///    Consent is not gated here at all now; if it should be, it needs a real purpose check
+    ///    rather than a test for emptiness, and that is a policy decision.
+    ///  * `automaticPpidEnabled` used to suppress the generated UUID. The backend sends no such
+    ///    field on any endpoint the SDK calls, so it never did anything; it has been deleted from
+    ///    the model, the public API and the bridges.
     public func getPPID() -> String? {
-        if !automaticPpidEnabled {
-            LogEvent("Automatic PPID is disabled")
-            return nil
-        } else if AUTargeting.shared.purposeConsents?.isEmpty ?? false {
-            LogEvent("Consent missing, cannot get PPID")
+        // The only switch. Per-publisher, backend-owned, and it suppresses the publisher's own
+        // identifier too — honouring it only for the generated UUID would miss the point.
+        guard Audienzz.shared.isPpidEnabled else {
+            LogEvent("PPID disabled by the publisher config (ppidEnabled = false)")
             return nil
         }
 

@@ -64,6 +64,12 @@ class AUBannerHandler: NSObject,
         self.gamView.adUnitID
     }
 
+    func ensureListeners() {
+        if gamView.delegate !== self { bannerDelegate = gamView.delegate; gamView.delegate = self }
+        if gamView.appEventDelegate !== self { eventDelegate = gamView.appEventDelegate; gamView.appEventDelegate = self }
+        if gamView.adSizeDelegate !== self { sizeDelegate = gamView.adSizeDelegate; gamView.adSizeDelegate = self }
+    }
+
     private func addListener() {
         self.gamView.delegate = self
         self.gamView.appEventDelegate = self
@@ -72,6 +78,7 @@ class AUBannerHandler: NSObject,
         // source). Stash it on the view so the render events can carry currency (and cpm on a
         // direct fill). Fires around impression, so it lands on adImpression/adClick/viewability.
         self.gamView.paidEventHandler = { [weak auBannerView] adValue in
+            guard auBannerView?.acceptsGoogleEvents == true else { return }
             auBannerView?.lastPaidCurrency = adValue.currencyCode
             auBannerView?.lastPaidCpm = adValue.value.doubleValue
         }
@@ -82,17 +89,22 @@ class AUBannerHandler: NSObject,
     }
 
     /// Reveals the GAM banner again after a `blankOnScreenReload` blanking, once the fresh ad
-    /// arrives (or fails). No-op unless this reload blanked the slot.
+    /// arrives (or fails). No-op unless this slot blanked itself.
     private func restoreFromBlankIfNeeded() {
-        if auBannerView?.blankedForReload == true {
-            auBannerView?.blankedForReload = false
-            gamView?.isHidden = false
-        }
+        auBannerView?.restoreFromBlankIfNeeded()
     }
 
     // MARK: - GADBannerViewDelegate
     func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+        auBannerView.map {
+            AUAdTrace.log(placement: $0.tracePlacement ?? $0.configId, delivery: $0.pendingDeliveryId,
+                          event: .googleLoaded, visible: $0.isViewRefreshEligible)
+        }
+        guard auBannerView?.completeGoogleLoad(received: true, retryableFailure: false) == true else { return }
         LogEvent("bannerViewDidReceiveAd")
+        // This is the moment the replacement becomes what the reader sees, so it is the moment its
+        // economics become the ones render events describe.
+        auBannerView?.commitDisplayedCreative()
         restoreFromBlankIfNeeded()
 
         if let gamBannerView = bannerView as? AdManagerBannerView {
@@ -128,6 +140,15 @@ class AUBannerHandler: NSObject,
         _ bannerView: BannerView,
         didFailToReceiveAdWithError error: any Error
     ) {
+        let failure = error as NSError
+        let retryable = failure.domain == GADErrorDomain &&
+            [RequestError.networkError.rawValue, RequestError.serverError.rawValue,
+             RequestError.timeout.rawValue, RequestError.internalError.rawValue].contains(failure.code)
+        auBannerView.map {
+            AUAdTrace.log(placement: $0.tracePlacement ?? $0.configId, delivery: $0.pendingDeliveryId,
+                          event: .googleFailed, detail: retryable ? "retryable" : "terminal")
+        }
+        guard auBannerView?.completeGoogleLoad(received: false, retryableFailure: retryable) == true else { return }
         LogEvent("didFailToReceiveAdWithError")
         LogEvent(error.localizedDescription)
         restoreFromBlankIfNeeded()
@@ -139,6 +160,11 @@ class AUBannerHandler: NSObject,
 
     /// Tells the delegate that an impression has been recorded for an ad.
     func bannerViewDidRecordImpression(_ bannerView: BannerView) {
+        auBannerView.map {
+            AUAdTrace.log(placement: $0.tracePlacement ?? $0.configId, delivery: $0.renderedDeliveryId,
+                          event: .googleImpression, visible: $0.isViewRefreshEligible)
+        }
+        guard auBannerView?.acceptsGoogleEvents == true else { return }
         LogEvent("bannerViewDidRecordImpression")
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID ?? "",
@@ -154,6 +180,7 @@ class AUBannerHandler: NSObject,
 
     /// Tells the delegate that a click has been recorded for the ad.
     func bannerViewDidRecordClick(_ bannerView: BannerView) {
+        guard auBannerView?.acceptsGoogleEvents == true else { return }
         LogEvent("bannerViewDidRecordClick")
         AUEventsManager.shared.adClick(
             adUnitId: adUnitID ?? "",
@@ -176,16 +203,19 @@ class AUBannerHandler: NSObject,
     // MARK: - Click-Time
 
     func bannerViewWillPresentScreen(_ bannerView: BannerView) {
+        guard auBannerView?.acceptsGoogleEvents == true else { return }
         LogEvent("bannerViewWillPresentScreen")
         bannerDelegate?.bannerViewWillPresentScreen?(bannerView)
     }
 
     func bannerViewWillDismissScreen(_ bannerView: BannerView) {
+        guard auBannerView?.acceptsGoogleEvents == true else { return }
         LogEvent("bannerViewWillDismissScreen")
         bannerDelegate?.bannerViewWillDismissScreen?(bannerView)
     }
 
     func bannerViewDidDismissScreen(_ bannerView: BannerView) {
+        guard auBannerView?.acceptsGoogleEvents == true else { return }
         LogEvent("bannerViewDidDismissScreen")
         bannerDelegate?.bannerViewDidDismissScreen?(bannerView)
     }
@@ -196,17 +226,19 @@ class AUBannerHandler: NSObject,
         didReceiveAppEvent name: String,
         with info: String?
     ) {
+        guard auBannerView?.acceptsGoogleEvents == true else { return }
         LogEvent("didReceiveAppEvent")
         // A Prebid line item's creative fires this app event when it wins the GAM auction;
         // its absence by impression time means the ad server (Google) rendered.
         if name.caseInsensitiveCompare(PREBID_APP_EVENT) == .orderedSame {
-            auBannerView?.prebidLineItemWon = true
+            auBannerView?.notePrebidLineItemRendered()
         }
         eventDelegate?.adView?(banner, didReceiveAppEvent: name, with: info)
     }
 
     // MARK: - GADAdSizeDelegate
     func adView(_ bannerView: BannerView, willChangeAdSizeTo size: AdSize) {
+        guard auBannerView?.acceptsGoogleEvents == true else { return }
         LogEvent("willChangeAdSizeTo")
         // Capture GAM's chosen size before bannerViewDidReceiveAd fires.
         // gamView.adSize is not yet updated here — size.size is the correct value.

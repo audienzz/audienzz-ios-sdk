@@ -66,6 +66,16 @@ public class VisibleView: UIView {
     /// the initial load still uses the prefetch / ≥20% path.
     internal var isViewRefreshEligible: Bool { isRefreshEligible }
 
+    /// Recomputes both verdicts from the current geometry, firing the usual transitions.
+    ///
+    /// The cached flags are only as current as the last signal that happened to be observed, and
+    /// no observable signal covers every way a view can move — `layer.position`, for one, changes
+    /// nothing KVO reports. Callers about to spend a request use this so the decision is made from
+    /// geometry rather than from whatever the last event left behind.
+    internal func refreshVisibilityNow() {
+        checkIfFrameIsVisible()
+    }
+
     // MARK: - Prefetch margin
 
     /// Distance in points before the view enters the viewport that triggers
@@ -170,6 +180,7 @@ public class VisibleView: UIView {
     // MARK: - Scroll observation
 
     private func observeSuperviewsOnOffsetChange() {
+        observeConcealment(of: self)
         guard let superviews = self.getAllSuperviews() else { return }
 
         for superview in superviews {
@@ -179,7 +190,109 @@ public class VisibleView: UIView {
                 }
                 contentOffsetObservations.append(observation)
             }
+            observeConcealment(of: superview)
         }
+    }
+
+    /// Re-evaluates visibility when something is hidden or faded rather than scrolled.
+    ///
+    /// Scroll observation alone only ever saw movement, so an ad covered by collapsing its
+    /// section, hiding its container or fading it out kept its last verdict — usually "visible" —
+    /// and went on refreshing behind whatever concealed it.
+    private func observeConcealment(of view: UIView) {
+        let recheck: (UIView, Any) -> Void = { [weak self] _, _ in
+            self?.checkIfFrameIsVisible()
+        }
+        contentOffsetObservations.append(view.observe(\.isHidden, options: [.new], changeHandler: recheck))
+        contentOffsetObservations.append(view.observe(\.alpha, options: [.new], changeHandler: recheck))
+        // A section that collapses, or a container that resizes to nothing, conceals the ad by
+        // geometry rather than by a flag and emits no scroll event either.
+        contentOffsetObservations.append(view.observe(\.bounds, options: [.new], changeHandler: recheck))
+        contentOffsetObservations.append(view.observe(\.frame, options: [.new], changeHandler: recheck))
+        // A transform moves the ad without changing its frame, and toggling clipsToBounds changes
+        // what an ancestor shows without changing any geometry at all. Neither emits any of the
+        // signals above.
+        contentOffsetObservations.append(view.observe(\.transform, options: [.new], changeHandler: recheck))
+        contentOffsetObservations.append(view.observe(\.clipsToBounds, options: [.new], changeHandler: recheck))
+    }
+
+    /// Below this an ad is not meaningfully on screen, and neither is anything behind it.
+    private static let minimumVisibleAlpha: CGFloat = 0.01
+
+    /// The part of this view a user could actually see, in window coordinates.
+    ///
+    /// `nil` means nothing of it can be seen. Comparing the raw frame against the window — which is
+    /// all this used to do — answers a different question: it says a banner is on screen while it
+    /// sits inside a hidden container, under a faded-out parent, clipped away by an ancestor's
+    /// bounds, or scrolled off sideways. Android has always clipped against every ancestor through
+    /// `getGlobalVisibleRect` and rejected non-visible views outright; this brings iOS level.
+    /// Whether the slot is close enough to the viewport to be worth buying an ad for.
+    ///
+    /// Clipping ancestors are honoured, but with the margin applied to them as well — a
+    /// `UIScrollView` clips by default, so testing their raw bounds treated every slot below the
+    /// fold as clipped away and defeated the lookahead entirely. A clipper that has collapsed to
+    /// nothing is a different matter: expanding an empty rect would happily admit the ad, so it is
+    /// rejected outright.
+    private func isWithinPrefetchZone(
+        frameInWindow: CGRect,
+        window: UIWindow,
+        expandedBounds: CGRect
+    ) -> Bool {
+        if isConcealed() { return false }
+        let margin = max(0, prefetchMarginPoints)
+        var region = frameInWindow
+        var ancestor: UIView? = superview
+        while let current = ancestor, current !== window {
+            if current.clipsToBounds {
+                let bounds = current.bounds
+                // Collapsed, not merely scrolled: nothing inside it can come into view.
+                if bounds.width <= 0 || bounds.height <= 0 { return false }
+                let lookahead = window.convert(bounds, from: current)
+                    .insetBy(dx: -margin, dy: -margin)
+                region = region.intersection(lookahead)
+                if region.isNull || region.isEmpty { return false }
+            }
+            ancestor = current.superview
+        }
+        return region.intersects(margin > 0 ? expandedBounds : window.bounds)
+    }
+
+    /// Whether the ad or anything above it is hidden or transparent. Geometry is not consulted:
+    /// being outside the viewport is not concealment.
+    private func isConcealed() -> Bool {
+        if isHidden || alpha <= Self.minimumVisibleAlpha { return true }
+        var ancestor: UIView? = superview
+        while let current = ancestor {
+            if current.isHidden || current.alpha <= Self.minimumVisibleAlpha { return true }
+            ancestor = current.superview
+        }
+        return false
+    }
+
+    private func unconcealedRectInWindow(frameInWindow: CGRect, window: UIWindow) -> CGRect? {
+        if isConcealed() { return nil }
+
+        var clipped = frameInWindow
+        var ancestor: UIView? = superview
+        while let current = ancestor, current !== window {
+            if current.clipsToBounds {
+                clipped = clipped.intersection(window.convert(current.bounds, from: current))
+                if clipped.isNull || clipped.isEmpty { return nil }
+            }
+            ancestor = current.superview
+        }
+        return clipped
+    }
+
+    /// The part of `unconcealed` that falls inside the screen, or `nil` if none does.
+    ///
+    /// Horizontal intersection counts too: a banner scrolled off the side of a horizontal pager
+    /// still overlapped the window vertically, which is all the old check looked at.
+    private func onScreenRect(unconcealed: CGRect?, window: UIWindow) -> CGRect? {
+        guard let unconcealed else { return nil }
+        let onScreen = unconcealed.intersection(window.bounds)
+        guard !onScreen.isNull, onScreen.width > 0, onScreen.height > 0 else { return nil }
+        return onScreen
     }
 
     private func removeAsSuperviewObserver() {
@@ -189,14 +302,39 @@ public class VisibleView: UIView {
 
     // MARK: - Visibility check
 
+    /// Guards the transition hooks, which can call back in here. A recomputation that is already
+    /// running has the current answer, so a nested one has nothing to add and could otherwise
+    /// recurse through resume -> recompute -> resume.
+    private var isEvaluatingVisibility = false
+
     private func checkIfFrameIsVisible() {
         guard let window = self.window else { return }
+        if isEvaluatingVisibility { return }
+        isEvaluatingVisibility = true
+        defer { isEvaluatingVisibility = false }
 
-        let frameInWindow = window.convert(self.frame, from: self.superview)
+        let frameInWindow = window.convert(self.bounds, from: self)
 
-        if frameInWindow.size.width == 0 && frameInWindow.size.height == 0 {
+        // A zero-size ad shows nothing. Returning early here left its last verdict standing, so a
+        // banner collapsed to nothing stayed "eligible" and kept refreshing. Both flags start
+        // false, so this is still a no-op before the first layout pass.
+        if frameInWindow.size.width <= 0 || frameInWindow.size.height <= 0 {
+            if isCurrentlyVisible {
+                isCurrentlyVisible = false
+                onBecameHidden()
+            }
+            if isRefreshEligible {
+                isRefreshEligible = false
+                onRefreshBecameIneligible()
+            }
             return
         }
+
+        // Two different questions. `unconcealed` is nil when the ad cannot be seen wherever it sits
+        // — hidden, transparent or clipped away by an ancestor. `onScreen` additionally requires it
+        // to fall inside the screen, which a slot still scrolling towards the viewport does not.
+        let unconcealed = unconcealedRectInWindow(frameInWindow: frameInWindow, window: window)
+        let onScreen = onScreenRect(unconcealed: unconcealed, window: window)
 
         // Prefetch zone — fires once when the view is within prefetchMarginPoints of the viewport.
         if !hasFiredPrefetchZone {
@@ -204,9 +342,11 @@ public class VisibleView: UIView {
                 dx: -prefetchMarginPoints,
                 dy: -prefetchMarginPoints
             )
-            let withinPrefetchZone = prefetchMarginPoints > 0
-                ? frameInWindow.intersects(expandedBounds)
-                : frameInWindow.intersects(window.bounds)
+            let withinPrefetchZone = isWithinPrefetchZone(
+                frameInWindow: frameInWindow,
+                window: window,
+                expandedBounds: expandedBounds
+            )
             if withinPrefetchZone {
                 hasFiredPrefetchZone = true
                 #if DEBUG
@@ -219,8 +359,10 @@ public class VisibleView: UIView {
         // Actual visibility — drives smart refresh and the legacy detectVisible() path.
         // We consider the ad "visible" only when at least 20% of its height intersects
         // the viewport, matching the Android implementation (visibleHeightFraction >= 0.2).
-        let intersection = frameInWindow.intersection(window.bounds)
-        let visibleFraction = frameInWindow.height > 0 ? intersection.height / frameInWindow.height : 0
+        let visibleFraction: CGFloat = {
+            guard let onScreen, frameInWindow.height > 0 else { return 0 }
+            return onScreen.height / frameInWindow.height
+        }()
         let visible = visibleFraction >= 0.2
 
         if visible && !isCurrentlyVisible {
@@ -236,7 +378,7 @@ public class VisibleView: UIView {
         // the legacy model it falls back to the same ≥20%-visible threshold as `visible` above, so
         // the refresh hooks reproduce the old become-visible/hidden behavior.
         let refreshEligible = usesDirectionalRefreshGate
-            ? computeRefreshEligible(frameInWindow: frameInWindow, viewport: window.bounds)
+            ? computeRefreshEligible(frameInWindow: frameInWindow, onScreen: onScreen)
             : visible
         if refreshEligible && !isRefreshEligible {
             isRefreshEligible = true
@@ -256,11 +398,14 @@ public class VisibleView: UIView {
     /// A fully-visible ad, or one entering from the bottom with ≥50% on screen, is eligible.
     /// Kept separate from `currentVisibleHeightFraction()` so the viewability tracker's math
     /// is untouched. Geometry is in window coordinates.
-    private func computeRefreshEligible(frameInWindow: CGRect, viewport: CGRect) -> Bool {
-        guard frameInWindow.height > 0 else { return false }
-        // >0 when the top edge is above the viewport top; >0 when the bottom edge is below it.
-        let topOffscreen = viewport.minY - frameInWindow.minY
-        let bottomOffscreen = frameInWindow.maxY - viewport.maxY
+    /// The rule itself is unchanged; what it measures against is. `onScreen` is the ad's actually
+    /// visible rect rather than the whole window, so an ancestor that clips, hides or fades the ad
+    /// now makes it ineligible exactly as scrolling it away does.
+    private func computeRefreshEligible(frameInWindow: CGRect, onScreen: CGRect?) -> Bool {
+        guard let onScreen, frameInWindow.height > 0 else { return false }
+        // >0 when the top edge is above the visible area's top; >0 when the bottom edge is below it.
+        let topOffscreen = onScreen.minY - frameInWindow.minY
+        let bottomOffscreen = frameInWindow.maxY - onScreen.maxY
         let topFullyOnScreen = topOffscreen < 1.0
         let bottomWithinHalf = bottomOffscreen <= frameInWindow.height * 0.5
         return topFullyOnScreen && bottomWithinHalf

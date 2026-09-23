@@ -16,12 +16,13 @@
 import Foundation
 import GoogleMobileAds
 import PrebidMobile
+import UIKit
 
 private let customPrebidServerURL = "https://ib.adnxs.com/openrtb2/prebid"
 private let prebidServerAccountId = "3927"
 private let customStatusEndpoint = "https://ib.adnxs.com/status"
 
-internal let AUSDKVersion = "0.3.2"
+internal let AUSDKVersion = "0.3.3"
 
 @objcMembers
 public class Audienzz: NSObject {
@@ -56,7 +57,7 @@ public class Audienzz: NSObject {
 
     public static let shared = Audienzz()
 
-    public func configureSDK(companyId: String, appVolume: Float = 0, enablePPID: Bool = false) {
+    public func configureSDK(companyId: String, appVolume: Float = 0) {
         setupPrebid(companyId, appVolume: appVolume)
 
         do {
@@ -65,7 +66,6 @@ public class Audienzz: NSObject {
                     error in
                 self.handleInitializationResultStatus(status: status)
 
-                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
 
                 if let error = error {
                     AULogEvent.logDebug("Initialization Error: \(error)")
@@ -81,8 +81,7 @@ public class Audienzz: NSObject {
     public func configureSDK(
         companyId: String,
         gadMobileAdsVersion: String? = nil,
-        appVolume: Float = 0,
-        enablePPID: Bool = false
+        appVolume: Float = 0
     ) {
         setupPrebid(companyId, appVolume: appVolume)
 
@@ -99,7 +98,6 @@ public class Audienzz: NSObject {
                 }
 
                 self.handleInitializationResultStatus(status: status)
-                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
             }
         } catch {
             AULogEvent.logDebug(
@@ -109,10 +107,8 @@ public class Audienzz: NSObject {
     }
 
     public func configureWithRemoteSDK(
-        gadMobileAdsVersion: String? = nil,
-        enablePPID: Bool = false
+        gadMobileAdsVersion: String? = nil
     ) async throws {
-        if autoScreenTracking { AUScreenTracker.installIfNeeded() }
         // Apply muted default immediately so ads are always muted even if remote
         // config is unavailable (network error, backend not ready, nil response).
         // The value will be overridden below once the remote config is fetched.
@@ -143,7 +139,6 @@ public class Audienzz: NSObject {
             initializePrebid(
                 serverURL: customPrebidServerURL,
                 gadMobileAdsVersion: gadMobileAdsVersion,
-                enablePPID: enablePPID
             )
             return
         }
@@ -194,7 +189,6 @@ public class Audienzz: NSObject {
         initializePrebid(
             serverURL: publisherConfig.prebidServer.url,
             gadMobileAdsVersion: gadMobileAdsVersion,
-            enablePPID: enablePPID
         )
     }
 
@@ -202,8 +196,7 @@ public class Audienzz: NSObject {
     /// happy path and the default-host fallback).
     private func initializePrebid(
         serverURL: String,
-        gadMobileAdsVersion: String?,
-        enablePPID: Bool
+        gadMobileAdsVersion: String?
     ) {
         do {
             try Prebid.initializeSDK(
@@ -218,7 +211,6 @@ public class Audienzz: NSObject {
                 }
 
                 self.handleInitializationResultStatus(status: status)
-                PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
             }
         } catch {
             AULogEvent.logDebug(
@@ -229,21 +221,19 @@ public class Audienzz: NSObject {
 
     // MARK: - Public Init For RN Bridg (Audienzz)
 
-    /// Stable Obj-C selector for RN bridge: `configureSDK_RNWithCompanyId:enablePPID:completion:`
-    @objc(configureSDK_RNWithCompanyId:enablePPID:completion:)
+    /// Stable Obj-C selector for RN bridge: `configureSDK_RNWithCompanyId:completion:`
+    @objc(configureSDK_RNWithCompanyId:completion:)
     public func configureSDK_RN(
         companyId: String,
-        enablePPID: Bool,
         completion: (() -> Void)?
     ) {
-        configureSDK_RN(companyId: companyId, appVolume: 0, enablePPID: enablePPID, completion)
+        configureSDK_RN(companyId: companyId, appVolume: 0, completion)
     }
 
     /// Special method used for RN bridging initialization
     public func configureSDK_RN(
         companyId: String,
         appVolume: Float = 0,
-        enablePPID: Bool = false,
         _ completion: (() -> Void)? = nil
     ) {
         Task {
@@ -259,7 +249,6 @@ public class Audienzz: NSObject {
                         AULogEvent.logDebug("Initialization Error: \(error)")
                     }
 
-                    PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
                     completion?()
                 }
             } catch {
@@ -277,7 +266,6 @@ public class Audienzz: NSObject {
         companyId: String,
         gadMobileAdsVersion: String?,
         appVolume: Float = 0,
-        enablePPID: Bool = false,
         _ completion: (() -> Void)? = nil
     ) {
         Task {
@@ -299,7 +287,6 @@ public class Audienzz: NSObject {
                     }
 
                     self.handleInitializationResultStatus(status: status)
-                    PPIDManager.shared.setAutomaticPpidEnabled(enablePPID)
                     completion?()
                 }
             } catch {
@@ -340,27 +327,69 @@ public class Audienzz: NSObject {
     /// to the backend value; `false`/`true` = force off/on regardless of the backend.
     public var smartRefreshV2Override: Bool?
 
+    /// Objective-C entry point for the override above.
+    ///
+    /// A Swift `Bool?` is not representable in Objective-C, so `smartRefreshV2Override` is absent
+    /// from the generated header and the React Native bridge — which is Objective-C — could not
+    /// build against it at all. Setting the tri-state from ObjC needs an explicit method.
+    @objc public func setSmartRefreshV2Override(_ enabled: Bool) {
+        smartRefreshV2Override = enabled
+    }
+
+    /// Clears the local override, deferring to the backend `smartRefreshV2` value again.
+    @objc public func clearSmartRefreshV2Override() {
+        smartRefreshV2Override = nil
+    }
+
     /// Resolved smart-refresh-v2 flag: local override wins, else the backend publisher config, else
     /// `false` (legacy smart refresh). Read at use-time so it picks up the async remote config once
     /// it loads.
+    /// Whether any PPID may be sent. Backend-controlled; absent → enabled.
+    ///
+    /// There is deliberately no public setter. A PPID is always sent unless the backend turns it
+    /// off for that publisher, and the only thing an app decides is *which* identifier to use, via
+    /// `PPIDManager.setPublisherPPID`.
+    internal var isPpidEnabled: Bool {
+        backendPpidEnabled ?? AudienzzRemoteConfig.shared.publisherConfig?.ppidEnabled ?? true
+    }
+
+    private var backendPpidEnabled: Bool?
+
+    /// Applies the publisher config's PPID switch.
+    ///
+    /// The SDK reads it from its own remote config when it fetched that itself. The Flutter
+    /// bridge fetches the publisher config in Dart, so `publisherConfig` is nil there and the
+    /// resolved value has to be handed down instead. Not part of the documented app-facing API.
+    public func applyBackendPpidConfig(ppidEnabled: Bool?) {
+        backendPpidEnabled = ppidEnabled
+    }
+
     internal var isSmartRefreshV2Enabled: Bool {
         smartRefreshV2Override
             ?? AudienzzRemoteConfig.shared.publisherConfig?.smartRefreshV2
             ?? false
     }
 
-    /// Automatic screen tracking. When `true` (default), the SDK swizzles `UIViewController`
-    /// appearance and fires a page impression (and drives screen-aware smart refresh) on every
-    /// content screen — including navigation pushes and tab changes — with no per-screen code. Set
-    /// to `false` **before** `configureSDK`/`configureWithRemoteSDK` to opt out and call
-    /// `onScreenResumed(_:)` yourself.
-    public var autoScreenTracking: Bool = true
-
     /// When `true`, a screen-change reload (smart refresh v2, on returning to a screen) briefly
     /// blanks the current banner — keeping the slot's size — until the fresh ad renders, making the
     /// refresh visually obvious. Default `false`. Only affects screen-change reloads, not periodic
     /// refresh.
     public var blankOnScreenReload: Bool = false
+
+    /// Emit one greppable `AUDZ …` line per decision the SDK makes about a slot: which page became
+    /// current, which page a slot belongs to, when an auction started, and why one did not.
+    ///
+    /// Off by default. Turn it on **before** configuring the SDK when you need a log you can
+    /// capture on a device and hand to someone else — it is not `#if DEBUG`-gated, so it survives a
+    /// release or TestFlight build, which is exactly the build a tester is usually running.
+    /// Route it somewhere other than the console with ``AUDiagnostics/sink``.
+    ///
+    /// The Android, Flutter and React Native SDKs emit the same line format, so one flow can be
+    /// compared across platforms.
+    public var diagnosticsEnabled: Bool {
+        get { AUDiagnostics.isEnabled }
+        set { AUDiagnostics.isEnabled = newValue }
+    }
 
     public var timeoutMillis: Int {
         // Assigning Prebid's `timeoutMillis` also updates `timeoutMillisDynamic`
@@ -420,51 +449,270 @@ public class Audienzz: NSObject {
         AUTargeting.shared.setGlobalOrtbConfig(ortbConfig: schain)
     }
 
-    /// Call from `viewDidAppear` of every screen (UIViewController) that shows ads. Fires a
-    /// `pageImpression` and generates a fresh page-impression id that ties all subsequent ad events
-    /// on that screen visit together (the iOS analogue of the Android `onScreenResumed`).
-    /// Screens without ads don't need to call it.
-    public func onScreenResumed(_ viewController: UIViewController) {
-        // Ignored while automatic tracking is on — it already observes view controllers (avoids
-        // double-counting). Turn off `autoScreenTracking` to drive screens manually.
-        if autoScreenTracking { return }
-        notifyScreenResumed(viewController)
+    /// Report an ad-bearing screen, dialog, or popup by its view controller — call from `viewDidAppear`
+    /// (or when a dialog/overlay appears). The screen name is derived from the controller's type unless
+    /// `name` is provided. Fires a `pageImpression` and a fresh page-impression id that ties all
+    /// subsequent ad events on this visit together. Screens without ads don't need to call it.
+    public func pageImpression(_ viewController: UIViewController, name: String? = nil) {
+        let screenName = name ?? String(describing: type(of: viewController))
+        AULogEvent.logDebug(
+            "[Audienzz][pageImpression] viewController=\(type(of: viewController)) → \"\(screenName)\" (\(name == nil ? "derived" : "override"))")
+        notifyScreenResumed(viewController, name: screenName)
     }
 
-    /// Manual screen signal by an opaque key (e.g. a SwiftUI/route name). The key is the screen
-    /// identity; always applied, since automatic tracking can't see non-UIViewController screens.
-    /// Fires the page impression and drives screen-aware smart refresh (v2) for banners tagged with
-    /// the same key via `AUBannerView.setScreen(_:)` — matched by value.
-    @objc(onScreenResumedWithKey:)
-    public func onScreenResumed(_ screenKey: String) {
-        notifyScreenResumed(screenKey as AnyObject, name: screenKey)
+    /// Report an ad-bearing screen, dialog, or popup by an explicit name (e.g. a SwiftUI or route
+    /// name). Fires the page impression and drives screen-aware smart refresh (v2) for banners tagged
+    /// with the same name via `AUBannerView.setScreen(_:)` — matched by value.
+    @objc(pageImpressionWithName:)
+    public func pageImpression(_ name: String) {
+        AULogEvent.logDebug("[Audienzz][pageImpression] name=\"\(name)\"")
+        notifyScreenResumed(name as AnyObject, name: name)
     }
 
-    /// Single sink used by both the automatic tracker and the manual API: page impression + the
-    /// screen-aware smart-refresh coordinator (v2 only).
-    internal func notifyScreenResumed(_ viewController: UIViewController) {
-        notifyScreenResumed(viewController, name: String(describing: type(of: viewController)))
+    /// Report a screen whose identity and analytics name are different things.
+    ///
+    /// `pageId` identifies the *page instance* and is matched by value against a banner's
+    /// `setScreen(_:)`; `name` is what analytics records. They are separated because a name legit-
+    /// imately repeats — two article screens are both "article" — while ownership must not. Passing
+    /// the name as both, which ``pageImpression(_:)-(String)`` does, makes the second article's page
+    /// impression recreate the first article's banners instead of releasing them.
+    ///
+    /// Host bridges mint the id per route instance. A native app with distinct view controllers
+    /// should keep using ``pageImpression(_:name:)`` and let identity be the controller.
+    @objc(pageImpressionWithPageId:name:)
+    public func pageImpression(pageId: String, name: String) {
+        AULogEvent.logDebug("[Audienzz][pageImpression] pageId=\"\(pageId)\" name=\"\(name)\"")
+        notifyScreenResumed(pageId as NSString, name: name)
     }
 
-    /// Identity of the controller most recently passed to `notifyScreenResumed`. Lets a banner tell
-    /// whether its host screen is already the active one before deciding to resume it proactively
-    /// (see `AUBannerView.ensureHostScreenResumed`). Weak — never keeps a screen alive.
-    internal weak var lastResumedScreenVC: UIViewController?
-
-    /// Generalized sink taking any screen token (a `UIViewController` or a route key).
+    /// Single sink for the manual page-impression API: page impression + the page-scoped ad
+    /// coordinator. Takes any screen token (a `UIViewController` or a name).
+    ///
+    /// Ads are page-scoped unconditionally — this is NOT gated on `isSmartRefreshV2Enabled`, which
+    /// now only selects the viewport gate used for scroll pause/resume. Every page impression
+    /// releases the previous page's banners and reloads the incoming page's, so a banner can never
+    /// keep auctioning for a screen the user has left.
     internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
-        AULogEvent.logDebug("[Audienzz] screenResumed: \(name) (smartRefreshV2=\(isSmartRefreshV2Enabled))")
-        lastResumedScreenVC = screen as? UIViewController
+        AULogEvent.logDebug("[Audienzz][pageImpression] firing → \"\(name)\"")
+        AUDiagnostics.log("page", "impression", [
+            ("id", AUScreenAdCoordinator.diagnosticToken(for: screen)),
+            ("name", name),
+        ])
+        // An explicit report always wins over a pending automatic foreground one, and claims this
+        // foreground visit so an activation arriving afterwards doesn't schedule a duplicate.
+        reportedInThisForegroundVisit = true
+        cancelPendingForegroundReimpression()
+        // Armed on the first page impression, so there is always an active screen to re-fire for.
+        observeForegroundReimpression()
         AUEventsManager.shared.onScreenResumed(screenName: name)
-        if isSmartRefreshV2Enabled {
-            AUScreenAdCoordinator.shared.onScreenResumed(screen)
+        AUScreenAdCoordinator.shared.onScreenResumed(screen, name: name)
+        // Emitted only once the transition is complete. An observer is free to report another page
+        // — the bridges hand this to app code — and running it mid-transition let that nested
+        // report finish first, after which this call's sweep overwrote it with the older page.
+        // The ROUTING key, not the display name. A bridge matches its banners against the token the
+        // coordinator is now holding, so emitting the name would leave every bridge banner unable to
+        // recognise its own page impression whenever the two differ. They are identical for a
+        // name-only report, so nothing changes for an app that never supplies an id.
+        pageImpressionObserver?((screen as? NSString) as String? ?? name)
+    }
+
+    // MARK: - Foreground re-impression
+
+    /// Returning from the background is a new page impression for the screen the user comes back to:
+    /// its banners reload so the creative is fresh at the moment it's looked at, and any banner left
+    /// over from an earlier screen is released.
+    ///
+    /// Suppressed when the app itself reported a page impression within
+    /// `foregroundReimpressionDebounce` of the activation (the common case where a view controller's
+    /// `viewDidAppear` also fires on return), so a restore never double-auctions.
+    internal func observeForegroundReimpression() {
+        guard foregroundObserver == nil else { return }
+        // Only a real background → foreground round trip counts. `didBecomeActive` alone also fires
+        // after Control Centre, a system permission prompt or an incoming call — none of which are a
+        // new page view, and all of which would otherwise burn an auction.
+        backgroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.didEnterBackground = true
+            self?.isAppBackgrounded = true
+            // A new foreground visit starts when we come back, and nothing has been reported for it
+            // yet. Whether the app reports one itself is a property of THAT visit, not of how long
+            // ago the last report happened.
+            self?.reportedInThisForegroundVisit = false
+            // Drop any pending automatic re-impression: backgrounding again inside the scheduling
+            // window would otherwise recreate the whole active page while backgrounded.
+            self?.cancelPendingForegroundReimpression()
+            // Hold every banner's refresh for the duration of the background, and retire whatever
+            // auction was in flight. A `DispatchWorkItem` scheduled on the main queue would fire on
+            // return regardless, and a response landing meanwhile buys a creative nobody sees.
+            AUScreenAdCoordinator.shared.blockForBackground()
+        }
+        // Clear the auction gate at willEnterForeground, not didBecomeActive. An app that reports
+        // its page from `willEnterForeground` runs BEFORE activation: with the gate still closed its
+        // recreation was rejected, and the activation that followed then suppressed the automatic
+        // re-impression as a duplicate — so the visit got no fresh auction at all and a blanked slot
+        // could stay blank.
+        willForegroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            // Only the gate opens here. Deferred retries deliberately do NOT run yet: whether an
+            // automatic page impression is going to own this recovery is not known until
+            // didBecomeActive, and the gap between the two notifications is not bounded. Retrying
+            // here meant a long gap let the retry auction first and the impression auction again.
+            self?.isAppBackgrounded = false
+        }
+        foregroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            self.isAppBackgrounded = false
+            // Exactly one owner recovers each banner. A page impression — scheduled here, or already
+            // reported by the app during this visit — recreates every banner on the active page and
+            // clears their background block itself. Only when no impression is going to happen does
+            // the coordinator resume them directly; doing both is how one return used to produce two
+            // auctions per banner.
+            var impressionOwnsRecovery = false
+            if self.didEnterBackground {
+                self.didEnterBackground = false
+                impressionOwnsRecovery = self.scheduleForegroundReimpression()
+            }
+            if !impressionOwnsRecovery {
+                AUScreenAdCoordinator.shared.resumeAfterForeground()
+            }
         }
     }
 
+    /// Schedules the automatic re-impression instead of firing it immediately, so an app that
+    /// reports its own page impression on resume cancels it. That makes the outcome the same in
+    /// both callback orders — exactly one page impression, not two.
+    /// - Returns: `true` when a page impression owns this visit's recovery — either one is now
+    ///   scheduled, or the app already reported one itself. `false` means nothing else will recreate
+    ///   the banners, so the caller must resume them directly.
+    @discardableResult
+    private func scheduleForegroundReimpression() -> Bool {
+        guard let (screen, name) = AUScreenAdCoordinator.shared.activeScreenAndName else {
+            AULogEvent.logDebug("[Audienzz][pageImpression] foreground — no active screen yet, skipping")
+            return false
+        }
+        // Cancelling on an explicit report only covers the order "activation first". An app that
+        // reports from `willEnterForeground` reports BEFORE activation, so also check whether this
+        // visit has already been reported.
+        //
+        // Deliberately not an elapsed-time test. Age and ownership are different questions, and
+        // conflating them failed both ways: a slow willEnterForeground → didBecomeActive gap made a
+        // report from this visit look old enough to ignore (two impressions), and a quick
+        // background/return made a report from the PREVIOUS visit look recent enough to suppress
+        // this one (no impression at all).
+        guard !reportedInThisForegroundVisit else {
+            AULogEvent.logDebug(
+                "[Audienzz][pageImpression] foreground — app already reported \"\(name)\" this visit, skipping")
+            // The report may have run before our foreground observer opened the auction gate.
+            // No impression is pending; unblock and recover any load that report could not start.
+            return false
+        }
+        pendingForegroundReimpression?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.pendingForegroundReimpression = nil
+            AULogEvent.logDebug("[Audienzz][pageImpression] foreground → re-firing \"\(name)\"")
+            self?.notifyScreenResumed(screen, name: name)
+        }
+        pendingForegroundReimpression = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.foregroundReimpressionDelay, execute: work)
+        return true
+    }
+
+    /// True while an automatic foreground page impression is scheduled. A banner whose auction the
+    /// gate deferred consults this: the impression recreates every banner on the active page, so it
+    /// owns the recovery and a deferred retry must stand down rather than auction as well.
+    internal var hasPendingForegroundReimpression: Bool { pendingForegroundReimpression != nil }
+
+    internal func cancelPendingForegroundReimpression() {
+        pendingForegroundReimpression?.cancel()
+        pendingForegroundReimpression = nil
+    }
+
+    #if DEBUG
+    /// Test isolation only: no page report is synthesized, so pre-page behavior remains testable.
+    @nonobjc internal func resetLifecycleForTesting() {
+        cancelPendingForegroundReimpression()
+        let center = NotificationCenter.default
+        [foregroundObserver, backgroundObserver, willForegroundObserver].compactMap { $0 }
+            .forEach { center.removeObserver($0) }
+        foregroundObserver = nil
+        backgroundObserver = nil
+        willForegroundObserver = nil
+        didEnterBackground = false
+        isAppBackgrounded = false
+        reportedInThisForegroundVisit = false
+        pageImpressionObserver = nil
+        AUScreenAdCoordinator.shared.resetForTesting()
+        observeForegroundReimpression()
+    }
+    #endif
+
+    /// Delay before an automatic foreground re-impression fires, giving the app's own report a
+    /// chance to cancel it.
+    private static let foregroundReimpressionDelay: TimeInterval = 0.4
+
+    /// True between `didEnterBackground` and the next activation. Read by the ad views' auction
+    /// gate, so nothing auctions while the app is backgrounded.
+    internal private(set) var isAppBackgrounded = false
+
+    private var didEnterBackground = false
+    /// Notified after every page impression, including the automatic one fired on returning to the
+    /// foreground.
+    ///
+    /// The Flutter and React Native bridges need to know a page transition happened so they can
+    /// remount platform views and page-scope the ad types the native coordinator doesn't track. They
+    /// used to observe their own app lifecycle and report a page impression themselves, which meant
+    /// two independent owners each scheduling and de-duplicating — no ordering of the two ever came
+    /// out right. Native owns foreground reporting; the bridges just listen.
+    public var pageImpressionObserver: ((String) -> Void)?
+
+    /// Whether the app reported a page impression itself during the current foreground visit.
+    /// Reset when the app backgrounds, so each visit is judged on its own.
+    private var reportedInThisForegroundVisit = false
+    private var pendingForegroundReimpression: DispatchWorkItem?
+    private var foregroundObserver: NSObjectProtocol?
+    private var backgroundObserver: NSObjectProtocol?
+    private var willForegroundObserver: NSObjectProtocol?
+
+    /// Whether Prebid has been given its account id — i.e. whether an auction can carry demand.
+    ///
+    /// The remote flow `await`s the publisher config before assigning it, so there is a real window
+    /// on a cold start where an auction would go out with an empty account id. Prebid answers
+    /// `.prebidInvalidAccountId` and the SDK still loads GAM, so the slot fills — but that first
+    /// impression, usually the above-the-fold one, carries no header-bidding demand at all.
+    internal var isPrebidConfigured: Bool {
+        prebidConfiguredOverride ?? prebidConfigured
+    }
+
+    private var prebidConfigured = false
+
+    /// Test seam. A unit test never runs the real initialization, so without this every banner test
+    /// would sit behind the not-configured gate.
+    internal var prebidConfiguredOverride: Bool?
+
+    /// Prebid is configured: let every banner that deferred its first load take it now.
+    ///
+    /// Resuming through the coordinator's registry rather than a queue of closures means a banner
+    /// deallocated while waiting is simply no longer there.
+    private func markPrebidConfigured() {
+        guard !prebidConfigured else { return }
+        prebidConfigured = true
+        AUScreenAdCoordinator.shared.resumeAllAfterPrebidConfigured()
+    }
+
     private func setupPrebid(_ companyId: String, appVolume: Float = 0) {
-        if autoScreenTracking { AUScreenTracker.installIfNeeded() }
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
+        markPrebidConfigured()
         Prebid.shared.customStatusEndpoint = customStatusEndpoint
         Targeting.shared.omidPartnerName = "Google"
         let v = MobileAds.shared.versionNumber
@@ -480,6 +728,7 @@ public class Audienzz: NSObject {
     ) {
         AUEventsManager.shared.configure(companyId: companyId)
         Prebid.shared.prebidServerAccountId = prebidServerAccountId
+        markPrebidConfigured()
         Prebid.shared.customStatusEndpoint = prebidStatusUrl
         Targeting.shared.omidPartnerName = "Google"
         let v = MobileAds.shared.versionNumber

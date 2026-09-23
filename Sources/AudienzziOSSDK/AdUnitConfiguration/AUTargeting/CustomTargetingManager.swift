@@ -2,17 +2,28 @@ import GoogleMobileAds
 
 class CustomTargetingManager {
 
-    private let sdkPlatform: String
-    private let sdkVersion: String
     private var targetingMap: [String: String] = [:]
 
     /// Keys set by SDK/bridge init — invisible to publishers.
     /// Cannot be removed via removeCustomTargeting / clearCustomTargeting.
     private var reservedTargetingMap: [String: String] = [:]
 
+    /// The single SDK identification key sent on every GAM request: platform and version in one
+    /// value, e.g. `ios-0.3.2`.
+    ///
+    /// It used to be two keys — `au_sdk = ios` and `au_v = 0.3.2`. One key is what GAM line-item
+    /// targeting and reporting actually want, because "this platform on this version" is a single
+    /// condition; expressing it as two forced every rule to AND them together.
+    ///
+    /// **`au_v` is no longer sent.** Anything keyed on it in Ad Manager needs to move to `au_sdk`
+    /// matching `<platform>-<version>`. The version is omitted only when the SDK could not resolve
+    /// one, in which case the value is the bare platform. Android sends the identical shape.
+    private let sdkPlatformVersion: String
+
     init(sdkPlatform: String = "ios", sdkVersion: String = "") {
-        self.sdkPlatform = sdkPlatform
-        self.sdkVersion = sdkVersion
+        // Combined once here rather than at every request: the two halves have no separate
+        // meaning any more, so keeping them as fields would just invite someone to send one.
+        sdkPlatformVersion = sdkVersion.isEmpty ? sdkPlatform : "\(sdkPlatform)-\(sdkVersion)"
     }
 
     /** Add single key-value targeting */
@@ -86,16 +97,12 @@ class CustomTargetingManager {
         // last so the SDK's own values always win.
         var targeting = request.customTargeting ?? [:]
         targetingMap.forEach { targeting[$0.key] = $0.value }
-        targeting["au_sdk"] = sdkPlatform
-        if !sdkVersion.isEmpty {
-            targeting["au_v"] = sdkVersion
-        }
+        targeting["au_sdk"] = sdkPlatformVersion
         reservedTargetingMap.forEach { targeting[$0.key] = $0.value }
         request.customTargeting = targeting
 
         AULogEvent.logDebug("GAM custom targeting applied:")
-        AULogEvent.logDebug("  au_sdk = \(sdkPlatform)")
-        if !sdkVersion.isEmpty { AULogEvent.logDebug("  au_v   = \(sdkVersion)") }
+        AULogEvent.logDebug("  au_sdk = \(sdkPlatformVersion)")
         reservedTargetingMap.forEach { AULogEvent.logDebug("  \($0.key) = \($0.value) [reserved]") }
         targetingMap.forEach { AULogEvent.logDebug("  \($0.key) = \($0.value)") }
 

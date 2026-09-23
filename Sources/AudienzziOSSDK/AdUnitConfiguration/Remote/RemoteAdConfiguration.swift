@@ -14,6 +14,10 @@ public struct RemoteAdConfiguration: Codable {
         public let refreshTimeSeconds: Int?
         /// Prefetch margin in points. `nil` when absent or null in the remote payload.
         public let prefetchDistancePt: Int?
+        /// Whether the banner defers its auction until it approaches the viewport.
+        /// `nil` when absent or null in the remote payload; the SDK default applies
+        /// (see `AURemoteConfigBannerView.defaultLazyLoad`).
+        public let lazyLoad: Bool?
         /// Reserved height (points) for the sticky ad wrapper. `nil` falls back to the SDK default (600).
         public let stickyMaxHeight: Int?
         /// Y offset (points) from the scroll viewport top where the sticky ad should pin.
@@ -27,6 +31,7 @@ public struct RemoteAdConfiguration: Codable {
             // so callers apply a default via the nil-coalescing operator.
             refreshTimeSeconds = try container.decodeIfPresent(Int.self, forKey: .refreshTimeSeconds)
             prefetchDistancePt = try container.decodeIfPresent(Int.self, forKey: .prefetchDistancePt)
+            lazyLoad = try container.decodeIfPresent(Bool.self, forKey: .lazyLoad)
             stickyMaxHeight = try container.decodeIfPresent(Int.self, forKey: .stickyMaxHeight)
             stickyTopOffset = try container.decodeIfPresent(Int.self, forKey: .stickyTopOffset)
         }

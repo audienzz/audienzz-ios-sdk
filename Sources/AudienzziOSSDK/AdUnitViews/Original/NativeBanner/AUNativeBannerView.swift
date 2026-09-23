@@ -23,19 +23,16 @@ import GoogleMobileAds
  * Lazy load is true by default.
 */
 @objcMembers
-public class AUNativeBannerView: AUAdView {
-    internal var gamRequest: AdManagerRequest?
-    internal var nativeUnit: NativeRequest!
+public class AUNativeBannerView: AUBannerView {
+    internal var nativeUnit: NativeRequest { adUnit as! NativeRequest }
     
     /**
      Initialize native banner view.
      Lazy load is true by default.
      */
     public init(configId: String, configuration: AUNativeRequestParameter) {
-        super.init(configId: configId, isLazyLoad: true)
-        let assetes = configuration.assets?.compactMap { $0.unwrap() }
-        nativeUnit = NativeRequest(configId: configId, assets: assetes)
-        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: nativeUnit)
+        let assets = configuration.assets?.compactMap { $0.unwrap() }
+        super.init(configId: configId, demandUnit: NativeRequest(configId: configId, assets: assets), isLazyLoad: true)
     }
     
     /**
@@ -43,10 +40,8 @@ public class AUNativeBannerView: AUAdView {
      Lazy load is true by default.
      */
     public init(configId: String, configuration: AUNativeRequestParameter, isLazyLoad: Bool) {
-        super.init(configId: configId, isLazyLoad: isLazyLoad)
-        let assetes = configuration.assets?.compactMap { $0.unwrap() }
-        nativeUnit = NativeRequest(configId: configId, assets: assetes)
-        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: nativeUnit)
+        let assets = configuration.assets?.compactMap { $0.unwrap() }
+        super.init(configId: configId, demandUnit: NativeRequest(configId: configId, assets: assets), isLazyLoad: isLazyLoad)
     }
     
     required init?(coder: NSCoder) {
@@ -80,21 +75,6 @@ public class AUNativeBannerView: AUAdView {
 
         nativeUnit.ext = configuration.ext
         
-        addSubview(gamBanner)
-        // Center the GAM banner in this host so a sub-width creative isn't leading-aligned.
-        centeredAdSubview = gamBanner
-        setNeedsLayout()
-
-        let ppid = PPIDManager.shared.getPPID()
-        
-        if let ppid = ppid {
-            gamRequest.publisherProvidedID = ppid
-        }
-        
-        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
-        
-        if !self.isLazyLoad {
-            fetchRequest(gamRequest)
-        }
+        super.createAd(with: gamRequest, gamBanner: gamBanner)
     }
 }

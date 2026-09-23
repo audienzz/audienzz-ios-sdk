@@ -32,6 +32,7 @@ extension AUNativeView {
     }
 
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
+        guard let generation = configuredDemandRefresh?.begin({ [weak self] in self?.fetchRequest(gamRequest) }) else { return }
         switch adType {
         case .origin:
             nativeUnit.fetchDemand(adObject: gamRequest) {
@@ -39,7 +40,7 @@ extension AUNativeView {
                 AULogEvent.logDebug(
                     "Audienz demand fetch for GAM \(resultCode.name())"
                 )
-                guard let self = self else { return }
+                guard let self = self, self.configuredDemandRefresh?.finish(generation) == true else { return }
                 self.onLoadRequest?(gamRequest)
             }
         case .rendering:
@@ -47,7 +48,7 @@ extension AUNativeView {
                 AULogEvent.logDebug(
                     "Audienz demand fetch for GAM \(bidInfo.resultCode.name())"
                 )
-                guard let self = self else { return }
+                guard let self = self, self.configuredDemandRefresh?.finish(generation) == true else { return }
                 self.onNativeLoadRequest?(
                     gamRequest,
                     bidInfo.targetingKeywords ?? [:]

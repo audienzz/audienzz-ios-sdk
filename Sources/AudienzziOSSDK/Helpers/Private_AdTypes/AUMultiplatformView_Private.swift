@@ -31,10 +31,11 @@ extension AUMultiplatformView {
     }
 
     func fetchRequest(_ gamRequest: AnyObject, prebidRequest: PrebidRequest) {
+        guard let generation = configuredDemandRefresh?.begin({ [weak self] in self?.fetchRequest(gamRequest, prebidRequest: prebidRequest) }) else { return }
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest, request: prebidRequest) {
             [weak self] info in
-            guard let self = self else { return }
+            guard let self = self, self.configuredDemandRefresh?.finish(generation) == true else { return }
             self.makeWinnerEvent(
                 AUResulrCodeConverter.convertResultCodeName(info.resultCode)
             )

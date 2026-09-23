@@ -28,6 +28,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         // Override point for customization after application launch.
 
+        // One greppable AUDZ line per slot decision. Capture from the Xcode console or
+        // `xcrun simctl spawn booted log stream --predicate 'eventMessage CONTAINS "AUDZ"'`.
+        // On by default HERE because this app exists to be tested and have its log read back; in
+        // a real app it is off unless you ask for it. Set it BEFORE configuring, so the very
+        // first page impression is in the log.
+        Audienzz.shared.diagnosticsEnabled = true
         // Demo: apply the persisted Smart Refresh v2 toggle (see the switch on the home screen).
         // The local override wins over the backend flag, so this forces the model on/off for the app.
         Audienzz.shared.smartRefreshV2Override = DemoFeatureFlags.smartRefreshV2Enabled
@@ -42,7 +48,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
             Task {
                 try await Audienzz.shared.configureWithRemoteSDK(
-                    enablePPID: true
                 )
 
                 performAdditionalInitialization()
@@ -50,8 +55,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         } else {
             Audienzz.shared.configureSDK(
                 companyId: "companyID",
-                gadMobileAdsVersion: nil,
-                enablePPID: true
+                gadMobileAdsVersion: nil
             )
 
             performAdditionalInitialization()

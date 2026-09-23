@@ -31,6 +31,15 @@ public class AUAdUnitConfiguration: AUAdUnitConfigurationType,
 
     internal var autorefreshEventModel: AutorefreshEventModel
 
+    /// Installed by the owning banner so a publisher changing the interval after `createAd` reaches
+    /// the refresh controller. Without it the interval would only be read once, and
+    /// `AURemoteConfigBannerView` — which applies the backend interval asynchronously, after the
+    /// banner exists — would never take effect.
+    internal var autorefreshIntervalObserver: ((Double) -> Void)?
+
+    /// Installed by the owning banner; `true` means the publisher paused refresh.
+    internal var autorefreshPauseObserver: ((Bool) -> Void)?
+
     init(adUnit: AdUnit) {
         self.adUnit = adUnit
         self.autorefreshEventModel = AutorefreshEventModel(
@@ -76,48 +85,63 @@ extension AUAdUnitConfiguration: AUAdUnitConfigurationSlotProtocol {
 
 //MARK: - AUAdUnitConfigurationAutorefreshProtocol
 extension AUAdUnitConfiguration: AUAdUnitConfigurationAutorefreshProtocol {
+
+    /// Sets the periodic refresh interval, in milliseconds. 0 disables refresh.
+    ///
+    /// The interval is stored by the SDK and never handed to Prebid. Prebid's `Dispatcher` is
+    /// created only by `AdUnit.setAutoRefreshMillis`, so not calling it is what guarantees Prebid
+    /// owns no timer — see ``AURefreshController`` for why two owners could not be reconciled.
     public func setAutoRefreshMillis(time: Double) {
         setAutorefresh(time: time)
     }
 
+    /// Publisher pause. Durable: a viewport or page resume will not undo it, only
+    /// ``resumeAutoRefresh()`` will.
     public func stopAutoRefresh() {
         stop()
     }
 
+    /// Clears the publisher pause. Refresh only actually resumes once nothing else is holding it
+    /// (the banner is on the active page, visible, and the app is in the foreground).
     public func resumeAutoRefresh() {
         resume()
     }
 
     private func setAutorefresh(time: Double) {
-        autorefreshEventModel.autorefreshTime = time
-        autorefreshEventModel.isAutorefresh = true
-        guard let multiplatformAdUnit = prebidAdUnit else {
-            adUnit.setAutoRefreshMillis(time: time)
-            return
-        }
-
-        multiplatformAdUnit.setAutoRefreshMillis(time: time)
+        let resolved = Self.clampInterval(time)
+        autorefreshEventModel.autorefreshTime = resolved
+        autorefreshEventModel.isAutorefresh = resolved > 0
+        // Deliberately NOT forwarded to `adUnit` / `multiplatformAdUnit`. See the doc comment above.
+        autorefreshIntervalObserver?(resolved)
     }
 
     private func stop() {
         autorefreshEventModel.isAutorefresh = false
-        guard let multiplatformAdUnit = prebidAdUnit else {
-            adUnit.stopAutoRefresh()
-            return
-        }
-
-        multiplatformAdUnit.stopAutoRefresh()
+        autorefreshPauseObserver?(true)
     }
 
     private func resume() {
-        autorefreshEventModel.isAutorefresh = true
-        guard let multiplatformAdUnit = prebidAdUnit else {
-            adUnit.resumeAutoRefresh()
-            return
-        }
-
-        multiplatformAdUnit.resumeAutoRefresh()
+        autorefreshEventModel.isAutorefresh = autorefreshEventModel.autorefreshTime > 0
+        autorefreshPauseObserver?(false)
     }
+
+    /// 0 (or less) disables refresh. Anything positive is raised to the floor the original Prebid
+    /// API enforced (`AdUnit.PB_MIN_RefreshTime`, 30 000 ms): below it Prebid refused to arm a
+    /// timer at all, so a smaller value never produced a periodic refresh and silently accepting
+    /// one now would speed a slot up rather than preserve its behaviour.
+    private static func clampInterval(_ millis: Double) -> Double {
+        guard millis > 0 else { return 0 }
+        if millis < minimumRefreshMillis {
+            AULogEvent.logWarn(
+                "[AUAdUnitConfiguration] refresh interval \(millis)ms is below the supported minimum; using \(minimumRefreshMillis)ms"
+            )
+            return minimumRefreshMillis
+        }
+        return millis
+    }
+
+    /// Mirrors Prebid's `AdUnit.PB_MIN_RefreshTime`, which is private to Prebid.
+    internal static let minimumRefreshMillis: Double = 30_000
 }
 
 // MARK: GPID

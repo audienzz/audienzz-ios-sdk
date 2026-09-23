@@ -1,5 +1,109 @@
+> **Upgrade notice:** the remote interstitial's `load()` / `preload()` / `showAtOpportunity()`
+> are **removed**, replaced by `prefetch` / `show` / `prefetchAndShow`. See
+> [Migrating](#migrating-from-load--preload--showatopportunity) and the [CHANGELOG](CHANGELOG.md).
+
 Audienzz iOS SDK
 ========
+
+## Quick integration (remote config + `pageImpression`)
+
+The recommended path: your ad units come from the Audienzz publisher config, and you tell the SDK
+which screen is current. Five steps.
+
+### 1. Install
+
+Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git`.
+CocoaPods: `pod 'AudienzziOSSDK'`.
+
+Add your GAM/AdMob app ID to `Info.plist` under `GADApplicationIdentifier`.
+
+### 2. Initialize once, in `AppDelegate`
+
+```swift
+import AudienzziOSSDK
+import GoogleMobileAds
+
+func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+) -> Bool {
+    AudienzzRemoteConfig.shared.configureRemote(
+        remoteUrl: URL(string: "https://api.adnz.co/api/ws-sdk-config/public/v1/")!,
+        publisherId: "YOUR_PUBLISHER_ID"   // provided by Audienzz
+    )
+
+    Task {
+        try await Audienzz.shared.configureWithRemoteSDK()
+        MobileAds.shared.start()
+        AudienzzGAMUtils.shared.initializeGAM()
+    }
+    return true
+}
+```
+
+**In the `AppDelegate`, not in a view controller.** An SDK initialized by whichever screen happens
+to open first is not initialized at all when the reader starts somewhere else, and every ad on that
+launch stays empty.
+
+Run your CMP **before** this and forward the result through `AUTargeting.shared` — see
+[Consent](#consent). Initializing first requests ads without the consent signals.
+
+### 3. Report every screen
+
+```swift
+override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    Audienzz.shared.pageImpression(self)
+}
+```
+
+This is the one thing the SDK cannot do for you, and everything else follows from it: it groups a
+visit's ad events, and it is what releases the *previous* screen's banners.
+
+**Report ad-free screens too.** A settings page with no ads still has to be reported — skipping it
+leaves the previous screen's banners auctioning for a screen nobody is looking at.
+
+### 4. Place a banner
+
+Keep the banner as a **property** of the view controller; `load(in:)` mounts its inner ad in the
+container but does not retain the owner.
+
+```swift
+private let banner = AURemoteConfigBannerView(adConfigId: "YOUR_CONFIG_ID")
+
+override func viewDidLoad() {
+    super.viewDidLoad()
+    banner.load(in: bannerContainer, rootViewController: self)
+}
+```
+
+### 5. Show an interstitial
+
+Three verbs, and the distinction between them is deliberate:
+
+```swift
+let interstitial = AURemoteConfigInterstitial(adConfigId: "YOUR_CONFIG_ID")
+interstitial.presentationViewController = self
+
+// Obtain and retain one ad. Never presents.
+interstitial.prefetch { result in /* .success means ready, nothing is on screen */ }
+
+// Present what is in hand, at a moment you chose. Returns false if nothing is ready —
+// it does NOT present later, when the reader has moved on.
+interstitial.show(from: self)
+
+// The one call that presents something you did not explicitly time.
+interstitial.prefetchAndShow(from: self) { _ in }
+```
+
+### That's it
+
+You do not have to wait for initialization before creating ads. An auction that would start before
+Prebid is ready is deferred and taken as soon as it is ready — so a banner built during launch fills
+normally rather than losing its one request.
+
+---
+
 ## Overview
 
 A mobile advertising SDK that combines header bidding capabilities from Prebid Mobile with Google's advertising ecosystem through a unified interface.
@@ -7,7 +111,7 @@ The implementation includes lazy loading functionality to optimize application p
 
 > ### ⚠️ Important
 >
-> - **Screen tracking is automatic.** The SDK tracks screens for you (navigation pushes, tab changes, presented controllers) — no per-screen code. It powers analytics page impressions and screen-aware Smart Refresh. Opt out with `Audienzz.shared.autoScreenTracking = false`, or report screens it can't see (e.g. SwiftUI) with `onScreenResumed("routeKey")`. See [Screen tracking](#step-2--screen-tracking-automatic).
+> - **You report every screen.** Call `Audienzz.shared.pageImpression(...)` on every screen, sheet or popup that can show an ad — including ad-free destinations, because reporting those is what releases the previous screen's banners. There is no automatic tracking: it was removed so that every platform behaves the same way, and so that a screen the SDK cannot see (SwiftUI, a custom router) is not a special case. See [Screen reporting](#step-2--screen-reporting).
 > - **Smart Refresh v2 is opt-in.** The screen-aware refresh model (directional viewport gate + pause/reload on screen navigation) is **off by default** — the classic viewport-aware refresh runs unless you enable it via the backend `smartRefreshV2` flag or `Audienzz.shared.smartRefreshV2Override = true`. See [Smart Refresh](#smart-refresh).
 
 ## How screens & ads work (read this first)
@@ -16,19 +120,21 @@ The SDK is **screen-aware**: it knows which screen is active and which ads belon
 each ad's lifecycle (page impressions + smart refresh) for you. Understanding this model is the key
 to integrating correctly.
 
-- **A screen** is a `UIViewController` — navigation pushes, tab changes, and presented controllers
-  are tracked **automatically** (see [Screen tracking](#step-2--screen-tracking-automatic)); you
-  write no per-screen code. Opt out with `Audienzz.shared.autoScreenTracking = false`.
+- **A screen** is whatever you report: a `UIViewController`, a SwiftUI destination, a sheet. You
+  tell the SDK when one becomes current with `Audienzz.shared.pageImpression(...)` — see
+  [Screen reporting](#step-2--screen-reporting).
 - **An ad belongs to the screen it is placed in.** Each banner resolves its host view controller by
   walking the responder chain, and screens are matched by **object identity**, so two tabs, or two
   instances of the same screen class, are distinct. The host is pinned once resolved, so the
-  association never drifts.
+  association never drifts. When the responder chain cannot distinguish your screens (SwiftUI, or
+  several screens in one controller), tag each banner with the same key you report:
+  `banner.setScreen("home")`.
 - **Lifecycle:** when a screen becomes active, its banners (re)load; when you leave it, they pause;
   returning reloads them (with Smart Refresh v2). This stops off-screen slots from auctioning and
   gives each visit a fresh, viewable ad.
-- **Screens the SDK can't infer** (SwiftUI, a custom navigation model) — report them by route key:
-  `Audienzz.shared.onScreenResumed("home")`, and (for screen-aware reload) tag each banner on that
-  screen with the same key via `banner.setScreen("home")`. See [Screen tracking](#step-2--screen-tracking-automatic).
+- **Report ad-free destinations too.** A settings screen with no ads still has to be reported —
+  that report is what releases the banners of the screen the reader just left. Skipping it leaves
+  them auctioning for a screen nobody is looking at.
 
 ## Underlying Technologies
 
@@ -157,7 +263,15 @@ The correct prefetch mechanism depends on the scroll container your ad lives in:
 
 **Why they differ:** In a plain `UIScrollView` all views are laid out in the hierarchy upfront. The SDK observes `contentOffset` via KVO and can detect "this view is now within N pt of the visible area" at exactly the right scroll position.
 
-In a `UITableView` or `UICollectionView`, cells are created and laid out on-demand — just before they scroll into view. By the time `createAd()` is called from `cellForRow(at:)`, the cell is already within ~a row height of the viewport regardless of `prefetchMarginPoints`.
+In a `UITableView` or `UICollectionView`, cells are created and laid out on-demand — just before they scroll into view. By the time `createAd()` is called from `cellForRow(at:)`, the cell is already within ~a row height of the viewport.
+
+**More precisely, the margin saturates rather than stops working.** Raising it above the dequeue distance changes nothing — the lead time is capped by when UIKit creates the cell, so 200, 600 and 2000 pt behave identically. Lowering it still works: `prefetchMarginPoints = 0` inside a cell does exactly what it says, and suppresses auctions for cells the reader dequeues but never scrolls to.
+
+Lazy and eager loading **converge** in a cell, but they are not equivalent. They coincide only when the container dequeues the cell inside the margin *and* the ad is eligible at that moment. They diverge when:
+
+- the margin is `0` or smaller than the dequeue distance — lazy then waits and eager does not;
+- the table or collection view is configured to prefetch further ahead, which can put a dequeued cell outside the margin;
+- the slot is not yet eligible when the cell appears — lazy re-evaluates, eager has already requested.
 
 By default, lazy loading starts **200 pt before** the view enters the viewport. You can customise this with `prefetchMarginPoints`:
 
@@ -181,7 +295,7 @@ bannerView.prefetchMarginPoints = 0
 
 #### UITableView / UICollectionView cells
 
-Use `isLazyLoad = false` to load immediately when the cell is created, and control how many cells ahead are pre-created with the table/collection prefetch APIs:
+To start the auction earlier in a cell, the main lever is making the cell exist earlier — the table/collection prefetch APIs. `isLazyLoad = false` additionally removes the viewport condition entirely, which matters when the cell is dequeued outside the margin or is not yet eligible:
 
 ```swift
 // In cellForRow(at:) — load immediately on cell creation
@@ -189,12 +303,41 @@ let bannerView = AUBannerView(
     configId: PREBID_CONFIG_ID,
     adSize: CGSize(width: 320, height: 50),
     adFormats: [.banner],
-    isLazyLoad: false  // Load immediately — prefetchMarginPoints has no effect in cells
+    isLazyLoad: false  // Load on cell creation — same timing as a saturated prefetch margin
 )
 
 // UICollectionView: enable prefetching so cells are created further ahead of the viewport
 collectionView.isPrefetchingEnabled = true
 ```
+
+#### React Native and other cross-platform hosts
+
+The saturation above applies to **native** `UITableView`/`UICollectionView` only. React Native's `FlatList` is JS-level windowing over a plain `RCTScrollView` — not a `UITableView` or `UICollectionView` — so the ad view is mounted well ahead of the viewport and the distance-based margin applies normally. There, `prefetchMarginPoints` is the effective lever, and the 200 pt default is usually what binds.
+
+If raising it does not move the auction earlier, the ad component is not mounting early enough: raise the list's `windowSize` / `initialNumToRender` rather than the margin. Saturation does return if the list recycles native views (e.g. FlashList) or if `removeClippedSubviews` is enabled on iOS, where it is off by default.
+
+#### Remote-config banners
+
+`AURemoteConfigBannerView` resolves both delivery settings **publisher override → ad config → SDK default**:
+
+| Setting | Publisher override | Ad config field | Default |
+|---|---|---|---|
+| Lazy loading | `setLazyLoadOverride(_:)` | `lazyLoad` | `true` — the auction waits for the viewport |
+| Prefetch margin | `setPrefetchMarginPointsOverride(_:)` | `prefetchDistancePt` | `200` pt |
+
+```swift
+// A view-controller property, retained for the whole time the slot is used:
+private let banner = AURemoteConfigBannerView(adConfigId: "118")
+
+// Configure before calling load(in:rootViewController:):
+banner.lazyLoadOverride = true              // defer the auction to the viewport
+banner.prefetchMarginPointsOverride = 600   // …starting 600 pt ahead
+banner.load(in: container, rootViewController: self)
+```
+
+Set them **before** `load(...)`; the values are read when the banner is built. Changing one and loading again replaces the banner rather than coalescing, so the change takes effect. `clearLazyLoadOverride()` / `clearPrefetchMarginPointsOverride()` hand control back to the ad config.
+
+> **Default is lazy.** A remote-config banner waits until the slot comes within the prefetch margin. This is deliberate: a publisher who builds several below-fold placements on entering an article would otherwise buy fills the reader may never approach, and an unrendered fill cannot become an impression. Set `lazyLoad: false` on the ad config, or `lazyLoadOverride = false`, for slots that are always on screen.
 
 ## Smart Refresh
 
@@ -224,11 +367,11 @@ Smart Refresh v2 refines the model in two ways. It is **off by default**; when d
 
 **1. Directional visibility gate.** A refresh runs only while the ad's **top edge is fully on screen** and **at least 50% of the ad is visible**. It pauses the moment the top scrolls off (even 1px) or more than half the ad drops below the fold — a stricter, less "wasteful" rule than a plain visible-percentage threshold. The **initial load is unaffected** (the ad still loads as early as possible via lazy/prefetch).
 
-**2. Screen-aware pause & reload.** Refresh is matched to the screen (view controller) the ad lives on. When you open a new screen, the previous screen's banners **pause**; when you navigate back — a new page impression — that screen's banners **reload** with a fresh ad. This is driven by [automatic screen tracking](#step-2--screen-tracking-automatic), so no per-screen or per-ad wiring is needed.
+**2. Screen-aware pause & reload.** Refresh is matched to the screen (view controller) the ad lives on. When you open a new screen, the previous screen's banners **pause**; when you navigate back — a new page impression — that screen's banners **reload** with a fresh ad. This is driven by your `pageImpression(...)` calls, so no per-ad wiring is needed.
 
 The scroll-off/scroll-back timer is unchanged (stale-aware, respecting your refresh interval); only **screen navigation** forces an immediate reload.
 
-Optionally, set `Audienzz.shared.blankOnScreenReload = true` to briefly blank the slot (keeping its size, so no layout shift) during a screen-change reload — a clear visual cue that the ad refreshed. Default is off.
+Optionally, set `Audienzz.shared.blankOnScreenReload = true` to clear the slot (keeping its size, so no layout shift) while a screen-change reload is in progress. The slot is blanked as soon as the page is left, so returning to it never shows the previous screen's creative — you see an empty slot until the fresh ad renders, rather than the old ad followed by a blank. If no replacement auction can start, the previous creative is left in place rather than leaving the slot empty with nothing on the way. Default is off.
 
 Enable it per publisher from the backend remote config (`smartRefreshV2: true` on the publisher config), or locally in the app (the local override wins):
 
@@ -249,7 +392,7 @@ viewability tracking yourself. The only integration step is one call per ad-bear
 
 | Event | When it fires |
 |---|---|
-| `pageImpression` | A screen showing ads appears/resumes (you trigger this via `onScreenResumed`) |
+| `pageImpression` | A screen showing ads appears/resumes (you trigger this via `pageImpression`) |
 | `bidRequest` | A Prebid bid request is sent for a slot (also on each auto-refresh) |
 | `bidResponse` | Prebid returns a result |
 | `bidWon` | A Prebid bid wins — carries `cpm`, `currency`, `creative_id`, `auction_id`, `ad_id`, `bidder_code` |
@@ -266,55 +409,60 @@ Banner, interstitial and rewarded ads on the Original API are all covered.
 Analytics is keyed on your **Company ID** (provided by Audienzz), supplied when you initialize the
 SDK. Nothing is reported until initialization succeeds. See [Initialize SDK](#initialize-sdk).
 
-### Step 2 — Screen tracking (automatic)
+### Step 2 — Screen reporting
 
-**You don't need to write any per-screen code.** Once the SDK is configured it observes view-
-controller appearance and fires a `pageImpression` (with a fresh page-impression id that tags all ad
-events on that visit). Navigation pushes/pops, tab changes, and presented controllers are each
-tracked as distinct screens, and container controllers (navigation/tab/split/page) and alerts are
-filtered out. This same signal drives screen-aware
+**You report every screen.** Call `pageImpression` when a screen becomes current. Each call fires a
+`pageImpression` analytics event with a fresh page-impression id that tags every ad event of that
+visit, and it is the same signal that drives screen-aware
 [Smart Refresh v2](#smart-refresh-v2-screen-aware--opt-in): entering a screen reloads its banners,
 leaving pauses them.
 
-That's it — no `viewWillAppear`/`viewDidAppear` wiring.
-
-**Opt out / manual control.** Set `Audienzz.shared.autoScreenTracking = false` **before** you call
-`configureSDK`/`configureWithRemoteSDK` to disable it and drive screens yourself:
-
 ```swift
-Audienzz.shared.autoScreenTracking = false
-// then, in each ad-bearing controller:
+// A view controller — the analytics name is derived from it unless you give one.
 override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    Audienzz.shared.onScreenResumed(self)
+    Audienzz.shared.pageImpression(self)
 }
+
+// A screen with no controller to point at (a SwiftUI destination, a custom router).
+Audienzz.shared.pageImpression("home")
+
+// A controller, but your own analytics name for it.
+Audienzz.shared.pageImpression(self, name: "article/detail")
 ```
 
-**Screens auto-tracking can't see** (SwiftUI destinations, or a custom navigation model) are reported
-by an opaque route key — this works whether or not auto-tracking is on:
+**Call it for ad-free destinations too.** A settings screen that carries no ads still ends the
+previous screen's visit; without that report the banners you just navigated away from keep
+auctioning.
 
-```swift
-Audienzz.shared.onScreenResumed("home")   // route id / name as the screen identity
-```
+**There is no automatic screen tracking.** The `viewDidAppear` observer that used to do this was
+removed: it could not see SwiftUI destinations or custom routers, so those were a separate
+integration anyway, and having two mechanisms meant a screen could be counted twice or not at all.
+Every platform now behaves identically — the app always reports.
 
-For analytics that's all you need. To also get **screen-aware Smart Refresh** (pause/reload on
-navigation) for a banner on such a screen, tag the banner with the same key so the SDK knows which
-screen it belongs to — otherwise it resolves to the host view controller and won't match a route key:
+> **Migrating.** `Audienzz.shared.onScreenResumed(...)` is now `pageImpression(...)` with the same
+> arguments, and `Audienzz.shared.autoScreenTracking` is removed. If you relied on automatic
+> tracking, add a `pageImpression` call to each screen; nothing reports itself any more.
+
+For analytics a report is all you need. To also get **screen-aware Smart Refresh** (pause/reload on
+navigation) for a banner on a screen the responder chain cannot identify, tag the banner with the
+same key you report — otherwise it resolves to the host view controller and won't match a route key:
 
 ```swift
 let banner = AUBannerView(configId: "…", adSize: …, adFormats: [.banner])
 banner.setScreen("home")                  // AURemoteConfigBannerView.setScreen("home") likewise
 // …on that screen's appearance:
-Audienzz.shared.onScreenResumed("home")   // reloads banners tagged "home"; pauses the rest
+Audienzz.shared.pageImpression("home")    // reloads banners tagged "home"; pauses the rest
 ```
 
-The key is matched **by value**, so the string reported to `onScreenResumed` and the one passed to
+The key is matched **by value**, so the string reported to `pageImpression` and the one passed to
 `setScreen` just have to be equal.
 
 Notes:
-- While auto-tracking is on, manual `onScreenResumed(_ viewController:)` calls are **ignored** (auto
-  already covers them) to avoid double-counting; the string-key overload is always applied.
-- `setScreen` isn't needed for `UIViewController`-hosted banners (those are matched automatically).
+- A sheet or popover that covers a screen is a screen: report it, and report the screen underneath
+  again when it is dismissed.
+- `setScreen` isn't needed for `UIViewController`-hosted banners (those are matched by the responder
+  chain), only where several screens share one controller.
 - There is **no `onPause`/teardown counterpart**. If no screen is ever reported, ad events still send
   with a fallback page-impression id; they just aren't tied to a named screen.
 
@@ -362,7 +510,7 @@ Ad view used for displaying banner and video ads.
 | `bannerParameters` | `AUBannerParameters?`       | Banner ad parameters (optional).                 |
 | `adUnitConfiguration` | `AUAdUnitConfigurationType!`| Ad unit configuration object.                 |
 | `onLoadRequest`    | `((AnyObject) -> Void)?`    | Callback triggered when a GAM request is ready.  |
-| `prefetchMarginPoints` | `CGFloat`              | Distance in points before the view enters the viewport that starts the Prebid demand fetch. Only effective when `isLazyLoad = true`. **Default:** `200`. No effect inside `UITableView`/`UICollectionView` cells — use `isLazyLoad = false` there. |
+| `prefetchMarginPoints` | `CGFloat`              | Distance in points before the view enters the viewport that starts the Prebid demand fetch. Only effective when `isLazyLoad = true`. **Default:** `200`. Inside `UITableView`/`UICollectionView` cells the margin saturates — raising it has no effect, lowering it (e.g. `0`) still does. See [Prefetch Margin](#prefetch-margin). |
 | `smartRefresh`     | `Bool`                      | When `true`, pauses auto-refresh while the ad is off-screen and force-refreshes when it returns to viewport if the refresh interval has elapsed. **Default:** `false`. |
 
 **Constructors:**
@@ -493,7 +641,7 @@ This object contains methods to initialize the SDK and configure global settings
 
 | Name                                | Parameters                                                                                               | Description                                  |
 |-------------------------------------|----------------------------------------------------------------------------------------------------------|----------------------------------------------|
-| `configureSDK`                     | `companyId: String`, `gadMobileAdsVersion: String? = nil`, `enablePPID: Bool = false` , | Initializes the SDK. When `enablePPID` is `true` - SDK will automatically generate unique identifier, store it in UserDefaults and add it to all Google Ad Manager requests as a Publisher Provided identifier. On additional methods to work with PPID look at [PPIDManager](#ppidmanager) |
+| `configureSDK`                     | `companyId: String`, `gadMobileAdsVersion: String? = nil` | Initializes the SDK. A Publisher Provided Identifier is generated, persisted and attached to every Google Ad Manager request automatically — see [PPIDManager](#ppidmanager) to supply your own instead. |
 `setSchainObject` | `schain: String` | Method used to set Schain object for all ad requests. For example on usage refer to [AppDelegate](Examples/DemoSwiftApp/DemoSwiftApp/AppDelegate.swift)|
 ### `AUTargeting`
 
@@ -548,9 +696,17 @@ This object is used to set targeting parameters for ad requests.
 
 | Name                                | Parameters                                       | Description                                    |
 |-------------------------------------|--------------------------------------------------|------------------------------------------------|
-| `getAutomaticPpidEnabled`                    | | Used to get current status of automatic PPID usage (if true - PPID is generated and used with all requests, if false - PPID is not used)                           |
-| `setAutomaticPpidEnabled`                   | `_ enabled: Bool`                        | Used to enable or disable automatic PPID usage                  |
-| `getPPID`                 | | Used to obtain current PPID if automaticPpid is enabled |
+| `setPublisherPPID`                          | `_ ppid: String?`                        | Supply your own PPID (e.g. a hashed e-mail). Takes precedence over the SDK-generated one; pass `nil` to clear and fall back to it. |
+| `getPPID`                                   |                                          | The PPID currently being sent: your PPID if set, otherwise the SDK-generated UUID. `nil` only when consent is missing. |
+
+A PPID is **always** sent with ad requests — the SDK generates one (a UUID,
+persisted locally and rotated every 12 months) whenever you haven't supplied
+your own. There is no enable/disable switch in the SDK: a missing PPID costs
+frequency capping and cross-session targeting. One backend switch suppresses it:
+
+| Publisher config field | Effect when `false` | Absent |
+|---|---|---|
+| `ppidEnabled` | No PPID is sent at all, including one you supplied | Enabled |
 
 
 ### Targeting & Advanced Configuration
@@ -771,8 +927,7 @@ func application(_ application: UIApplication, didFinishLaunchingWithOptions lau
     Task {
         // 2. Initialize SDK with remote configuration
         try await Audienzz.shared.configureWithRemoteSDK(
-            gadMobileAdsVersion: GADGetStringFromVersionNumber(GADMobileAds.sharedInstance().versionNumber),
-            enablePPID: false
+            gadMobileAdsVersion: GADGetStringFromVersionNumber(GADMobileAds.sharedInstance().versionNumber)
         )
         
         // 3. Start Google Mobile Ads
@@ -787,54 +942,101 @@ func application(_ application: UIApplication, didFinishLaunchingWithOptions lau
 ### Banner Ad (Remote Config)
 
 Use `AURemoteConfigBannerView` to load a banner defined by a remote configuration ID.
+Keep the remote banner as a **view-controller property**. `load(in:)` mounts its inner ad in the
+container; it does not retain the remote owner. A temporary local owner is released before the
+asynchronous Google load can run.
 
 ```swift
-// 1. Initialize the view with the configuration ID
-let bannerView = AURemoteConfigBannerView(adConfigId: "YOUR_CONFIG_ID")
+final class ArticleViewController: UIViewController {
+    // Connect this outlet to the container in your storyboard/layout.
+    @IBOutlet private weak var adContainerView: UIView!
+    private let banner = AURemoteConfigBannerView(adConfigId: "YOUR_CONFIG_ID")
 
-// 2. Load the ad into a container view
-// The SDK handles fetching configuration, setting up Prebid/GAM, and rendering.
-bannerView.load(in: adContainerView, rootViewController: self)
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        Audienzz.shared.pageImpression(self) // before creating/loading this page's ads
+        banner.load(in: adContainerView, rootViewController: self)
+    }
+
+    deinit {
+        banner.destroy()
+    }
+}
 ```
 
+Identical `load` calls reuse the existing banner; `pageImpression` owns reactivation on return.
+The SDK updates the container height when the creative size changes, so do not add a new height
+constraint from each `bannerViewDidReceiveAd` callback. Report the new page on every destination,
+including screens without ads, so banners from the previous page are released.
+
 **Fixed Size Banner:**
-To enforce a specific size for a fixed banner (e.g., 320x50), pass the desired size to the `load` method. This will override any adaptive settings from the remote configuration:
+For a configuration without adaptive sizing, pass the desired fixed size (e.g., 320x50) to `load`:
 
 ```swift
-bannerView.load(in: adContainerView, size: CGSize(width: 320, height: 50), rootViewController: self)
+banner.load(in: adContainerView, size: CGSize(width: 320, height: 50), rootViewController: self)
 ```
 
 **Adaptive Banner:**
 If the remote configuration has adaptive banners enabled, simply omit the `size` parameter. The SDK will automatically calculate the optimal banner height based on the container view's width and the adaptive strategy defined in the backend configuration (e.g., `fullWidth` or `customWidth`):
 
 ```swift
-bannerView.load(in: adContainerView, rootViewController: self)
+banner.load(in: adContainerView, rootViewController: self)
 ```
 
 ### Interstitial Ad (Remote Config)
 
 Use `AURemoteConfigInterstitial` to load an interstitial defined by a remote configuration ID.
 
+Three verbs, and the verb decides whether anything is presented:
+
+| Method | What it does |
+| --- | --- |
+| `prefetch(completion:)` | Obtains and retains one ad. Never presents. |
+| `show(from:eligible:)` | Presents ready inventory at this opportunity, or reports why it could not. Never schedules a presentation for later. |
+| `prefetchAndShow(from:completion:)` | Presents when the load completes, or presents inventory already in hand. |
+
 ```swift
-// 1. Initialize with the configuration ID
+// Retain one owner per placement outside transient page views.
 let interstitial = AURemoteConfigInterstitial(adConfigId: "YOUR_CONFIG_ID")
-
-// 2. Set the delegate (optional, for lifecycle events)
 interstitial.delegate = self
+interstitial.onPresentationError = { print("Presentation failed: \($0)") }
+interstitial.prefetch { result in
+    // Update readiness/error UI here; this callback can never present anything.
+    if case .failure(let error) = result { print(error) }
+}
 
-// 3. Load the ad
-interstitial.load { [weak self] result in
-    switch result {
-    case .success:
-        // 4. Show the ad when ready
-        if let self = self {
-            interstitial.show(from: self)
-        }
-    case .failure(let error):
-        print("Failed to load interstitial: \(error)")
-    }
+// At a later eligible transition, after evaluating the publisher's frequency cap:
+let submitted = interstitial.show(from: self, eligible: publisherAllowsAd)
+// false: this opportunity was skipped — nothing is replayed when loading finishes.
+// true: submitted to Google; delegate/error callbacks report the outcome.
+```
+
+If you want the ad shown as soon as it arrives, ask for that by name:
+
+```swift
+interstitial.prefetchAndShow(from: self) { result in
+    if case .failure(let error) = result { print(error) }
 }
 ```
+
+### Migrating from `load` / `preload` / `showAtOpportunity`
+
+`load(completion:)` is **removed**. It meant "prepare inventory" in one release and "prepare and
+then present" in the next, so a method call no longer tells you whether the reader will be
+interrupted. Map by what your code actually relied on:
+
+| Before | Now |
+| --- | --- |
+| `load { … }` used only to prepare inventory | `prefetch { … }`, then `show(from:)` at your opportunity |
+| `load { … }` relied on for immediate display | `prefetchAndShow(from:) { … }` |
+| `automaticallyShowOnLoad = false` + `load { … }` | `prefetch { … }` |
+| `preload { … }` | `prefetch { … }` |
+| `showAtOpportunity(from:eligible:)` | `show(from:eligible:)` |
+| `show(from:)` | `show(from:)` — same call; it now reports a skipped opportunity instead of presenting blindly |
+
+`automaticallyShowOnLoad` is removed with it: the behaviour it selected is now the difference
+between two method names. Objective-C callers use `prefetchWithCompletion:` and
+`prefetchAndShowWithCompletionFrom:completion:`.
 
 ## Sticky Ads
 
@@ -1014,3 +1216,59 @@ Use this checklist to verify your integration:
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+
+
+## Refresh ownership and custom load completion
+
+Original GAM display and native banners (`AUBannerView` and `AUNativeBannerView`) use an Audienzz-owned refresh controller. Prebid receives no refresh interval. Configure the GAM ad unit with its own refresh rate unset so it does not run a second schedule.
+
+The refresh interval starts when Google finishes loading, including a no-fill response. Only a transient Google load failure triggers bounded retries. A Prebid timeout still proceeds to Google and does not retry a successfully filled Google slot. There is one Google load outstanding per banner view: after a page transition, its stale terminal callback is discarded before the replacement begins. This can defer a page replacement until the old Google load finishes.
+
+Set the Google delegate before `createAd`. Passing an `AdManagerBannerView` installs the SDK's delegate wrapper automatically; `AUBannerEventHandler` can identify a Google banner inside a custom container. If the SDK cannot observe your custom ad-server view, report its terminal callback exactly once:
+
+```swift
+banner.notifyAdLoadCompleted(rendered: true)  // a creative is on screen
+banner.notifyAdLoadCompleted()               // no-fill, or a permanent configuration failure
+banner.notifyAdLoadCompleted(retryableFailure: true) // transient ad-server failure
+```
+
+`rendered` says whether a creative is actually on screen, and only a rendered one takes over the
+slot's identity in the delivery trace — a no-fill ends the request without replacing what the user
+is still looking at. Do not report these manually for a GAM banner already observed by the SDK. `stopAutoRefresh()` is a durable publisher block; only `resumeAutoRefresh()` clears it. Page, foreground, attachment and visibility blocks are independent, and visibility itself is two separate reasons: what the SDK measures from the view hierarchy, and what a host that does its own detection reports through `pauseSmartRefresh()` / `resumeSmartRefresh()`. Only the host can clear its own — the SDK cannot see a Flutter or React Native overlay drawn above the platform view, so nothing it measures is allowed to override that pause. First loads retain prefetch behavior; periodic refresh requires attachment and the configured visibility gate. Deferred first loads/page replacements recover when their applicable blocks clear.
+
+The shared configuration's other consumers (custom native, multiformat, instream, interstitial and rewarded APIs) retain their configurable **demand** cadence through `AUConfiguredDemandRefresh`, without a Prebid timer. Their cadence ends at the demand handoff, not at a publisher-owned renderer's completion; they do not infer fast retries from Prebid results. Their page ownership is captured when the configured view is created, so report `pageImpression` first. This distinction does not change Prebid Rendering banner APIs, which remain a separate integration surface.
+
+
+### Remote interstitial presentation behavior
+
+Set `presentationViewController` and `delegate` before prefetching. A `prefetch` completion reports
+loading only and can never present; `onPresentationError` reports preflight and Google presentation
+errors, and — because it has no return value to inspect — the guards that cancel a
+`prefetchAndShow`. `onLifecycleEvent` exposes correlated Google load/show milestones for publisher
+analytics, including `opportunitySkipped` with a `reason`.
+
+Repeated prefetches for one owner coalesce onto the request in flight and reuse valid ready
+inventory, so a second call costs nothing. Repeated presentation calls cannot show twice or start a
+parallel request. Supply the publisher's current frequency-cap decision as `eligible`; an unready,
+inactive, ineligible or concurrent presentation skips that opportunity **without scheduling a
+future show** — that is what `prefetchAndShow` is for, and it has to be asked for by name. Keep one
+owner per logical placement. `show` returns whether presentation was submitted; delegate/error
+callbacks report its outcome. Call UIKit-facing APIs on the main thread. The presentation exclusion
+covers SDK remote interstitial owners; publishers must also account for other fullscreen content.
+
+A ready or presenting ad is never replaced by another load. An ad expires after one hour, and no
+presentation is replayed later if the app was inactive when loading finished. `destroy()` cancels
+pending loads; destruction during a presentation is deferred until dismissal/failure.
+
+Remote interstitial requests carry the same global GAM targeting as the other original API paths
+(`AUTargeting.shared.addGlobalTargeting`), alongside the PPID.
+
+Fullscreen `AUInterstitialView` and `AURewardedView` demand is one-shot and independent of page,
+attachment, viewport and banner refresh. Their shared configuration cannot turn on a periodic
+fullscreen timer. A page report never replaces their prefetched inventory.
+
+### Automatic request counters
+
+Original and remote banners/interstitials automatically include `au_page_seq`, `au_slot` and
+`au_refresh` in GAM custom targeting. See [the request targeting contract](docs/ad-request-targeting.md)
+for page resets, automatic slot ordering and request-count semantics. No new publisher parameter is required.

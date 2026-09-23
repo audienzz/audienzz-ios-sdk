@@ -22,13 +22,63 @@ typealias PrebidAdFormat = PrebidMobile.AdFormat
 
 @objcMembers
 public class AUAdView: VisibleView {
+    /// SDK-owned logical slot identity; adapters retain it across native replacements.
+    public lazy var requestContext = AUAdRequestContext()
+
     var isLazyLoaded: Bool = false
     private(set) var isLazyLoad: Bool
     private(set) var configId: String
     private(set) var adSize: CGSize
     
-    public var adUnitConfiguration: AUAdUnitConfigurationType!
+    public var adUnitConfiguration: AUAdUnitConfigurationType! {
+        didSet {
+            configuredDemandRefresh?.destroy()
+            // GAM banners install their own full load lifecycle. Other configurable ad formats
+            // preserve their demand cadence through this SDK-owned controller.
+            configuredDemandRefresh = nil
+            if !(self is AUBannerView), !(self is AUInterstitialView), !(self is AURewardedView), let configuration = adUnitConfiguration as? AUAdUnitConfiguration {
+                configuredDemandRefresh = AUConfiguredDemandRefresh(view: self, configuration: configuration)
+            }
+        }
+    }
+    internal var configuredDemandRefresh: AUConfiguredDemandRefresh?
+    internal let fullscreenDemand = AUFullscreenDemand()
+
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        configuredDemandRefresh?.attachmentChanged()
+    }
+
+    public override func removeFromSuperview() {
+        super.removeFromSuperview()
+        configuredDemandRefresh?.destroy()
+        fullscreenDemand.destroy()
+    }
+
+    override func onRefreshBecameEligible() {
+        configuredDemandRefresh?.viewport(visible: true)
+    }
+
+    override func onRefreshBecameIneligible() {
+        configuredDemandRefresh?.viewport(visible: false)
+    }
     public var onLoadRequest: ((AnyObject) -> Void)?
+
+    /// For custom ad-server views whose terminal callbacks the SDK cannot observe automatically.
+    /// Call once after the ad server finishes loading. Original GAM banners are wired
+    /// automatically and must not report through this.
+    ///
+    /// - Parameters:
+    ///   - rendered: whether the ad server returned a creative that is now on screen. A no-fill is
+    ///     `false`: it ends the request, but nothing was rendered, and reporting it as rendered
+    ///     attributed the previous creative's impression to a delivery that never arrived.
+    ///   - retryableFailure: `true` only for a transient ad-server failure. A no-fill and a
+    ///     permanent misconfiguration are both `false` — they end the request and wait out the
+    ///     normal interval rather than retrying.
+    public func notifyAdLoadCompleted(rendered: Bool = false, retryableFailure: Bool = false) {
+        adLoadCompletion?(rendered, retryableFailure)
+    }
+    internal var adLoadCompletion: ((Bool, Bool) -> Void)?
     /// Fired after every ad load with the actual rendered size GAM chose to serve.
     /// Use this to update your container constraints when the served size differs
     /// from the initially declared slot size (e.g. GAM picks a 300×600 direct ad
@@ -107,7 +157,8 @@ public class AUAdView: VisibleView {
     // prefetchMarginPoints is declared and implemented in VisibleView.
     // See VisibleView.prefetchMarginPoints for the full KDoc.
     // Defaults to 200 pt. Set to 0 for exact-visibility loading.
-    // Not effective in UITableView / UICollectionView — use isLazyLoad = false there.
+    // Inside UITableView/UICollectionView cells the margin saturates: raising it above the
+    // dequeue distance has no effect, lowering it (e.g. 0) still does. See the README.
 
     /// Pause auto-refresh when the ad scrolls off-screen and resume when it returns.
     /// Defaults to `false`. When `true`, pairs with the refresh interval to avoid refreshing
@@ -115,14 +166,30 @@ public class AUAdView: VisibleView {
     public var smartRefresh: Bool = false
 
     // MARK: - Smart refresh internals
-    internal var lastRefreshTime: Date?
-    internal var pendingSmartRefreshWorkItem: DispatchWorkItem?
 
-    /// Whether this ad's host screen is the currently-active one (smart-refresh v2 / screen-aware).
-    /// Defaults to `true` so ads on screens that never call `onScreenResumed`, and all ads under the
-    /// legacy model, behave exactly as before. Flipped by `AUScreenAdCoordinator` on screen changes;
-    /// while `false`, the viewport gate must not resume the ad.
+    /// When the last request completed, or nil if none ever has. Read as "has this slot ever
+    /// loaded?" — the refresh *interval* is measured by `AURefreshController` on a monotonic clock,
+    /// not from this wall-clock stamp.
+    internal var lastRefreshTime: Date?
+
+    /// Whether this ad's host screen is the currently-active one. Defaults to `true` so ads in apps
+    /// that never call `pageImpression` behave exactly as before. Flipped by `AUScreenAdCoordinator`
+    /// on page transitions; while `false` the ad is released and the viewport gate must not resume it.
     internal var screenActive: Bool = true
+
+    /// The page epoch this ad was created under (see `AUScreenAdCoordinator.epoch`). A stamp older
+    /// than the coordinator's current epoch means the ad was created before its screen's
+    /// `pageImpression` — an ordering violation the coordinator reports and later repairs on attach.
+    internal var pageEpoch: Int = 0
+
+    /// Incremented whenever this ad's liveness changes (page release). An auction captures it at
+    /// `fetchRequest` and the completion re-checks it, so a response that lands after the user has
+    /// left the screen cannot push a creative into a released slot.
+    internal var auctionGeneration: Int = 0
+
+    /// True once a first request has actually been issued, so re-activation can't double-auction.
+    internal var initialLoadRequested: Bool = false
+
     
     internal func unwrapAdFormat(_ formats: [AUAdFormat]) -> [PrebidAdFormat] {
         formats.compactMap { element in

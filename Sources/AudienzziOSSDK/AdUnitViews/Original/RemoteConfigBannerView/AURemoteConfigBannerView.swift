@@ -15,18 +15,103 @@ import GoogleMobileAds
  */
 @objcMembers
 public class AURemoteConfigBannerView: VisibleView {
+    /// Stable logical placement, shared with replacement native ads.
+    public lazy var requestContext = AUAdRequestContext()
+
     internal var adConfigId: String
 
     public var bannerParameters: AUBannerParameters?
     public var videoParameters: AUVideoParameters?
 
+    // MARK: - Delivery overrides
+    //
+    // Both resolve publisher override -> ad config -> SDK default, the same precedence used by
+    // `Audienzz.shared.smartRefreshV2Override`. They are read when a banner is built, so set them
+    // before `load(...)`; changing one afterwards takes effect on the next load, which is not
+    // coalesced away because both values are part of the load key.
+
+    /// Publisher override for lazy loading. `nil` (default) defers to the ad config's `lazyLoad`,
+    /// which itself falls back to ``defaultLazyLoad``.
+    ///
+    /// `false` auctions as soon as `load(...)` runs, wherever the slot sits. `true` defers the
+    /// auction until the slot comes within ``prefetchMarginPointsOverride`` pt of the viewport.
+    public var lazyLoadOverride: Bool?
+
+    /// Publisher override for the prefetch margin, in points. `nil` (default) defers to the ad
+    /// config's `prefetchDistancePt`, which itself falls back to 200 pt. Only has an effect while
+    /// lazy loading is on.
+    public var prefetchMarginPointsOverride: CGFloat?
+
+    /// Objective-C entry point: a Swift `Bool?` is not representable in Objective-C, so
+    /// ``lazyLoadOverride`` is absent from the generated header.
+    @objc public func setLazyLoadOverride(_ enabled: Bool) {
+        lazyLoadOverride = enabled
+    }
+
+    /// Clears the local override, deferring to the ad config's `lazyLoad` again.
+    @objc public func clearLazyLoadOverride() {
+        lazyLoadOverride = nil
+    }
+
+    /// Objective-C entry point: a Swift `CGFloat?` is not representable in Objective-C, so
+    /// ``prefetchMarginPointsOverride`` is absent from the generated header.
+    @objc public func setPrefetchMarginPointsOverride(_ points: CGFloat) {
+        prefetchMarginPointsOverride = points
+    }
+
+    /// Clears the local override, deferring to the ad config's `prefetchDistancePt` again.
+    @objc public func clearPrefetchMarginPointsOverride() {
+        prefetchMarginPointsOverride = nil
+    }
+
     /// Screen token applied to the underlying `AUBannerView` once it's built (see `setScreen`).
     private var pendingScreenKey: AnyObject?
-    private weak var bannerView: AUBannerView?
+
+    /// Publisher state requested before the inner banner existed.
+    ///
+    /// Remote config arrives asynchronously, so a host can legitimately stop or cover this banner
+    /// while `bannerView` is still nil. Forwarding through an optional silently dropped those
+    /// calls, and the banner built afterwards held neither — so a banner the publisher had stopped
+    /// went on refreshing, and a reported cover was never applied.
+    private var pendingPublisherStop = false
+    private var pendingHostCover = false
+
+    /// Held strongly: this class owns the banner's lifetime.
+    ///
+    /// It used to be `weak`, which meant the only thing keeping a banner alive was the container's
+    /// subview list — so a second `load(in:)` simply added another one. Both stayed registered with
+    /// the page coordinator and both kept their own refresh interval running, doubling the requests
+    /// for a single placement while only the newest was visible.
+    private var bannerView: AUBannerView?
+
+    /// Exactly the constraints this class activated, so retiring a banner cannot deactivate a
+    /// constraint the publisher put on their own container or on its other children.
+    private var ownedConstraints: [NSLayoutConstraint] = []
+
+    /// Identifies what an accepted load was for, so an identical repeat can be coalesced and a
+    /// genuinely different one recognised as an intentional replacement.
+    private struct LoadKey: Equatable {
+        let adConfigId: String
+        let container: ObjectIdentifier
+        let rootViewController: ObjectIdentifier
+        /// The size actually resolved for this load, not the size the caller asked for. Adaptive
+        /// banners derive theirs from the container, so `nil` twice is not the same request twice.
+        let resolvedSize: CGSize
+        /// The resolved delivery settings. A publisher that changes an override and loads again
+        /// means it, so the repeat must not be coalesced into the banner built under the old one.
+        let lazyLoad: Bool
+        let prefetchMarginPoints: CGFloat
+    }
+    private var activeLoadKey: LoadKey?
+
+    /// Bumped by every accepted load and every retirement. Asynchronous callbacks captured by a
+    /// previous banner (`onLoadRequest`, `onAdSizeChanged`) compare against it and stand down, so a
+    /// retired banner can neither drive the current GAM view nor resize the current container.
+    private var loadGeneration: Int = 0
 
     /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
     /// destination, or a custom route). Pass the same token reported to
-    /// `Audienzz.shared.onScreenResumed(token)`; matched by value. Call before or after `load(...)` —
+    /// `Audienzz.shared.pageImpression(token)`; matched by value. Call before or after `load(...)` —
     /// the underlying banner is built asynchronously, so the key is applied when ready.
     public func setScreen(_ screenKey: Any) {
         pendingScreenKey = screenKey as AnyObject
@@ -40,15 +125,33 @@ public class AURemoteConfigBannerView: VisibleView {
         bannerView?.reloadAd()
     }
 
-    /// Pause Prebid smart-refresh on the underlying banner. Forwards to
-    /// `AUBannerView.pauseSmartRefresh()`. No-op until the banner has been built.
+    /// Publisher pause. Durable: nothing else clears it — a scroll back into view or a page
+    /// impression will not resume refresh until `resumeAutoRefresh()` is called.
+    ///
+    /// This used to forward to the viewport pause, so scrolling the banner back on screen silently
+    /// undid it. Use `pauseSmartRefresh()` for a visibility pause; that is what the bridges report.
     @objc public func stopAutoRefresh() {
+        pendingPublisherStop = true
+        bannerView?.adUnitConfiguration.stopAutoRefresh()
+    }
+
+    /// Clears the publisher pause. Refresh only actually resumes once nothing else is holding it
+    /// (the banner is on the active page, visible, and the app is in the foreground).
+    @objc public func resumeAutoRefresh() {
+        pendingPublisherStop = false
+        bannerView?.adUnitConfiguration.resumeAutoRefresh()
+    }
+
+    /// Viewport pause, for view layers that do their own visibility detection (React Native,
+    /// Flutter). Independent of the publisher pause above.
+    @objc public func pauseSmartRefresh() {
+        pendingHostCover = true
         bannerView?.pauseSmartRefresh()
     }
 
-    /// Resume Prebid smart-refresh on the underlying banner previously paused via
-    /// `stopAutoRefresh()`. Forwards to `AUBannerView.resumeSmartRefresh()`.
-    @objc public func resumeAutoRefresh() {
+    /// Viewport resume. Clears only the visibility reason.
+    @objc public func resumeSmartRefresh() {
+        pendingHostCover = false
         bannerView?.resumeSmartRefresh()
     }
 
@@ -64,7 +167,10 @@ public class AURemoteConfigBannerView: VisibleView {
     }
 
     // MARK: - Public API
-    /// High-level entry point for SDK users.
+    /// High-level entry point for SDK users. Retain this owner (for example, as a view-controller
+    /// property) for as long as the ad is used. The container retains the inner banner, not this
+    /// owner; a local variable going out of scope would disable its Google-load and size callbacks.
+    /// Report `pageImpression` before the first load and call `destroy()` when permanently finished.
     @MainActor
     public func load(
         in container: UIView,
@@ -72,7 +178,12 @@ public class AURemoteConfigBannerView: VisibleView {
         rootViewController: UIViewController,
         delegate: GoogleMobileAds.BannerViewDelegate? = nil
     ) {
+        // Resolved before the coalescing decision, because it is what a repeat has to match. A
+        // container that has since been laid out wider produces a different adaptive size, and
+        // treating that as a repeat left the banner pinned to the size it was first built for.
         guard let remoteConfig = AudienzzRemoteConfig.shared.remoteConfig(for: adConfigId) else {
+            // Deliberately before any retirement: a momentarily missing config must not destroy a
+            // banner that is working.
             AULogEvent.logDebug("[AURemoteConfigBannerView] Remote config is nil")
             return
         }
@@ -102,6 +213,33 @@ public class AURemoteConfigBannerView: VisibleView {
             }
         }
 
+        let requestedKey = LoadKey(
+            adConfigId: adConfigId,
+            container: ObjectIdentifier(container),
+            rootViewController: ObjectIdentifier(rootViewController),
+            resolvedSize: gadSize.size,
+            lazyLoad: resolvedLazyLoad(for: remoteConfig),
+            prefetchMarginPoints: resolvedPrefetchMarginPoints(for: remoteConfig)
+        )
+        // An identical repeat is a no-op, not a second banner. React Native re-runs this whenever
+        // any prop changes, and a publisher may call it from a layout pass that fires more than
+        // once; each of those used to leave another live banner behind.
+        //
+        // "Identical" also requires the banner we are holding to still be usable. A publisher that
+        // clears the container's children detaches and destroys ours without telling us, and
+        // coalescing against that corpse left the slot permanently empty.
+        if activeLoadKey == requestedKey, let current = bannerView, current.superview === container,
+           !current.refreshController.isDestroyed {
+            AUAdTrace.log(placement: adConfigId, load: loadGeneration, event: .ownerCoalesced)
+            return
+        }
+        // Anything else is an intentional replacement: retire first, then build.
+        retireCurrentBanner(reason: bannerView == nil ? "first load" : "replaced")
+        activeLoadKey = requestedKey
+        loadGeneration += 1
+        let generation = loadGeneration
+        AUAdTrace.log(placement: adConfigId, load: generation, event: .ownerAccepted)
+
         let gamBanner = AdManagerBannerView(adSize: gadSize)
         gamBanner.rootViewController = rootViewController
         gamBanner.delegate = delegate
@@ -127,23 +265,23 @@ public class AURemoteConfigBannerView: VisibleView {
             configId: remoteConfig.prebidConfig.placementId,
             adSize: sortedSizes.first ?? .zero,
             adFormats: [.banner],
-            isLazyLoad: true
+            isLazyLoad: resolvedLazyLoad(for: remoteConfig)
         )
+        bannerView.requestContext = requestContext
         self.bannerView = bannerView
+        // So the delivery trace reports the ad config the publisher configured, not the Prebid
+        // placement id, and matches the owner lines above.
+        bannerView.tracePlacement = adConfigId
         if let pendingScreenKey { bannerView.hostScreenOverride = pendingScreenKey }
 
-        // M4: route refresh through adUnitConfiguration (not adUnit directly) so
-        // autorefreshEventModel is updated — otherwise the stale-aware smart
-        // refresh logic reads autorefreshTime == 0 and never engages, and
-        // analytics report isAutorefresh = false.
-        // M22: Prebid enforces a 30s floor (values below are silently rejected).
-        // Clamp positive values here so Prebid and the SDK's stale-aware refresh
-        // use the same effective cadence.
+        // Routed through `adUnitConfiguration`, which is what owns the interval: it stores the value
+        // for `AURefreshController` (and for analytics' `autorefresh_time`) and applies the 30s
+        // floor. The banner installs its observer in `createAd`, which has already run by the time
+        // the remote config arrives, so this reaches the controller.
         let configuredRefreshMs = Double((remoteConfig.config.refreshTimeSeconds ?? Self.defaultRefreshSeconds) * 1000)
-        let refreshMs = configuredRefreshMs > 0 ? max(configuredRefreshMs, 30_000) : configuredRefreshMs
-        bannerView.adUnitConfiguration.setAutoRefreshMillis(time: refreshMs)
+        bannerView.adUnitConfiguration.setAutoRefreshMillis(time: configuredRefreshMs)
         bannerView.smartRefresh = true
-        bannerView.prefetchMarginPoints = CGFloat(remoteConfig.config.prefetchDistancePt ?? Self.defaultPrefetchDistancePt)
+        bannerView.prefetchMarginPoints = resolvedPrefetchMarginPoints(for: remoteConfig)
 
         bannerView.addAdditionalSize(sizes: Array(sortedSizes.dropFirst()))
         bannerView.videoParameters = videoParameters
@@ -158,15 +296,30 @@ public class AURemoteConfigBannerView: VisibleView {
             gamView: gamBanner
         )
 
+        // Before createAd: a stop requested while config was resolving must be in place before the
+        // banner can issue its first request.
+        applyPendingPublisherState(to: bannerView)
+
         bannerView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
 
         gamBanner.frame = CGRect(origin: .zero, size: gadSize.size)
 
-        bannerView.onLoadRequest = { gamRequest in
+        bannerView.onLoadRequest = { [weak self] gamRequest in
+            // A retired banner's demand callback must not drive a GAM view that is no longer the
+            // one on screen.
+            guard let self, self.loadGeneration == generation else { return }
             guard let request = gamRequest as? Request else {
                 print("[AURemoteConfigBannerView] Failed to unwrap GAM request")
                 return
             }
+            // The delivery's own identity, not the owner's. Every other google.* line for this
+            // load carries it, and mixing the two made a request impossible to pair with its
+            // completion — the owner's counter was the same on every refresh.
+            AUAdTrace.log(
+                placement: self.adConfigId,
+                delivery: self.bannerView?.pendingDeliveryId,
+                event: .googleRequested
+            )
             gamBanner.load(request)
         }
 
@@ -184,20 +337,23 @@ public class AURemoteConfigBannerView: VisibleView {
         containerWidthConstraint.priority = .defaultLow
         let containerHeightConstraint = container.heightAnchor.constraint(equalToConstant: gadSize.size.height)
 
-        NSLayoutConstraint.activate([
+        let created = [
             bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             bannerView.topAnchor.constraint(equalTo: container.topAnchor),
             bannerWidthConstraint,
             bannerHeightConstraint,
             containerWidthConstraint,
             containerHeightConstraint
-        ])
+        ]
+        NSLayoutConstraint.activate(created)
+        ownedConstraints = created
 
         // When GAM serves an ad at a different size than the initially declared slot
         // (e.g. a 300×600 direct campaign against a 300×250 Prebid bid), update the
         // bannerView and container constraints to match the actual rendered size so
         // the ad is neither clipped nor surrounded by blank space.
-        bannerView.onAdSizeChanged = { [weak container] newSize in
+        bannerView.onAdSizeChanged = { [weak self, weak container] newSize in
+            guard let self, self.loadGeneration == generation else { return }
             bannerWidthConstraint.constant = newSize.width
             bannerHeightConstraint.constant = newSize.height
             containerWidthConstraint.constant = newSize.width
@@ -219,8 +375,69 @@ public class AURemoteConfigBannerView: VisibleView {
         load(in: container, size: size, rootViewController: rootViewController, delegate: delegate)
     }
 
+    /// Releases the banner this view owns. Safe to call more than once, and safe to call when no
+    /// banner was ever built. Leaves every other child of the container untouched.
+    @objc public func destroy() {
+        retireCurrentBanner(reason: "disposed")
+    }
+
     // MARK: - Private
+
+    /// Retires the current banner: stops its refresh, deregisters it from the page coordinator,
+    /// removes only the views and constraints this class created, and invalidates any callback a
+    /// previous load left outstanding.
+    private func retireCurrentBanner(reason: String) {
+        loadGeneration += 1
+        NSLayoutConstraint.deactivate(ownedConstraints)
+        ownedConstraints.removeAll()
+        activeLoadKey = nil
+        guard let banner = bannerView else { return }
+        AUAdTrace.log(placement: adConfigId, load: loadGeneration, event: .ownerRetired, detail: reason)
+        banner.onLoadRequest = nil
+        banner.onAdSizeChanged = nil
+        // destroy() stops the refresh controller and deregisters from the coordinator; the
+        // removal takes only our own subview out of a container we do not own.
+        banner.destroy()
+        banner.removeFromSuperview()
+        bannerView = nil
+    }
+
+    /// Applies whatever the host asked for while the inner banner was still being built.
+    ///
+    /// The stop goes on first, before `createAd` can request: installing it afterwards would let an
+    /// eager banner issue one request the publisher had already stopped.
+    private func applyPendingPublisherState(to banner: AUBannerView) {
+        if pendingPublisherStop {
+            banner.adUnitConfiguration.stopAutoRefresh()
+        }
+        if pendingHostCover {
+            banner.pauseSmartRefresh()
+        }
+    }
+
+    /// Resolved lazy-load setting: publisher override, then the ad config, then the SDK default.
+    internal func resolvedLazyLoad(for remoteConfig: RemoteAdConfiguration) -> Bool {
+        lazyLoadOverride ?? remoteConfig.config.lazyLoad ?? Self.defaultLazyLoad
+    }
+
+    /// Resolved prefetch margin in points: publisher override, then the ad config, then 200 pt.
+    internal func resolvedPrefetchMarginPoints(for remoteConfig: RemoteAdConfiguration) -> CGFloat {
+        if let prefetchMarginPointsOverride { return prefetchMarginPointsOverride }
+        if let configured = remoteConfig.config.prefetchDistancePt { return CGFloat(configured) }
+        return CGFloat(Self.defaultPrefetchDistancePt)
+    }
 
     private static let defaultRefreshSeconds = 30
     private static let defaultPrefetchDistancePt = 200
+
+    /// Remote-config banners defer their auction until the slot approaches the viewport unless the
+    /// ad config or the publisher asks otherwise.
+    ///
+    /// This was briefly flipped to eager. That made every mounted placement auction on `load(...)`
+    /// regardless of position, so a publisher opening an article bought fills for below-fold slots
+    /// the reader might never approach — responses that can never become impressions, which is the
+    /// delivery pattern we are trying to reduce, not create. Eager remains available per placement
+    /// (`lazyLoad: false` on the ad config, or `lazyLoadOverride = false`) for slots that are
+    /// always on screen.
+    internal static let defaultLazyLoad = true
 }

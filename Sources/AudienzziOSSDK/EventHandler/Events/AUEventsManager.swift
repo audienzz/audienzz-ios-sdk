@@ -15,19 +15,36 @@
 
 import Foundation
 import AdSupport
+#if canImport(UIKit)
+import UIKit
+#endif
 
 fileprivate let keyVisitorId = "keyVisitorId"
 
-/// Clickstream analytics logger. Each event is enriched with identity/session data and POSTed
-/// immediately to the collector (mirrors the Android `EventLoggerImpl` — no local queue/batching).
+/// Clickstream analytics logger. Each event is enriched with identity/session data, serialized, and
+/// handed to `AUEventQueue`, which coalesces events into batched POSTs to the collector (mirrors the
+/// Android `EventLoggerImpl` + `EventBatcher`).
 final class AUEventsManager: AULogEventType {
     static let shared = AUEventsManager()
 
     private var visitorId: String = "visitorId"
     private var companyId: String = "companyId"
     private let sessionId: String = AUUniqHelper.makeUniqID()
-    private let sessionStartTimestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1000)
-    private var deviceId: String = ""
+    /// Unix time in **seconds**, fixed for the life of the session.
+    ///
+    /// It was milliseconds until this release, which is why historical rows are ~1e12 and new ones
+    /// are ~1e9. A consumer can tell them apart by magnitude — see `docs/analytics-contract.md`
+    /// for the migration rule. Durations (`time_to_respond`, `autorefresh_time`) are unchanged and
+    /// remain milliseconds; only this absolute timestamp moved.
+    private let sessionStartTimestamp: Int64 = Int64(Date().timeIntervalSince1970)
+
+    /// The advertising identifier, re-read per event rather than cached for the session.
+    ///
+    /// `nil` means "not available" and the field is omitted from the payload: analytics must work
+    /// without it. Nothing is substituted — not the PPID, not the IDFV, not a fingerprint — and the
+    /// all-zero IDFA that ATT returns when tracking is not authorized is not an identity, so it is
+    /// never sent either.
+    private var deviceId: String?
 
     /// Monotonic per-session counter so the backend can order events regardless of POST arrival.
     private var sessionSeq: Int = 0
@@ -38,12 +55,15 @@ final class AUEventsManager: AULogEventType {
     private var currentScreenName: String?
 
     private let mapper = AUEventNetworkMapper()
-    private var networkManager: AUEventsNetworkManager<AUBatchResultModel>!
+    private var eventQueue: AUEventQueue?
+    private var lifecycleObserved = false
 
     func configure(companyId: String) {
-        networkManager = AUEventsNetworkManager<AUBatchResultModel>()
+        let networkManager = AUEventsNetworkManager<AUBatchResultModel>()
+        eventQueue = AUEventQueue(networkManager: networkManager)
         visitorId = makeVisitorId()
         self.companyId = companyId
+        observeAppLifecycle()
     }
 
     // MARK: - Screen tracking
@@ -62,7 +82,7 @@ final class AUEventsManager: AULogEventType {
     // MARK: - Logging
 
     func logEvent(_ event: AUEventDomain) {
-        guard networkManager != nil else { return }
+        guard let eventQueue = eventQueue else { return }
         requestDeviceId()
 
         // Safety net: if an ad event fires before any onScreenResumed (e.g. a banner prefetches
@@ -101,17 +121,45 @@ final class AUEventsManager: AULogEventType {
             print("[AUAnalytics] ▶︎ \(network.eventType) seq=\(network.sessionSeq)\n\(str)")
         }
         #endif
-        networkManager.request(.batchEvents([json])) { result in
-            switch result {
-            case .success:
-                AULogEvent.logDebug(
-                    "[AUAnalytics] ✓ sent \(network.eventType) seq=\(network.sessionSeq)")
-            case .failure(let error):
-                AULogEvent.logDebug(
-                    "[AUAnalytics] ✗ FAILED \(network.eventType) seq=\(network.sessionSeq): \(error.localizedDescription)")
-            }
+        // Enqueue for batched delivery; the queue coalesces events and POSTs them to /submit/batch
+        // on size/time/background triggers, with bounded retry.
+        eventQueue.enqueue(json)
+    }
+
+    // MARK: - App lifecycle (batch flush)
+
+    /// Flush the event queue when the app backgrounds (so a pending buffer isn't stranded) and again
+    /// when it returns to the foreground (drains anything left after a failed/backoff cycle). Uses
+    /// block-based observers (added once) since `AUEventsManager` is not an `NSObject`.
+    private func observeAppLifecycle() {
+        #if canImport(UIKit)
+        guard !lifecycleObserved else { return }
+        lifecycleObserved = true
+        let nc = NotificationCenter.default
+        nc.addObserver(forName: UIApplication.didEnterBackgroundNotification,
+                       object: nil, queue: .main) { [weak self] _ in
+            self?.flushOnBackground()
+        }
+        nc.addObserver(forName: UIApplication.didBecomeActiveNotification,
+                       object: nil, queue: .main) { [weak self] _ in
+            self?.eventQueue?.flush()
+        }
+        #endif
+    }
+
+    #if canImport(UIKit)
+    private func flushOnBackground() {
+        // Buy a little time for the in-flight batch to complete after the app leaves the foreground.
+        var bgTask: UIBackgroundTaskIdentifier = .invalid
+        bgTask = UIApplication.shared.beginBackgroundTask(withName: "AUEventsFlush") {
+            if bgTask != .invalid { UIApplication.shared.endBackgroundTask(bgTask); bgTask = .invalid }
+        }
+        eventQueue?.flush()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            if bgTask != .invalid { UIApplication.shared.endBackgroundTask(bgTask); bgTask = .invalid }
         }
     }
+    #endif
 
     private func nextSequence() -> Int {
         seqLock.lock()
@@ -128,10 +176,31 @@ final class AUEventsManager: AULogEventType {
         return obj
     }
 
+    /// Re-read the advertising identifier for every event.
+    ///
+    /// Caching it for the session was wrong in both directions: authorization granted after the
+    /// first event was never picked up, and — worse — authorization *revoked* after an authorized
+    /// event left the SDK emitting an identifier the user had withdrawn. `ASIdentifierManager` is a
+    /// cheap local read, so there is nothing to gain by holding it.
+    ///
+    /// The all-zero UUID is what ATT returns when tracking is not authorized (and what the
+    /// simulator returns by default). It is a sentinel, not an identity, so it becomes `nil` and
+    /// the field is omitted. The SDK never prompts for ATT on the publisher's behalf.
     private func requestDeviceId() {
-        if deviceId.isEmpty || deviceId == "00000000-0000-0000-0000-000000000000" {
-            deviceId = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
-        }
+        let idfa = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
+        deviceId = Self.usableDeviceId(idfa)
+    }
+
+    /// Exposed for tests: the session-start value the manager actually emits, so its UNIT can be
+    /// asserted where it is chosen rather than where it is merely copied.
+    var sessionStartTimestampForTesting: Int64 { sessionStartTimestamp }
+
+    /// Exposed for tests: the rule that turns a raw IDFA into either an identity or nothing.
+    static func usableDeviceId(_ raw: String?) -> String? {
+        guard let raw, !raw.isEmpty else { return nil }
+        let normalized = raw.lowercased()
+        guard normalized != "00000000-0000-0000-0000-000000000000" else { return nil }
+        return normalized
     }
 
     private func makeVisitorId() -> String {

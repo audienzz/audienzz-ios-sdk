@@ -78,7 +78,7 @@ class AdAdaptiveViewController: UIViewController {
         super.viewWillAppear(animated)
         // Track the screen visit for analytics (fires `pageImpression` and a fresh page-impression
         // id that ties this screen's ad events together). Call it before ads load.
-        Audienzz.shared.onScreenResumed(self)
+        Audienzz.shared.pageImpression(self)
     }
 
     private enum AdTypes: Int {

@@ -31,8 +31,9 @@ extension AUInstreamView {
     }
 
     func fetchRequest() {
+        guard let generation = configuredDemandRefresh?.begin({ [weak self] in self?.fetchRequest() }) else { return }
         adUnit.fetchDemand { [weak self] bidInfo in
-            guard let self = self else { return }
+            guard let self = self, self.configuredDemandRefresh?.finish(generation) == true else { return }
             let resultCode = AUResultCode(rawValue: bidInfo.resultCode.rawValue)
             if resultCode == .audienzzDemandFetchSuccess {
                 self.customKeywords = bidInfo.targetingKeywords
