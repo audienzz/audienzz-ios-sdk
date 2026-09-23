@@ -323,7 +323,7 @@ If raising it does not move the auction earlier, the ad component is not mountin
 | Setting | Publisher override | Ad config field | Default |
 |---|---|---|---|
 | Lazy loading | `setLazyLoadOverride(_:)` | `lazyLoad` | `true` — the auction waits for the viewport |
-| Prefetch margin | `setPrefetchMarginPointsOverride(_:)` | `prefetchDistancePt` | `200` pt |
+| Prefetch margin | `setPrefetchMarginPointsOverride(_:)` | `prefetchDistanceDp` | `200` pt |
 
 ```swift
 // A view-controller property, retained for the whole time the slot is used:
