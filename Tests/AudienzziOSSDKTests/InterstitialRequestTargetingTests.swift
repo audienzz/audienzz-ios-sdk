@@ -112,4 +112,33 @@ final class InterstitialRequestTargetingTests: AudienzzLifecycleTestCase {
 
         XCTAssertEqual(captured?.customTargeting?["audit_category"] as? String, "sports")
     }
+
+    /// The impression has to declare the API frameworks the SDK can render.
+    ///
+    /// Prebid writes `banner.api` only from the ad unit's banner parameters, and a bare Prebid
+    /// interstitial unit has none — so the remote interstitial's request carried no `api` at all,
+    /// unlike every banner and Android. The expected list is Android's: MRAID 1/2/3 and OMID 1.
+    func testTheRequestDeclaresTheSupportedApiFrameworks() {
+        var api: [Int]?
+        var sizes: [CGSize]?
+        owner.demand = { unit, _, _ in
+            api = unit.bannerParameters.api?.map { $0.value }
+            sizes = unit.bannerParameters.adSizes
+        }
+
+        owner.prefetch { _ in }
+
+        XCTAssertEqual(api, [3, 5, 6, 7], "MRAID_1, MRAID_2, MRAID_3, OMID_1")
+        XCTAssertEqual(sizes, [CGSize(width: 320, height: 480)], "the sizes still come from the config")
+    }
+
+    func testTheApiFrameworksAreDeclaredEvenWithoutConfiguredSizes() {
+        owner.configuration = { _ in ("audit", "/audit/interstitial", []) }
+        var api: [Int]?
+        owner.demand = { unit, _, _ in api = unit.bannerParameters.api?.map { $0.value } }
+
+        owner.prefetch { _ in }
+
+        XCTAssertEqual(api, [3, 5, 6, 7])
+    }
 }

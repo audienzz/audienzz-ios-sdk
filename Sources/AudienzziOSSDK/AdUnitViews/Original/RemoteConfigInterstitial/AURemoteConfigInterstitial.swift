@@ -274,9 +274,14 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         // a size it was never going to fill. Bidders size their response to the format they are
         // given, so the request has to describe the ad. Prebid merges these into `banner.format`
         // for interstitials just as it does for banners.
-        if !config.adSizes.isEmpty {
-            unit.bannerParameters.adSizes = config.adSizes
-        } else {
+        //
+        // Built from AUBannerParameters, like every other original ad unit here, so the impression
+        // also declares the supported API frameworks (MRAID 1/2/3, OMID 1 — the same list Android
+        // sends). A bare Prebid unit has none, and Prebid then omits `banner.api` entirely.
+        let parameters = AUBannerParameters()
+        if !config.adSizes.isEmpty { parameters.adSizes = config.adSizes }
+        unit.bannerParameters = parameters.makeBannerParameters()
+        if config.adSizes.isEmpty {
             AULogEvent.logWarn(
                 "[AURemoteConfigInterstitial] no prebid adSizes in remote config for " +
                 "\(adConfigId) — the bid request will carry no banner format")
