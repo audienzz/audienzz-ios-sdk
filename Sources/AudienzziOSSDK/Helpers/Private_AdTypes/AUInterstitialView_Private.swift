@@ -37,16 +37,19 @@ extension AUInterstitialView {
     internal override func fetchRequest(_ gamRequest: AdManagerRequest) {
         guard adUnit != nil, let generation = fullscreenDemand.begin() else { return }
         let gamRequest = requestContext.nextRequest(from: gamRequest)
+        let stampedTargeting = AUAdRequestContext.stampedTargeting(of: gamRequest)
         prebidWinningBidder = nil
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
-        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
+        demand(adUnit, gamRequest) { [weak self] resultCode in
             AULogEvent.logDebug(
                 "Audienzz demand fetch for GAM \(resultCode.name())"
             )
             guard let self = self, self.fullscreenDemand.finish(generation) else { return }
+            // Prebid removed every `hb_` key, hb_refresh_count included, before it bid.
+            AUAdRequestContext.restore(stampedTargeting, into: gamRequest)
             let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
             let rawTargeting = gamRequest.customTargeting as? [AnyHashable: Any] ?? [:]
             self.makeResultEvents(

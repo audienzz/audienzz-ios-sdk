@@ -37,14 +37,39 @@ public final class AUAdRequestContext: NSObject {
         request.customTargeting = targeting
         return request
     }
+
+    /// The counter keys stamped on `request`, captured so they can be put back after Prebid.
+    @nonobjc internal static func stampedTargeting(of request: AdManagerRequest) -> [String: String] {
+        let targeting = request.customTargeting ?? [:]
+        var stamped: [String: String] = [:]
+        for key in AUAdRequestSnapshot.keys { stamped[key] = targeting[key] as? String }
+        return stamped
+    }
+
+    /// Puts the request's own counter keys back after Prebid has run.
+    ///
+    /// Prebid iOS removes every `hb_` key from the GAM request at the start of each auction
+    /// (`Utils.removeHBKeywords`), so `hb_refresh_count` would otherwise never reach GAM on a
+    /// header-bid request. Call it in the demand completion, before the request goes to GAM.
+    /// Prebid's own bid keys are left exactly as it set them.
+    @nonobjc internal static func restore(_ stamped: [String: String], into request: AdManagerRequest) {
+        guard !stamped.isEmpty else { return }
+        var targeting = request.customTargeting ?? [:]
+        stamped.forEach { targeting[$0.key] = $0.value }
+        request.customTargeting = targeting
+    }
 }
 
 internal struct AUAdRequestSnapshot: Equatable {
     let pageSequence: Int
     let slot: Int
     let refresh: Int
+    /// `hb_refresh_count` shares Prebid's prefix, which is why it needs
+    /// ``AUAdRequestContext/restore(_:into:)`` after every Prebid auction.
+    static let keys = ["au_page_seq", "au_slot", "hb_refresh_count"]
+
     var targeting: [String: String] {
-        ["au_page_seq": String(pageSequence), "au_slot": String(slot), "au_refresh": String(refresh)]
+        ["au_page_seq": String(pageSequence), "au_slot": String(slot), "hb_refresh_count": String(refresh)]
     }
 }
 

@@ -395,6 +395,7 @@ extension AUBannerView {
         let refreshGeneration = refreshController.onRequestStarted(reason)
         initialLoadRequested = true
         let gamRequest = requestContext.nextRequest(from: gamRequest)
+        let stampedTargeting = AUAdRequestContext.stampedTargeting(of: gamRequest)
         // Re-read the PPID on every auction rather than trusting the one stamped at createAd.
         // A banner refreshes for the lifetime of its screen, so a publisher PPID set after the ad
         // was built, a 12-month rotation, or consent arriving late would otherwise never reach the
@@ -438,6 +439,8 @@ extension AUBannerView {
                 return
             }
             let timeToRespond = Int64(Date().timeIntervalSince1970 * 1000) - requestStartMs
+            // Prebid removed every `hb_` key, hb_refresh_count included, before it bid.
+            AUAdRequestContext.restore(stampedTargeting, into: gamRequest)
 
             // A prefetch-zone first load completes before the ad is on screen, so the banner is
             // not refresh-eligible yet. Record that as a block reason rather than a stopped timer:
