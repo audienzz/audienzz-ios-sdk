@@ -261,12 +261,20 @@ public class AURemoteConfigBannerView: VisibleView {
                 ($0.width * $0.height) > ($1.width * $1.height)
             }
 
+        // No Prebid sizes means the placement is sold through GAM alone. The ad unit still needs a
+        // size to be built, so it takes GAM's; with header bidding off it is never sent.
+        let headerBidding = !sortedSizes.isEmpty
+        if !headerBidding {
+            AULogEvent.logDebug("[AURemoteConfigBannerView] \(adConfigId) has no Prebid sizes — serving GAM-only")
+        }
+
         let bannerView = AUBannerView(
             configId: remoteConfig.prebidConfig.placementId,
-            adSize: sortedSizes.first ?? .zero,
+            adSize: sortedSizes.first ?? gadSize.size,
             adFormats: [.banner],
             isLazyLoad: resolvedLazyLoad(for: remoteConfig)
         )
+        bannerView.headerBiddingEnabled = headerBidding
         bannerView.requestContext = requestContext
         self.bannerView = bannerView
         // So the delivery trace reports the ad config the publisher configured, not the Prebid

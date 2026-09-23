@@ -405,9 +405,24 @@ extension AUBannerView {
         currentAuctionId = AUUniqHelper.makeUniqID()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         let generationAtRequest = auctionGeneration
+        if !headerBiddingEnabled {
+            // GAM-only: nothing to ask Prebid, so nothing to report about a bid. Clear the previous
+            // auction's winner so render events cannot inherit a bidder this auction never had.
+            lastPrebidCreativeSize = nil
+            prebidLineItemWon = false
+            prebidWinningBidder = nil
+            lastRenderEconomics = nil
+            AULogEvent.logDebug("[AUBannerView] \(configId) — header bidding off, GAM-only")
+            if smartRefresh, !isViewRefreshEligible { refreshController.block(.notVisible) }
+            isInitialAutorefresh = false
+            // Counted here because makeResultEvents, which counts a header-bid load, never runs.
+            slotReloadCount += 1
+            startGoogleLoad(gamRequest, auction: generationAtRequest, refresh: refreshGeneration)
+            return true
+        }
         makeRequestEvent()
         var responseDelivered = false
-        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
+        demand(adUnit, gamRequest) { [weak self] resultCode in
             guard !responseDelivered else { return }
             responseDelivered = true
             guard let self = self else { return }
@@ -468,16 +483,21 @@ extension AUBannerView {
                 creativeId: creativeId
             )
             self.isInitialAutorefresh = false
-
-            let load = GoogleLoad(auction: generationAtRequest, refresh: refreshGeneration)
-            self.googleLoad = load
-            self.googleEventPageGeneration = self.creativePageGeneration
-            self.renderAuctionId = self.currentAuctionId
-            self.eventHandler?.ensureListeners()
-            self.watchGoogleLoad(load)
-            self.onLoadRequest?(gamRequest)
+            self.startGoogleLoad(gamRequest, auction: generationAtRequest, refresh: refreshGeneration)
         }
         return true
+    }
+
+    /// Hands the request to GAM. Shared by the Prebid completion and the GAM-only path, so both
+    /// arm the same load watchdog and tie Google's callbacks to the same auction and page.
+    private func startGoogleLoad(_ gamRequest: AdManagerRequest, auction: Int, refresh: Int) {
+        let load = GoogleLoad(auction: auction, refresh: refresh)
+        googleLoad = load
+        googleEventPageGeneration = creativePageGeneration
+        renderAuctionId = currentAuctionId
+        eventHandler?.ensureListeners()
+        watchGoogleLoad(load)
+        onLoadRequest?(gamRequest)
     }
 
 

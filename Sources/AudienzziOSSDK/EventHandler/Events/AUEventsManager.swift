@@ -81,7 +81,12 @@ final class AUEventsManager: AULogEventType {
 
     // MARK: - Logging
 
+    /// Sees every event handed to ``logEvent(_:)``, before anything decides whether it is sent.
+    /// Tests only: it is how a test proves an event was — or was not — reported.
+    var observerForTesting: ((AUEventDomain) -> Void)?
+
     func logEvent(_ event: AUEventDomain) {
+        observerForTesting?(event)
         guard let eventQueue = eventQueue else { return }
         requestDeviceId()
 
