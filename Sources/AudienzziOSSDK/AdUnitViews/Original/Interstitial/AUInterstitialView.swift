@@ -25,6 +25,12 @@ import GoogleMobileAds
 @objcMembers
 public class AUInterstitialView: AUAdView {
     internal var adUnit: InterstitialAdUnit!
+
+    /// Asks Prebid for demand. A seam so a test can stand in for Prebid, including the way it
+    /// rewrites the request's custom targeting.
+    @nonobjc internal var demand: (InterstitialAdUnit, AdManagerRequest, @escaping (ResultCode) -> Void) -> Void = {
+        unit, request, completion in unit.fetchDemand(adObject: request, completion: completion)
+    }
     internal var gamRequest: AnyObject?
     internal var eventHandler: AUInterstitialHandler?
     internal var gadUnitID: String?

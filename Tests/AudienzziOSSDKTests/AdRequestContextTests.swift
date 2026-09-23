@@ -9,7 +9,7 @@ final class AdRequestContextTests: AudienzzLifecycleTestCase {
                                file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertEqual(request.customTargeting?["au_page_seq"] as? String, String(page), file: file, line: line)
         XCTAssertEqual(request.customTargeting?["au_slot"] as? String, String(slot), file: file, line: line)
-        XCTAssertEqual(request.customTargeting?["au_refresh"] as? String, String(refresh), file: file, line: line)
+        XCTAssertEqual(request.customTargeting?["hb_refresh_count"] as? String, String(refresh), file: file, line: line)
     }
 
     func testUnorderedSweepReservesLazySlotsBeforeRequests() {
@@ -27,7 +27,7 @@ final class AdRequestContextTests: AudienzzLifecycleTestCase {
         Audienzz.shared.pageImpression("article")
         let context = AUAdRequestContext()
         let template = AdManagerRequest()
-        template.customTargeting = ["category": "sports", "au_refresh": "999"]
+        template.customTargeting = ["category": "sports", "hb_refresh_count": "999"]
         template.publisherProvidedID = "publisher-test-id"
         let first = context.nextRequest(from: template)
         let second = context.nextRequest(from: template)
@@ -39,7 +39,7 @@ final class AdRequestContextTests: AudienzzLifecycleTestCase {
         Audienzz.shared.pageImpression("article")
         assertRequest(context.nextRequest(from: template), 2, 1, 0)
         assertRequest(first, 1, 1, 0)
-        XCTAssertEqual(template.customTargeting?["au_refresh"] as? String, "999")
+        XCTAssertEqual(template.customTargeting?["hb_refresh_count"] as? String, "999")
     }
 
     func testBridgeRecreationReusesSlotAndPageTransitionResetsIt() {
