@@ -23,46 +23,11 @@ public class AURemoteConfigBannerView: VisibleView {
     public var bannerParameters: AUBannerParameters?
     public var videoParameters: AUVideoParameters?
 
-    // MARK: - Delivery overrides
+    // MARK: - Delivery settings
     //
-    // Both resolve publisher override -> ad config -> SDK default, the same precedence used by
-    // `Audienzz.shared.smartRefreshV2Override`. They are read when a banner is built, so set them
-    // before `load(...)`; changing one afterwards takes effect on the next load, which is not
-    // coalesced away because both values are part of the load key.
-
-    /// Publisher override for lazy loading. `nil` (default) defers to the ad config's `lazyLoad`,
-    /// which itself falls back to ``defaultLazyLoad``.
-    ///
-    /// `false` auctions as soon as `load(...)` runs, wherever the slot sits. `true` defers the
-    /// auction until the slot comes within ``prefetchMarginPointsOverride`` pt of the viewport.
-    public var lazyLoadOverride: Bool?
-
-    /// Publisher override for the prefetch margin, in points. `nil` (default) defers to the ad
-    /// config's `prefetchDistanceDp`, which itself falls back to 200 pt. Only has an effect while
-    /// lazy loading is on.
-    public var prefetchMarginPointsOverride: CGFloat?
-
-    /// Objective-C entry point: a Swift `Bool?` is not representable in Objective-C, so
-    /// ``lazyLoadOverride`` is absent from the generated header.
-    @objc public func setLazyLoadOverride(_ enabled: Bool) {
-        lazyLoadOverride = enabled
-    }
-
-    /// Clears the local override, deferring to the ad config's `lazyLoad` again.
-    @objc public func clearLazyLoadOverride() {
-        lazyLoadOverride = nil
-    }
-
-    /// Objective-C entry point: a Swift `CGFloat?` is not representable in Objective-C, so
-    /// ``prefetchMarginPointsOverride`` is absent from the generated header.
-    @objc public func setPrefetchMarginPointsOverride(_ points: CGFloat) {
-        prefetchMarginPointsOverride = points
-    }
-
-    /// Clears the local override, deferring to the ad config's `prefetchDistanceDp` again.
-    @objc public func clearPrefetchMarginPointsOverride() {
-        prefetchMarginPointsOverride = nil
-    }
+    // Lazy loading and the prefetch margin are backend-driven only: the ad config's `lazyLoad` and
+    // `prefetchDistanceDp`, else the SDK defaults. There is deliberately no publisher override, so
+    // one placement behaves the same in every app and on every platform.
 
     /// Screen token applied to the underlying `AUBannerView` once it's built (see `setScreen`).
     private var pendingScreenKey: AnyObject?
@@ -97,8 +62,8 @@ public class AURemoteConfigBannerView: VisibleView {
         /// The size actually resolved for this load, not the size the caller asked for. Adaptive
         /// banners derive theirs from the container, so `nil` twice is not the same request twice.
         let resolvedSize: CGSize
-        /// The resolved delivery settings. A publisher that changes an override and loads again
-        /// means it, so the repeat must not be coalesced into the banner built under the old one.
+        /// The resolved delivery settings. A refreshed ad config that changes them must not be
+        /// coalesced into the banner built under the old values.
         let lazyLoad: Bool
         let prefetchMarginPoints: CGFloat
     }
@@ -415,29 +380,26 @@ public class AURemoteConfigBannerView: VisibleView {
         }
     }
 
-    /// Resolved lazy-load setting: publisher override, then the ad config, then the SDK default.
+    /// Resolved lazy loading: the ad config, then ``defaultLazyLoad``.
     internal func resolvedLazyLoad(for remoteConfig: RemoteAdConfiguration) -> Bool {
-        lazyLoadOverride ?? remoteConfig.config.lazyLoad ?? Self.defaultLazyLoad
+        remoteConfig.config.lazyLoad ?? Self.defaultLazyLoad
     }
 
-    /// Resolved prefetch margin in points: publisher override, then the ad config, then 200 pt.
+    /// Resolved prefetch margin in points: the ad config's `prefetchDistanceDp`, then 200 pt.
     internal func resolvedPrefetchMarginPoints(for remoteConfig: RemoteAdConfiguration) -> CGFloat {
-        if let prefetchMarginPointsOverride { return prefetchMarginPointsOverride }
-        if let configured = remoteConfig.config.prefetchDistancePt { return CGFloat(configured) }
-        return CGFloat(Self.defaultPrefetchDistancePt)
+        CGFloat(remoteConfig.config.prefetchDistancePt ?? Self.defaultPrefetchDistancePt)
     }
 
     private static let defaultRefreshSeconds = 30
     private static let defaultPrefetchDistancePt = 200
 
     /// Remote-config banners defer their auction until the slot approaches the viewport unless the
-    /// ad config or the publisher asks otherwise.
+    /// ad config asks otherwise.
     ///
     /// This was briefly flipped to eager. That made every mounted placement auction on `load(...)`
     /// regardless of position, so a publisher opening an article bought fills for below-fold slots
     /// the reader might never approach — responses that can never become impressions, which is the
     /// delivery pattern we are trying to reduce, not create. Eager remains available per placement
-    /// (`lazyLoad: false` on the ad config, or `lazyLoadOverride = false`) for slots that are
-    /// always on screen.
+    /// (`lazyLoad: false` on the ad config) for slots that are always on screen.
     internal static let defaultLazyLoad = true
 }

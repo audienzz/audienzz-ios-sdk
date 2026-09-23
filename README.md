@@ -318,26 +318,16 @@ If raising it does not move the auction earlier, the ad component is not mountin
 
 #### Remote-config banners
 
-`AURemoteConfigBannerView` resolves both delivery settings **publisher override → ad config → SDK default**:
+`AURemoteConfigBannerView` takes both delivery settings from the ad config only — **ad config → SDK default**. There is no app-side override: a placement behaves the same in every app and on every platform, and is tuned in the backend.
 
-| Setting | Publisher override | Ad config field | Default |
-|---|---|---|---|
-| Lazy loading | `setLazyLoadOverride(_:)` | `lazyLoad` | `true` — the auction waits for the viewport |
-| Prefetch margin | `setPrefetchMarginPointsOverride(_:)` | `prefetchDistanceDp` | `200` pt |
+| Setting | Ad config field (`config`) | Default |
+|---|---|---|
+| Lazy loading | `lazyLoad` | `true` — the auction waits for the viewport |
+| Prefetch margin | `prefetchDistanceDp` | `200` pt |
 
-```swift
-// A view-controller property, retained for the whole time the slot is used:
-private let banner = AURemoteConfigBannerView(adConfigId: "118")
+A refreshed ad config that changes either value replaces the banner on the next `load(...)` rather than coalescing into the old one.
 
-// Configure before calling load(in:rootViewController:):
-banner.lazyLoadOverride = true              // defer the auction to the viewport
-banner.prefetchMarginPointsOverride = 600   // …starting 600 pt ahead
-banner.load(in: container, rootViewController: self)
-```
-
-Set them **before** `load(...)`; the values are read when the banner is built. Changing one and loading again replaces the banner rather than coalescing, so the change takes effect. `clearLazyLoadOverride()` / `clearPrefetchMarginPointsOverride()` hand control back to the ad config.
-
-> **Default is lazy.** A remote-config banner waits until the slot comes within the prefetch margin. This is deliberate: a publisher who builds several below-fold placements on entering an article would otherwise buy fills the reader may never approach, and an unrendered fill cannot become an impression. Set `lazyLoad: false` on the ad config, or `lazyLoadOverride = false`, for slots that are always on screen.
+> **Default is lazy.** A remote-config banner waits until the slot comes within the prefetch margin. This is deliberate: a publisher who builds several below-fold placements on entering an article would otherwise buy fills the reader may never approach, and an unrendered fill cannot become an impression. Set `lazyLoad: false` on the ad config for slots that are always on screen.
 
 ## Smart Refresh
 
