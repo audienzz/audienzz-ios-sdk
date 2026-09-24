@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — breaking: interstitial formats and API frameworks are backend-controlled
+## 0.4.0 (unreleased) — breaking: interstitial formats and API frameworks are backend-controlled
 
 - **Publisher key-values and the SDK's never clear each other.** Prebid iOS deletes every `hb_` key
   before bidding; the SDK now puts back everything it removed (a publisher's `hb_` keys too) except
