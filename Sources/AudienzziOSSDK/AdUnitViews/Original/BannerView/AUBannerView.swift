@@ -61,6 +61,20 @@ public class AUBannerView: AUAdView {
 
     internal var demandFormats: Set<PrebidMobile.AdFormat> = [.banner]
 
+    /// Whether each auction asks Prebid for a bid before loading GAM. `false` serves GAM-only: no
+    /// Prebid request is sent and no bidRequest/bidResponse/bidWon/noBid event is reported, while
+    /// refresh, page ownership, blanking and targeting behave as usual. Set it before the first load.
+    ///
+    /// A remote-config placement with no Prebid sizes turns this off. Handing Prebid a `.zero` size
+    /// instead did not skip header bidding: stock Prebid only rejects negative sizes, so every
+    /// auction still sent a request that could never be filled.
+    public var headerBiddingEnabled: Bool = true
+
+    /// Asks Prebid for demand. A seam so a test can see whether an auction reached Prebid at all.
+    @nonobjc internal var demand: (AdUnit, AdManagerRequest, @escaping (ResultCode) -> Void) -> Void = {
+        unit, request, completion in unit.fetchDemand(adObject: request, completion: completion)
+    }
+
     public var videoParameters: AUVideoParameters?
     public var bannerParameters: AUBannerParameters?
 
@@ -389,7 +403,9 @@ public class AUBannerView: AUAdView {
             gamRequest.publisherProvidedID = ppid
         }
 
-        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
+        // Kept as the publisher passed it. Global targeting and the SDK's keys are added to a copy
+        // for every auction (AUAuctionTargeting), so they stay current and this object is untouched.
+        self.gamRequest = gamRequest
 
         // The event wrapper is optional; GAM completion ownership is not.
         if let googleView = eventHandler?.gamView ?? Self.singleGoogleBanner(in: gamBanner) {

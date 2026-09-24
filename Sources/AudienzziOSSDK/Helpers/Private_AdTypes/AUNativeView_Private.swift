@@ -33,14 +33,21 @@ extension AUNativeView {
 
     override func fetchRequest(_ gamRequest: AdManagerRequest) {
         guard let generation = configuredDemandRefresh?.begin({ [weak self] in self?.fetchRequest(gamRequest) }) else { return }
+        // A fresh copy per auction: a refresh re-running Prebid on the same object would otherwise
+        // carry the previous auction's bid keys.
+        let publisherRequest = gamRequest
+        let gamRequest = AUAuctionTargeting.request(from: publisherRequest)
         switch adType {
         case .origin:
+            let prebidGuard = AUAuctionTargeting.PrebidGuard(gamRequest)
             nativeUnit.fetchDemand(adObject: gamRequest) {
                 [weak self] resultCode in
                 AULogEvent.logDebug(
                     "Audienz demand fetch for GAM \(resultCode.name())"
                 )
                 guard let self = self, self.configuredDemandRefresh?.finish(generation) == true else { return }
+                // Prebid removed every `hb_` key before it bid, the publisher's too.
+                prebidGuard.restore(into: gamRequest)
                 self.onLoadRequest?(gamRequest)
             }
         case .rendering:

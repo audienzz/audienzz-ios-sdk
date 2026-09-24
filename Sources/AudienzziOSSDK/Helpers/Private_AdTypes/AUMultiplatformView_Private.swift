@@ -14,6 +14,7 @@
  */
 
 import PrebidMobile
+import GoogleMobileAds
 import UIKit
 
 @objc
@@ -33,9 +34,15 @@ extension AUMultiplatformView {
     func fetchRequest(_ gamRequest: AnyObject, prebidRequest: PrebidRequest) {
         guard let generation = configuredDemandRefresh?.begin({ [weak self] in self?.fetchRequest(gamRequest, prebidRequest: prebidRequest) }) else { return }
         makeRequestEvent()
+        let publisherRequest = gamRequest
+        let gamRequest: AnyObject = (publisherRequest as? AdManagerRequest)
+            .map { AUAuctionTargeting.request(from: $0) } ?? publisherRequest
+        let prebidGuard = (gamRequest as? AdManagerRequest).map { AUAuctionTargeting.PrebidGuard($0) }
         adUnit.fetchDemand(adObject: gamRequest, request: prebidRequest) {
             [weak self] info in
             guard let self = self, self.configuredDemandRefresh?.finish(generation) == true else { return }
+            // Prebid removed every `hb_` key before it bid, the publisher's too.
+            if let request = gamRequest as? AdManagerRequest { prebidGuard?.restore(into: request) }
             self.makeWinnerEvent(
                 AUResulrCodeConverter.convertResultCodeName(info.resultCode)
             )

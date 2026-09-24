@@ -2,12 +2,9 @@ import XCTest
 import UIKit
 @testable import AudienzziOSSDK
 
-/// Lazy loading and the prefetch margin are delivery decisions a publisher has to be able to make.
-///
-/// `AURemoteConfigBannerView` used to hardcode `isLazyLoad: true` and read the margin only from the
-/// ad config, so a publisher whose slot auctioned too late had no lever at all — the inner banner is
-/// private and the inherited `prefetchMarginPoints` is not exposed to Objective-C, so neither the
-/// app nor a bridge could reach either value.
+/// Lazy loading and the prefetch margin of a remote-config banner are backend-driven only: the ad
+/// config's `lazyLoad` and `prefetchDistanceDp`, else the SDK defaults. There is no publisher
+/// override, so one placement behaves the same in every app and on every platform.
 @MainActor
 final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
 
@@ -30,7 +27,7 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
     },
     {
       "id": "configured-lazy",
-      "config": { "adType": "banner", "refreshTimeSeconds": 30, "lazyLoad": true, "prefetchDistancePt": 600 },
+      "config": { "adType": "banner", "refreshTimeSeconds": 30, "lazyLoad": true, "prefetchDistanceDp": 600 },
       "gamConfig": { "adUnitPath": "/1234/unit", "adSizes": ["320x50"] },
       "prebidConfig": { "placementId": "placement", "adSizes": ["320x50"] }
     }]
@@ -88,36 +85,16 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(view.resolvedPrefetchMarginPoints(for: config("configured-lazy")), 600)
     }
 
-    func testThePublisherOverridesTheAdConfig() {
-        let view = AURemoteConfigBannerView(adConfigId: "configured-lazy")
-        view.lazyLoadOverride = false
-        view.prefetchMarginPointsOverride = 900
-        XCTAssertFalse(view.resolvedLazyLoad(for: config("configured-lazy")))
-        XCTAssertEqual(view.resolvedPrefetchMarginPoints(for: config("configured-lazy")), 900)
-    }
-
-    func testClearingAnOverrideRestoresTheAdConfigValue() {
-        let view = AURemoteConfigBannerView(adConfigId: "configured-lazy")
-        view.setLazyLoadOverride(false)
-        view.setPrefetchMarginPointsOverride(900)
-        view.clearLazyLoadOverride()
-        view.clearPrefetchMarginPointsOverride()
-        XCTAssertTrue(view.resolvedLazyLoad(for: config("configured-lazy")))
-        XCTAssertEqual(view.resolvedPrefetchMarginPoints(for: config("configured-lazy")), 600)
-    }
-
     // MARK: - The resolved values reach the banner
 
-    func testTheResolvedSettingsAreAppliedToTheBannerThatIsBuilt() {
-        let view = AURemoteConfigBannerView(adConfigId: "unconfigured")
-        view.lazyLoadOverride = true
-        view.prefetchMarginPointsOverride = 750
+    func testTheAdConfigSettingsAreAppliedToTheBannerThatIsBuilt() {
+        let view = AURemoteConfigBannerView(adConfigId: "configured-lazy")
         view.load(in: container, size: CGSize(width: 320, height: 50), rootViewController: host)
 
         let built = banner()
         XCTAssertNotNil(built, "a banner should have been built")
-        XCTAssertTrue(built?.isLazyLoad == true, "the publisher asked for lazy loading")
-        XCTAssertEqual(built?.prefetchMarginPoints, 750)
+        XCTAssertTrue(built?.isLazyLoad == true, "the ad config asked for lazy loading")
+        XCTAssertEqual(built?.prefetchMarginPoints, 600)
     }
 
     func testAnUnconfiguredPlacementBuildsALazyBanner() {
@@ -127,14 +104,6 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
                       "with nothing configured the banner must wait for the viewport")
     }
 
-    func testAPublisherCanStillChooseEagerLoading() {
-        let view = AURemoteConfigBannerView(adConfigId: "unconfigured")
-        view.lazyLoadOverride = false
-        view.load(in: container, size: CGSize(width: 320, height: 50), rootViewController: host)
-        XCTAssertFalse(banner()?.isLazyLoad ?? true,
-                       "eager loading must remain reachable as an explicit choice")
-    }
-
     func testAnAdConfigCanStillChooseEagerLoading() {
         let view = AURemoteConfigBannerView(adConfigId: "configured-eager")
         view.load(in: container, size: CGSize(width: 320, height: 50), rootViewController: host)
@@ -142,17 +111,23 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
                        "a placement must be switchable to eager from the backend alone")
     }
 
-    // MARK: - Changing a setting is not coalesced away
+    // MARK: - A changed setting is not coalesced away
 
-    func testChangingAnOverrideAndReloadingReplacesTheBanner() {
+    func testARefreshedAdConfigThatChangesASettingReplacesTheBanner() throws {
         let view = AURemoteConfigBannerView(adConfigId: "unconfigured")
         let size = CGSize(width: 320, height: 50)
         view.load(in: container, size: size, rootViewController: host)
         let first = banner()
         XCTAssertEqual(first?.isLazyLoad, true)
 
-        // Same container, same size — identical in every respect except the delivery setting.
-        view.lazyLoadOverride = false
+        // Same container, same size — identical in every respect except the backend's setting.
+        let refreshed = try JSONDecoder().decode([RemoteAdConfiguration].self, from: Data("""
+        [{"id": "unconfigured",
+          "config": { "adType": "banner", "refreshTimeSeconds": 30, "lazyLoad": false },
+          "gamConfig": { "adUnitPath": "/1234/unit", "adSizes": ["320x50"] },
+          "prebidConfig": { "placementId": "placement", "adSizes": ["320x50"] }}]
+        """.utf8))
+        AudienzzRemoteConfig.shared.setAdUnitConfigsForTesting(refreshed)
         view.load(in: container, size: size, rootViewController: host)
 
         let second = banner()
@@ -170,5 +145,42 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
         let first = banner()
         view.load(in: container, size: size, rootViewController: host)
         XCTAssertTrue(banner() === first, "nothing changed, so the banner must be reused")
+    }
+
+    // MARK: - The backend payload
+
+    private static func decodeConfig(_ config: String) throws -> RemoteAdConfiguration {
+        let json = """
+        {"id": "x", "config": \(config),
+         "gamConfig": {"adUnitPath": "/1234/unit", "adSizes": ["320x50"]},
+         "prebidConfig": {"placementId": "placement", "adSizes": ["320x50"]}}
+        """
+        return try JSONDecoder().decode(RemoteAdConfiguration.self, from: Data(json.utf8))
+    }
+
+    /// The backend sends one key for every platform. Android, Flutter and React Native read
+    /// `prefetchDistanceDp`; iOS read `prefetchDistancePt`, so a margin set in the backend
+    /// silently never reached iOS.
+    func testDeliverySettingsDecodeFromTheKeysEveryPlatformReads() throws {
+        let decoded = try Self.decodeConfig(
+            #"{"adType": "banner", "lazyLoad": false, "prefetchDistanceDp": 50}"#)
+        XCTAssertEqual(decoded.config.prefetchDistancePt, 50)
+        XCTAssertEqual(decoded.config.lazyLoad, false)
+    }
+
+    func testTheOldIosOnlyKeyIsNotRead() throws {
+        let decoded = try Self.decodeConfig(#"{"adType": "banner", "prefetchDistancePt": 50}"#)
+        XCTAssertNil(decoded.config.prefetchDistancePt,
+                     "one backend key for all platforms, not a second iOS-only one")
+    }
+
+    /// The 24h cache re-encodes the decoded struct; the margin must survive the round trip.
+    func testTheMarginSurvivesTheLocalCache() throws {
+        let decoded = try Self.decodeConfig(
+            #"{"adType": "banner", "lazyLoad": true, "prefetchDistanceDp": 50}"#)
+        let cached = try JSONDecoder().decode(RemoteAdConfiguration.self,
+                                              from: JSONEncoder().encode(decoded))
+        XCTAssertEqual(cached.config.prefetchDistancePt, 50)
+        XCTAssertEqual(cached.config.lazyLoad, true)
     }
 }

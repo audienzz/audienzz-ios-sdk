@@ -41,6 +41,9 @@ class CustomTargetingManager {
         reservedTargetingMap[key] = value
     }
 
+    /** The reserved (SDK-internal) keys currently set. */
+    var reservedKeys: Set<String> { Set(reservedTargetingMap.keys) }
+
     /** Returns true if the key is in the reserved map. */
     func isReserved(key: String) -> Bool {
         reservedTargetingMap[key] != nil

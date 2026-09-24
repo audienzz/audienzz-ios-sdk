@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.0 (unreleased) — breaking: interstitial formats and API frameworks are backend-controlled
+
+- **Publisher key-values and the SDK's never clear each other.** Prebid iOS deletes every `hb_` key
+  before bidding; the SDK now puts back everything it removed (a publisher's `hb_` keys too) except
+  the bid keys Prebid set, on every original ad type (rewarded, native and multiformat included).
+  Global targeting and the SDK's keys are applied to a copy per auction: the publisher's request is
+  no longer modified, and global key-values added or removed later reach the next refresh (they
+  were frozen at `createAd`).
+- `prebidConfig.format` (`banner` / `video` / `bannerAndVideo`, default `bannerAndVideo`) and
+  `prebidConfig.apis` (default `[3, 5, 6, 7]`) now decide what every interstitial requests.
+  Validated, and resolved once per accepted load. See `docs/interstitial-capabilities.md`.
+- **Removed:** `AUInterstitialView(configId:adFormats:)`, `(configId:adFormats:isLazyLoad:)` and
+  `(configId:adFormats:isLazyLoad:minWidthPerc:minHeightPerc:)`. Use `(configId:)`,
+  `(configId:isLazyLoad:)` and `(configId:isLazyLoad:minWidthPerc:minHeightPerc:)`.
+- An interstitial's `bannerParameters.api`, `videoParameters.api` and `impOrtbConfig` `api` /
+  format keys are ignored; their other settings are kept.
+- Remote interstitials now always declare `banner.api` (they sent none) and request playable video
+  parameters when video is asked for; their analytics subtype follows the requested format.
+
 ## Unreleased — breaking interstitial presentation change
 
 **Before upgrading from 0.3.2: audit every `AURemoteConfigInterstitial.load()` call.**
