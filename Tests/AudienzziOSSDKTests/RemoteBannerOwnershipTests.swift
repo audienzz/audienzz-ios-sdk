@@ -1,5 +1,6 @@
 import XCTest
 import UIKit
+import GoogleMobileAds
 @testable import AudienzziOSSDK
 
 /// One placement must be served by one banner.
@@ -48,17 +49,27 @@ final class RemoteBannerOwnershipTests: AudienzzLifecycleTestCase {
         ])
         host.view.layoutIfNeeded()
         let owner = AURemoteConfigBannerView(adConfigId: "adaptive-banner")
+        var requests = 0
+        owner.loadGoogle = { google, _ in
+            requests += 1
+            XCTAssertEqual(nsValue(for: google.adSize),
+                           nsValue(for: currentOrientationInlineAdaptiveBanner(width: 320)),
+                           "the real Google handoff must keep adaptive flags, not just reserve space")
+            google.resize(adSizeFor(cgSize: CGSize(width: 320, height: 140)))
+        }
         owner.load(in: container, rootViewController: host)
         defer { owner.destroy(); window.isHidden = true }
         let banner = try XCTUnwrap(banners().first)
         banner.headerBiddingEnabled = false
-        var requests = 0
-        banner.onLoadRequest = { _ in requests += 1 }
         host.view.layoutIfNeeded()
         banner.refreshVisibilityNow()
         RunLoop.main.run(until: Date().addingTimeInterval(0.3))
         XCTAssertGreaterThan(banner.bounds.height, 0, "adaptive lazy slot must reserve space before load")
         XCTAssertEqual(requests, 1, "a visible adaptive slot must reach Google once")
+        let handoff = try XCTUnwrap(banner.onLoadRequest)
+        handoff(AdManagerRequest())
+        XCTAssertEqual(requests, 2, "a later handoff must also restore adaptive sizing")
+        XCTAssertGreaterThan(banner.bounds.height, 0)
     }
 
     private func seedConfig(_ present: Bool) {
