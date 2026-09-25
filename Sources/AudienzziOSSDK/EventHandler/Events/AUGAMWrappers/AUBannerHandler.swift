@@ -44,10 +44,9 @@ class AUBannerHandler: NSObject,
     weak var eventDelegate: AppEventDelegate?
     weak var sizeDelegate: AdSizeDelegate?
 
-    /// The actual ad size GAM will render, captured from `willChangeAdSizeTo` which fires
-    /// synchronously before `bannerViewDidReceiveAd`. At that point `gamView.adSize` is not
-    /// yet updated — the delegate parameter is the only reliable source of the chosen size.
-    /// Consumed and cleared in `bannerViewDidReceiveAd`.
+    /// A creative size received before load completion. Size changes can also arrive after
+    /// completion (inline adaptive banners and resizing creatives), so they update layout at
+    /// their own callback rather than waiting for another load.
     private var pendingGAMSize: CGSize?
 
     init(auBannerView: AUBannerView, gamView: AdManagerBannerView) {
@@ -109,14 +108,10 @@ class AUBannerHandler: NSObject,
 
         if let gamBannerView = bannerView as? AdManagerBannerView {
             // Determine the actual rendered size using two sources:
-            // 1. pendingGAMSize — set by willChangeAdSizeTo, which fires synchronously
-            //    before this callback whenever GAM renders at a size different from the
-            //    primary declared adSize (whether a Prebid creative or GAM's own ad).
-            //    gamView.adSize is NOT yet updated at that point, so the delegate parameter
-            //    is the only reliable source.
-            // 2. gamBannerView.adSize.size — used when willChangeAdSizeTo did not fire,
-            //    meaning GAM served exactly the primary declared adSize. In that case
-            //    adSize is still the original primary value and is correct.
+            // 1. pendingGAMSize — when willChangeAdSizeTo preceded this callback.
+            // 2. gamBannerView.adSize.size — for fixed-size creatives without a size callback.
+            // An inline adaptive descriptor can still be 320x0 here. Keep its placeholder until
+            // Google reports the creative dimensions; a width alone is not a rendered size.
             // Note: lastPrebidCreativeSize (hb_size from Prebid targeting) is intentionally
             // excluded. When Prebid wins at a non-primary size willChangeAdSizeTo fires and
             // pendingGAMSize covers it. When Prebid wins at the primary size adSize.size is
@@ -124,7 +119,7 @@ class AUBannerHandler: NSObject,
             // sized to the Prebid bid size even when GAM served its own ad at the primary size.
             let actualSize = pendingGAMSize ?? gamBannerView.adSize.size
 
-            if actualSize != .zero {
+            if actualSize.width > 0 && actualSize.height > 0 {
                 gamBannerView.resize(adSizeFor(cgSize: actualSize))
                 auBannerView?.onAdSizeChanged?(actualSize)
                 // The GAM banner just resized itself in place; re-center it so a creative
@@ -149,6 +144,7 @@ class AUBannerHandler: NSObject,
                           event: .googleFailed, detail: retryable ? "retryable" : "terminal")
         }
         guard auBannerView?.completeGoogleLoad(received: false, retryableFailure: retryable) == true else { return }
+        pendingGAMSize = nil
         LogEvent("didFailToReceiveAdWithError")
         LogEvent(error.localizedDescription)
         restoreFromBlankIfNeeded()
@@ -240,9 +236,12 @@ class AUBannerHandler: NSObject,
     func adView(_ bannerView: BannerView, willChangeAdSizeTo size: AdSize) {
         guard auBannerView?.acceptsGoogleEvents == true else { return }
         LogEvent("willChangeAdSizeTo")
-        // Capture GAM's chosen size before bannerViewDidReceiveAd fires.
-        // gamView.adSize is not yet updated here — size.size is the correct value.
+        guard size.size.width > 0, size.size.height > 0 else { return }
+        // Google will resize its own view after this callback. Resize our container now, using
+        // the callback value, not the still-old adSize. This must also work after didReceiveAd.
         pendingGAMSize = size.size
+        auBannerView?.onAdSizeChanged?(size.size)
+        auBannerView?.setNeedsLayout()
         sizeDelegate?.adView(bannerView, willChangeAdSizeTo: size)
     }
 }
