@@ -48,6 +48,7 @@ public class AURemoteConfigBannerView: VisibleView {
     /// the page coordinator and both kept their own refresh interval running, doubling the requests
     /// for a single placement while only the newest was visible.
     private var bannerView: AUBannerView?
+    internal var loadGoogle: (AdManagerBannerView, Request) -> Void = { $0.load($1) }
 
     /// Exactly the constraints this class activated, so retiring a banner cannot deactivate a
     /// constraint the publisher put on their own container or on its other children.
@@ -281,8 +282,6 @@ public class AURemoteConfigBannerView: VisibleView {
         // banner can issue its first request.
         applyPendingPublisherState(to: bannerView)
 
-        gamBanner.frame = CGRect(origin: .zero, size: initialLayoutSize)
-
         // Installed BEFORE createAd, which may issue the first request itself (an eager banner).
         bannerView.onLoadRequest = { [weak self] gamRequest in
             // A retired banner's demand callback must not drive a GAM view that is no longer the
@@ -300,7 +299,13 @@ public class AURemoteConfigBannerView: VisibleView {
                 delivery: self.bannerView?.pendingDeliveryId,
                 event: .googleRequested
             )
-            gamBanner.load(request)
+            if remoteConfig.gamConfig.adaptiveBannerConfig?.enabled == true {
+                // Layout and a previous creative's resize can turn adSize into a fixed size.
+                // Restore the adaptive request descriptor without adSize's implicit request.
+                // The outer AUBannerView keeps its nonzero lazy-loading placeholder.
+                gamBanner.resize(gadSize)
+            }
+            self.loadGoogle(gamBanner, request)
         }
 
         bannerView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
