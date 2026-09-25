@@ -186,7 +186,7 @@ Follow these steps to get your first ad showing:
    - Initialize GAM helpers: `AudienzzGAMUtils.shared.initializeGAM()`
 4. Create an ad unit in your UI
    - Banner: `AUBannerView(configId:..., adSize:..., adFormats:[.banner])`
-   - Interstitial: `AUInterstitialView(configId:..., adFormats:[.banner] or [.video])`
+   - Interstitial: `AUInterstitialView(configId:..., isLazyLoad:...)` — formats and API frameworks are backend-controlled, see [docs/interstitial-capabilities.md](docs/interstitial-capabilities.md)
 5. Bridge to GAM and load
    - Use `createAd(with: AdManagerRequest, ...)`
    - In `onLoadRequest`, call the corresponding GAM `load` API
@@ -318,26 +318,16 @@ If raising it does not move the auction earlier, the ad component is not mountin
 
 #### Remote-config banners
 
-`AURemoteConfigBannerView` resolves both delivery settings **publisher override → ad config → SDK default**:
+`AURemoteConfigBannerView` takes both delivery settings from the ad config only — **ad config → SDK default**. There is no app-side override: a placement behaves the same in every app and on every platform, and is tuned in the backend.
 
-| Setting | Publisher override | Ad config field | Default |
-|---|---|---|---|
-| Lazy loading | `setLazyLoadOverride(_:)` | `lazyLoad` | `true` — the auction waits for the viewport |
-| Prefetch margin | `setPrefetchMarginPointsOverride(_:)` | `prefetchDistancePt` | `200` pt |
+| Setting | Ad config field (`config`) | Default |
+|---|---|---|
+| Lazy loading | `lazyLoad` | `true` — the auction waits for the viewport |
+| Prefetch margin | `prefetchDistanceDp` | `200` pt |
 
-```swift
-// A view-controller property, retained for the whole time the slot is used:
-private let banner = AURemoteConfigBannerView(adConfigId: "118")
+A refreshed ad config that changes either value replaces the banner on the next `load(...)` rather than coalescing into the old one.
 
-// Configure before calling load(in:rootViewController:):
-banner.lazyLoadOverride = true              // defer the auction to the viewport
-banner.prefetchMarginPointsOverride = 600   // …starting 600 pt ahead
-banner.load(in: container, rootViewController: self)
-```
-
-Set them **before** `load(...)`; the values are read when the banner is built. Changing one and loading again replaces the banner rather than coalescing, so the change takes effect. `clearLazyLoadOverride()` / `clearPrefetchMarginPointsOverride()` hand control back to the ad config.
-
-> **Default is lazy.** A remote-config banner waits until the slot comes within the prefetch margin. This is deliberate: a publisher who builds several below-fold placements on entering an article would otherwise buy fills the reader may never approach, and an unrendered fill cannot become an impression. Set `lazyLoad: false` on the ad config, or `lazyLoadOverride = false`, for slots that are always on screen.
+> **Default is lazy.** A remote-config banner waits until the slot comes within the prefetch margin. This is deliberate: a publisher who builds several below-fold placements on entering an article would otherwise buy fills the reader may never approach, and an unrendered fill cannot become an impression. Set `lazyLoad: false` on the ad config for slots that are always on screen.
 
 ## Smart Refresh
 
@@ -545,9 +535,11 @@ Ad view used for displaying interstitial (full-screen) ads.
 
 | Name                         | Parameters                                                       | Description                                                                                                         |
 |------------------------------|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-| `AUInterstitialView` | `configId: String`, `adFormats: [AUAdFormat]`, `isLazyLoad: Bool` | Creates a new `AUInterstitialView` with specified ad formats. ConfigId - refers to prebid config id      |
-| `AUInterstitialView` | `configId: String`, `adFormats: [AUAdFormat]`, `isLazyLoad: Bool`, `minWidthPerc: Int`, `minHeightPerc: Int` | Creates a new `AUInterstitialView` with a minimum size in percentage. ConfigId - refers to prebid config id |
-| `AUInterstitialView` | `configId: String`, `adFormats: [AUAdFormat]`                                               | Creates a new `AUInterstitialView`. ConfigId - refers to prebid config id                                   |
+| `AUInterstitialView` | `configId: String`, `isLazyLoad: Bool` | Creates a new `AUInterstitialView`. ConfigId - refers to prebid config id      |
+| `AUInterstitialView` | `configId: String`, `isLazyLoad: Bool`, `minWidthPerc: Int`, `minHeightPerc: Int` | Creates a new `AUInterstitialView` with a minimum size in percentage. ConfigId - refers to prebid config id |
+| `AUInterstitialView` | `configId: String`                                               | Creates a new `AUInterstitialView` (lazy). ConfigId - refers to prebid config id                                   |
+
+An interstitial's formats and API frameworks are not arguments: they are backend-controlled (`prebidConfig.format` / `prebidConfig.apis`), and a hand-built `AUInterstitialView` requests banner + video with MRAID 1/2/3 + OMID 1. The `api` of its `bannerParameters` / `videoParameters` is ignored. See [docs/interstitial-capabilities.md](docs/interstitial-capabilities.md).
 
 **Methods:**
 
@@ -855,10 +847,9 @@ audienzzBannerView.onAdSizeChanged = { [weak self] newSize in
 Here is minimum example of configuring and loading interstitial ad:
 
 ```swift
-// Create an interstitial ad view with specified ad formats
+// Create an interstitial ad view. Its formats and API frameworks are backend-controlled.
 let audienzzInterstitialView = AUInterstitialView(
     configId: PREBID_CONFIG_ID,        // Prebid configuration ID provided by Audienzz
-    adFormats: [.banner],              // Specify that this ad unit supports banner format (for interstitial)
     isLazyLoad: true                   // Enable lazy loading for better performance
 )
 
@@ -1270,5 +1261,5 @@ fullscreen timer. A page report never replaces their prefetched inventory.
 ### Automatic request counters
 
 Original and remote banners/interstitials automatically include `au_page_seq`, `au_slot` and
-`au_refresh` in GAM custom targeting. See [the request targeting contract](docs/ad-request-targeting.md)
+`hb_refresh_count` in GAM custom targeting. See [the request targeting contract](docs/ad-request-targeting.md)
 for page resets, automatic slot ordering and request-count semantics. No new publisher parameter is required.

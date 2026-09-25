@@ -25,6 +25,12 @@ import GoogleMobileAds
 @objcMembers
 public class AUInterstitialView: AUAdView {
     internal var adUnit: InterstitialAdUnit!
+
+    /// Asks Prebid for demand. A seam so a test can stand in for Prebid, including the way it
+    /// rewrites the request's custom targeting.
+    @nonobjc internal var demand: (InterstitialAdUnit, AdManagerRequest, @escaping (ResultCode) -> Void) -> Void = {
+        unit, request, completion in unit.fetchDemand(adObject: request, completion: completion)
+    }
     internal var gamRequest: AnyObject?
     internal var eventHandler: AUInterstitialHandler?
     internal var gadUnitID: String?
@@ -43,44 +49,60 @@ public class AUInterstitialView: AUAdView {
     /// Full-screen viewability driver (start on present, success after 1s, cancel on dismiss).
     internal var fullScreenViewabilityTimer: AUFullScreenViewabilityTimer?
 
+    /// Video settings for the request: duration, bitrate, protocols, playback and so on.
+    /// Its `api` list is ignored — the API frameworks an interstitial advertises are
+    /// backend-controlled (see `AUInterstitialCapabilities`).
     public var videoParameters: AUVideoParameters?
+    /// Banner settings for the request: sizes and minimum size percentages. Its `api` list is
+    /// ignored, like ``videoParameters``'s.
     public var bannerParameters = AUBannerParameters()
-    
+
+    /// Formats and API frameworks this interstitial's requests advertise. A hand-built
+    /// interstitial has no ad config, so this is the default unless a bridge that read the ad
+    /// config itself hands the backend values over (``setBackendCapabilities(format:apis:)``).
+    /// There is no publisher setting for it.
+    internal var capabilities = AUInterstitialCapabilities.default
+
     /**
-     Initialize Interstitial view
-     Lazy load is true by default.
+     Initialize Interstitial view.
+     The ad formats and API frameworks it requests are not arguments: they are
+     backend-controlled, and a hand-built interstitial asks for banner and video with
+     MRAID 1/2/3 + OMID 1.
      */
-    public init(configId: String, adFormats: [AUAdFormat]) {
-        super.init(configId: configId, isLazyLoad: true)
-        adUnit = InterstitialAdUnit(configId: configId)
-        self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
-        
-        self.adUnit.adFormats = Set(unwrapAdFormat(adFormats))
-    }
-    
-    /**
-     Initialize Interstitial view
-     Lazy load is true by default.
-     */
-    public init(configId: String, adFormats: [AUAdFormat], isLazyLoad: Bool) {
+    public override init(configId: String, isLazyLoad: Bool) {
         super.init(configId: configId, isLazyLoad: isLazyLoad)
         self.adUnit = InterstitialAdUnit(configId: configId)
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
-        
-        self.adUnit.adFormats = Set(unwrapAdFormat(adFormats))
+        capabilities.apply(to: adUnit)
     }
-    
+
     /**
-     Initialize Interstitial view. Convenience variant
+     Initialize Interstitial view.
      Lazy load is true by default.
      */
-    public convenience init(configId: String, adFormats: [AUAdFormat], isLazyLoad: Bool, minWidthPerc: Int, minHeightPerc: Int) {
-        self.init(configId: configId, adFormats: adFormats, isLazyLoad: isLazyLoad)
+    public convenience init(configId: String) {
+        self.init(configId: configId, isLazyLoad: true)
+    }
+
+    /**
+     Initialize Interstitial view with minimum size percentages.
+     */
+    public convenience init(configId: String, isLazyLoad: Bool, minWidthPerc: Int, minHeightPerc: Int) {
+        self.init(configId: configId, isLazyLoad: isLazyLoad)
         self.adUnit = InterstitialAdUnit(configId: configId, minWidthPerc: minWidthPerc, minHeightPerc: minHeightPerc)
         self.adUnitConfiguration = AUAdUnitConfiguration(adUnit: adUnit)
-        self.adUnit.adFormats = Set(unwrapAdFormat(adFormats))
+        capabilities.apply(to: adUnit)
     }
-    
+
+    /// Bridge-only: the ad config's raw `prebidConfig.format` / `prebidConfig.apis`, for a bridge
+    /// whose remote interstitials read the ad config themselves (Flutter). They are validated
+    /// exactly as the native remote interstitial validates them, and take effect on the next
+    /// accepted request. Not a publisher setting.
+    @_spi(AudienzzBridge)
+    public func setBackendCapabilities(format: String?, apis: [Int]?) {
+        capabilities = AUInterstitialCapabilities.resolve(format: format, apis: apis)
+    }
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -132,7 +154,8 @@ public class AUInterstitialView: AUAdView {
             gamRequest.publisherProvidedID = ppid
         }
         
-        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
+        // Kept as the publisher passed it; targeting is assembled per request (AUAuctionTargeting).
+        self.gamRequest = gamRequest
         
         if !self.isLazyLoad {
             fetchRequest(gamRequest)

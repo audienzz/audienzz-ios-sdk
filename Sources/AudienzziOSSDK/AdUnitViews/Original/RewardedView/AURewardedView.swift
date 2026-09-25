@@ -110,7 +110,8 @@ public class AURewardedView: AUAdView {
             gamRequest.publisherProvidedID = ppid
         }
         
-        self.gamRequest = AUTargeting.shared.customTargetingManager.applyToGamRequest(request: gamRequest)
+        // Kept as the publisher passed it; targeting is assembled per request (AUAuctionTargeting).
+        self.gamRequest = gamRequest
         if !self.isLazyLoad {
             fetchRequest(gamRequest)
         } else {

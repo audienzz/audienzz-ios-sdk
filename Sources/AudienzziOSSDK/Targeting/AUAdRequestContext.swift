@@ -43,8 +43,12 @@ internal struct AUAdRequestSnapshot: Equatable {
     let pageSequence: Int
     let slot: Int
     let refresh: Int
+    /// `hb_refresh_count` shares Prebid's prefix, which is why every Prebid auction is wrapped in
+    /// ``AUAuctionTargeting/PrebidGuard``.
+    static let keys = ["au_page_seq", "au_slot", "hb_refresh_count"]
+
     var targeting: [String: String] {
-        ["au_page_seq": String(pageSequence), "au_slot": String(slot), "au_refresh": String(refresh)]
+        ["au_page_seq": String(pageSequence), "au_slot": String(slot), "hb_refresh_count": String(refresh)]
     }
 }
 

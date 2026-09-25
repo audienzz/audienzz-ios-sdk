@@ -32,7 +32,6 @@ extension SeparateViewController {
 
         interstitialView = AUInterstitialView(
             configId: placementId,
-            adFormats: [.banner],
             isLazyLoad: true
         )
         interstitialView.frame = CGRect(
@@ -103,7 +102,6 @@ extension SeparateViewController {
 
         interstitialVideoView = AUInterstitialView(
             configId: placementId,
-            adFormats: [.video],
             isLazyLoad: true,
             minWidthPerc: 60,
             minHeightPerc: 70
@@ -170,7 +168,6 @@ extension SeparateViewController {
 
         interstitialMultiplatformView = AUInterstitialView(
             configId: placementId,
-            adFormats: [.banner, .video],
             isLazyLoad: true,
             minWidthPerc: 60,
             minHeightPerc: 70
