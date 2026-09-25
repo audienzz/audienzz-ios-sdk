@@ -216,6 +216,9 @@ public class AURemoteConfigBannerView: VisibleView {
         let gamBanner = AdManagerBannerView(adSize: gadSize)
         gamBanner.rootViewController = rootViewController
         gamBanner.delegate = delegate
+        // Bridges need creative-size changes independently of load completion so their outer
+        // layout can grow when an inline banner reports its height later.
+        gamBanner.adSizeDelegate = delegate as? AdSizeDelegate
         gamBanner.adUnitID = remoteConfig.gamConfig.adUnitPath
         gamBanner.validAdSizes = remoteConfig.gamConfig.adSizes
             .compactMap { CGSize.from(string: $0) }
