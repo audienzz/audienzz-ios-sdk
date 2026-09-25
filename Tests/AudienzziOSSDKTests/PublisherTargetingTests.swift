@@ -47,14 +47,15 @@ final class PublisherTargetingTests: AudienzzLifecycleTestCase {
     }
 
     /// Everything the contract promises about one request that reached GAM.
-    private func assertContract(_ sent: AdManagerRequest?, refresh: Int = 0,
+    private func assertContract(_ sent: AdManagerRequest?, refresh: Int = 0, banner: Bool = true,
                                 file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertNotNil(sent, "control: a request reached GAM", file: file, line: line)
         XCTAssertEqual(value("category", sent), "sports", "publisher per-request key", file: file, line: line)
         XCTAssertEqual(value("hb_custom", sent), "keep", "a publisher `hb_` key survives Prebid", file: file, line: line)
         XCTAssertEqual(value("section", sent), "news", "publisher global key", file: file, line: line)
         XCTAssertNotEqual(value("au_slot", sent), "999", "a publisher cannot override the SDK's keys", file: file, line: line)
-        XCTAssertNotNil(value("au_slot", sent), file: file, line: line)
+        if banner { XCTAssertNotNil(value("au_slot", sent), file: file, line: line) }
+        else { XCTAssertNil(value("au_slot", sent), file: file, line: line) }
         XCTAssertEqual(value("hb_refresh_count", sent), String(refresh), file: file, line: line)
         XCTAssertTrue(value("au_sdk", sent)?.hasPrefix("ios") == true, "\(String(describing: value("au_sdk", sent)))", file: file, line: line)
     }
@@ -152,7 +153,7 @@ final class PublisherTargetingTests: AudienzzLifecycleTestCase {
         view.onLoadRequest = { sent = $0 as? AdManagerRequest }
         view.createAd(with: publisherRequest(), adUnitID: "/gam/int")
         settle()
-        assertContract(sent)
+        assertContract(sent, banner: false)
     }
 
     func testRemoteInterstitialKeepsBothSides() {
@@ -172,7 +173,7 @@ final class PublisherTargetingTests: AudienzzLifecycleTestCase {
         owner.loadOverride = { _ in }
         owner.prefetch { _ in }
         settle()
-        assertContract(sent)
+        assertContract(sent, banner: false)
     }
 
     func testRewardedKeepsTheSidesThroughPrebid() {

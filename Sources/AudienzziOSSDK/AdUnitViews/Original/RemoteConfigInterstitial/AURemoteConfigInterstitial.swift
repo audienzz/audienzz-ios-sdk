@@ -304,7 +304,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         // interstitials at all, so targeted line items could not be selected for them.
         let template = AUTargeting.shared.customTargetingManager
             .applyToGamRequest(request: AdManagerRequest())
-        let request = requestContext.nextRequest(from: template)
+        let request = requestContext.nextRequest(from: template, isInterstitial: true)
         let prebidGuard = AUAuctionTargeting.PrebidGuard(request)
         request.publisherProvidedID = PPIDManager.shared.getPPID()
         analyticsAdUnitPath = config.adUnitPath

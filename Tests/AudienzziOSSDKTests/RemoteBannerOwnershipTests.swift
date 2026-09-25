@@ -34,6 +34,33 @@ final class RemoteBannerOwnershipTests: AudienzzLifecycleTestCase {
     }]
     """
 
+
+    func testReviewAdaptiveLazySlotHasNonzeroFrameAndCanRequest() throws {
+        Audienzz.shared.pageImpression(host)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.rootViewController = host
+        window.isHidden = false
+        container.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            container.leadingAnchor.constraint(equalTo: host.view.leadingAnchor),
+            container.topAnchor.constraint(equalTo: host.view.topAnchor, constant: 100),
+            container.widthAnchor.constraint(equalToConstant: 320)
+        ])
+        host.view.layoutIfNeeded()
+        let owner = AURemoteConfigBannerView(adConfigId: "adaptive-banner")
+        owner.load(in: container, rootViewController: host)
+        defer { owner.destroy(); window.isHidden = true }
+        let banner = try XCTUnwrap(banners().first)
+        banner.headerBiddingEnabled = false
+        var requests = 0
+        banner.onLoadRequest = { _ in requests += 1 }
+        host.view.layoutIfNeeded()
+        banner.refreshVisibilityNow()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        XCTAssertGreaterThan(banner.bounds.height, 0, "adaptive lazy slot must reserve space before load")
+        XCTAssertEqual(requests, 1, "a visible adaptive slot must reach Google once")
+    }
+
     private func seedConfig(_ present: Bool) {
         var configs: [RemoteAdConfiguration]?
         if present {

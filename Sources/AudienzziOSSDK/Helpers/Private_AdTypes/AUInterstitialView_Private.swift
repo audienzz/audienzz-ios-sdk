@@ -40,7 +40,7 @@ extension AUInterstitialView {
         // frameworks are backend-controlled and win over bannerParameters, videoParameters and
         // impOrtbConfig alike.
         capabilities.apply(to: adUnit)
-        let gamRequest = requestContext.nextRequest(from: AUAuctionTargeting.request(from: gamRequest))
+        let gamRequest = requestContext.nextRequest(from: AUAuctionTargeting.request(from: gamRequest), isInterstitial: true)
         let prebidGuard = AUAuctionTargeting.PrebidGuard(gamRequest)
         prebidWinningBidder = nil
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
