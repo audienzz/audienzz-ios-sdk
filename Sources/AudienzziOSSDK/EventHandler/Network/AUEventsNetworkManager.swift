@@ -22,7 +22,10 @@ class AUEventsNetworkManager<T: APIResult> {
     private let urlSession: URLSession!
     
     init(urlSession: URLSession? = nil) {
-        self.urlSession = urlSession ?? URLSession(configuration: .default, delegate: nil,
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForResource = 30
+        self.urlSession = urlSession ?? URLSession(configuration: configuration, delegate: nil,
                                                    delegateQueue: OperationQueue.main)
         self.startMonitoring()
     }

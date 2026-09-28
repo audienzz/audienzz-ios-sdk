@@ -91,8 +91,7 @@ final class AnalyticsTransportTests: XCTestCase {
             return count == 1 ? (403, Data("<html>Forbidden</html>".utf8)) : (204, nil)
         }
         let queue = AUEventQueue(networkManager: network, store: store,
-            config: .init(maxBatchSize: 1, flushIntervalMs: 10, maxQueueSize: 10,
-                          maxRetries: 1, retryBaseDelayMs: 1))
+            config: .init(maxQueueSize: 10, retryBaseDelayMs: 1, maxRetryDelayMs: 10))
         queue.enqueue(["event_id": "secret-first", "event_type": "pageImpression", "device_id": "secret-device"])
         queue.enqueue(["event_id": "secret-second", "event_type": "adImpression"])
         withExtendedLifetime(queue) {
