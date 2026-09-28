@@ -33,6 +33,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // On by default HERE because this app exists to be tested and have its log read back; in
         // a real app it is off unless you ask for it. Set it BEFORE configuring, so the very
         // first page impression is in the log.
+        Audienzz.shared.configureAnalytics(publisherId: nil, environment: "test")
         Audienzz.shared.diagnosticsEnabled = true
         // Demo: apply the persisted Smart Refresh v2 toggle (see the switch on the home screen).
         // The local override wins over the backend flag, so this forces the model on/off for the app.

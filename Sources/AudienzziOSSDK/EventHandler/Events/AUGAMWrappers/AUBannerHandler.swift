@@ -52,7 +52,7 @@ class AUBannerHandler: NSObject,
     init(auBannerView: AUBannerView, gamView: AdManagerBannerView) {
         self.auBannerView = auBannerView
         self.gamView = gamView
-        self.bannerDelegate = gamView.delegate
+        self.bannerDelegate = (gamView.delegate as? AUBannerHandler).map { $0.bannerDelegate } ?? gamView.delegate
         self.eventDelegate = gamView.appEventDelegate
         self.sizeDelegate = gamView.adSizeDelegate
         super.init()
@@ -64,7 +64,10 @@ class AUBannerHandler: NSObject,
     }
 
     func ensureListeners() {
-        if gamView.delegate !== self { bannerDelegate = gamView.delegate; gamView.delegate = self }
+        if gamView.delegate !== self {
+            bannerDelegate = (gamView.delegate as? AUBannerHandler).map { $0.bannerDelegate } ?? gamView.delegate
+            gamView.delegate = self
+        }
         if gamView.appEventDelegate !== self { eventDelegate = gamView.appEventDelegate; gamView.appEventDelegate = self }
         if gamView.adSizeDelegate !== self { sizeDelegate = gamView.adSizeDelegate; gamView.adSizeDelegate = self }
     }
@@ -73,13 +76,12 @@ class AUBannerHandler: NSObject,
         self.gamView.delegate = self
         self.gamView.appEventDelegate = self
         self.gamView.adSizeDelegate = self
-        // GMA reports the impression's paid value + currency here (the only fork-free currency
-        // source). Stash it on the view so the render events can carry currency (and cpm on a
-        // direct fill). Fires around impression, so it lands on adImpression/adClick/viewability.
+        // GMA reports revenue for one impression and its currency. Convert the amount to CPM;
+        // the pair may arrive after the impression callback, so never delay or re-emit that event.
         self.gamView.paidEventHandler = { [weak auBannerView] adValue in
             guard auBannerView?.acceptsGoogleEvents == true else { return }
             auBannerView?.lastPaidCurrency = adValue.currencyCode
-            auBannerView?.lastPaidCpm = adValue.value.doubleValue
+            auBannerView?.lastPaidCpm = adValue.value.doubleValue * 1_000
         }
     }
 
@@ -161,6 +163,8 @@ class AUBannerHandler: NSObject,
                           event: .googleImpression, visible: $0.isViewRefreshEligible)
         }
         guard auBannerView?.acceptsGoogleEvents == true else { return }
+        guard auBannerView?.claimDisplayedImpression(
+            responseId: bannerView.responseInfo?.responseIdentifier) == true else { return }
         LogEvent("bannerViewDidRecordImpression")
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID ?? "",

@@ -36,6 +36,45 @@ final class AnalyticsTransportTests: XCTestCase {
         super.tearDown()
     }
 
+    func testConfiguredPublisherAndEnvironmentReachTheSerializedRequest() {
+        let done = expectation(description: "Analytics context reaches transport")
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer {
+            AUAnalyticsContext.shared.configure(publisherId: nil, environment: "production")
+            try? FileManager.default.removeItem(at: directory)
+        }
+        StubProtocol.reply = { request in
+            do {
+                var body = request.httpBody ?? Data()
+                if let stream = request.httpBodyStream {
+                    stream.open()
+                    defer { stream.close() }
+                    var buffer = [UInt8](repeating: 0, count: 4096)
+                    while true {
+                        let count = stream.read(&buffer, maxLength: buffer.count)
+                        guard count > 0 else { break }
+                        body.append(contentsOf: buffer.prefix(count))
+                    }
+                }
+                XCTAssertFalse(body.isEmpty)
+                let events = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [[String: Any]])
+                XCTAssertEqual(events.count, 1)
+                let event = try XCTUnwrap(events.first)
+                XCTAssertEqual(event["publisher_id"] as? String, "35")
+                XCTAssertEqual(event["environment"] as? String, "test")
+                XCTAssertNil(event["company_id"])
+                done.fulfill()
+            } catch { XCTFail("Malformed payload: \(error)") }
+            return (204, nil)
+        }
+        let queue = AUEventQueue(networkManager: network, store: AUEventStore(directory: directory))
+        let manager = AUEventsManager(makeQueue: { queue })
+        XCTAssertTrue(Audienzz.shared.configureAnalytics(publisherId: "35", environment: "test"))
+        manager.configure(companyId: "seller-not-company")
+        manager.onScreenResumed(screenName: "fixture")
+        withExtendedLifetime(manager) { wait(for: [done], timeout: 2) }
+    }
+
     func testEveryHTTPResponseCompletesWithStatusBasedResult() {
         for (status, body) in [(200, ""), (202, ""), (204, ""),
                                (403, "<html>Forbidden</html>"), (500, ""),
