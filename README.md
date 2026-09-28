@@ -385,7 +385,7 @@ viewability tracking yourself. The only integration step is one call per ad-bear
 | `pageImpression` | A screen showing ads appears/resumes (you trigger this via `pageImpression`) |
 | `bidRequest` | A Prebid bid request is sent for a slot (also on each auto-refresh) |
 | `bidResponse` | Prebid returns a result |
-| `bidWon` | A Prebid bid wins — carries `cpm`, `currency`, `creative_id`, `auction_id`, `ad_id`, `bidder_code` |
+| `bidWon` | A Prebid bid wins — carries `auction_id`, `bidder_code` and available targeting metadata; unavailable exact bid price/currency and IDs are omitted |
 | `noBid` | The auction returned no usable bid |
 | `adImpression` | The ad is rendered on screen — carries `bidder_code` (the demand that rendered) |
 | `adClick` | The user taps the ad |
@@ -396,8 +396,9 @@ Banner, interstitial and rewarded ads on the Original API are all covered.
 
 ### Step 1 — Initialize the SDK
 
-Analytics is keyed on your **Company ID** (provided by Audienzz), supplied when you initialize the
-SDK. Nothing is reported until initialization succeeds. See [Initialize SDK](#initialize-sdk).
+Analytics uses the **publisher ID** from remote configuration as `publisher_id`; the collector
+resolves company and website IDs. Direct integrations can supply the publisher through
+`configureAnalytics`. See [the analytics contract](docs/analytics-contract.md).
 
 ### Step 2 — Screen reporting
 

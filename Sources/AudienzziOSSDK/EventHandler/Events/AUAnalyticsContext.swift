@@ -29,3 +29,10 @@ final class AUAnalyticsContext {
 private extension String {
     var nonEmpty: String? { isEmpty ? nil : self }
 }
+
+/// Immutable screen-visit identity captured when an ad request starts. An empty snapshot means
+/// the publisher has not reported a page yet; it must never adopt a later screen's identity.
+struct AUAnalyticsPageContext {
+    var pageImpressionId: String? = nil
+    var screenName: String? = nil
+}

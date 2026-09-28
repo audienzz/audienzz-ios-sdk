@@ -43,6 +43,7 @@ public class AUGAMBannerEventHandler: NSObject {
 */
 @objcMembers
 public class AUBannerRenderingView: AUAdView {
+    @nonobjc internal var analyticsPage = AUAnalyticsPageContext()
     internal var bannerView: BannerView!
     
     @objc public weak var delegate: AUBannerRenderingAdDelegate?
@@ -134,6 +135,7 @@ public class AUBannerRenderingView: AUAdView {
 
         if !isLazyLoad {
             delegate?.bannerAdDidDisplayOnScreen?()
+            analyticsPage = AUEventsManager.shared.capturePageContext()
             bannerView.loadAd()
         }
     }
@@ -144,6 +146,7 @@ public class AUBannerRenderingView: AUAdView {
         }
 
         delegate?.bannerAdDidDisplayOnScreen?()
+        analyticsPage = AUEventsManager.shared.capturePageContext()
         bannerView.loadAd()
         isLazyLoaded = true
         #if DEBUG
@@ -198,7 +201,7 @@ internal class AUBannerRenderingDelegateType: NSObject, BannerViewDelegate {
     private func makeCloseEvent(_ parent: AUBannerRenderingView) {}
 
     private func makeClickEvent(_ parent: AUBannerRenderingView) {
-        AUEventsManager.shared.adClick(adUnitId: parent.eventHandler?.adUnitID ?? "")
+        AUEventsManager.shared.adClick(adUnitId: parent.eventHandler?.adUnitID ?? "", pageContext: parent.analyticsPage)
     }
 
     private func makeErrorEvent(parent: AUBannerRenderingView, _ error: Error) {}

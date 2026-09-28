@@ -51,8 +51,13 @@ final class AUEventsManager: AULogEventType {
     private let seqLock = NSLock()
 
     /// Regenerated on every `onScreenResumed`; tags all ad events with the current screen visit.
-    private var currentPageImpressionId: String?
-    private var currentScreenName: String?
+    private var currentPageContext = AUAnalyticsPageContext()
+    private let pageLock = NSLock()
+
+    func capturePageContext() -> AUAnalyticsPageContext {
+        pageLock.lock(); defer { pageLock.unlock() }
+        return currentPageContext
+    }
 
     private let mapper = AUEventNetworkMapper()
     private var eventQueue: AUEventQueue?
@@ -78,12 +83,15 @@ final class AUEventsManager: AULogEventType {
 
     // MARK: - Screen tracking
 
-    /// Call from every screen (UIViewController) that shows ads. Generates a fresh page-impression
-    /// id and fires a `pageImpression`; subsequent ad events are tagged with that id.
+    /// Report every screen visit, including screens without ads. Refreshes retain the visit ID;
+    /// another page impression (including returning to the same screen) creates a new one.
     func onScreenResumed(screenName: String) {
-        currentPageImpressionId = AUUniqHelper.makeUniqID()
-        currentScreenName = screenName
+        let page = AUAnalyticsPageContext(pageImpressionId: AUUniqHelper.makeUniqID(), screenName: screenName)
+        pageLock.lock()
+        currentPageContext = page
+        pageLock.unlock()
         var event = AUEventDomain(type: .pageImpression)
+        event.pageContext = page
         event.screenName = screenName
         event.consentString = AUTargeting.shared.gdprConsentString
         logEvent(event)
@@ -96,18 +104,14 @@ final class AUEventsManager: AULogEventType {
     var observerForTesting: ((AUEventDomain) -> Void)?
 
     func logEvent(_ event: AUEventDomain) {
-        observerForTesting?(event)
+        var enriched = event
+        let page = event.pageContext ?? capturePageContext()
+        enriched.pageImpressionId = event.pageImpressionId ?? page.pageImpressionId
+        enriched.screenName = event.screenName ?? page.screenName
+        observerForTesting?(enriched)
         guard let eventQueue = eventQueue else { return }
         requestDeviceId()
 
-        // Safety net: if an ad event fires before any onScreenResumed (e.g. a banner prefetches
-        // during layout, before the host's viewWillAppear), lazily start a page-impression id so the
-        // event is never orphaned. onScreenResumed normally sets this first, so this rarely triggers.
-        if currentPageImpressionId == nil, event.type != .pageImpression {
-            currentPageImpressionId = AUUniqHelper.makeUniqID()
-        }
-
-        var enriched = event
         enriched.uuid = AUUniqHelper.makeUniqID()
         enriched.visitorId = visitorId
         let context = AUAnalyticsContext.shared.snapshot()
@@ -116,9 +120,6 @@ final class AUEventsManager: AULogEventType {
         enriched.sessionId = sessionId
         enriched.sessionStartTimestamp = sessionStartTimestamp
         enriched.deviceId = deviceId
-        enriched.pageImpressionId = currentPageImpressionId
-        // Screen name of the current visit rides on every event (not just pageImpression).
-        enriched.screenName = enriched.screenName ?? currentScreenName
         enriched.sessionSeq = nextSequence()
 
         let network = mapper.toNetwork(enriched)

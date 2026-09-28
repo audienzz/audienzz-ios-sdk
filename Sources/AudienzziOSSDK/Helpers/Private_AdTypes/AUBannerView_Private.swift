@@ -404,6 +404,7 @@ extension AUBannerView {
 
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
+        currentAnalyticsPage = AUEventsManager.shared.capturePageContext()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         let generationAtRequest = auctionGeneration
         if !headerBiddingEnabled {
@@ -578,7 +579,8 @@ extension AUBannerView {
             isRefresh: !isInitialAutorefresh,
             mediaTypes: Self.mediaTypesJSON(subtype: makeAdSubType()),
             auctionId: currentAuctionId,
-            slotReload: emittedSlotReload
+            slotReload: emittedSlotReload,
+            pageContext: currentAnalyticsPage
         )
     }
 
@@ -622,14 +624,15 @@ extension AUBannerView {
                 // Keep hb_pb as price_bucket; do not pretend it is an exact, denominated CPM.
                 cpm: nil, currency: nil, creativeId: creativeId,
                 auctionId: currentAuctionId, adId: adId,
-                timeToRespond: timeToRespond, slotReload: emittedSlotReload)
+                timeToRespond: timeToRespond, slotReload: emittedSlotReload, pageContext: currentAnalyticsPage)
         }
 
         AUEventsManager.shared.bidResponse(
             adUnitId: adUnitID, adViewId: configId, sizes: sizes,
             adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
             isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-            resultCode: codeName, timeToRespond: timeToRespond, economics: economics
+            resultCode: codeName, timeToRespond: timeToRespond, economics: economics,
+            pageContext: currentAnalyticsPage
         )
 
         if let economics {
@@ -639,7 +642,8 @@ extension AUBannerView {
                 adUnitId: adUnitID, adViewId: configId, sizes: sizes,
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-                economics: economics
+                economics: economics,
+                pageContext: currentAnalyticsPage
             )
         } else {
             self.prebidWinningBidder = nil
@@ -649,7 +653,8 @@ extension AUBannerView {
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
                 resultCode: codeName, mediaTypes: Self.mediaTypesJSON(subtype: subtype),
-                auctionId: currentAuctionId, slotReload: emittedSlotReload
+                auctionId: currentAuctionId, slotReload: emittedSlotReload,
+                pageContext: currentAnalyticsPage
             )
         }
         // Count this load; next auction/refresh reports the incremented value.
@@ -666,6 +671,7 @@ extension AUBannerView {
         displayedImpressionRecorded = false
         var ec = lastRenderEconomics ?? AURenderEconomics()
         ec.auctionId = ec.auctionId ?? currentAuctionId
+        ec.pageContext = currentAnalyticsPage
         // The reported flag is binary and belongs to the creative, not to the slot's current count.
         ec.slotReload = ec.slotReload ?? emittedSlotReload
         displayedEconomics = ec

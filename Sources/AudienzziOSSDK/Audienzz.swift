@@ -500,6 +500,10 @@ public class Audienzz: NSObject {
     /// releases the previous page's banners and reloads the incoming page's, so a banner can never
     /// keep auctioning for a screen the user has left.
     internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.notifyScreenResumed(screen, name: name) }
+            return
+        }
         AULogEvent.logDebug("[Audienzz][pageImpression] firing → \"\(name)\"")
         AUDiagnostics.log("page", "impression", [
             ("id", AUScreenAdCoordinator.diagnosticToken(for: screen)),

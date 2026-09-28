@@ -37,6 +37,7 @@ public class AUGAMRewardedAdEventHandler: NSObject {
 */
 @objcMembers
 public class AURewardedRenderingView: AUAdView {
+    @nonobjc internal var analyticsPage = AUAnalyticsPageContext()
     private var rewardedAdUnit: RewardedAdUnit!
     public weak var delegate: AURewardedAdUnitDelegate?
     internal var subdelegate: AURewardedRenderingDelegateType?
@@ -75,6 +76,7 @@ public class AURewardedRenderingView: AUAdView {
         
         if !isLazyLoad {
             self.delegate?.rewardedAdDidDisplayOnScreen?()
+            analyticsPage = AUEventsManager.shared.capturePageContext()
             rewardedAdUnit.loadAd()
         }
     }
@@ -98,6 +100,7 @@ public class AURewardedRenderingView: AUAdView {
         }
 
         self.delegate?.rewardedAdDidDisplayOnScreen?()
+        analyticsPage = AUEventsManager.shared.capturePageContext()
         rewardedAdUnit.loadAd()
         isLazyLoaded = true
         #if DEBUG
