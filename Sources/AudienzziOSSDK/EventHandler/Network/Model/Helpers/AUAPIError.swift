@@ -15,15 +15,26 @@
 
 import Foundation
 
-enum AUAPIError: Error, Equatable {
+enum AUAPIError: Error, Equatable, LocalizedError {
     case connectionError(Error)
     case couldNotParseResponse
+    case httpStatus(Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .connectionError(let error): return error.localizedDescription
+        case .couldNotParseResponse: return "Could not parse analytics response"
+        case .httpStatus(let status): return "Analytics HTTP \(status)"
+        }
+    }
 }
 
 func == (lhs: AUAPIError, rhs: AUAPIError) -> Bool {
   switch (lhs, rhs) {
   case (.couldNotParseResponse, .couldNotParseResponse):
     return true
+  case (.httpStatus(let lhs), .httpStatus(let rhs)):
+    return lhs == rhs
   default:
     return false
   }

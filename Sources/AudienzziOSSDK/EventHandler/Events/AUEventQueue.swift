@@ -101,6 +101,8 @@ final class AUEventQueue {
         queue.async { [weak self] in
             guard let self = self else { return }
             self.buffer.append(json)
+            AUDiagnostics.log("analytics", "queued", [("type", json["event_type"]),
+                                                       ("count", self.buffer.count)])
             // Persist before anything else can go wrong with it.
             self.store.append(json)
 
@@ -140,6 +142,7 @@ final class AUEventQueue {
         // next launch resends it — a duplicate the backend can dedupe on `event_id` is recoverable,
         // a silently dropped event is not.
         inFlightChunk = chunk
+        AUDiagnostics.log("analytics", "sending", [("count", chunk.count), ("attempt", retryCount + 1)])
         AULogEvent.logDebug("[AUAnalytics] flushing batch of \(chunk.count) (\(buffer.count) still queued)")
 
         // `AUEventsNetworkManager` can invoke the completion more than once; guard so a batch is
@@ -153,15 +156,26 @@ final class AUEventQueue {
                 self.inFlight = false
 
                 switch result {
-                case .success:
+                case .success(let acknowledgement):
                     self.retryCount = 0
                     // Delivered — no longer owed, so drop it from disk.
                     self.inFlightChunk = []
                     self.persistBuffer()
+                    AUDiagnostics.log("analytics", "sent", [("count", chunk.count), ("status", acknowledgement.code)])
                     AULogEvent.logDebug("[AUAnalytics] ✓ batch sent (\(chunk.count) events)")
                     if !self.buffer.isEmpty { self.sendNextBatch() }
 
                 case .failure(let error):
+                    // Never log the batch or arbitrary error text: proxy replies may contain
+                    // request data. A status or URL loading error code is enough to diagnose it.
+                    var fields: [(String, Any?)] = [("count", chunk.count),
+                                                   ("attempt", self.retryCount + 1)]
+                    switch error {
+                    case .httpStatus(let status): fields.append(("status", status))
+                    case .connectionError(let cause): fields.append(("code", (cause as NSError).code))
+                    case .couldNotParseResponse: fields.append(("reason", "invalidResponse"))
+                    }
+                    AUDiagnostics.log("analytics", "failed", fields)
                     if self.retryCount < self.config.maxRetries {
                         self.retryCount += 1
                         // Back into the buffer; still owed, and still on disk where it already is.
@@ -178,6 +192,7 @@ final class AUEventQueue {
                         // Given up on: stop owing it, or it would be retried forever across launches.
                         self.inFlightChunk = []
                         self.persistBuffer()
+                        AUDiagnostics.log("analytics", "dropped", [("count", chunk.count)])
                         AULogEvent.logDebug(
                             "[AUAnalytics] ✗ batch dropped after \(self.config.maxRetries) retries (\(chunk.count) events)")
                         if !self.buffer.isEmpty { self.scheduleTimerIfNeeded() }
