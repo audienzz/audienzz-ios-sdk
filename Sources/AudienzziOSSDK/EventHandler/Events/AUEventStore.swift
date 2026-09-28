@@ -15,25 +15,15 @@
 
 import Foundation
 
-/// Disk backing for `AUEventQueue` — a durable outbox so events survive process death.
-///
-/// Events are stored as JSON Lines: one serialized event per line, appended as it is enqueued and
-/// rewritten only when a batch is confirmed delivered. Appending (rather than rewriting the whole
-/// buffer per event) keeps the cost of an enqueue constant regardless of how much is backed up.
-///
-/// Writing on *enqueue* is the whole point. The queue already flushes when the app backgrounds, so
-/// the tidy path was never the lossy one; what was lost was a foreground crash or force-quit, and
-/// only a write that has already happened by then can survive it.
-///
-/// A line that fails to parse is skipped rather than failing the load: the last line can be a
-/// partial write if the process died mid-append, and one torn event is not a reason to drop the
-/// hundreds of intact ones in front of it.
-///
-/// Not thread-safe by itself — every call is made from `AUEventQueue`'s serial queue.
+/// Append-only durable outbox. Event records retain the existing JSONL format; small acknowledgement
+/// records remove events by ID. Compact every 64 removals (or when empty), not once per HTTP reply.
+/// All access belongs to AUEventQueue's utility queue. Legacy event-only files migrate on read.
 final class AUEventStore {
 
     private let fileURL: URL?
     private var handle: FileHandle?
+    private var cached: [JSONObject]?
+    private var removals = 0
 
     /// - Parameter directory: override for tests. Default is Application Support, which is meant
     ///   for data the app recreates as needed but should not lose casually — Caches would let the
@@ -44,9 +34,7 @@ final class AUEventStore {
             AULogEvent.logDebug("[AUAnalytics] no writable directory — events will not be persisted")
             return
         }
-        try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
         self.fileURL = base.appendingPathComponent(fileName)
-        excludeFromBackup()
     }
 
     deinit {
@@ -57,48 +45,74 @@ final class AUEventStore {
 
     /// Every event still on disk, oldest first. Unparseable lines are skipped.
     func loadAll() -> [JSONObject] {
-        guard let fileURL = fileURL,
-              let data = try? Data(contentsOf: fileURL),
-              !data.isEmpty
-        else { return [] }
-
+        if let cached { return cached }
+        guard let fileURL, let data = try? Data(contentsOf: fileURL), !data.isEmpty else {
+            cached = []
+            return []
+        }
         var events: [JSONObject] = []
-        var skipped = 0
+        var skipped = false
         for line in data.split(separator: UInt8(ascii: "\n")) where !line.isEmpty {
-            if let object = try? JSONSerialization.jsonObject(with: Data(line)) as? JSONObject {
+            guard let object = try? JSONSerialization.jsonObject(with: Data(line)) as? JSONObject else {
+                skipped = true
+                continue
+            }
+            if let id = object["_au_ack"] as? String {
+                events.removeAll { $0["event_id"] as? String == id }
+                removals += 1
+            } else if let id = object["event_id"] as? String {
+                events.removeAll { $0["event_id"] as? String == id }
                 events.append(object)
-            } else {
-                skipped += 1
             }
         }
-        if skipped > 0 {
-            AULogEvent.logDebug("[AUAnalytics] skipped \(skipped) unreadable line(s) while restoring")
-        }
-        if !events.isEmpty {
-            AULogEvent.logDebug("[AUAnalytics] restored \(events.count) event(s) from disk")
-        }
+        cached = events
+        // Repair a torn tail before appending, so it cannot swallow the next valid event.
+        if skipped || removals >= 64 { replaceAll(events) }
         return events
     }
 
     // MARK: - Writing
 
-    /// Append one event. Constant cost — no rewrite of what is already stored.
     func append(_ json: JSONObject) {
-        guard let line = Self.line(from: json) else { return }
-        guard let handle = appendHandle() else { return }
+        _ = loadAll()
+        guard let id = json["event_id"] as? String else { return }
+        cached?.removeAll { $0["event_id"] as? String == id }
+        cached?.append(json)
+        appendRecord(json)
+    }
+
+    func remove(id: String) {
+        _ = loadAll()
+        guard cached?.contains(where: { $0["event_id"] as? String == id }) == true else { return }
+        cached?.removeAll { $0["event_id"] as? String == id }
+        removals += 1
+        if cached?.isEmpty == true || removals >= 64 {
+            replaceAll(cached ?? [])
+        } else {
+            appendRecord(["_au_ack": id])
+        }
+    }
+
+    private func appendRecord(_ record: JSONObject) {
+        guard let line = Self.line(from: record), let handle = appendHandle() else {
+            AUDiagnostics.log("analytics", "persistenceFailed")
+            return
+        }
         do {
             try handle.seekToEnd()
-            try handle.write(contentsOf: line)
+            try handle.write(contentsOf: Data([UInt8(ascii: "\n")]) + line)
         } catch {
-            AULogEvent.logDebug("[AUAnalytics] could not persist event: \(error.localizedDescription)")
+            AUDiagnostics.log("analytics", "persistenceFailed")
             closeHandle()
         }
     }
 
     /// Replace the stored contents with exactly `events` (written atomically).
     ///
-    /// Called after a batch settles, so what is on disk is what is still owed to the collector.
+    /// Periodic checkpoint: only events still owed to the collector are retained.
     func replaceAll(_ events: [JSONObject]) {
+        cached = events
+        removals = 0
         guard let fileURL = fileURL else { return }
         closeHandle()
 
@@ -112,6 +126,7 @@ final class AUEventStore {
             if let line = Self.line(from: event) { data.append(line) }
         }
         do {
+            try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             // Atomic: a process death mid-rewrite leaves the previous file, never a truncated one.
             try data.write(to: fileURL, options: .atomic)
             excludeFromBackup()
@@ -134,6 +149,7 @@ final class AUEventStore {
         if let handle = handle { return handle }
         guard let fileURL = fileURL else { return nil }
         if !FileManager.default.fileExists(atPath: fileURL.path) {
+            try? FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             FileManager.default.createFile(atPath: fileURL.path, contents: nil)
             excludeFromBackup()
         }

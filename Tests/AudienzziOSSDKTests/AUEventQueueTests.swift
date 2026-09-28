@@ -1,205 +1,155 @@
-/*   Copyright 2018-2025 Audienzz.org, Inc.
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
- */
-
 import XCTest
 @testable import AudienzziOSSDK
 
-/// How the queue uses its store, which is where the durability actually lives — `AUEventStoreTests`
-/// only proves the file works when someone writes to it.
-///
-/// The question each test answers is "what would a process death at this exact moment cost?", so
-/// several of them assert *during* the in-flight request rather than after it.
 final class AUEventQueueTests: XCTestCase {
-
-    /// Records batches and lets the test decide when (and how) each one completes.
-    private final class FakeNetworkManager: AUEventsNetworkManager<AUBatchResultModel> {
-        var sentBatches: [[JSONObject]] = []
-        /// Result to hand back, and a hook that runs before completing — the only place a test can
-        /// observe the world mid-flight.
-        var resultForBatch: (([JSONObject]) -> Result<AUBatchResultModel, AUAPIError>) = { _ in
-            .success(AUBatchResultModel(code: 200))
-        }
-        var onRequest: (([JSONObject]) -> Void)?
-
+    private final class Network: AUEventsNetworkManager<AUBatchResultModel> {
+        private let lock = NSLock()
+        private var requests: [[JSONObject]] = []
+        private var handlers: [(Result<AUBatchResultModel, AUAPIError>) -> Void] = []
+        var atRequest: (([JSONObject]) -> Void)?
+        var sent: [[JSONObject]] { lock.lock(); defer { lock.unlock() }; return requests }
         override func request(_ route: APIRoute<AUBatchResultModel>,
                               handler: @escaping (Result<AUBatchResultModel, AUAPIError>) -> Void) {
-            guard case .batchEvents(let chunk) = route else {
-                XCTFail("the queue must only ever POST batches")
-                return
-            }
-            sentBatches.append(chunk)
-            onRequest?(chunk)
-            handler(resultForBatch(chunk))
+            guard case .batchEvents(let events) = route else { return XCTFail("Unexpected route") }
+            lock.lock()
+            requests.append(events)
+            handlers.append(handler)
+            lock.unlock()
+            atRequest?(events)
+        }
+        func complete(_ index: Int, _ error: AUAPIError? = nil) {
+            lock.lock()
+            let handler = handlers[index]
+            lock.unlock()
+            handler(error.map { .failure($0) } ?? .success(AUBatchResultModel(code: 204)))
         }
     }
-
     private var directory: URL!
-    private var network: FakeNetworkManager!
-
-    /// Small values so the size, timer and backoff paths are reachable without waiting out the real
-    /// 30s interval or the 2/4/8s backoff.
-    private let config = AUEventQueue.Config(
-        maxBatchSize: 2,
-        flushIntervalMs: 50,
-        maxQueueSize: 4,
-        maxRetries: 2,
-        retryBaseDelayMs: 1
-    )
-
+    private var network: Network!
     override func setUp() {
-        super.setUp()
-        directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("AUEventQueueTests-\(UUID().uuidString)")
-        network = FakeNetworkManager()
+        directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        network = Network()
     }
-
     override func tearDown() {
+        network = nil
         try? FileManager.default.removeItem(at: directory)
-        super.tearDown()
+    }
+    private func store() -> AUEventStore { AUEventStore(directory: directory) }
+    private func event(_ id: String) -> JSONObject { ["event_id": id, "event_type": "adClick"] }
+    private func ids(_ events: [JSONObject]) -> [String] { events.compactMap { $0["event_id"] as? String } }
+    private func waitUntil(_ condition: @escaping () -> Bool, file: StaticString = #filePath, line: UInt = #line) {
+        let deadline = Date().addingTimeInterval(2)
+        while !condition() && Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.002)) }
+        XCTAssertTrue(condition(), file: file, line: line)
     }
 
-    private func makeStore() -> AUEventStore { AUEventStore(directory: directory) }
-
-    private func makeQueue(store: AUEventStore? = nil) -> AUEventQueue {
-        AUEventQueue(networkManager: network, store: store ?? makeStore(), config: config)
-    }
-
-    private func event(_ id: String) -> JSONObject {
-        ["event_type": "adClick", "event_id": id, "session_seq": 0]
-    }
-
-    private func ids(_ events: [JSONObject]) -> [String] {
-        events.compactMap { $0["event_id"] as? String }
-    }
-
-    /// Wait for the queue's serial work to drain. Everything it does is scheduled on that queue, so
-    /// a barrier on it is a reliable "nothing further is pending".
-    private func drain(_ timeout: TimeInterval = 2) {
-        let done = expectation(description: "queue drained")
-        DispatchQueue.global().asyncAfter(deadline: .now() + 0.15) { done.fulfill() }
-        wait(for: [done], timeout: timeout)
-    }
-
-    // MARK: - Writing
-
-    func testAnEventIsOnDiskBeforeTheBatchIsEvenAttempted() {
-        // If the write happened after the send, a crash in between would lose the event — which is
-        // the entire case persistence exists for.
-        var onDiskAtSendTime: [String] = []
-        let store = makeStore()
-        network.onRequest = { [weak self] _ in
-            guard let self = self else { return }
-            onDiskAtSendTime = self.ids(self.makeStore().loadAll())
+    func testFirstEventStartsImmediatelyAndIsPersistedBeforeHTTP() {
+        let sent = expectation(description: "immediate send on worker")
+        network.atRequest = { events in
+            XCTAssertFalse(Thread.isMainThread)
+            XCTAssertEqual(self.ids(self.store().loadAll()), ["a"])
+            XCTAssertEqual(self.ids(events), ["a"])
+            sent.fulfill()
         }
-
-        let queue = makeQueue(store: store)
+        let queue = AUEventQueue(networkManager: network, store: store())
         queue.enqueue(event("a"))
-        queue.enqueue(event("b"))
-        drain()
-
-        XCTAssertEqual(onDiskAtSendTime, ["a", "b"])
+        withExtendedLifetime(queue) { wait(for: [sent], timeout: 0.5) }
     }
 
-    func testADeliveredBatchIsDroppedFromDisk() {
-        let queue = makeQueue()
-        queue.enqueue(event("a"))
-        queue.enqueue(event("b"))
-        drain()
-
-        XCTAssertEqual(network.sentBatches.count, 1)
-        XCTAssertEqual(makeStore().loadAll().count, 0)
+    func testOnlyOneRequestRunsAtATimeAndDuplicateCallbacksCannotDeleteTheNextEvent() {
+        let queue = AUEventQueue(networkManager: network, store: store())
+        queue.enqueue(event("a")); queue.enqueue(event("b"))
+        waitUntil { self.store().loadAll().count == 2 && self.network.sent.count == 1 }
+        network.complete(0)
+        waitUntil { self.network.sent.count == 2 }
+        network.complete(0) // A duplicate completion for "a" cannot acknowledge "b".
+        queue.flush()
+        XCTAssertEqual(ids(store().loadAll()), ["b"])
+        network.complete(1)
+        waitUntil { self.store().loadAll().isEmpty }
+        XCTAssertEqual(network.sent.map(ids), [["a"], ["b"]])
+        withExtendedLifetime(queue) {}
     }
 
-    func testABatchGivenUpOnIsAlsoDroppedFromDisk() {
-        // Otherwise a permanently failing batch would be replayed by every future launch and the
-        // store would never drain.
-        network.resultForBatch = { _ in .failure(.couldNotParseResponse) }
-
-        let queue = makeQueue()
+    func testFailuresStayOnDiskBeyondThreeAttemptsAndBackoffCannotBeBypassed() {
+        let queue = AUEventQueue(networkManager: network, store: store(),
+            config: .init(maxQueueSize: 500, retryBaseDelayMs: 30, maxRetryDelayMs: 60))
         queue.enqueue(event("a"))
-        queue.enqueue(event("b"))
-        drain()
-
-        XCTAssertEqual(network.sentBatches.count, config.maxRetries + 1)
-        XCTAssertEqual(makeStore().loadAll().count, 0)
-    }
-
-    func testEventsQueuedBehindADeliveredBatchSurviveTheRewrite() {
-        // The rewrite must keep what is still owed, not simply truncate the file.
-        let queue = makeQueue()
-        network.onRequest = { chunk in
-            if self.ids(chunk) == ["a", "b"] { queue.enqueue(self.event("c")) }
+        for attempt in 0..<5 {
+            waitUntil { self.network.sent.count == attempt + 1 }
+            let started = Date()
+            network.complete(attempt, .httpStatus(503))
+            for _ in 0..<20 { queue.flush() }
+            waitUntil { self.network.sent.count == attempt + 2 }
+            XCTAssertGreaterThanOrEqual(Date().timeIntervalSince(started), attempt == 0 ? 0.025 : 0.05)
+            XCTAssertEqual(ids(store().loadAll()), ["a"])
         }
+        network.complete(5)
+        waitUntil { self.store().loadAll().isEmpty }
+        withExtendedLifetime(queue) {}
+    }
+
+    func testANewEventDuringBackoffIsSavedButDoesNotTriggerAnEarlyRetry() {
+        let queue = AUEventQueue(networkManager: network, store: store(),
+            config: .init(maxQueueSize: 500, retryBaseDelayMs: 100, maxRetryDelayMs: 100))
         queue.enqueue(event("a"))
+        waitUntil { self.network.sent.count == 1 }
+        network.complete(0, .httpStatus(400))
         queue.enqueue(event("b"))
-        drain()
-
-        // "c" either went out in a second batch or is still owed on disk — never silently gone.
-        let delivered = network.sentBatches.flatMap { self.ids($0) }
-        let stillOwed = ids(makeStore().loadAll())
-        XCTAssertTrue(delivered.contains("c") || stillOwed.contains("c"),
-                      "an event enqueued during a flush was lost")
+        waitUntil { self.store().loadAll().count == 2 }
+        XCTAssertEqual(network.sent.count, 1)
+        waitUntil { self.network.sent.count == 2 }
+        XCTAssertEqual(ids(network.sent[1]), ["a"])
+        network.complete(1, .httpStatus(400))
+        waitUntil { self.network.sent.count == 3 }
+        XCTAssertEqual(ids(network.sent[2]), ["b"], "A bad payload must not strand later events")
+        network.complete(2)
+        waitUntil { self.network.sent.count == 4 }
+        XCTAssertEqual(ids(network.sent[3]), ["a"])
+        network.complete(3)
+        waitUntil { self.store().loadAll().isEmpty }
+        withExtendedLifetime(queue) {}
     }
 
-    // MARK: - Restoring
-
-    func testEventsLeftByAPreviousProcessAreSentOnStartup() {
-        let previous = makeStore()
-        previous.append(event("a"))
-        previous.append(event("b"))
-
-        // Retained deliberately: the restore runs on the queue's own serial queue with a weak
-        // self, so a discarded instance would simply never do it.
-        let queue = makeQueue()
-        withExtendedLifetime(queue) { drain() }
-
-        XCTAssertEqual(network.sentBatches.flatMap { self.ids($0) }, ["a", "b"])
-        XCTAssertEqual(makeStore().loadAll().count, 0)
+    func testAnInFlightEventSurvivesRestartWithItsOriginalIdentity() {
+        var queue: AUEventQueue? = AUEventQueue(networkManager: network, store: store())
+        queue?.enqueue(event("old"))
+        waitUntil { self.network.sent.count == 1 }
+        queue = nil // No acknowledgement: exactly the process-termination ambiguity.
+        let nextNetwork = Network()
+        let next = AUEventQueue(networkManager: nextNetwork, store: store())
+        next.enqueue(event("new"))
+        waitUntil { nextNetwork.sent.count == 1 && self.store().loadAll().count == 2 }
+        XCTAssertEqual(ids(nextNetwork.sent[0]), ["old"])
+        nextNetwork.complete(0)
+        waitUntil { nextNetwork.sent.count == 2 }
+        XCTAssertEqual(ids(nextNetwork.sent[1]), ["new"])
+        nextNetwork.complete(1)
+        waitUntil { self.store().loadAll().isEmpty }
+        withExtendedLifetime(next) {}
     }
 
-    func testRestoredEventsGoOutAheadOfNewOnes() {
-        // They are older; sending the new ones first would reorder the session for no reason.
-        let previous = makeStore()
-        previous.append(event("old"))
-
-        let queue = makeQueue()
-        queue.enqueue(event("new"))
-        drain()
-
-        XCTAssertEqual(network.sentBatches.flatMap { self.ids($0) }.first, "old")
+    func testOverflowProtectsTheInFlightEventAndItsAckCannotRemoveANewerEvent() {
+        let queue = AUEventQueue(networkManager: network, store: store(),
+            config: .init(maxQueueSize: 3))
+        queue.enqueue(event("a"))
+        waitUntil { self.network.sent.count == 1 }
+        for id in ["b", "c", "d", "e"] { queue.enqueue(event(id)) }
+        waitUntil { self.ids(self.store().loadAll()) == ["a", "d", "e"] }
+        network.complete(0)
+        waitUntil { self.network.sent.count == 2 }
+        XCTAssertEqual(ids(store().loadAll()), ["d", "e"])
+        XCTAssertEqual(ids(network.sent[1]), ["d"])
+        withExtendedLifetime(queue) {}
     }
 
-    func testAnEmptyStoreStartsCleanly() {
-        let queue = makeQueue()
-        withExtendedLifetime(queue) { drain() }
-
-        XCTAssertTrue(network.sentBatches.isEmpty)
-    }
-
-    // MARK: - Capacity
-
-    func testOverflowDropsTheOldestFromDiskToo() {
-        // Otherwise the file keeps a backlog the queue has already given up on.
-        network.resultForBatch = { _ in .failure(.couldNotParseResponse) }
-        let store = makeStore()
-        // Restore path fills the buffer past maxQueueSize (4) without any send succeeding.
-        for id in ["a", "b", "c", "d", "e", "f"] { store.append(event(id)) }
-
-        let queue = makeQueue(store: store)
-        withExtendedLifetime(queue) { drain() }
-
-        XCTAssertLessThanOrEqual(makeStore().loadAll().count, config.maxQueueSize)
+    func testReinitializingAnalyticsReusesItsOutbox() {
+        let queue = AUEventQueue(networkManager: network, store: store())
+        var created = 0
+        let manager = AUEventsManager(makeQueue: { created += 1; return queue })
+        manager.configure(companyId: "first")
+        manager.configure(companyId: "second")
+        XCTAssertEqual(created, 1)
+        withExtendedLifetime(manager) {}
     }
 }

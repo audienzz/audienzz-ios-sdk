@@ -3,7 +3,8 @@
 One representative payload per event type, captured from the iOS DemoSwiftApp
 (SDK `0.2.5`, `dev-analytics`, banner on `RemoteConfigViewController`).
 
-Each event is a flat JSON object POSTed individually to
+Each sample below is a flat event object. Current-branch delivery POSTs an array containing
+one such event to
 `https://api.adnz.co/api/ws-clickstream-collector/submit/batch`.
 
 **Event flow per screen visit:**

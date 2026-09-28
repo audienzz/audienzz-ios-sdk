@@ -22,7 +22,7 @@ import UIKit
 fileprivate let keyVisitorId = "keyVisitorId"
 
 /// Clickstream analytics logger. Each event is enriched with identity/session data, serialized, and
-/// handed to `AUEventQueue`, which coalesces events into batched POSTs to the collector (mirrors the
+/// handed to `AUEventQueue` for immediate durable delivery to the collector (mirrors the
 /// Android `EventLoggerImpl` + `EventBatcher`).
 final class AUEventsManager: AULogEventType {
     static let shared = AUEventsManager()
@@ -56,11 +56,21 @@ final class AUEventsManager: AULogEventType {
 
     private let mapper = AUEventNetworkMapper()
     private var eventQueue: AUEventQueue?
+    private let makeQueue: () -> AUEventQueue
+    private let configureLock = NSLock()
     private var lifecycleObserved = false
 
+    init(makeQueue: @escaping () -> AUEventQueue = {
+        AUEventQueue(networkManager: AUEventsNetworkManager<AUBatchResultModel>())
+    }) {
+        self.makeQueue = makeQueue
+    }
+
     func configure(companyId: String) {
-        let networkManager = AUEventsNetworkManager<AUBatchResultModel>()
-        eventQueue = AUEventQueue(networkManager: networkManager)
+        configureLock.lock()
+        defer { configureLock.unlock() }
+        // Reinitializing the SDK must not create a second writer for the same durable outbox.
+        if eventQueue == nil { eventQueue = makeQueue() }
         visitorId = makeVisitorId()
         self.companyId = companyId
         observeAppLifecycle()
@@ -126,12 +136,11 @@ final class AUEventsManager: AULogEventType {
             print("[AUAnalytics] ▶︎ \(network.eventType) seq=\(network.sessionSeq)\n\(str)")
         }
         #endif
-        // Enqueue for batched delivery; the queue coalesces events and POSTs them to /submit/batch
-        // on size/time/background triggers, with bounded retry.
+        // Persist off the UI thread, then attempt immediate delivery with persistent retries.
         eventQueue.enqueue(json)
     }
 
-    // MARK: - App lifecycle (batch flush)
+    // MARK: - App lifecycle (delivery hint)
 
     /// Flush the event queue when the app backgrounds (so a pending buffer isn't stranded) and again
     /// when it returns to the foreground (drains anything left after a failed/backoff cycle). Uses
