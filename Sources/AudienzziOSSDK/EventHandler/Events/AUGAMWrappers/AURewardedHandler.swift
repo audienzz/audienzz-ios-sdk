@@ -36,6 +36,7 @@ class AURewardedHandler: NSObject,
     // strong back-reference leaked the view and the full GAM ad object per screen.
     weak var adView: AURewardedView?
     weak var fullScreentDelegate: FullScreenContentDelegate?
+    private var recordedImpression = false
 
     init(handler: AURewardedEventHandler, adView: AURewardedView) {
         self.handler = handler
@@ -54,7 +55,7 @@ class AURewardedHandler: NSObject,
         // GMA paid value + currency (the only fork-free currency source), stashed for the render events.
         handler.adUnit.paidEventHandler = { [weak adView] adValue in
             adView?.lastPaidCurrency = adValue.currencyCode
-            adView?.lastPaidCpm = adValue.value.doubleValue
+            adView?.lastPaidCpm = adValue.value.doubleValue * 1_000
         }
     }
 
@@ -63,6 +64,8 @@ class AURewardedHandler: NSObject,
     }
 
     func adDidRecordImpression(_ ad: any FullScreenPresentingAd) {
+        guard !recordedImpression else { return }
+        recordedImpression = true
         LogEvent("adDidRecordImpression")
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID, adType: AUAdType.rewarded,
@@ -90,14 +93,13 @@ class AURewardedHandler: NSObject,
         let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
         ec.bidderCode = bidder
         if bidder == AD_SERVER_BIDDER {
-            // Ad server rendered — zero the creative id so a direct-sold impression isn't
-            // misclassified as RTB (GMA exposes no served-creative id → "0" stub).
-            ec.creativeId = "0"
+            ec.creativeId = nil
+            ec.adId = nil
+            ec.cpm = nil
+            ec.currency = nil
         }
         ec.auctionId = ec.auctionId ?? adView.currentAuctionId
-        // Currency (and cpm on a direct fill) from the GMA paid event.
-        ec.currency = ec.currency ?? adView.lastPaidCurrency
-        ec.cpm = ec.cpm ?? adView.lastPaidCpm
+        ec.applyGooglePaidValue(cpm: adView.lastPaidCpm, currency: adView.lastPaidCurrency)
         return ec
     }
 

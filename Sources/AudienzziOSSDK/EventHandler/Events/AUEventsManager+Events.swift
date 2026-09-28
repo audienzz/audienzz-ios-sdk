@@ -56,12 +56,22 @@ struct AURenderEconomics {
     var mediaType: String? = nil
     var size: String? = nil
     var cpm: Double? = nil
+    var cpmSource: String? = nil
     var currency: String? = nil
     var creativeId: String? = nil
     var auctionId: String? = nil
     var adId: String? = nil
     var timeToRespond: Int64? = nil
     var slotReload: Int? = nil
+}
+
+extension AURenderEconomics {
+    mutating func applyGooglePaidValue(cpm: Double?, currency: String?) {
+        guard let cpm, cpm.isFinite, cpm >= 0, let currency, !currency.isEmpty else { return }
+        self.cpm = cpm
+        self.currency = currency
+        self.cpmSource = "google_paid"
+    }
 }
 
 extension AUEventDomain {
@@ -77,6 +87,7 @@ extension AUEventDomain {
         mediaType = ec.mediaType
         size = ec.size
         cpm = ec.cpm
+        cpmSource = ec.cpmSource
         currency = ec.currency
         creativeId = ec.creativeId
         auctionId = ec.auctionId

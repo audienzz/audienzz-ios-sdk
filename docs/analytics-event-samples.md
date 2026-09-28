@@ -1,5 +1,10 @@
 # Audienzz Analytics — Event Samples
 
+> Historical capture, not the current payload schema. Today's branch uses top-level
+> `publisher_id`, `environment`, `os_version` and omits company/website guesses and unknown IDs.
+> Currency must accompany its own monetary source. See [the current contract](analytics-contract.md).
+
+
 One representative payload per event type, captured from the iOS DemoSwiftApp
 (SDK `0.2.5`, `dev-analytics`, banner on `RemoteConfigViewController`).
 

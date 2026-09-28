@@ -67,7 +67,10 @@ struct AUEventNetworkMapper {
 
         return AUEventNetwork(
             eventType: event.type.rawValue,
-            companyId: event.companyId,
+            companyId: nil, // company/website are resolved by the collector from publisher_id.
+            publisherId: event.publisherId,
+            environment: event.environment,
+            osVersion: UIDevice.current.systemVersion,
             source: Self.source,
             eventId: event.uuid ?? UUID().uuidString.lowercased(),
             pageImpressionId: event.pageImpressionId,
@@ -116,14 +119,19 @@ struct AUEventNetworkMapper {
         if let v = e.hbFormat { a["hb_format"] = v }
         // Round to 6 dp: Prebid's Bid.price is a Float, so widening to Double adds noise
         // (e.g. 1.4249999523…). 6 dp preserves real sub-cent precision while emitting a clean value.
-        if let v = e.cpm { a["cpm"] = String((v * 1_000_000).rounded() / 1_000_000) }
-        if let v = e.currency { a["currency"] = v }
-        if let v = e.creativeId { a["creative_id"] = v }
+        if let v = e.cpm, v.isFinite, v >= 0 {
+            var decimal = Decimal(v)
+            var rounded = Decimal()
+            NSDecimalRound(&rounded, &decimal, 6, .plain)
+            a["cpm"] = NSDecimalNumber(decimal: rounded).stringValue
+            if let source = e.cpmSource { a["cpm_source"] = source }
+        }
+        if let v = e.currency, !v.isEmpty { a["currency"] = v }
+        if let v = e.creativeId, !v.isEmpty, v != "0" { a["creative_id"] = v }
         if let v = e.auctionId { a["auction_id"] = v }
-        if let v = e.adId { a["ad_id"] = v }
+        if let v = e.adId, !v.isEmpty, v != "0" { a["ad_id"] = v }
         // Web-clickstream parity attributes.
         if let v = e.adViewId { a["ad_unit_code"] = v }        // Prebid configId
-        if let v = e.websiteId { a["website_id"] = v }         // remote-config publisherId
         if let v = e.mediaType { a["media_type"] = v }
         if let v = e.mediaTypes { a["media_types"] = v }
         if let v = e.size { a["size"] = v }

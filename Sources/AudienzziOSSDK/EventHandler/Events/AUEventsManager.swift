@@ -110,15 +110,15 @@ final class AUEventsManager: AULogEventType {
         var enriched = event
         enriched.uuid = AUUniqHelper.makeUniqID()
         enriched.visitorId = visitorId
-        enriched.companyId = companyId
+        let context = AUAnalyticsContext.shared.snapshot()
+        enriched.publisherId = context.publisherId
+        enriched.environment = context.environment
         enriched.sessionId = sessionId
         enriched.sessionStartTimestamp = sessionStartTimestamp
         enriched.deviceId = deviceId
         enriched.pageImpressionId = currentPageImpressionId
         // Screen name of the current visit rides on every event (not just pageImpression).
         enriched.screenName = enriched.screenName ?? currentScreenName
-        // website_id — the remote-config publisher id (resolved async; nil for very early events).
-        enriched.websiteId = AudienzzRemoteConfig.shared.publisherId
         enriched.sessionSeq = nextSequence()
 
         let network = mapper.toNetwork(enriched)

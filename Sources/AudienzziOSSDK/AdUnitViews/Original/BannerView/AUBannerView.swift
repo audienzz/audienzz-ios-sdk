@@ -129,6 +129,17 @@ public class AUBannerView: AUAdView {
     /// still on screen.
     internal var displayedPrebidBidder: String?
     internal var displayedPrebidLineItemWon: Bool = false
+    internal var displayedImpressionRecorded = false
+    private var lastImpressionResponseId: String?
+
+    /// Idempotent per received creative, not per auction in flight or placement.
+    internal func claimDisplayedImpression(responseId: String?) -> Bool {
+        guard !displayedImpressionRecorded else { return false }
+        if let responseId, responseId == lastImpressionResponseId { return false }
+        displayedImpressionRecorded = true
+        lastImpressionResponseId = responseId
+        return true
+    }
 
     /// The single owner of periodic refresh for this banner. Prebid is never given an interval —
     /// its `Dispatcher` is created only by `AdUnit.setAutoRefreshMillis`, which the SDK no longer
