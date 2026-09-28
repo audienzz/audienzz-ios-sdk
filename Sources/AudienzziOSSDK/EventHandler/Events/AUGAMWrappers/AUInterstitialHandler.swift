@@ -37,11 +37,13 @@ class AUInterstitialHandler: NSObject,
     weak var adView: AUInterstitialView?
     weak var fullScreentDelegate: FullScreenContentDelegate?
     private var recordedImpression = false
+    private let analyticsPage: AUAnalyticsPageContext
 
     init(handler: AUInterstitialEventHandler, adView: AUInterstitialView) {
         self.handler = handler
         self.fullScreentDelegate = handler.adUnit.fullScreenContentDelegate
         self.adView = adView
+        self.analyticsPage = adView.currentAnalyticsPage
         super.init()
         addListener()
     }
@@ -88,7 +90,7 @@ class AUInterstitialHandler: NSObject,
     /// Full-screen ads expose no app event; carry the winning-bid economics and best-effort
     /// bidder_code (the Prebid auction winner if there was one, else the ad server).
     private func renderEconomics() -> AURenderEconomics {
-        guard let adView else { return AURenderEconomics() }
+        guard let adView else { return AURenderEconomics(pageContext: analyticsPage) }
         var ec = adView.lastRenderEconomics ?? AURenderEconomics()
         let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
         ec.bidderCode = bidder
@@ -99,6 +101,7 @@ class AUInterstitialHandler: NSObject,
             ec.currency = nil
         }
         ec.auctionId = ec.auctionId ?? adView.currentAuctionId
+        ec.pageContext = analyticsPage
         ec.applyGooglePaidValue(cpm: adView.lastPaidCpm, currency: adView.lastPaidCurrency)
         return ec
     }

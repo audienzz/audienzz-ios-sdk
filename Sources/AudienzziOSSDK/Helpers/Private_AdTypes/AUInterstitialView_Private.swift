@@ -45,6 +45,7 @@ extension AUInterstitialView {
         prebidWinningBidder = nil
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
+        currentAnalyticsPage = AUEventsManager.shared.capturePageContext()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
         demand(adUnit, gamRequest) { [weak self] resultCode in
@@ -77,7 +78,8 @@ extension AUInterstitialView {
             adType: adTypeString, adSubtype: makeAdSubType(), apiType: apiTypeString,
             isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
             mediaTypes: AUBannerView.mediaTypesJSON(subtype: makeAdSubType()),
-            auctionId: currentAuctionId
+            auctionId: currentAuctionId,
+            pageContext: currentAnalyticsPage
         )
     }
 
@@ -99,14 +101,15 @@ extension AUInterstitialView {
                 // Keep hb_pb as price_bucket; do not pretend it is an exact, denominated CPM.
                 cpm: nil, currency: nil, creativeId: creativeId,
                 auctionId: currentAuctionId, adId: adId,
-                timeToRespond: timeToRespond, slotReload: 0)
+                timeToRespond: timeToRespond, slotReload: 0, pageContext: currentAnalyticsPage)
         }
 
         AUEventsManager.shared.bidResponse(
             adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
             adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
             isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-            resultCode: codeName, timeToRespond: timeToRespond, economics: economics
+            resultCode: codeName, timeToRespond: timeToRespond, economics: economics,
+            pageContext: currentAnalyticsPage
         )
 
         if let economics {
@@ -116,7 +119,8 @@ extension AUInterstitialView {
                 adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-                economics: economics
+                economics: economics,
+                pageContext: currentAnalyticsPage
             )
         } else {
             self.prebidWinningBidder = nil
@@ -126,7 +130,8 @@ extension AUInterstitialView {
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: false, autorefreshTime: 0, isRefresh: false, resultCode: codeName,
                 mediaTypes: AUBannerView.mediaTypesJSON(subtype: subtype),
-                auctionId: currentAuctionId
+                auctionId: currentAuctionId,
+                pageContext: currentAnalyticsPage
             )
         }
     }

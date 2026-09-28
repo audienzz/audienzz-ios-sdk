@@ -42,6 +42,7 @@ public class AUGAMInterstitialEventHandler: NSObject {
 */
 @objcMembers
 public class AUInterstitialRenderingView: AUAdView {
+    @nonobjc internal var analyticsPage = AUAnalyticsPageContext()
     private var adUnit: InterstitialRenderingAdUnit!
     
     public weak var delegate: AUInterstitialenderingAdDelegate?
@@ -114,6 +115,7 @@ public class AUInterstitialRenderingView: AUAdView {
         
         if !isLazyLoad {
             delegate?.interstitialAdDidDisplayOnScreen?()
+            analyticsPage = AUEventsManager.shared.capturePageContext()
             adUnit.loadAd()
         }
     }
@@ -134,6 +136,7 @@ public class AUInterstitialRenderingView: AUAdView {
         }
 
         delegate?.interstitialAdDidDisplayOnScreen?()
+        analyticsPage = AUEventsManager.shared.capturePageContext()
         adUnit.loadAd()
         isLazyLoaded = true
         #if DEBUG

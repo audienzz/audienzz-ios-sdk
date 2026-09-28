@@ -45,6 +45,7 @@ struct AUEventDomain {
     var sessionSeq: Int?
     var deviceId: String?
     var pageImpressionId: String?
+    var pageContext: AUAnalyticsPageContext?
 
     // Ad context (per-event attributes)
     var adUnitId: String?
