@@ -77,9 +77,7 @@ enum HTTPResult {
 
 extension HTTPResult {
   init(data: Data?, urlResponse: URLResponse?, error: Error?) {
-    if data == nil {
-      self = .failure(.emptyData)
-    } else if let error = error {
+    if let error = error {
       self = .failure(.connectionError(error as NSError))
     } else if let httpURLResponse = urlResponse as? HTTPURLResponse {
       self = HTTPResult.success(HTTPResponse(urlResponse: httpURLResponse, responseData: data))
