@@ -15,165 +15,169 @@
 
 import Foundation
 
-/// Append-only durable outbox. Event records retain the existing JSONL format; small acknowledgement
-/// records remove events by ID. Compact every 64 removals (or when empty), not once per HTTP reply.
-/// All access belongs to AUEventQueue's utility queue. Legacy event-only files migrate on read.
+/// Durable JSONL outbox; old event-only and per-ID acknowledgement journals remain readable.
+/// One analytics worker owns this store. No unacknowledged event is evicted to admit another.
 final class AUEventStore {
-
+    enum Admission { case stored, full, ioError, invalid }
     private let fileURL: URL?
-    private var handle: FileHandle?
+    private let maxBytes: Int
     private var cached: [JSONObject]?
+    private var storedIDs = Set<String>()
+    private(set) var quarantinedIDs = Set<String>()
+    private(set) var readFailed = false
+    private var payloadBytes = 0
     private var removals = 0
 
-    /// - Parameter directory: override for tests. Default is Application Support, which is meant
-    ///   for data the app recreates as needed but should not lose casually — Caches would let the
-    ///   system evict a backlog we are in the middle of retrying.
-    init(directory: URL? = nil, fileName: String = "events.jsonl") {
-        guard let base = directory ?? Self.defaultDirectory() else {
-            self.fileURL = nil
-            AULogEvent.logDebug("[AUAnalytics] no writable directory — events will not be persisted")
-            return
-        }
-        self.fileURL = base.appendingPathComponent(fileName)
+    init(directory: URL? = nil, fileName: String = "events.jsonl", maxBytes: Int = 20 * 1024 * 1024) {
+        let base = directory ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first?.appendingPathComponent("Audienzz", isDirectory: true)
+        fileURL = base?.appendingPathComponent(fileName)
+        self.maxBytes = maxBytes
     }
 
-    deinit {
-        try? handle?.close()
-    }
-
-    // MARK: - Reading
-
-    /// Every event still on disk, oldest first. Unparseable lines are skipped.
     func loadAll() -> [JSONObject] {
-        if let cached { return cached }
-        guard let fileURL, let data = try? Data(contentsOf: fileURL), !data.isEmpty else {
-            cached = []
-            return []
-        }
-        var events: [JSONObject] = []
-        var skipped = false
-        for line in data.split(separator: UInt8(ascii: "\n")) where !line.isEmpty {
-            guard let object = try? JSONSerialization.jsonObject(with: Data(line)) as? JSONObject else {
-                skipped = true
-                continue
-            }
-            if let id = object["_au_ack"] as? String {
-                events.removeAll { $0["event_id"] as? String == id }
-                removals += 1
-            } else if let id = object["event_id"] as? String {
-                events.removeAll { $0["event_id"] as? String == id }
-                events.append(object)
-            }
-        }
-        cached = events
-        // Repair a torn tail before appending, so it cannot swallow the next valid event.
-        if skipped || removals >= 64 { replaceAll(events) }
-        return events
-    }
-
-    // MARK: - Writing
-
-    func append(_ json: JSONObject) {
-        _ = loadAll()
-        guard let id = json["event_id"] as? String else { return }
-        cached?.removeAll { $0["event_id"] as? String == id }
-        cached?.append(json)
-        appendRecord(json)
-    }
-
-    func remove(id: String) {
-        _ = loadAll()
-        guard cached?.contains(where: { $0["event_id"] as? String == id }) == true else { return }
-        cached?.removeAll { $0["event_id"] as? String == id }
-        removals += 1
-        if cached?.isEmpty == true || removals >= 64 {
-            replaceAll(cached ?? [])
-        } else {
-            appendRecord(["_au_ack": id])
-        }
-    }
-
-    private func appendRecord(_ record: JSONObject) {
-        guard let line = Self.line(from: record), let handle = appendHandle() else {
-            AUDiagnostics.log("analytics", "persistenceFailed")
-            return
-        }
+        if let cached { return cached.filter { !quarantinedIDs.contains($0["event_id"] as? String ?? "") } }
+        var records: [String: JSONObject] = [:]
+        var order: [String] = []
+        var seen = Set<String>()
+        var rejected = Set<String>()
+        var damaged = false
         do {
-            try handle.seekToEnd()
-            try handle.write(contentsOf: Data([UInt8(ascii: "\n")]) + line)
+            if let fileURL, FileManager.default.fileExists(atPath: fileURL.path) {
+                let data = try Data(contentsOf: fileURL)
+                for line in data.split(separator: UInt8(ascii: "\n")) where !line.isEmpty {
+                    guard let object = try? JSONSerialization.jsonObject(with: Data(line)) as? JSONObject else {
+                        damaged = true; continue
+                    }
+                    if let id = object["_au_ack"] as? String {
+                        records.removeValue(forKey: id); removals += 1
+                    } else if let ids = object["_au_ack_ids"] as? [String] {
+                        let set = Set(ids)
+                        ids.forEach { records.removeValue(forKey: $0) }
+                        rejected.subtract(set); removals += ids.count
+                    } else if let id = object["_au_quarantine"] as? String {
+                        rejected.insert(id)
+                    } else if let id = object["event_id"] as? String {
+                        if seen.insert(id).inserted { order.append(id) }
+                        records[id] = object
+                    } else { damaged = true }
+                }
+            }
         } catch {
-            AUDiagnostics.log("analytics", "persistenceFailed")
-            closeHandle()
+            readFailed = true
+            persistenceFailed()
+            return [] // Do NOT cache this or overwrite the unreadable journal.
         }
+        let events = order.compactMap { records[$0] }
+        readFailed = false
+        storedIDs = Set(records.keys)
+        cached = events; quarantinedIDs = rejected
+        payloadBytes = events.reduce(0) { $0 + (Self.encode($1)?.count ?? 0) }
+        if damaged || removals >= max(64, events.count / 4) { compact() }
+        return events.filter { !rejected.contains($0["event_id"] as? String ?? "") }
     }
 
-    /// Replace the stored contents with exactly `events` (written atomically).
-    ///
-    /// Periodic checkpoint: only events still owed to the collector are retained.
-    func replaceAll(_ events: [JSONObject]) {
-        cached = events
-        removals = 0
-        guard let fileURL = fileURL else { return }
-        closeHandle()
+    @discardableResult func append(_ event: JSONObject) -> Admission {
+        if cached == nil { _ = loadAll() }
+        guard !readFailed else { return .ioError }
+        guard let id = event["event_id"] as? String, let data = Self.encode(event) else { return .invalid }
+        if storedIDs.contains(id) { return .stored }
+        guard payloadBytes + data.count <= maxBytes else { return .full }
+        guard appendRecord(event) else { return .ioError }
+        cached?.append(event); storedIDs.insert(id); payloadBytes += data.count
+        checkpointIfNeeded()
+        return .stored
+    }
 
-        if events.isEmpty {
-            try? FileManager.default.removeItem(at: fileURL)
-            return
-        }
+    @discardableResult func acknowledge(ids: [String]) -> Bool {
+        if cached == nil { _ = loadAll() }
+        guard !readFailed else { return false }
+        let set = Set(ids)
+        let removed = (cached ?? []).filter { set.contains($0["event_id"] as? String ?? "") }
+        if removed.isEmpty { return true }
+        guard appendRecord(["_au_ack_ids": ids]) else { return false }
+        cached?.removeAll { set.contains($0["event_id"] as? String ?? "") }
+        quarantinedIDs.subtract(set); storedIDs.subtract(set)
+        payloadBytes -= removed.reduce(0) { $0 + (Self.encode($1)?.count ?? 0) }
+        removals += removed.count
+        checkpointIfNeeded()
+        return true
+    }
 
-        var data = Data()
-        for event in events {
-            if let line = Self.line(from: event) { data.append(line) }
-        }
+    @discardableResult func quarantine(id: String) -> Bool {
+        if quarantinedIDs.contains(id) { return true }
+        guard appendRecord(["_au_quarantine": id]) else { return false }
+        quarantinedIDs.insert(id)
+        checkpointIfNeeded()
+        return true
+    }
+
+    func remove(id: String) { acknowledge(ids: [id]) }
+
+    // Maintenance/testing only. Network acknowledgements always name their exact IDs.
+    @discardableResult func replaceAll(_ events: [JSONObject]) -> Bool {
+        guard writeSnapshot(events, rejected: []) else { return false }
+        cached = events; storedIDs = Set(events.compactMap { $0["event_id"] as? String }); quarantinedIDs = []; removals = 0
+        payloadBytes = events.reduce(0) { $0 + (Self.encode($1)?.count ?? 0) }
+        return true
+    }
+
+    private func appendRecord(_ record: JSONObject) -> Bool {
+        guard let fileURL, let data = Self.encode(record) else { persistenceFailed(); return false }
         do {
             try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-            // Atomic: a process death mid-rewrite leaves the previous file, never a truncated one.
-            try data.write(to: fileURL, options: .atomic)
-            excludeFromBackup()
-        } catch {
-            AULogEvent.logDebug("[AUAnalytics] could not rewrite store: \(error.localizedDescription)")
-        }
+            if !FileManager.default.fileExists(atPath: fileURL.path) {
+                guard FileManager.default.createFile(atPath: fileURL.path, contents: nil) else { persistenceFailed(); return false }
+                excludeFromBackup()
+            }
+            let handle = try FileHandle(forWritingTo: fileURL)
+            defer { try? handle.close() }
+            try handle.seekToEnd()
+            try handle.write(contentsOf: Data([10]) + data + Data([10]))
+            try handle.synchronize()
+            return true
+        } catch { persistenceFailed(); return false }
     }
 
-    // MARK: - Internals
-
-    private static func line(from json: JSONObject) -> Data? {
-        // `.sortedKeys` only to keep the file diffable when inspecting it by hand.
-        guard var data = try? JSONSerialization.data(withJSONObject: json, options: [.sortedKeys])
-        else { return nil }
-        data.append(UInt8(ascii: "\n"))
-        return data
+    private func checkpointIfNeeded() {
+        let bytes = fileURL.flatMap { try? $0.resourceValues(forKeys: [.fileSizeKey]).fileSize } ?? 0
+        if cached?.isEmpty == true || removals >= max(64, (cached?.count ?? 0) / 4) || bytes > maxBytes + 1024 * 1024 { compact() }
     }
-
-    private func appendHandle() -> FileHandle? {
-        if let handle = handle { return handle }
-        guard let fileURL = fileURL else { return nil }
-        if !FileManager.default.fileExists(atPath: fileURL.path) {
-            try? FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-            FileManager.default.createFile(atPath: fileURL.path, contents: nil)
-            excludeFromBackup()
-        }
-        handle = try? FileHandle(forWritingTo: fileURL)
-        return handle
+    private func compact() {
+        if writeSnapshot(cached ?? [], rejected: quarantinedIDs) { removals = 0 }
     }
-
-    private func closeHandle() {
-        try? handle?.close()
-        handle = nil
+    private func writeSnapshot(_ events: [JSONObject], rejected: Set<String>) -> Bool {
+        guard let fileURL else { persistenceFailed(); return false }
+        do {
+            if events.isEmpty {
+                if FileManager.default.fileExists(atPath: fileURL.path) { try FileManager.default.removeItem(at: fileURL) }
+            } else {
+                var data = Data()
+                for event in events {
+                    guard let encoded = Self.encode(event) else { return false }
+                    data.append(encoded); data.append(10)
+                }
+                for id in rejected {
+                    data.append(try JSONSerialization.data(withJSONObject: ["_au_quarantine": id])); data.append(10)
+                }
+                try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try data.write(to: fileURL, options: .atomic)
+                let handle = try FileHandle(forWritingTo: fileURL)
+                defer { try? handle.close() }
+                try handle.synchronize()
+                excludeFromBackup()
+            }
+            return true
+        } catch { persistenceFailed(); return false }
     }
-
-    /// A retry backlog is not the user's data; it should not travel to a new device in a backup.
+    static func encode(_ event: JSONObject) -> Data? {
+        guard JSONSerialization.isValidJSONObject(event) else { return nil }
+        return try? JSONSerialization.data(withJSONObject: event, options: [.sortedKeys])
+    }
+    private func persistenceFailed() { AUDiagnostics.log("analytics", "persistenceFailed") }
     private func excludeFromBackup() {
-        guard var url = fileURL, FileManager.default.fileExists(atPath: url.path) else { return }
-        var values = URLResourceValues()
-        values.isExcludedFromBackup = true
+        guard var url = fileURL else { return }
+        var values = URLResourceValues(); values.isExcludedFromBackup = true
         try? url.setResourceValues(values)
-    }
-
-    private static func defaultDirectory() -> URL? {
-        FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)
-            .first?
-            .appendingPathComponent("Audienzz", isDirectory: true)
     }
 }

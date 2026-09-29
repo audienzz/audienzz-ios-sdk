@@ -22,7 +22,7 @@ import UIKit
 fileprivate let keyVisitorId = "keyVisitorId"
 
 /// Clickstream analytics logger. Each event is enriched with identity/session data, serialized, and
-/// handed to `AUEventQueue` for immediate durable delivery to the collector (mirrors the
+/// handed to `AUEventQueue` for durable batched delivery to the collector (mirrors the
 /// Android `EventLoggerImpl` + `EventBatcher`).
 final class AUEventsManager: AULogEventType {
     static let shared = AUEventsManager()
@@ -137,7 +137,7 @@ final class AUEventsManager: AULogEventType {
             print("[AUAnalytics] ▶︎ \(network.eventType) seq=\(network.sessionSeq)\n\(str)")
         }
         #endif
-        // Persist off the UI thread, then attempt immediate delivery with persistent retries.
+        // Persist off the UI thread, then batch delivery with persistent retries.
         eventQueue.enqueue(json)
     }
 

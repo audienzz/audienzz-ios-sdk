@@ -182,4 +182,37 @@ final class AUEventStoreTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
     }
 
+    func testByteCapacityPreservesExistingEventsAndFreesSpaceOnlyOnAck() {
+        let bytes = AUEventStore.encode(event("a"))!.count
+        let store = AUEventStore(directory: directory, maxBytes: bytes * 2)
+        XCTAssertEqual(store.append(event("a")), .stored)
+        XCTAssertEqual(store.append(event("b")), .stored)
+        XCTAssertEqual(store.append(event("c")), .full)
+        XCTAssertEqual(ids(makeStore().loadAll()), ["a", "b"])
+        XCTAssertTrue(store.acknowledge(ids: ["a"]))
+        XCTAssertEqual(store.append(event("c")), .stored)
+        XCTAssertEqual(ids(makeStore().loadAll()), ["b", "c"])
+    }
+
+    func testQuarantineSurvivesCompactionWithoutDiscardingPayload() throws {
+        let store = makeStore()
+        (0..<100).forEach { store.append(event(String($0))) }
+        XCTAssertTrue(store.quarantine(id: "0"))
+        XCTAssertTrue(store.acknowledge(ids: (1..<71).map(String.init)))
+        let restored = makeStore()
+        XCTAssertEqual(ids(restored.loadAll()), (71..<100).map(String.init))
+        XCTAssertEqual(restored.quarantinedIDs, ["0"])
+        XCTAssertTrue(try String(contentsOf: fileURL, encoding: .utf8).contains("\"event_id\":\"0\""))
+    }
+
+    func testFailedWriteDoesNotPoisonCacheOrPretendEventIsDurable() throws {
+        try Data("blocked".utf8).write(to: directory)
+        let store = makeStore()
+        XCTAssertEqual(store.append(event("a")), .ioError)
+        XCTAssertTrue(store.loadAll().isEmpty)
+        try FileManager.default.removeItem(at: directory)
+        XCTAssertEqual(store.append(event("a")), .stored)
+        XCTAssertEqual(ids(makeStore().loadAll()), ["a"])
+    }
+
 }

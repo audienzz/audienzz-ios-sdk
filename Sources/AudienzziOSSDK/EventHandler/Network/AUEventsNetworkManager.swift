@@ -54,6 +54,20 @@ class AUEventsNetworkManager<T: APIResult> {
     }
 }
 
+extension AUEventsNetworkManager {
+    static func retryAfter(_ value: String?, now: Date = Date()) -> TimeInterval? {
+        guard let value else { return nil }
+        if let seconds = Double(value.trimmingCharacters(in: .whitespaces)), seconds.isFinite {
+            return max(0, seconds)
+        }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        return formatter.date(from: value).map { max(0, $0.timeIntervalSince(now)) }
+    }
+}
+
 // MARK: - Network Request
 fileprivate extension AUEventsNetworkManager {
     func run(request: HTTPRequest, completion: @escaping (HTTPResult) -> Void) {
@@ -71,7 +85,8 @@ fileprivate extension AUEventsNetworkManager {
         // must settle the request, otherwise AUEventQueue remains in flight indefinitely. Trust
         // the HTTP status, never an error response's JSON "code" or an HTML proxy error page.
         guard (200..<300).contains(responce.statusCode) else {
-            handler(.failure(.httpStatus(responce.statusCode)))
+            let header = responce.headers.first { $0.key.lowercased() == "retry-after" }?.value
+            handler(.failure(.httpStatus(responce.statusCode, retryAfter: Self.retryAfter(header))))
             return
         }
         handler(extractAPIResponce(jsonObject: ["code": responce.statusCode], parser: method.resultParser))

@@ -5,12 +5,13 @@ import XCTest
 final class AnalyticsTransportTests: XCTestCase {
     private final class StubProtocol: URLProtocol {
         static var reply: ((URLRequest) -> (Int, Data?))!
+        static var headers: [String: String]?
         override class func canInit(with request: URLRequest) -> Bool { true }
         override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
         override func startLoading() {
             let (status, body) = Self.reply(request)
             let response = HTTPURLResponse(url: request.url!, statusCode: status,
-                                           httpVersion: nil, headerFields: nil)!
+                                           httpVersion: nil, headerFields: Self.headers)!
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             if let body { client?.urlProtocol(self, didLoad: body) }
             client?.urlProtocolDidFinishLoading(self)
@@ -33,6 +34,7 @@ final class AnalyticsTransportTests: XCTestCase {
         session.invalidateAndCancel()
         network = nil
         StubProtocol.reply = nil
+        StubProtocol.headers = nil
         super.tearDown()
     }
 
@@ -67,7 +69,7 @@ final class AnalyticsTransportTests: XCTestCase {
             } catch { XCTFail("Malformed payload: \(error)") }
             return (204, nil)
         }
-        let queue = AUEventQueue(networkManager: network, store: AUEventStore(directory: directory))
+        let queue = AUEventQueue(networkManager: network, store: AUEventStore(directory: directory), config: .init(batchDelayMs: 10))
         let manager = AUEventsManager(makeQueue: { queue })
         XCTAssertTrue(Audienzz.shared.configureAnalytics(publisherId: "35", environment: "test"))
         manager.configure(companyId: "seller-not-company")
@@ -101,13 +103,28 @@ final class AnalyticsTransportTests: XCTestCase {
         }
     }
 
+    func testHTTPRetryAfterIsPreservedWithoutAResponseBody() {
+        let done = expectation(description: "Retry-After reaches sender")
+        StubProtocol.headers = ["Retry-After": "120"]
+        StubProtocol.reply = { _ in (429, nil) }
+        network.request(.batchEvents([["event_id": "fixture"]])) { result in
+            guard case .failure(.httpStatus(429, retryAfter: 120)) = result else {
+                XCTFail("Missing rate-limit metadata"); done.fulfill(); return
+            }
+            done.fulfill()
+        }
+        wait(for: [done], timeout: 1)
+        XCTAssertEqual(AUEventsNetworkManager<AUBatchResultModel>.retryAfter("Thu, 01 Jan 1970 00:00:30 GMT", now: Date(timeIntervalSince1970: 0)), 30)
+        XCTAssertNil(AUEventsNetworkManager<AUBatchResultModel>.retryAfter("invalid"))
+    }
+
     func testQueueRetriesAfterHTMLFailureAndContinuesAfterNoContentSuccess() {
         let oldEnabled = AUDiagnostics.isEnabled
         let oldSink = AUDiagnostics.sink
         let lock = NSLock()
         var lines: [String] = []
         let acknowledged = expectation(description: "Both batches acknowledged")
-        acknowledged.expectedFulfillmentCount = 2
+        acknowledged.expectedFulfillmentCount = 1
         acknowledged.assertForOverFulfill = true
         AUDiagnostics.isEnabled = true
         AUDiagnostics.sink = { line in
@@ -121,7 +138,7 @@ final class AnalyticsTransportTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = AUEventStore(directory: directory)
         let done = expectation(description: "Failed batch retries and the following event is sent")
-        done.expectedFulfillmentCount = 3
+        done.expectedFulfillmentCount = 2
         done.assertForOverFulfill = true
         var count = 0
         StubProtocol.reply = { _ in
@@ -130,7 +147,7 @@ final class AnalyticsTransportTests: XCTestCase {
             return count == 1 ? (403, Data("<html>Forbidden</html>".utf8)) : (204, nil)
         }
         let queue = AUEventQueue(networkManager: network, store: store,
-            config: .init(maxQueueSize: 10, retryBaseDelayMs: 1, maxRetryDelayMs: 10))
+            config: .init(batchDelayMs: 10, minIntervalMs: 10, retryBaseDelayMs: 10, maxRetryDelayMs: 10))
         queue.enqueue(["event_id": "secret-first", "event_type": "pageImpression", "device_id": "secret-device"])
         queue.enqueue(["event_id": "secret-second", "event_type": "adImpression"])
         withExtendedLifetime(queue) {
