@@ -46,7 +46,7 @@ internal final class AUScreenAdCoordinator {
     /// The current active screen (token preferred), or nil before the first page impression.
     private var activeScreen: AnyObject? { activeScreenToken ?? activeScreenVC }
 
-    /// The active screen plus its reported name, for the foreground re-impression.
+    /// The active screen plus its reported name, for foreground recovery.
     var activeScreenAndName: (AnyObject, String)? {
         guard let activeScreen, let activeScreenName else { return nil }
         return (activeScreen, activeScreenName)
@@ -108,7 +108,7 @@ internal final class AUScreenAdCoordinator {
 
     /// Hard page transition. The screen is any token — a host `UIViewController` (matched by object
     /// identity) or a route key (matched by value against a banner's `setScreen`). Two screens of the
-    /// same class, and the same screen resuming again (app foreground, back navigation), all count as
+    /// same class, and the same screen resuming again (explicit report, back navigation), all count as
     /// distinct transitions.
     ///
     /// Every registered banner is swept: the incoming page's banners are recreated (fresh auction),
@@ -132,7 +132,6 @@ internal final class AUScreenAdCoordinator {
         activeScreenName = name
         let live = ads.allObjects
         requestLedger.beginPage(epoch, retained: live.filter { $0.isHostedBy(screen) }.map { $0.requestContext })
-        for ad in configuredAds.allObjects { ad.pageChanged(screen) }
         AULogEvent.logDebug(
             "[AUScreenCoordinator] pageImpression \"\(name)\" epoch=\(epoch) — \(live.count) banner(s) registered")
         AUDiagnostics.log("page", "transition", [
@@ -141,6 +140,19 @@ internal final class AUScreenAdCoordinator {
             ("epoch", epoch),
             ("slots", live.count),
         ])
+        refreshBanners(screen, name: name, live: live)
+    }
+
+    /// Reload ads without starting a new page or resetting slots/request counters.
+    func recoverActivePage() {
+        assertMain()
+        guard let (screen, name) = activeScreenAndName else { return }
+        AUDiagnostics.log("page", "recovered", [("name", name), ("epoch", epoch)])
+        refreshBanners(screen, name: name, live: ads.allObjects)
+    }
+
+    private func refreshBanners(_ screen: AnyObject, name: String, live: [AUBannerView]) {
+        for ad in configuredAds.allObjects { ad.pageChanged(screen) }
         for ad in live {
             let hostName = ad.resolveHostViewController().map { String(describing: type(of: $0)) }
                 ?? (ad.hostScreenOverride.map { "\($0)" } ?? "none")
@@ -167,7 +179,7 @@ internal final class AUScreenAdCoordinator {
     /// Restore refresh after the app returns to the foreground, for apps that never call
     /// `pageImpression`.
     ///
-    /// A page-scoped app gets a foreground page impression instead, and that impression recreates
+    /// A page-scoped app gets a foreground recovery sweep instead, and that sweep recreates
     /// every banner on the active page — doing both is how a single return used to produce two
     /// auctions for one banner. The caller decides which of the two owns the recovery.
     func resumeAfterForeground() {

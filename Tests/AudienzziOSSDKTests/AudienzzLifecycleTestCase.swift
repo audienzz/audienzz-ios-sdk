@@ -26,9 +26,9 @@ final class LifecycleIsolationTests: AudienzzLifecycleTestCase {
         sdk.pageImpression("old")
         NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
-        XCTAssertTrue(sdk.hasPendingForegroundReimpression)
+        XCTAssertTrue(sdk.hasPendingForegroundRecovery)
         sdk.resetLifecycleForTesting()
-        XCTAssertFalse(sdk.hasPendingForegroundReimpression)
+        XCTAssertFalse(sdk.hasPendingForegroundRecovery)
         XCTAssertFalse(sdk.isAppBackgrounded)
         XCTAssertNil(coordinator.activeScreenAndName)
         XCTAssertEqual(coordinator.epoch, 0)
@@ -43,7 +43,7 @@ final class LifecycleIsolationTests: AudienzzLifecycleTestCase {
         sdk.resetLifecycleForTesting()
         NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
         XCTAssertFalse(sdk.isAppBackgrounded)
-        XCTAssertFalse(sdk.hasPendingForegroundReimpression)
+        XCTAssertFalse(sdk.hasPendingForegroundRecovery)
         XCTAssertNil(coordinator.activeScreenAndName)
     }
 }

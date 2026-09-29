@@ -435,7 +435,7 @@ public class AUBannerView: AUAdView {
             AULogEvent.logWarn("[AUBannerView] No unique Google banner found; supply AUBannerEventHandler or call notifyAdLoadCompleted for custom renderers")
         }
         if window == nil { refreshController.block(.detached) }
-        Audienzz.shared.observeForegroundReimpression()
+        Audienzz.shared.observeForegroundRecovery()
         if Audienzz.shared.isAppBackgrounded { refreshController.block(.appBackground) }
 
         // Join the current page. The epoch stamp is what lets the coordinator tell this screen's

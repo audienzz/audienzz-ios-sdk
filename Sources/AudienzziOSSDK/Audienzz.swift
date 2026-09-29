@@ -517,9 +517,9 @@ public class Audienzz: NSObject {
         // An explicit report always wins over a pending automatic foreground one, and claims this
         // foreground visit so an activation arriving afterwards doesn't schedule a duplicate.
         reportedInThisForegroundVisit = true
-        cancelPendingForegroundReimpression()
+        cancelPendingForegroundRecovery()
         // Armed on the first page impression, so there is always an active screen to re-fire for.
-        observeForegroundReimpression()
+        observeForegroundRecovery()
         AUEventsManager.shared.onScreenResumed(screenName: name)
         AUScreenAdCoordinator.shared.onScreenResumed(screen, name: name)
         // Emitted only once the transition is complete. An observer is free to report another page
@@ -532,16 +532,11 @@ public class Audienzz: NSObject {
         pageImpressionObserver?((screen as? NSString) as String? ?? name)
     }
 
-    // MARK: - Foreground re-impression
+    // MARK: - Foreground ad recovery
 
-    /// Returning from the background is a new page impression for the screen the user comes back to:
-    /// its banners reload so the creative is fresh at the moment it's looked at, and any banner left
-    /// over from an earlier screen is released.
-    ///
-    /// Suppressed when the app itself reported a page impression within
-    /// `foregroundReimpressionDebounce` of the activation (the common case where a view controller's
-    /// `viewDidAppear` also fires on return), so a restore never double-auctions.
-    internal func observeForegroundReimpression() {
+    /// Refresh the current page after a real background return, preserving its analytics identity.
+    /// An explicit navigation report supersedes the delayed recovery, so ads reload only once.
+    internal func observeForegroundRecovery() {
         guard foregroundObserver == nil else { return }
         // Only a real background → foreground round trip counts. `didBecomeActive` alone also fires
         // after Control Centre, a system permission prompt or an incoming call — none of which are a
@@ -557,9 +552,9 @@ public class Audienzz: NSObject {
             // yet. Whether the app reports one itself is a property of THAT visit, not of how long
             // ago the last report happened.
             self?.reportedInThisForegroundVisit = false
-            // Drop any pending automatic re-impression: backgrounding again inside the scheduling
+            // Drop any pending automatic recovery: backgrounding again inside the scheduling
             // window would otherwise recreate the whole active page while backgrounded.
-            self?.cancelPendingForegroundReimpression()
+            self?.cancelPendingForegroundRecovery()
             // Hold every banner's refresh for the duration of the background, and retire whatever
             // auction was in flight. A `DispatchWorkItem` scheduled on the main queue would fire on
             // return regardless, and a response landing meanwhile buys a creative nobody sees.
@@ -576,9 +571,9 @@ public class Audienzz: NSObject {
             queue: .main
         ) { [weak self] _ in
             // Only the gate opens here. Deferred retries deliberately do NOT run yet: whether an
-            // automatic page impression is going to own this recovery is not known until
+            // automatic sweep is going to own this recovery is not known until
             // didBecomeActive, and the gap between the two notifications is not bounded. Retrying
-            // here meant a long gap let the retry auction first and the impression auction again.
+            // here meant a long gap let the retry auction first and the recovery auction again.
             self?.isAppBackgrounded = false
         }
         foregroundObserver = NotificationCenter.default.addObserver(
@@ -588,32 +583,25 @@ public class Audienzz: NSObject {
         ) { [weak self] _ in
             guard let self else { return }
             self.isAppBackgrounded = false
-            // Exactly one owner recovers each banner. A page impression — scheduled here, or already
-            // reported by the app during this visit — recreates every banner on the active page and
-            // clears their background block itself. Only when no impression is going to happen does
-            // the coordinator resume them directly; doing both is how one return used to produce two
-            // auctions per banner.
-            var impressionOwnsRecovery = false
+            // A pending sweep owns recovery. Otherwise resume blocked work directly, including
+            // loads from explicit navigation reported before the foreground gate opened.
+            var sweepOwnsRecovery = false
             if self.didEnterBackground {
                 self.didEnterBackground = false
-                impressionOwnsRecovery = self.scheduleForegroundReimpression()
+                sweepOwnsRecovery = self.scheduleForegroundRecovery()
             }
-            if !impressionOwnsRecovery {
+            if !sweepOwnsRecovery {
                 AUScreenAdCoordinator.shared.resumeAfterForeground()
             }
         }
     }
 
-    /// Schedules the automatic re-impression instead of firing it immediately, so an app that
-    /// reports its own page impression on resume cancels it. That makes the outcome the same in
-    /// both callback orders — exactly one page impression, not two.
-    /// - Returns: `true` when a page impression owns this visit's recovery — either one is now
-    ///   scheduled, or the app already reported one itself. `false` means nothing else will recreate
-    ///   the banners, so the caller must resume them directly.
+    /// Give explicit navigation a chance to supersede recovery in either callback order.
+    /// Returns true only when the delayed sweep owns recovery; otherwise resume blocked work.
     @discardableResult
-    private func scheduleForegroundReimpression() -> Bool {
+    private func scheduleForegroundRecovery() -> Bool {
         guard let (screen, name) = AUScreenAdCoordinator.shared.activeScreenAndName else {
-            AULogEvent.logDebug("[Audienzz][pageImpression] foreground — no active screen yet, skipping")
+            AULogEvent.logDebug("[Audienzz][foregroundRecovery] — no active screen yet, skipping")
             return false
         }
         // Cancelling on an explicit report only covers the order "activation first". An app that
@@ -622,41 +610,46 @@ public class Audienzz: NSObject {
         //
         // Deliberately not an elapsed-time test. Age and ownership are different questions, and
         // conflating them failed both ways: a slow willEnterForeground → didBecomeActive gap made a
-        // report from this visit look old enough to ignore (two impressions), and a quick
+        // report from this visit look old enough to ignore (two ad reloads), and a quick
         // background/return made a report from the PREVIOUS visit look recent enough to suppress
-        // this one (no impression at all).
+        // this one (no ad recovery).
         guard !reportedInThisForegroundVisit else {
             AULogEvent.logDebug(
-                "[Audienzz][pageImpression] foreground — app already reported \"\(name)\" this visit, skipping")
+                "[Audienzz][foregroundRecovery] — app already reported \"\(name)\" this visit, skipping")
             // The report may have run before our foreground observer opened the auction gate.
             // No impression is pending; unblock and recover any load that report could not start.
             return false
         }
-        pendingForegroundReimpression?.cancel()
+        pendingForegroundRecovery?.cancel()
+        let recoveryEpoch = AUScreenAdCoordinator.shared.epoch
         let work = DispatchWorkItem { [weak self] in
-            self?.pendingForegroundReimpression = nil
-            AULogEvent.logDebug("[Audienzz][pageImpression] foreground → re-firing \"\(name)\"")
-            self?.notifyScreenResumed(screen, name: name)
+            guard let self else { return }
+            self.pendingForegroundRecovery = nil
+            guard !self.isAppBackgrounded,
+                  AUScreenAdCoordinator.shared.epoch == recoveryEpoch else { return }
+            AUScreenAdCoordinator.shared.recoverActivePage()
+            // Compatibility signal for Flutter/RN remounts, not an analytics page impression.
+            self.pageImpressionObserver?((screen as? NSString) as String? ?? name)
         }
-        pendingForegroundReimpression = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.foregroundReimpressionDelay, execute: work)
+        pendingForegroundRecovery = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.foregroundRecoveryDelay, execute: work)
         return true
     }
 
-    /// True while an automatic foreground page impression is scheduled. A banner whose auction the
-    /// gate deferred consults this: the impression recreates every banner on the active page, so it
+    /// True while an automatic foreground recovery is scheduled. A banner whose auction the
+    /// gate deferred consults this: the recovery recreates every banner on the active page, so it
     /// owns the recovery and a deferred retry must stand down rather than auction as well.
-    internal var hasPendingForegroundReimpression: Bool { pendingForegroundReimpression != nil }
+    internal var hasPendingForegroundRecovery: Bool { pendingForegroundRecovery != nil }
 
-    internal func cancelPendingForegroundReimpression() {
-        pendingForegroundReimpression?.cancel()
-        pendingForegroundReimpression = nil
+    internal func cancelPendingForegroundRecovery() {
+        pendingForegroundRecovery?.cancel()
+        pendingForegroundRecovery = nil
     }
 
     #if DEBUG
     /// Test isolation only: no page report is synthesized, so pre-page behavior remains testable.
     @nonobjc internal func resetLifecycleForTesting() {
-        cancelPendingForegroundReimpression()
+        cancelPendingForegroundRecovery()
         let center = NotificationCenter.default
         [foregroundObserver, backgroundObserver, willForegroundObserver].compactMap { $0 }
             .forEach { center.removeObserver($0) }
@@ -668,33 +661,29 @@ public class Audienzz: NSObject {
         reportedInThisForegroundVisit = false
         pageImpressionObserver = nil
         AUScreenAdCoordinator.shared.resetForTesting()
-        observeForegroundReimpression()
+        observeForegroundRecovery()
     }
     #endif
 
-    /// Delay before an automatic foreground re-impression fires, giving the app's own report a
+    /// Delay before an automatic foreground recovery fires, giving the app's own report a
     /// chance to cancel it.
-    private static let foregroundReimpressionDelay: TimeInterval = 0.4
+    private static let foregroundRecoveryDelay: TimeInterval = 0.4
 
     /// True between `didEnterBackground` and the next activation. Read by the ad views' auction
     /// gate, so nothing auctions while the app is backgrounded.
     internal private(set) var isAppBackgrounded = false
 
     private var didEnterBackground = false
-    /// Notified after every page impression, including the automatic one fired on returning to the
-    /// foreground.
-    ///
-    /// The Flutter and React Native bridges need to know a page transition happened so they can
-    /// remount platform views and page-scope the ad types the native coordinator doesn't track. They
-    /// used to observe their own app lifecycle and report a page impression themselves, which meant
-    /// two independent owners each scheduling and de-duplicating — no ordering of the two ever came
-    /// out right. Native owns foreground reporting; the bridges just listen.
+    /// Page lifecycle notification after explicit navigation OR foreground ad recovery.
+    /// The routing key stays the same during recovery. Despite the legacy name, this is not an
+    /// analytics event: Flutter/RN use it to remount views and refresh rendering banners.
+    /// Their local view revision may advance without changing page_impression_id or au_page_seq.
     public var pageImpressionObserver: ((String) -> Void)?
 
     /// Whether the app reported a page impression itself during the current foreground visit.
     /// Reset when the app backgrounds, so each visit is judged on its own.
     private var reportedInThisForegroundVisit = false
-    private var pendingForegroundReimpression: DispatchWorkItem?
+    private var pendingForegroundRecovery: DispatchWorkItem?
     private var foregroundObserver: NSObjectProtocol?
     private var backgroundObserver: NSObjectProtocol?
     private var willForegroundObserver: NSObjectProtocol?

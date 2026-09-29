@@ -63,6 +63,15 @@ visit's ad events, and it is what releases the *previous* screen's banners.
 **Report ad-free screens too.** A settings page with no ads still has to be reported — skipping it
 leaves the previous screen's banners auctioning for a screen nobody is looking at.
 
+**App background/foreground is the same page visit.** With the native foreground-continuity
+update, minimizing and reopening the app refreshes its active banners (and blanks them when
+blanking is enabled), but sends no new `pageImpression` analytics event. The existing
+`page_impression_id`, `au_page_seq` and `au_slot` remain; each replacement request advances the
+slot's `hb_refresh_count` and gets a fresh auction ID. Visibility, page ownership and publisher
+pause still apply. Do not call `pageImpression` from app-resume callbacks just because the app
+became active. Report actual navigation, including ad-free screens, back navigation and a new
+article. An explicit call still starts a new page impression, even for the same screen.
+
 ### 4. Place a banner
 
 Keep the banner as a **property** of the view controller; `load(in:)` mounts its inner ad in the
@@ -382,7 +391,7 @@ viewability tracking yourself. The only integration step is one call per ad-bear
 
 | Event | When it fires |
 |---|---|
-| `pageImpression` | A screen showing ads appears/resumes (you trigger this via `pageImpression`) |
+| `pageImpression` | A navigation visit is reported explicitly, including ad-free screens; app resume is not a new visit |
 | `bidRequest` | A Prebid bid request is sent for a slot (also on each auto-refresh) |
 | `bidResponse` | Prebid returns a result |
 | `bidWon` | A Prebid bid wins — carries `auction_id`, `bidder_code` and available targeting metadata; unavailable exact bid price/currency and IDs are omitted |

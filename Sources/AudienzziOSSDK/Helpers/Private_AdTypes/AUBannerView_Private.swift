@@ -175,7 +175,7 @@ extension AUBannerView {
             refreshController.unblock(.appBackground, schedule: false)
         }
         // A hold recorded from a verdict that has since stopped being true must not outlive the
-        // transition: the automatic foreground impression owns recovery and returns early from
+        // transition: the automatic foreground sweep owns recovery and returns early from
         // `resumeAfterForeground`, so this is the only path left that can release it. Recomputing
         // rather than unblocking directly is what keeps the cached verdict and the hold in step —
         // and it can only ever clear `.notVisible`, never a host-reported pause the SDK cannot
@@ -250,13 +250,13 @@ extension AUBannerView {
 
     /// The app came back to the foreground with no page impression to own the recovery.
     ///
-    /// A page-scoped app gets a foreground page impression instead, and that impression recreates
+    /// A page-scoped app gets a foreground recovery sweep instead, and that sweep recreates
     /// every banner on the active page — doing both is how a single return used to produce two
     /// auctions. An app that never calls `pageImpression` has no such transition, so this restores
     /// its refresh directly; otherwise backgrounding once would silently kill refresh for the rest
     /// of the process.
     func resumeAfterForeground() {
-        guard !Audienzz.shared.hasPendingForegroundReimpression else { return }
+        guard !Audienzz.shared.hasPendingForegroundRecovery else { return }
         // Re-sync the cached verdict here as well as at request time. If the request-time gate held
         // a refresh because of a signal nothing observed, the block is cleared by whichever
         // recovery event comes next rather than waiting for a visibility event that may not exist.
@@ -284,7 +284,7 @@ extension AUBannerView {
     /// was missed.
     @nonobjc func canStartAuction(_ reason: AURefreshRequestReason = .firstLoad) -> Bool {
         guard !refreshController.isDestroyed, screenActive, !Audienzz.shared.isAppBackgrounded,
-              !Audienzz.shared.hasPendingForegroundReimpression else { return false }
+              !Audienzz.shared.hasPendingForegroundRecovery else { return false }
         // Prebid gets its account id only once the publisher config has been fetched, and the
         // remote flow awaits that. An above-the-fold banner fires its first load immediately, so it
         // routinely wins that race — and Prebid then answers `.prebidInvalidAccountId` while the

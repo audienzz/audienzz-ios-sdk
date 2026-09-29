@@ -83,3 +83,22 @@ corresponding tests on both platforms. Foreground/page-impression semantics are 
 Final follow-up full suites: **349 iOS / 321 Android tests passed**, zero failures, after restoring
 all mutation probes. Native versions and bridge code are unchanged; no live-device/collector
 validation was performed for this follow-up.
+
+
+### App background and foreground
+
+A real background/foreground round trip recovers ads on the active page without emitting a
+`pageImpression` or changing `page_impression_id`, screen name, `au_page_seq`, or banner positions.
+Request counters continue within that page; each admitted replacement still gets a fresh auction ID.
+Blanking (when enabled), lazy loading, visibility gates, publisher pause, stale-callback retirement
+and Google-load serialization remain in force. Navigation during the recovery delay supersedes it.
+
+The legacy `pageImpressionObserver` callback is a **UI lifecycle signal**, used for both navigation
+and foreground recovery. Its Flutter/RN echoes (`onPageImpression` / `AudienzzPageImpression`) may
+advance a local view revision without emitting analytics or incrementing `au_page_seq`. Published
+bridges already consume this signal; they only need the native release containing this change.
+
+Publishers report actual navigation, including back navigation and ad-free destinations; they
+must not report a new page solely from app-resume callbacks. Explicit `pageImpression` calls
+remain unconditional, even for the same screen. Existing explicit interstitial-return reports
+are unchanged. With no reported page, foreground recovery does not invent a page identity.

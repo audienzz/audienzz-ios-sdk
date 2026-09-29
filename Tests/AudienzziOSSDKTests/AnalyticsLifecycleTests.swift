@@ -208,6 +208,75 @@ final class AnalyticsLifecycleTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(start.pageImpressionId, oldPage); XCTAssertEqual(start.auctionId, "auction-A")
         XCTAssertEqual(success.pageImpressionId, oldPage); XCTAssertEqual(success.auctionId, "auction-A")
     }
+
+    private func backgroundAndRecover() {
+        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        wait(0.6)
+    }
+
+    func testForegroundBlanksAndReloadsWithoutResettingPageTargetingOrAnalytics() throws {
+        let oldBlank = Audienzz.shared.blankOnScreenReload
+        Audienzz.shared.blankOnScreenReload = true
+        defer { Audienzz.shared.blankOnScreenReload = oldBlank }
+        var requests: [AdManagerRequest] = []
+        banner.onLoadRequest = { [unowned self] request in
+            handoffs += 1
+            requests.append(request as! AdManagerRequest)
+        }
+        loaded(); impression()
+        let page = try XCTUnwrap(events.first { $0.type == .bidRequest }?.pageImpressionId)
+        let seq = try XCTUnwrap(requests.first?.customTargeting?["au_page_seq"] as? String)
+        let slot = try XCTUnwrap(requests.first?.customTargeting?["au_slot"] as? String)
+        for index in 1...2 {
+            backgroundAndRecover()
+            XCTAssertEqual(handoffs, index + 1)
+            XCTAssertTrue(google.isHidden, "slot stays blank until Google completes")
+            XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 1)
+            google.delegate?.bannerViewDidReceiveAd?(google); impression()
+            XCTAssertFalse(google.isHidden)
+            XCTAssertEqual(requests.last?.customTargeting?["au_page_seq"] as? String, seq)
+            XCTAssertEqual(requests.last?.customTargeting?["au_slot"] as? String, slot)
+            XCTAssertEqual(requests.last?.customTargeting?["hb_refresh_count"] as? String, String(index))
+        }
+        XCTAssertEqual(count(.pageImpression), 0, "observer starts after the original page report")
+        XCTAssertEqual(count(.bidRequest), 3); XCTAssertEqual(count(.adImpression), 3)
+        let bids = events.filter { $0.type == .bidRequest }
+        let auctionIds = try bids.map { try XCTUnwrap($0.auctionId) }
+        XCTAssertEqual(Set(auctionIds).count, 3)
+        for event in events { XCTAssertEqual(event.pageImpressionId, page) }
+    }
+
+    func testForegroundOffscreenReplacementWaitsThenRecoversWithoutAnotherPage() {
+        loaded()
+        banner.smartRefresh = true
+        banner.frame.origin.y = 2000
+        banner.refreshVisibilityNow()
+        backgroundAndRecover()
+        XCTAssertEqual(handoffs, 1)
+        XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 1)
+        banner.frame.origin.y = 100
+        banner.refreshVisibilityNow()
+        wait(0.1)
+        XCTAssertEqual(handoffs, 2)
+        XCTAssertEqual(count(.pageImpression), 0)
+    }
+
+    func testForegroundCannotReactivateOtherPageOrUndoPublisherPause() {
+        loaded()
+        banner.adUnitConfiguration.stopAutoRefresh()
+        backgroundAndRecover()
+        XCTAssertEqual(handoffs, 1)
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.publisher))
+        Audienzz.shared.pageImpression("B")
+        backgroundAndRecover()
+        XCTAssertEqual(handoffs, 1)
+        XCTAssertFalse(banner.screenActive)
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.pageInactive))
+        XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 2)
+    }
+
 }
 private final class ProbeInterstitialAd: GoogleMobileAds.InterstitialAd {
     override var adUnitID: String { "/probe/interstitial" }

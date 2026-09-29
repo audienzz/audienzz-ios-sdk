@@ -37,7 +37,7 @@ internal final class AUConfiguredDemandRefresh {
         controller.setIntervalMillis(configuration.autorefreshEventModel.autorefreshTime)
         if view.window == nil { controller.block(.detached) }
         if Audienzz.shared.isAppBackgrounded { controller.block(.appBackground) }
-        Audienzz.shared.observeForegroundReimpression()
+        Audienzz.shared.observeForegroundRecovery()
         coordinator.registerConfigured(self)
     }
 
@@ -49,7 +49,7 @@ internal final class AUConfiguredDemandRefresh {
             completed || ($0 != .detached && $0 != .notVisible && $0 != .hostReportedHidden)
         }
         guard active, !blocked, !Audienzz.shared.isAppBackgrounded,
-              !Audienzz.shared.hasPendingForegroundReimpression else {
+              !Audienzz.shared.hasPendingForegroundRecovery else {
             pending = true
             return nil
         }
@@ -87,7 +87,7 @@ internal final class AUConfiguredDemandRefresh {
     }
 
     func foreground() {
-        guard !Audienzz.shared.hasPendingForegroundReimpression else { return }
+        guard !Audienzz.shared.hasPendingForegroundRecovery else { return }
         controller.unblock(.appBackground, schedule: false)
         resume()
     }
