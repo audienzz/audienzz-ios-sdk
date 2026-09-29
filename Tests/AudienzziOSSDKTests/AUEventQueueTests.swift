@@ -59,7 +59,12 @@ final class AUEventQueueTests: XCTestCase {
     }
     override func tearDown() { network = nil; clock = nil; try? FileManager.default.removeItem(at: directory) }
     private func store() -> AUEventStore { AUEventStore(directory: directory) }
-    private func event(_ id: String) -> JSONObject { ["event_id": id, "event_type": "adClick", "page_impression_id": "original"] }
+    private func event(_ id: String) -> JSONObject { ["event_id": id, "event_type": "adClick", "page_impression_id": "original", "attributes": ["auction_id": "A"]] }
+    private func auctionEvent(_ id: String, _ auction: String?) -> JSONObject {
+        var value = event(id)
+        value["attributes"] = auction.map { ["auction_id": $0] } ?? [:]
+        return value
+    }
     private func ids(_ events: [JSONObject]) -> [String] { events.compactMap { $0["event_id"] as? String } }
     private func sender(config: AUEventQueue.Config = .default, storage: AUEventStore? = nil, backend: (() -> Int?)? = nil) -> AUEventQueue {
         let result = AUEventQueue(networkManager: network, store: storage ?? store(), config: config, scheduler: clock, jitter: { 1 }, backendBatchSize: backend)
@@ -69,14 +74,114 @@ final class AUEventQueueTests: XCTestCase {
         network.complete(index, error); queue.syncForTesting()
     }
 
-    func testTimerStartsAtOldestEventAndPersistencePrecedesHTTP() {
+    func testBusyAuctionCannotDelayAnotherAuctionAndBatchesNeverMix() {
+        let queue = sender()
+        queue.enqueue(auctionEvent("a", "A")); queue.enqueue(auctionEvent("b", "B")); queue.syncForTesting()
+        clock.advance(1.5); queue.enqueue(auctionEvent("a2", "A")); queue.syncForTesting()
+        clock.advance(0.499); XCTAssertTrue(network.sent.isEmpty)
+        clock.advance(0.001)
+        XCTAssertEqual(network.sent.map(ids), [["b"]]); complete(queue, 0)
+        clock.advance(0.5); queue.enqueue(auctionEvent("a3", "A")); queue.syncForTesting()
+        clock.advance(1.999); XCTAssertEqual(network.sent.count, 1)
+        clock.advance(0.001)
+        XCTAssertEqual(network.sent.map(ids), [["b"], ["a", "a2", "a3"]])
+        complete(queue, 1)
+    }
+
+    func testMissingAndBlankAuctionIDsUseASeparateDebouncedBucket() {
+        let queue = sender()
+        var page = auctionEvent("page", nil); page["event_type"] = "pageImpression"
+        queue.enqueue(auctionEvent("a", "A")); queue.enqueue(page)
+        queue.enqueue(auctionEvent("blank", " ")); queue.syncForTesting()
+        clock.advance(1); queue.enqueue(auctionEvent("a2", "A")); queue.syncForTesting()
+        clock.advance(1)
+        XCTAssertEqual(network.sent.map(ids), [["page", "blank"]]); complete(queue, 0)
+        clock.advance(2)
+        XCTAssertEqual(network.sent.map(ids), [["page", "blank"], ["a", "a2"]]); complete(queue, 1)
+    }
+
+    func testDuplicateEnqueueDoesNotExtendAuctionDebounce() {
+        let queue = sender()
+        queue.enqueue(event("a")); queue.syncForTesting()
+        clock.advance(1.5); queue.enqueue(event("a")); queue.syncForTesting()
+        clock.advance(0.5)
+        XCTAssertEqual(network.sent.map(ids), [["a"]]); complete(queue, 0)
+        XCTAssertTrue(store().loadAll().isEmpty)
+    }
+    func testCapCountsEventsPerAuctionInsteadOfAcrossEntireQueue() {
+        let queue = sender()
+        (0..<9).forEach { queue.enqueue(auctionEvent(String($0), "A")) }
+        (9..<18).forEach { queue.enqueue(auctionEvent(String($0), "B")) }; queue.syncForTesting()
+        clock.advance(1.999); XCTAssertTrue(network.sent.isEmpty)
+        clock.advance(0.001)
+        XCTAssertEqual(network.sent.map(ids), [(0..<9).map(String.init)]); complete(queue, 0)
+        clock.advance(2)
+        XCTAssertEqual(network.sent.map(ids), [(0..<9).map(String.init), (9..<18).map(String.init)])
+        complete(queue, 1)
+    }
+
+    func testContinuouslyFullAuctionYieldsToAnOlderQuietAuction() {
+        let queue = sender()
+        (0..<10).forEach { queue.enqueue(event(String($0))) }; queue.syncForTesting()
+        XCTAssertEqual(network.sent.count, 1); complete(queue, 0)
+        clock.advance(0.1); queue.enqueue(auctionEvent("b", "B")); queue.syncForTesting()
+        clock.advance(1.8); (10..<20).forEach { queue.enqueue(event(String($0))) }; queue.syncForTesting()
+        clock.advance(0.1); XCTAssertEqual(network.sent.count, 2); complete(queue, 1)
+        clock.advance(1.9); (20..<30).forEach { queue.enqueue(event(String($0))) }; queue.syncForTesting()
+        clock.advance(0.1)
+        XCTAssertEqual(network.sent.map(ids), [(0..<10).map(String.init), (10..<20).map(String.init), ["b"]])
+        complete(queue, 2); clock.advance(2)
+        XCTAssertEqual(ids(network.sent[3]), (20..<30).map(String.init)); complete(queue, 3)
+    }
+
+    func testRestoredBacklogRegroupsByAuctionAndNewEventsStillDebounce() {
+        XCTAssertEqual(store().append(auctionEvent("oldA", "A")), .stored)
+        XCTAssertEqual(store().append(auctionEvent("oldB", "B")), .stored)
+        XCTAssertEqual(store().append(auctionEvent("oldA2", "A")), .stored)
+        let queue = sender()
+        XCTAssertEqual(network.sent.map(ids), [["oldA", "oldA2"]])
+        clock.advance(1.9); queue.enqueue(event("newA")); queue.syncForTesting()
+        clock.advance(0.1); complete(queue, 0)
+        XCTAssertEqual(network.sent.map(ids), [["oldA", "oldA2"], ["oldB"]]); complete(queue, 1)
+        clock.advance(1.999); XCTAssertEqual(network.sent.count, 2)
+        clock.advance(0.001)
+        XCTAssertEqual(network.sent.map(ids), [["oldA", "oldA2"], ["oldB"], ["newA"]]); complete(queue, 2)
+        XCTAssertTrue(store().loadAll().isEmpty)
+    }
+
+    func testLateEventDuringInFlightPostGetsItsOwnDebounce() {
+        let queue = sender()
+        queue.enqueue(event("a")); queue.syncForTesting()
+        clock.advance(2); XCTAssertEqual(network.sent.map(ids), [["a"]])
+        clock.advance(2.9); queue.enqueue(event("b")); queue.syncForTesting()
+        clock.advance(0.1); complete(queue, 0)
+        XCTAssertEqual(ids(store().loadAll()), ["b"])
+        // b arrived at 4.9; its own deadline is 6.9, not the completion at 5.0.
+        clock.advance(1.899); XCTAssertEqual(network.sent.count, 1)
+        clock.advance(0.001)
+        XCTAssertEqual(network.sent.map(ids), [["a"], ["b"]]); complete(queue, 1)
+    }
+
+    func testBackgroundFlushOnlyForcesEventsAlreadyQueued() {
+        let queue = sender()
+        queue.enqueue(event("a")); queue.flush(); queue.syncForTesting()
+        XCTAssertEqual(network.sent.map(ids), [["a"]])
+        clock.advance(1.9); queue.enqueue(event("b")); queue.wake(); queue.syncForTesting()
+        clock.advance(0.1); complete(queue, 0)
+        XCTAssertEqual(network.sent.count, 1)
+        clock.advance(1.899); XCTAssertEqual(network.sent.count, 1)
+        clock.advance(0.001)
+        XCTAssertEqual(network.sent.map(ids), [["a"], ["b"]]); complete(queue, 1)
+    }
+
+    func testAuctionDebounceRestartsAtLatestEventAndPersistencePrecedesHTTP() {
         let queue = sender()
         queue.enqueue(event("a")); queue.syncForTesting()
         XCTAssertEqual(ids(store().loadAll()), ["a"])
         XCTAssertTrue(network.sent.isEmpty)
-        clock.advance(4)
+        clock.advance(1.5)
         queue.enqueue(event("b")); queue.syncForTesting()
-        clock.advance(0.999); XCTAssertTrue(network.sent.isEmpty)
+        clock.advance(1.999); XCTAssertTrue(network.sent.isEmpty)
         network.atRequest = { events in
             XCTAssertFalse(Thread.isMainThread)
             XCTAssertEqual(self.ids(self.store().loadAll()), self.ids(events))
@@ -136,7 +241,7 @@ final class AUEventQueueTests: XCTestCase {
         settings.applyBackendConfig(15)
         let queue = sender(backend: { settings.current })
         (0..<9).forEach { queue.enqueue(event(String($0))) }; queue.syncForTesting()
-        clock.advance(4); settings.applyBackendConfig(nil)
+        clock.advance(1); settings.applyBackendConfig(nil)
         queue.enqueue(event("9")); queue.syncForTesting()
         XCTAssertEqual(network.sent.map(ids), [(0..<10).map(String.init)])
     }
@@ -144,7 +249,7 @@ final class AUEventQueueTests: XCTestCase {
     func testByteLimitUsesUTF8AndOversizedSingletonIsRetainedInQuarantine() {
         let byteLimit = AUEventStore.encode(event("a"))!.count * 2 + 3
         let queue = sender(config: .init(batchBytes: byteLimit))
-        var big = event("big"); big["value"] = String(repeating: "ж", count: 50)
+        var big = event("big"); big["value"] = String(repeating: "ж", count: 1000)
         queue.enqueue(big); queue.enqueue(event("a")); queue.enqueue(event("b")); queue.enqueue(event("c")); queue.syncForTesting()
         clock.advance(5)
         XCTAssertEqual(network.sent.count, 1)
@@ -168,12 +273,14 @@ final class AUEventQueueTests: XCTestCase {
         XCTAssertEqual(ids(network.sent[2]), ["b"])
     }
 
-    func testConnectivityFlushesEarlyWithoutBypassingBackoff() {
+    func testConnectivityRespectsAuctionDebounceAndBackoff() {
         let queue = sender()
         queue.enqueue(event("a")); queue.syncForTesting()
         XCTAssertTrue(network.sent.isEmpty)
         XCTAssertNotNil(network.onConnectionRestored)
         network.onConnectionRestored?(); queue.syncForTesting()
+        clock.advance(1.999); XCTAssertTrue(network.sent.isEmpty)
+        clock.advance(0.001)
         XCTAssertEqual(network.sent.map(ids), [["a"]])
         complete(queue, 0, .httpStatus(503))
         network.onConnectionRestored?(); queue.syncForTesting()

@@ -144,8 +144,8 @@ final class AUEventsManager: AULogEventType {
 
     // MARK: - App lifecycle (delivery hint)
 
-    /// Flush the event queue when the app backgrounds (so a pending buffer isn't stranded) and again
-    /// when it returns to the foreground (drains anything left after a failed/backoff cycle). Uses
+    /// Flush pending events when the app backgrounds; wake on foreground without breaking the
+    /// inactivity window of a newly active auction. Uses
     /// block-based observers (added once) since `AUEventsManager` is not an `NSObject`.
     private func observeAppLifecycle() {
         #if canImport(UIKit)
@@ -158,7 +158,7 @@ final class AUEventsManager: AULogEventType {
         }
         nc.addObserver(forName: UIApplication.didBecomeActiveNotification,
                        object: nil, queue: .main) { [weak self] _ in
-            self?.eventQueue?.flush()
+            self?.eventQueue?.wake()
         }
         #endif
     }

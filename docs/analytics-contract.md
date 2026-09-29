@@ -18,12 +18,18 @@ An interstitial prefetched on A and shown on B keeps A's ID throughout. Report t
 loading ads; a request made before the first page report has no page ID. No manual ID propagation
 is needed in Dart/JS. These guarantees require the matching native release.
 
-The batching branch persists events immediately on the native utility worker, then POSTs at
-the publisher's `analyticsBatchSize` or after 5 seconds. Missing, null, blank, invalid or nonpositive
+The batching branch persists events immediately on the native utility worker, then groups by
+`attributes.auction_id`. Each group sends after two seconds without another new event for that
+auction, or upon reaching the publisher's `analyticsBatchSize`. Missing, null, blank, invalid or nonpositive
 values default to 10; positive integers are capped at 15. Numeric strings are tolerated. The field
 is cached with publisher configuration and read before each send, including pending retries.
 Batches are also capped at 128 KiB; one request runs at a time with at
 least 2 seconds between starts. Failures remain durable and retry with jitter/Retry-After.
+Every POST contains one auction's events. Missing/blank auction IDs, including page impressions,
+use a separate debounced bucket. Other auctions cannot extend a group's debounce. Late events
+start a new window, and new events are never appended to an existing retry attempt. Background
+flushes and restart recovery make only already-queued events due early; foreground/connectivity
+do not bypass debounce. Due groups are selected fairly, and pacing/backoff can delay the POST.
 The 20 MiB store preserves existing events on overflow and retains rejected singletons in
 quarantine. See the cross-platform contract above for retention, limits and required whole-batch
 acknowledgement / event-ID deduplication on the collector. No Dart/JS queue is needed. Flutter
@@ -53,3 +59,8 @@ Validation: 334 iOS and 306 Android tests pass. Reverting iOS fullscreen attribu
 owner, or removing the same-response load guard, fails the targeted regression tests; restoring
 the fixes passes. See the [cross-platform review](https://github.com/audienzz/audienzz-android-sdk/blob/feature/durable-analytics-batching/docs/analytics-review-2026-09-29.md).
 No live-device/collector validation was performed for these lifecycle fixes.
+
+After the auction-debounce update, the full suites pass with 342 iOS / 314 Android tests. Tests
+cover independent auction deadlines, late arrivals during HTTP, the no-auction bucket, cap
+accounting, fair selection, durable recovery and retry isolation. Removing grouping/latest-arrival
+debounce fails the corresponding regressions.
