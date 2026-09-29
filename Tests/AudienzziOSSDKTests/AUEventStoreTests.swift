@@ -215,4 +215,49 @@ final class AUEventStoreTests: XCTestCase {
         XCTAssertEqual(ids(makeStore().loadAll()), ["a"])
     }
 
+    func testQuarantineCannotConsumePendingDeliveryCapacityAfterRestart() {
+        let bytes = AUEventStore.encode(event("a"))!.count
+        let first = AUEventStore(directory: directory, maxBytes: bytes)
+        XCTAssertEqual(first.append(event("a")), .stored)
+        XCTAssertTrue(first.quarantine(id: "a"))
+        let reopened = AUEventStore(directory: directory, maxBytes: bytes)
+        XCTAssertEqual(reopened.append(event("b")), .stored)
+        XCTAssertEqual(reopened.append(event("c")), .full)
+        XCTAssertEqual(ids(makeStore().loadAll()), ["b"])
+        let final = makeStore(); _ = final.loadAll()
+        XCTAssertEqual(final.quarantinedIDs, ["a"])
+    }
+
+    func testQuarantineRetentionBoundsCountAndBytesWithoutTrimmingPendingEvents() throws {
+        let bytes = AUEventStore.encode(event("a"))!.count
+        func limited(_ budget: Int) -> AUEventStore {
+            AUEventStore(directory: directory, maxBytes: bytes * 10, quarantineMaxBytes: budget, quarantineMaxCount: 2)
+        }
+        let first = limited(bytes * 10)
+        XCTAssertEqual(first.append(event("owed")), .stored)
+        for id in ["a", "b", "c"] {
+            XCTAssertEqual(first.append(event(id)), .stored); XCTAssertTrue(first.quarantine(id: id))
+        }
+        let countBounded = limited(bytes * 10); _ = countBounded.loadAll()
+        XCTAssertEqual(countBounded.quarantinedIDs, ["b", "c"])
+        let byteBounded = limited(bytes)
+        XCTAssertEqual(ids(byteBounded.loadAll()), ["owed"])
+        XCTAssertEqual(byteBounded.quarantinedIDs, ["c"])
+        XCTAssertTrue(byteBounded.acknowledge(ids: ["owed"]))
+        let reopened = limited(bytes)
+        XCTAssertTrue(reopened.loadAll().isEmpty)
+        XCTAssertEqual(reopened.quarantinedIDs, ["c"])
+        XCTAssertTrue(try String(contentsOf: fileURL, encoding: .utf8).contains("_au_discard_ids"))
+    }
+
+    func testOversizedQuarantinedDiagnosticIsDiscardedWhileOwedEventsRemain() {
+        let first = AUEventStore(directory: directory, quarantineMaxBytes: 1)
+        XCTAssertEqual(first.append(event("owed")), .stored)
+        XCTAssertEqual(first.append(event("bad")), .stored)
+        XCTAssertTrue(first.quarantine(id: "bad"))
+        let reopened = makeStore()
+        XCTAssertEqual(ids(reopened.loadAll()), ["owed"])
+        XCTAssertTrue(reopened.quarantinedIDs.isEmpty)
+    }
+
 }

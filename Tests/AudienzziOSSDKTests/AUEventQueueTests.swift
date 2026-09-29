@@ -362,22 +362,90 @@ final class AUEventQueueTests: XCTestCase {
         XCTAssertEqual(ids(store().loadAll()), ["a"])
     }
 
-    func testFailedAckPersistenceReplaysOnlyTheOriginalBatch() throws {
+    func testFailedAckPersistenceRetriesLocallyWhileAnotherAuctionProceeds() throws {
         let queue = sender()
         queue.enqueue(event("a")); queue.flush(); queue.syncForTesting()
-        queue.enqueue(event("b")); queue.syncForTesting()
+        queue.enqueue(auctionEvent("b", "B")); queue.syncForTesting()
         let backup = directory.appendingPathExtension("saved")
         defer { try? FileManager.default.removeItem(at: backup) }
         try FileManager.default.moveItem(at: directory, to: backup)
         try Data("unwritable".utf8).write(to: directory)
         complete(queue, 0)
+        clock.advance(2)
+        XCTAssertEqual(network.sent.map(ids), [["a"], ["b"]])
+        complete(queue, 1)
+        clock.advance(600)
+        XCTAssertEqual(network.sent.map(ids), [["a"], ["b"]])
+        XCTAssertEqual(ids(AUEventStore(directory: backup).loadAll()), ["a", "b"])
         try FileManager.default.removeItem(at: directory)
         try FileManager.default.moveItem(at: backup, to: directory)
+        clock.advance(60)
+        XCTAssertTrue(store().loadAll().isEmpty)
+        XCTAssertEqual(clock.activeJobs, 0)
+        XCTAssertEqual(network.sent.count, 2)
+    }
+
+    func testAcceptedBatchWithFailedLocalAckReplaysAfterRestart() throws {
+        var queue: AUEventQueue? = sender()
+        queue!.enqueue(event("a")); queue!.flush(); queue!.syncForTesting()
+        let backup = directory.appendingPathExtension("saved")
+        defer { try? FileManager.default.removeItem(at: backup) }
+        try FileManager.default.moveItem(at: directory, to: backup)
+        try Data("unwritable".utf8).write(to: directory)
+        complete(queue!, 0)
+        queue = nil
+        try FileManager.default.removeItem(at: directory)
+        try FileManager.default.moveItem(at: backup, to: directory)
+        network = Network()
+        let restarted = sender()
+        XCTAssertEqual(network.sent.map(ids), [["a"]])
+        complete(restarted, 0)
+        XCTAssertTrue(store().loadAll().isEmpty)
+    }
+
+    func testLateSameAuctionEventDoesNotRideAlongWithScheduledFlush() {
+        let queue = sender()
+        queue.enqueue(auctionEvent("b", "B")); queue.syncForTesting()
+        clock.advance(2); complete(queue, 0)
+        clock.advance(0.1); queue.enqueue(event("a1")); queue.flush(); queue.syncForTesting()
+        clock.advance(0.4); queue.enqueue(event("a2")); queue.syncForTesting()
+        clock.advance(1.5)
+        XCTAssertEqual(network.sent.map(ids), [["b"], ["a1"]])
+        complete(queue, 1)
+        clock.advance(1.999)
+        XCTAssertEqual(network.sent.count, 2)
+        clock.advance(0.001)
+        XCTAssertEqual(network.sent.map(ids), [["b"], ["a1"], ["a2"]])
+    }
+
+    func testRestoredAndFreshAuctionsBothProgressWithoutDrainingBacklogFirst() {
+        let storage = store()
+        for i in 100..<160 { XCTAssertEqual(storage.append(auctionEvent(String(i), "old-\(i)")), .stored) }
+        let queue = sender(storage: storage)
+        for i in 0..<10 { queue.enqueue(auctionEvent(String(i), "fresh-\(i)")) }
+        queue.syncForTesting(); complete(queue, 0)
         clock.advance(2)
-        XCTAssertEqual(network.sent.map(ids), [["a"], ["a"]])
-        XCTAssertEqual(ids(store().loadAll()), ["a", "b"])
+        XCTAssertEqual(network.sent.map(ids), [["100"], ["0"]])
         complete(queue, 1); clock.advance(2)
-        XCTAssertEqual(ids(network.sent[2]), ["b"])
+        XCTAssertEqual(ids(network.sent[2]), ["101"])
+        complete(queue, 2); clock.advance(2)
+        XCTAssertEqual(ids(network.sent[3]), ["1"])
+        for i in 3..<70 { complete(queue, i); clock.advance(2) }
+        XCTAssertEqual(network.sent.count, 70)
+        XCTAssertEqual(Set(network.sent.flatMap(ids)), Set((100..<160).map(String.init) + (0..<10).map(String.init)))
+        XCTAssertTrue(store().loadAll().isEmpty)
+    }
+
+    func testFreshEventInSameRestoredAuctionGetsItsOwnFairTurn() {
+        let storage = store()
+        for i in 100..<160 { XCTAssertEqual(storage.append(event(String(i))), .stored) }
+        let queue = sender(storage: storage)
+        queue.enqueue(event("fresh")); queue.syncForTesting(); complete(queue, 0)
+        clock.advance(1.999); XCTAssertEqual(network.sent.count, 1)
+        clock.advance(0.001)
+        XCTAssertEqual(ids(network.sent[1]), ["fresh"])
+        complete(queue, 1); clock.advance(2)
+        XCTAssertEqual(ids(network.sent[2]), (110..<120).map(String.init))
     }
 
     func testCapacityNeverDeletesAnUnacknowledgedEvent() {

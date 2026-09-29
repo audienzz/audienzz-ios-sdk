@@ -29,9 +29,17 @@ Every POST contains one auction's events. Missing/blank auction IDs, including p
 use a separate debounced bucket. Other auctions cannot extend a group's debounce. Late events
 start a new window, and new events are never appended to an existing retry attempt. Background
 flushes and restart recovery make only already-queued events due early; foreground/connectivity
-do not bypass debounce. Due groups are selected fairly, and pacing/backoff can delay the POST.
-The 20 MiB store preserves existing events on overflow and retains rejected singletons in
-quarantine. See the cross-platform contract above for retention, limits and required whole-batch
+do not bypass debounce. Due restored/fresh groups alternate, selecting the oldest due auction
+within each lane. Even matching auction IDs stay in separate restored/fresh groups so a large
+backlog cannot bury newly generated events. Failed HTTP plans retain priority and backoff;
+pacing, in-flight HTTP and backoff can delay the POST.
+The 20 MiB pending-delivery quota preserves already owed events on overflow. Quarantined
+rejections use a separate diagnostic budget of 100 events / 1 MiB; older/oversized rejected
+payloads are durably discarded, never counted as delivered. No pending deliverable event is
+pruned. Known HTTP successes with a failed local acknowledgement retry only the disk write
+with 2/4/8/16/32/60-second capped backoff; other persisted events may proceed. Those accepted
+IDs remain durable until local acknowledgement, so a process restart can still replay them.
+See the cross-platform contract above for retention, limits and required whole-batch
 acknowledgement / event-ID deduplication on the collector. No Dart/JS queue is needed. Flutter
 requires a small config-forwarding update because it fetches publisher config in Dart; RN uses
 native remote initialization. Release the matching native SDKs before updating bridge pins.
@@ -55,12 +63,23 @@ verify that reopening the store after acknowledgement cannot resend it. Ambiguou
 still repeat an event ID; collector deduplication is required. These changes do not establish the
 cause of the historical September 25 traffic without sample payloads/event IDs.
 
-Validation: 334 iOS and 306 Android tests pass. Reverting iOS fullscreen attribution to the mutable
+Producer/lifecycle baseline: 334 iOS and 306 Android tests passed. Reverting iOS fullscreen attribution to the mutable
 owner, or removing the same-response load guard, fails the targeted regression tests; restoring
 the fixes passes. See the [cross-platform review](https://github.com/audienzz/audienzz-android-sdk/blob/feature/durable-analytics-batching/docs/analytics-review-2026-09-29.md).
 No live-device/collector validation was performed for these lifecycle fixes.
 
-After the auction-debounce update, the full suites pass with 342 iOS / 314 Android tests. Tests
+Auction-debounce baseline: the full suites passed with 342 iOS / 314 Android tests. Tests
 cover independent auction deadlines, late arrivals during HTTP, the no-auction bucket, cap
 accounting, fair selection, durable recovery and retry isolation. Removing grouping/latest-arrival
 debounce fails the corresponding regressions.
+
+The follow-up review adds the missing flush-spacing regression, tests fairness with 60 restored
+auctions and with new events in the same restored auction, and exercises persistent local
+acknowledgement failure plus replay after process death. Real-file tests verify separate
+quarantine capacity and bounded retention across reopen/compaction. Deliberately reverting
+flush filtering, fairness, local-only acknowledgement retry, or quarantine limits fails their
+corresponding tests on both platforms. Foreground/page-impression semantics are unchanged.
+
+Final follow-up full suites: **349 iOS / 321 Android tests passed**, zero failures, after restoring
+all mutation probes. Native versions and bridge code are unchanged; no live-device/collector
+validation was performed for this follow-up.

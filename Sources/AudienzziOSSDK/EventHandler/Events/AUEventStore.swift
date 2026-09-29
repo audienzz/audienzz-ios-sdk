@@ -16,23 +16,28 @@
 import Foundation
 
 /// Durable JSONL outbox; old event-only and per-ID acknowledgement journals remain readable.
-/// One analytics worker owns this store. No unacknowledged event is evicted to admit another.
+/// One analytics worker owns this store. No pending deliverable event is evicted to admit another.
 final class AUEventStore {
     enum Admission { case stored, full, ioError, invalid }
     private let fileURL: URL?
     private let maxBytes: Int
+    private let quarantineMaxBytes: Int
+    private let quarantineMaxCount: Int
     private var cached: [JSONObject]?
     private var storedIDs = Set<String>()
     private(set) var quarantinedIDs = Set<String>()
     private(set) var readFailed = false
     private var payloadBytes = 0
+    private var quarantineBytes = 0
     private var removals = 0
 
-    init(directory: URL? = nil, fileName: String = "events.jsonl", maxBytes: Int = 20 * 1024 * 1024) {
+    init(directory: URL? = nil, fileName: String = "events.jsonl", maxBytes: Int = 20 * 1024 * 1024,
+         quarantineMaxBytes: Int = 1024 * 1024, quarantineMaxCount: Int = 100) {
         let base = directory ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first?.appendingPathComponent("Audienzz", isDirectory: true)
         fileURL = base?.appendingPathComponent(fileName)
         self.maxBytes = maxBytes
+        self.quarantineMaxBytes = quarantineMaxBytes; self.quarantineMaxCount = quarantineMaxCount
     }
 
     func loadAll() -> [JSONObject] {
@@ -51,7 +56,7 @@ final class AUEventStore {
                     }
                     if let id = object["_au_ack"] as? String {
                         records.removeValue(forKey: id); removals += 1
-                    } else if let ids = object["_au_ack_ids"] as? [String] {
+                    } else if let ids = (object["_au_ack_ids"] ?? object["_au_discard_ids"]) as? [String] {
                         let set = Set(ids)
                         ids.forEach { records.removeValue(forKey: $0) }
                         rejected.subtract(set); removals += ids.count
@@ -71,10 +76,13 @@ final class AUEventStore {
         let events = order.compactMap { records[$0] }
         readFailed = false
         storedIDs = Set(records.keys)
-        cached = events; quarantinedIDs = rejected
+        cached = events; quarantinedIDs = rejected.intersection(storedIDs)
         payloadBytes = events.reduce(0) { $0 + (Self.encode($1)?.count ?? 0) }
+        quarantineBytes = events.filter { quarantinedIDs.contains($0["event_id"] as? String ?? "") }
+            .reduce(0) { $0 + (Self.encode($1)?.count ?? 0) }
+        trimQuarantine()
         if damaged || removals >= max(64, events.count / 4) { compact() }
-        return events.filter { !rejected.contains($0["event_id"] as? String ?? "") }
+        return (cached ?? []).filter { !quarantinedIDs.contains($0["event_id"] as? String ?? "") }
     }
 
     @discardableResult func append(_ event: JSONObject) -> Admission {
@@ -82,7 +90,7 @@ final class AUEventStore {
         guard !readFailed else { return .ioError }
         guard let id = event["event_id"] as? String, let data = Self.encode(event) else { return .invalid }
         if storedIDs.contains(id) { return .stored }
-        guard payloadBytes + data.count <= maxBytes else { return .full }
+        guard payloadBytes - quarantineBytes + data.count <= maxBytes else { return .full }
         guard appendRecord(event) else { return .ioError }
         cached?.append(event); storedIDs.insert(id); payloadBytes += data.count
         checkpointIfNeeded()
@@ -97,6 +105,8 @@ final class AUEventStore {
         if removed.isEmpty { return true }
         guard appendRecord(["_au_ack_ids": ids]) else { return false }
         cached?.removeAll { set.contains($0["event_id"] as? String ?? "") }
+        quarantineBytes -= removed.filter { quarantinedIDs.contains($0["event_id"] as? String ?? "") }
+            .reduce(0) { $0 + (Self.encode($1)?.count ?? 0) }
         quarantinedIDs.subtract(set); storedIDs.subtract(set)
         payloadBytes -= removed.reduce(0) { $0 + (Self.encode($1)?.count ?? 0) }
         removals += removed.count
@@ -105,9 +115,12 @@ final class AUEventStore {
     }
 
     @discardableResult func quarantine(id: String) -> Bool {
+        if cached == nil { _ = loadAll() }
+        guard !readFailed else { return false }
+        guard let event = cached?.first(where: { $0["event_id"] as? String == id }) else { return true }
         if quarantinedIDs.contains(id) { return true }
         guard appendRecord(["_au_quarantine": id]) else { return false }
-        quarantinedIDs.insert(id)
+        quarantinedIDs.insert(id); quarantineBytes += Self.encode(event)?.count ?? 0
         checkpointIfNeeded()
         return true
     }
@@ -117,7 +130,7 @@ final class AUEventStore {
     // Maintenance/testing only. Network acknowledgements always name their exact IDs.
     @discardableResult func replaceAll(_ events: [JSONObject]) -> Bool {
         guard writeSnapshot(events, rejected: []) else { return false }
-        cached = events; storedIDs = Set(events.compactMap { $0["event_id"] as? String }); quarantinedIDs = []; removals = 0
+        cached = events; storedIDs = Set(events.compactMap { $0["event_id"] as? String }); quarantinedIDs = []; quarantineBytes = 0; removals = 0
         payloadBytes = events.reduce(0) { $0 + (Self.encode($1)?.count ?? 0) }
         return true
     }
@@ -139,9 +152,30 @@ final class AUEventStore {
         } catch { persistenceFailed(); return false }
     }
 
+    /// Rejected payloads are bounded diagnostics, outside the pending-delivery quota.
+    private func trimQuarantine() {
+        guard quarantinedIDs.count > quarantineMaxCount || quarantineBytes > quarantineMaxBytes else { return }
+        var bytes = 0, count = 0
+        var discard = Set<String>()
+        for event in (cached ?? []).reversed() {
+            guard let id = event["event_id"] as? String, quarantinedIDs.contains(id) else { continue }
+            let size = Self.encode(event)?.count ?? 0
+            if count < quarantineMaxCount && bytes + size <= quarantineMaxBytes { count += 1; bytes += size }
+            else { discard.insert(id) }
+        }
+        // A distinct durable discard marker; never label rejected events as delivered.
+        guard appendRecord(["_au_discard_ids": Array(discard)]) else { return }
+        let removed = (cached ?? []).filter { discard.contains($0["event_id"] as? String ?? "") }
+        let removedBytes = removed.reduce(0) { $0 + (Self.encode($1)?.count ?? 0) }
+        cached?.removeAll { discard.contains($0["event_id"] as? String ?? "") }
+        storedIDs.subtract(discard); quarantinedIDs.subtract(discard)
+        payloadBytes -= removedBytes; quarantineBytes -= removedBytes; removals += discard.count
+        AUDiagnostics.log("analytics", "quarantinePruned", [("count", discard.count)])
+    }
     private func checkpointIfNeeded() {
+        trimQuarantine()
         let bytes = fileURL.flatMap { try? $0.resourceValues(forKeys: [.fileSizeKey]).fileSize } ?? 0
-        if cached?.isEmpty == true || removals >= max(64, (cached?.count ?? 0) / 4) || bytes > maxBytes + 1024 * 1024 { compact() }
+        if cached?.isEmpty == true || removals >= max(64, (cached?.count ?? 0) / 4) || bytes > maxBytes + quarantineMaxBytes + 1024 * 1024 { compact() }
     }
     private func compact() {
         if writeSnapshot(cached ?? [], rejected: quarantinedIDs) { removals = 0 }
