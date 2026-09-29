@@ -123,31 +123,39 @@ final class AnalyticsTransportTests: XCTestCase {
         let oldSink = AUDiagnostics.sink
         let lock = NSLock()
         var lines: [String] = []
+        var ackCount = 0
         let acknowledged = expectation(description: "Both batches acknowledged")
-        acknowledged.expectedFulfillmentCount = 1
-        acknowledged.assertForOverFulfill = true
+        acknowledged.expectedFulfillmentCount = 2
         AUDiagnostics.isEnabled = true
         AUDiagnostics.sink = { line in
             lock.lock()
             lines.append(line)
+            let isAck = line.hasPrefix("AUDZ analytics sent ")
+            if isAck { ackCount += 1 }
+            let fulfillAck = isAck && ackCount <= 2
             lock.unlock()
-            if line.hasPrefix("AUDZ analytics sent ") { acknowledged.fulfill() }
+            if fulfillAck { acknowledged.fulfill() }
         }
         defer { AUDiagnostics.isEnabled = oldEnabled; AUDiagnostics.sink = oldSink }
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = AUEventStore(directory: directory)
         let done = expectation(description: "Failed batch retries and the following event is sent")
-        done.expectedFulfillmentCount = 2
-        done.assertForOverFulfill = true
+        done.expectedFulfillmentCount = 3
         var count = 0
         StubProtocol.reply = { _ in
+            lock.lock()
             count += 1
-            done.fulfill()
-            return count == 1 ? (403, Data("<html>Forbidden</html>".utf8)) : (204, nil)
+            let attempt = count
+            lock.unlock()
+            // Bound fulfillment so a regression reports an assertion, not an XCTest crash.
+            if attempt <= 3 { done.fulfill() }
+            return attempt == 1 ? (403, Data("<html>Forbidden</html>".utf8)) : (204, nil)
         }
+        // Two separate batches deterministically: first fails then retries, second succeeds.
+        // A 10 ms debounce alone can group or separate these events depending on disk timing.
         let queue = AUEventQueue(networkManager: network, store: store,
-            config: .init(batchDelayMs: 10, minIntervalMs: 10, retryBaseDelayMs: 10, maxRetryDelayMs: 10))
+            config: .init(batchSize: 1, batchDelayMs: 10, minIntervalMs: 10, retryBaseDelayMs: 10, maxRetryDelayMs: 10))
         queue.enqueue(["event_id": "secret-first", "event_type": "pageImpression", "device_id": "secret-device"])
         queue.enqueue(["event_id": "secret-second", "event_type": "adImpression"])
         withExtendedLifetime(queue) {
@@ -159,9 +167,14 @@ final class AnalyticsTransportTests: XCTestCase {
                 !FileManager.default.fileExists(atPath: file.path)
             }, object: nil)
             wait(for: [drained], timeout: 2)
+            queue.syncForTesting()
             lock.lock()
             let captured = lines
+            let attempts = count
+            let acknowledgements = ackCount
             lock.unlock()
+            XCTAssertEqual(attempts, 3)
+            XCTAssertEqual(acknowledgements, 2)
             XCTAssertTrue(captured.contains { $0.hasPrefix("AUDZ analytics queued type=pageImpression") })
             XCTAssertTrue(captured.contains { $0.hasPrefix("AUDZ analytics failed ") && $0.contains("status=403") })
             XCTAssertFalse(captured.contains { $0.contains("secret-") || $0.contains("device_id") })
