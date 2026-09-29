@@ -57,6 +57,12 @@ public class Audienzz: NSObject {
 
     public static let shared = Audienzz()
 
+    /// Call before initialization for test/staging apps, or when using a direct integration.
+    /// Remote initialization supplies publisherId automatically. Invalid environments leave state unchanged.
+    @discardableResult public func configureAnalytics(publisherId: String?, environment: String) -> Bool {
+        AUAnalyticsContext.shared.configure(publisherId: publisherId, environment: environment)
+    }
+
     public func configureSDK(companyId: String, appVolume: Float = 0) {
         setupPrebid(companyId, appVolume: appVolume)
 
@@ -109,6 +115,7 @@ public class Audienzz: NSObject {
     public func configureWithRemoteSDK(
         gadMobileAdsVersion: String? = nil
     ) async throws {
+        AUAnalyticsContext.shared.setPublisherId(AudienzzRemoteConfig.shared.publisherId)
         // Apply muted default immediately so ads are always muted even if remote
         // config is unavailable (network error, backend not ready, nil response).
         // The value will be overridden below once the remote config is fetched.
@@ -493,6 +500,10 @@ public class Audienzz: NSObject {
     /// releases the previous page's banners and reloads the incoming page's, so a banner can never
     /// keep auctioning for a screen the user has left.
     internal func notifyScreenResumed(_ screen: AnyObject, name: String) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.notifyScreenResumed(screen, name: name) }
+            return
+        }
         AULogEvent.logDebug("[Audienzz][pageImpression] firing → \"\(name)\"")
         AUDiagnostics.log("page", "impression", [
             ("id", AUScreenAdCoordinator.diagnosticToken(for: screen)),

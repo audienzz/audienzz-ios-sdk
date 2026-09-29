@@ -36,11 +36,14 @@ class AUInterstitialHandler: NSObject,
     // strong back-reference leaked the view and the full GAM ad object per screen.
     weak var adView: AUInterstitialView?
     weak var fullScreentDelegate: FullScreenContentDelegate?
+    private var recordedImpression = false
+    private let analyticsPage: AUAnalyticsPageContext
 
     init(handler: AUInterstitialEventHandler, adView: AUInterstitialView) {
         self.handler = handler
         self.fullScreentDelegate = handler.adUnit.fullScreenContentDelegate
         self.adView = adView
+        self.analyticsPage = adView.currentAnalyticsPage
         super.init()
         addListener()
     }
@@ -54,7 +57,7 @@ class AUInterstitialHandler: NSObject,
         // GMA paid value + currency (the only fork-free currency source), stashed for the render events.
         handler.adUnit.paidEventHandler = { [weak adView] adValue in
             adView?.lastPaidCurrency = adValue.currencyCode
-            adView?.lastPaidCpm = adValue.value.doubleValue
+            adView?.lastPaidCpm = adValue.value.doubleValue * 1_000
         }
     }
 
@@ -63,6 +66,8 @@ class AUInterstitialHandler: NSObject,
     }
 
     func adDidRecordImpression(_ ad: any FullScreenPresentingAd) {
+        guard !recordedImpression else { return }
+        recordedImpression = true
         LogEvent("adDidRecordImpression")
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID, adType: AUAdType.interstitial,
@@ -85,19 +90,19 @@ class AUInterstitialHandler: NSObject,
     /// Full-screen ads expose no app event; carry the winning-bid economics and best-effort
     /// bidder_code (the Prebid auction winner if there was one, else the ad server).
     private func renderEconomics() -> AURenderEconomics {
-        guard let adView else { return AURenderEconomics() }
+        guard let adView else { return AURenderEconomics(pageContext: analyticsPage) }
         var ec = adView.lastRenderEconomics ?? AURenderEconomics()
         let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
         ec.bidderCode = bidder
         if bidder == AD_SERVER_BIDDER {
-            // Ad server rendered — zero the creative id so a direct-sold impression isn't
-            // misclassified as RTB (GMA exposes no served-creative id → "0" stub).
-            ec.creativeId = "0"
+            ec.creativeId = nil
+            ec.adId = nil
+            ec.cpm = nil
+            ec.currency = nil
         }
         ec.auctionId = ec.auctionId ?? adView.currentAuctionId
-        // Currency (and cpm on a direct fill) from the GMA paid event.
-        ec.currency = ec.currency ?? adView.lastPaidCurrency
-        ec.cpm = ec.cpm ?? adView.lastPaidCpm
+        ec.pageContext = analyticsPage
+        ec.applyGooglePaidValue(cpm: adView.lastPaidCpm, currency: adView.lastPaidCurrency)
         return ec
     }
 

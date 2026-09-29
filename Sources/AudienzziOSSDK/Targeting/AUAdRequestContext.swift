@@ -24,15 +24,21 @@ public final class AUAdRequestContext: NSObject {
         return context
     }
 
+    /// Interstitials retain their own request counter, but never reserve a banner position.
+    public static func forInterstitial(_ identifier: String) -> AUAdRequestContext {
+        AUScreenAdCoordinator.shared.requestLedger.forSlot("interstitial:" + identifier)
+    }
+
     @nonobjc internal func register() {
         AUScreenAdCoordinator.shared.requestLedger.reserve(self)
     }
 
     /// Copy the publisher's request: a later page or refresh must not mutate an in-flight request.
-    @nonobjc internal func nextRequest(from template: AdManagerRequest) -> AdManagerRequest {
+    @nonobjc internal func nextRequest(from template: AdManagerRequest, isInterstitial: Bool = false) -> AdManagerRequest {
         let request = template.copy() as! AdManagerRequest
-        let snapshot = AUScreenAdCoordinator.shared.requestLedger.nextRequest(self)
+        let snapshot = AUScreenAdCoordinator.shared.requestLedger.nextRequest(self, isInterstitial: isInterstitial)
         var targeting = request.customTargeting ?? [:]
+        targeting.removeValue(forKey: "au_slot")
         snapshot.targeting.forEach { targeting[$0.key] = $0.value }
         request.customTargeting = targeting
         return request
@@ -41,14 +47,16 @@ public final class AUAdRequestContext: NSObject {
 
 internal struct AUAdRequestSnapshot: Equatable {
     let pageSequence: Int
-    let slot: Int
+    let slot: Int?
     let refresh: Int
     /// `hb_refresh_count` shares Prebid's prefix, which is why every Prebid auction is wrapped in
     /// ``AUAuctionTargeting/PrebidGuard``.
     static let keys = ["au_page_seq", "au_slot", "hb_refresh_count"]
 
     var targeting: [String: String] {
-        ["au_page_seq": String(pageSequence), "au_slot": String(slot), "hb_refresh_count": String(refresh)]
+        var result = ["au_page_seq": String(pageSequence), "hb_refresh_count": String(refresh)]
+        if let slot { result["au_slot"] = String(slot) }
+        return result
     }
 }
 
@@ -59,11 +67,13 @@ internal final class AUAdRequestLedger {
     private var entries: [ObjectIdentifier: Entry] = [:]
     // Retain identities until the page ends so allocator addresses cannot be reused within a page.
     private var contexts: [ObjectIdentifier: AUAdRequestContext] = [:]
+    private var interstitialRequests: [ObjectIdentifier: Int] = [:]
     private var bridgeSlots: [String: AUAdRequestContext] = [:]
 
     func beginPage(_ sequence: Int, retained: [AUAdRequestContext]) {
         pageSequence = sequence
         entries.removeAll()
+        interstitialRequests.removeAll()
         contexts.removeAll()
         bridgeSlots.removeAll()
         // Weak coordinator registries are unordered. Reserve before any recreation can request.
@@ -89,7 +99,14 @@ internal final class AUAdRequestLedger {
         return context
     }
 
-    func nextRequest(_ context: AUAdRequestContext) -> AUAdRequestSnapshot {
+    func nextRequest(_ context: AUAdRequestContext, isInterstitial: Bool = false) -> AUAdRequestSnapshot {
+        if isInterstitial {
+            let key = ObjectIdentifier(context)
+            let count = interstitialRequests[key, default: 0]
+            interstitialRequests[key] = count + 1
+            contexts[key] = context
+            return AUAdRequestSnapshot(pageSequence: pageSequence, slot: nil, refresh: count)
+        }
         reserve(context)
         let key = ObjectIdentifier(context)
         let entry = entries[key]!

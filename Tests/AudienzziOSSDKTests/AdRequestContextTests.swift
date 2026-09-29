@@ -5,10 +5,10 @@ import GoogleMobileAds
 
 @MainActor
 final class AdRequestContextTests: AudienzzLifecycleTestCase {
-    private func assertRequest(_ request: AdManagerRequest, _ page: Int, _ slot: Int, _ refresh: Int,
+    private func assertRequest(_ request: AdManagerRequest, _ page: Int, _ slot: Int?, _ refresh: Int,
                                file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertEqual(request.customTargeting?["au_page_seq"] as? String, String(page), file: file, line: line)
-        XCTAssertEqual(request.customTargeting?["au_slot"] as? String, String(slot), file: file, line: line)
+        XCTAssertEqual(request.customTargeting?["au_slot"] as? String, slot.map(String.init), file: file, line: line)
         XCTAssertEqual(request.customTargeting?["hb_refresh_count"] as? String, String(refresh), file: file, line: line)
     }
 
@@ -66,10 +66,27 @@ final class AdRequestContextTests: AudienzzLifecycleTestCase {
         owner.prefetch { _ in }
         owner.prefetch { _ in }
         XCTAssertEqual(requests.count, 1)
-        assertRequest(try XCTUnwrap(requests.first), 1, 1, 0)
+        assertRequest(try XCTUnwrap(requests.first), 1, nil, 0)
         // An unrelated page impression cannot mutate the retained, in-flight request.
         Audienzz.shared.pageImpression("other")
-        assertRequest(try XCTUnwrap(requests.first), 1, 1, 0)
+        assertRequest(try XCTUnwrap(requests.first), 1, nil, 0)
+    }
+
+    func testInterstitialNeverConsumesABannerPositionAndClearsStaleSlotTargeting() {
+        Audienzz.shared.pageImpression("article")
+        let interstitial = AUAdRequestContext.forInterstitial("overlay")
+        let template = AdManagerRequest()
+        template.customTargeting = ["au_slot": "999", "category": "sport"]
+        let first = interstitial.nextRequest(from: template, isInterstitial: true)
+        assertRequest(first, 1, nil, 0)
+        assertRequest(AUAdRequestContext.forSlot("top").nextRequest(from: AdManagerRequest()), 1, 1, 0)
+        assertRequest(interstitial.nextRequest(from: template, isInterstitial: true), 1, nil, 1)
+        assertRequest(AUAdRequestContext.forSlot("bottom").nextRequest(from: AdManagerRequest()), 1, 2, 0)
+        XCTAssertEqual(first.customTargeting?["category"] as? String, "sport")
+        Audienzz.shared.pageImpression("article")
+        assertRequest(interstitial.nextRequest(from: template, isInterstitial: true), 2, nil, 0)
+        assertRequest(first, 1, nil, 0)
+        XCTAssertEqual(template.customTargeting?["au_slot"] as? String, "999")
     }
 
     func testBannerHandoffHasPerSlotCountersAndPageReset() throws {

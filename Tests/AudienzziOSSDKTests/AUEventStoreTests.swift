@@ -141,6 +141,45 @@ final class AUEventStoreTests: XCTestCase {
         store.append(event("a"))
         store.replaceAll([event("a")])
 
-        XCTAssertEqual(store.loadAll().count, 0)
+        XCTAssertEqual(AUEventStore(directory: URL(fileURLWithPath: "/dev/null/nope")).loadAll().count, 0)
     }
+    func testAcknowledgementsRemoveOnlyTheirEventWithoutRewritingTheBacklog() throws {
+        let store = makeStore()
+        (0..<100).forEach { store.append(event(String($0))) }
+        store.remove(id: "37")
+        store.remove(id: "0")
+        let raw = try String(contentsOf: fileURL, encoding: .utf8)
+        XCTAssertTrue(raw.contains("_au_ack"), "Per-event success must append a small marker")
+        XCTAssertEqual(ids(makeStore().loadAll()), (1..<100).filter { $0 != 37 }.map(String.init))
+        // Checkpoints bound journal size while preserving every still-pending event.
+        (1..<70).forEach { store.remove(id: String($0)) }
+        XCTAssertEqual(ids(makeStore().loadAll()), (70..<100).map(String.init))
+        XCTAssertLessThan(try Data(contentsOf: fileURL).count, raw.utf8.count)
+    }
+
+    func testAppendingAfterATornTailPreservesTheNewEvent() throws {
+        makeStore().append(event("old"))
+        let handle = try FileHandle(forWritingTo: fileURL)
+        try handle.seekToEnd()
+        try handle.write(contentsOf: Data(#"{"event_id":"unfinished"#.utf8))
+        try handle.close()
+        let restored = makeStore()
+        restored.append(event("new"))
+        XCTAssertEqual(ids(makeStore().loadAll()), ["old", "new"])
+    }
+
+    func testMeasureABoundedBacklogWithoutPerEventFullRewrites() {
+        let store = makeStore()
+        let start = Date()
+        for i in 0..<500 {
+            var json = event(String(i))
+            json["payload"] = String(repeating: "x", count: 2048)
+            store.append(json)
+        }
+        for i in 0..<500 { store.remove(id: String(i)) }
+        print("Analytics storage benchmark: 500 persisted events + acknowledgements = \(Date().timeIntervalSince(start) * 1000) ms (simulator filesystem)")
+        XCTAssertTrue(makeStore().loadAll().isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
+    }
+
 }

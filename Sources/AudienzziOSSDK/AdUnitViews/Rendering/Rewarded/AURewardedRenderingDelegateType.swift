@@ -65,7 +65,7 @@ internal class AURewardedRenderingDelegateType: NSObject, RewardedAdUnitDelegate
     private func makeCloseEvent(_ parent: AURewardedRenderingView) {}
 
     private func makeClickEvent(_ parent: AURewardedRenderingView) {
-        AUEventsManager.shared.adClick(adUnitId: parent.eventHandler?.adUnitID ?? "")
+        AUEventsManager.shared.adClick(adUnitId: parent.eventHandler?.adUnitID ?? "", pageContext: parent.analyticsPage)
     }
 
     private func makeErrorEvent(parent: AURewardedRenderingView, _ error: Error?) {}

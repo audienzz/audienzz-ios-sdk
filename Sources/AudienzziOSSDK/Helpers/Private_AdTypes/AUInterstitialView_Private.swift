@@ -40,11 +40,12 @@ extension AUInterstitialView {
         // frameworks are backend-controlled and win over bannerParameters, videoParameters and
         // impOrtbConfig alike.
         capabilities.apply(to: adUnit)
-        let gamRequest = requestContext.nextRequest(from: AUAuctionTargeting.request(from: gamRequest))
+        let gamRequest = requestContext.nextRequest(from: AUAuctionTargeting.request(from: gamRequest), isInterstitial: true)
         let prebidGuard = AUAuctionTargeting.PrebidGuard(gamRequest)
         prebidWinningBidder = nil
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
+        currentAnalyticsPage = AUEventsManager.shared.capturePageContext()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
         demand(adUnit, gamRequest) { [weak self] resultCode in
@@ -77,7 +78,8 @@ extension AUInterstitialView {
             adType: adTypeString, adSubtype: makeAdSubType(), apiType: apiTypeString,
             isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
             mediaTypes: AUBannerView.mediaTypesJSON(subtype: makeAdSubType()),
-            auctionId: currentAuctionId
+            auctionId: currentAuctionId,
+            pageContext: currentAnalyticsPage
         )
     }
 
@@ -95,18 +97,19 @@ extension AUInterstitialView {
                 bidderCode: bidder, winnerBidderCode: bidder, winnerType: AUWinnerType.rtb,
                 priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
                 mediaType: hbFormat, size: hbSize,
-                // Fork-free: cpm = bucketed hb_pb; currency from the GMA paid event at render;
-                // creative_id = bidder-specific keyword when present, else "0"; ad_id = hb_adid.
-                cpm: priceBucket.flatMap { Double($0) }, currency: nil, creativeId: creativeId ?? "0",
-                auctionId: currentAuctionId, adId: adId ?? "0",
-                timeToRespond: timeToRespond, slotReload: 0)
+                // Stock Prebid exposes targeting, not the exact bid price/currency on this API.
+                // Keep hb_pb as price_bucket; do not pretend it is an exact, denominated CPM.
+                cpm: nil, currency: nil, creativeId: creativeId,
+                auctionId: currentAuctionId, adId: adId,
+                timeToRespond: timeToRespond, slotReload: 0, pageContext: currentAnalyticsPage)
         }
 
         AUEventsManager.shared.bidResponse(
             adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
             adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
             isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-            resultCode: codeName, timeToRespond: timeToRespond, economics: economics
+            resultCode: codeName, timeToRespond: timeToRespond, economics: economics,
+            pageContext: currentAnalyticsPage
         )
 
         if let economics {
@@ -116,7 +119,8 @@ extension AUInterstitialView {
                 adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-                economics: economics
+                economics: economics,
+                pageContext: currentAnalyticsPage
             )
         } else {
             self.prebidWinningBidder = nil
@@ -126,7 +130,8 @@ extension AUInterstitialView {
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: false, autorefreshTime: 0, isRefresh: false, resultCode: codeName,
                 mediaTypes: AUBannerView.mediaTypesJSON(subtype: subtype),
-                auctionId: currentAuctionId
+                auctionId: currentAuctionId,
+                pageContext: currentAnalyticsPage
             )
         }
     }

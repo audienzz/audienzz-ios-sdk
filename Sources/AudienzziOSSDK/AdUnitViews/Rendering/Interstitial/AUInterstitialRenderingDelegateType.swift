@@ -57,7 +57,7 @@ internal class AUInterstitialRenderingDelegateType: NSObject, InterstitialAdUnit
     private func makeCloseEvent(_ parent: AUInterstitialRenderingView) {}
 
     private func makeClickEvent(_ parent: AUInterstitialRenderingView) {
-        AUEventsManager.shared.adClick(adUnitId: parent.eventHandler?.adUnitID ?? "")
+        AUEventsManager.shared.adClick(adUnitId: parent.eventHandler?.adUnitID ?? "", pageContext: parent.analyticsPage)
     }
 
     private func makeErrorEvent(parent: AUInterstitialRenderingView, _ error: Error?) {}

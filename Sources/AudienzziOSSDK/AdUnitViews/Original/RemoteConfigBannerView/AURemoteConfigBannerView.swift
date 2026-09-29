@@ -48,6 +48,7 @@ public class AURemoteConfigBannerView: VisibleView {
     /// the page coordinator and both kept their own refresh interval running, doubling the requests
     /// for a single placement while only the newest was visible.
     private var bannerView: AUBannerView?
+    internal var loadGoogle: (AdManagerBannerView, Request) -> Void = { $0.load($1) }
 
     /// Exactly the constraints this class activated, so retiring a banner cannot deactivate a
     /// constraint the publisher put on their own container or on its other children.
@@ -157,7 +158,7 @@ public class AURemoteConfigBannerView: VisibleView {
 
         if let adaptiveBannerConfig = remoteConfig.gamConfig.adaptiveBannerConfig, adaptiveBannerConfig.enabled {
             let adWidth: CGFloat = switch adaptiveBannerConfig.widthStrategy {
-            case .fullWidth: max(container.bounds.width, UIScreen.main.bounds.width)
+            case .fullWidth: container.bounds.width > 0 ? container.bounds.width : UIScreen.main.bounds.width
             case .custom: adaptiveBannerConfig.customWidth ?? 0
             default: adaptiveBannerConfig.customWidth ?? 0
             }
@@ -177,6 +178,13 @@ public class AURemoteConfigBannerView: VisibleView {
                 gadSize = adSizeFor(cgSize: size ?? .zero)
             }
         }
+
+        // Inline adaptive descriptors have zero height until Google returns a creative.
+        // Give the lazy viewport gate a real placeholder; keep GAM's descriptor unchanged.
+        let configuredHeight = remoteConfig.gamConfig.adSizes.compactMap { CGSize.from(string: $0) }
+            .first(where: { $0.height > 0 })?.height ?? 50
+        let placeholderHeight = gadSize.size.height > 0 ? gadSize.size.height : configuredHeight
+        let initialLayoutSize = CGSize(width: gadSize.size.width, height: placeholderHeight)
 
         let requestedKey = LoadKey(
             adConfigId: adConfigId,
@@ -208,6 +216,9 @@ public class AURemoteConfigBannerView: VisibleView {
         let gamBanner = AdManagerBannerView(adSize: gadSize)
         gamBanner.rootViewController = rootViewController
         gamBanner.delegate = delegate
+        // Bridges need creative-size changes independently of load completion so their outer
+        // layout can grow when an inline banner reports its height later.
+        gamBanner.adSizeDelegate = delegate as? AdSizeDelegate
         gamBanner.adUnitID = remoteConfig.gamConfig.adUnitPath
         gamBanner.validAdSizes = remoteConfig.gamConfig.adSizes
             .compactMap { CGSize.from(string: $0) }
@@ -260,6 +271,7 @@ public class AURemoteConfigBannerView: VisibleView {
         bannerView.videoParameters = videoParameters
         bannerView.bannerParameters = bannerParameters
         
+        bannerView.frame = CGRect(origin: .zero, size: initialLayoutSize)
         bannerView.translatesAutoresizingMaskIntoConstraints = false
         bannerView.backgroundColor = .clear
         container.addSubview(bannerView)
@@ -272,8 +284,6 @@ public class AURemoteConfigBannerView: VisibleView {
         // Before createAd: a stop requested while config was resolving must be in place before the
         // banner can issue its first request.
         applyPendingPublisherState(to: bannerView)
-
-        gamBanner.frame = CGRect(origin: .zero, size: gadSize.size)
 
         // Installed BEFORE createAd, which may issue the first request itself (an eager banner).
         bannerView.onLoadRequest = { [weak self] gamRequest in
@@ -292,13 +302,19 @@ public class AURemoteConfigBannerView: VisibleView {
                 delivery: self.bannerView?.pendingDeliveryId,
                 event: .googleRequested
             )
-            gamBanner.load(request)
+            if remoteConfig.gamConfig.adaptiveBannerConfig?.enabled == true {
+                // Layout and a previous creative's resize can turn adSize into a fixed size.
+                // Restore the adaptive request descriptor without adSize's implicit request.
+                // The outer AUBannerView keeps its nonzero lazy-loading placeholder.
+                gamBanner.resize(gadSize)
+            }
+            self.loadGoogle(gamBanner, request)
         }
 
         bannerView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
 
         let bannerWidthConstraint = bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width)
-        let bannerHeightConstraint = bannerView.heightAnchor.constraint(equalToConstant: gadSize.size.height)
+        let bannerHeightConstraint = bannerView.heightAnchor.constraint(equalToConstant: initialLayoutSize.height)
         let containerWidthConstraint = container.widthAnchor.constraint(equalToConstant: gadSize.size.width)
         // The host owns the container's width: the RN bridge lets React Native size the
         // view (full width), and native callers pin it themselves (e.g. leading+trailing).
@@ -309,7 +325,7 @@ public class AURemoteConfigBannerView: VisibleView {
         // and `centerXAnchor` centers the banner; if no width is supplied, this still sizes
         // the container to the ad.
         containerWidthConstraint.priority = .defaultLow
-        let containerHeightConstraint = container.heightAnchor.constraint(equalToConstant: gadSize.size.height)
+        let containerHeightConstraint = container.heightAnchor.constraint(equalToConstant: initialLayoutSize.height)
 
         let created = [
             bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),

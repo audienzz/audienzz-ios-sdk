@@ -41,6 +41,7 @@ extension AURewardedView {
         prebidWinningBidder = nil
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
+        currentAnalyticsPage = AUEventsManager.shared.capturePageContext()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         makeRequestEvent()
         adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
@@ -73,7 +74,8 @@ extension AURewardedView {
             adType: adTypeString, adSubtype: AUAdSubtype.video, apiType: apiTypeString,
             isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
             mediaTypes: "[\"video\"]",
-            auctionId: currentAuctionId
+            auctionId: currentAuctionId,
+            pageContext: currentAnalyticsPage
         )
     }
 
@@ -90,18 +92,19 @@ extension AURewardedView {
                 bidderCode: bidder, winnerBidderCode: bidder, winnerType: AUWinnerType.rtb,
                 priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
                 mediaType: hbFormat ?? "video", size: hbSize,
-                // Fork-free: cpm = bucketed hb_pb; currency from the GMA paid event at render;
-                // creative_id = bidder-specific keyword when present, else "0"; ad_id = hb_adid.
-                cpm: priceBucket.flatMap { Double($0) }, currency: nil, creativeId: creativeId ?? "0",
-                auctionId: currentAuctionId, adId: adId ?? "0",
-                timeToRespond: timeToRespond, slotReload: 0)
+                // Stock Prebid exposes targeting, not the exact bid price/currency on this API.
+                // Keep hb_pb as price_bucket; do not pretend it is an exact, denominated CPM.
+                cpm: nil, currency: nil, creativeId: creativeId,
+                auctionId: currentAuctionId, adId: adId,
+                timeToRespond: timeToRespond, slotReload: 0, pageContext: currentAnalyticsPage)
         }
 
         AUEventsManager.shared.bidResponse(
             adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
             adType: adTypeString, adSubtype: AUAdSubtype.video, apiType: apiTypeString,
             isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-            resultCode: codeName, timeToRespond: timeToRespond, economics: economics
+            resultCode: codeName, timeToRespond: timeToRespond, economics: economics,
+            pageContext: currentAnalyticsPage
         )
 
         if let economics {
@@ -111,7 +114,8 @@ extension AURewardedView {
                 adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
                 adType: adTypeString, adSubtype: AUAdSubtype.video, apiType: apiTypeString,
                 isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-                economics: economics
+                economics: economics,
+                pageContext: currentAnalyticsPage
             )
         } else {
             self.prebidWinningBidder = nil
@@ -121,7 +125,8 @@ extension AURewardedView {
                 adType: adTypeString, adSubtype: AUAdSubtype.video, apiType: apiTypeString,
                 isAutorefresh: false, autorefreshTime: 0, isRefresh: false, resultCode: codeName,
                 mediaTypes: "[\"video\"]",
-                auctionId: currentAuctionId
+                auctionId: currentAuctionId,
+                pageContext: currentAnalyticsPage
             )
         }
     }

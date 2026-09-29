@@ -63,6 +63,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     public lazy var requestContext = AUAdRequestContext()
 
     private var loadID = AUUniqHelper.makeUniqID()
+    private var analyticsPage = AUAnalyticsPageContext()
     private let adViewID = AUUniqHelper.makeUniqID()
     private var analyticsAdUnitPath: String?
     private var recordedImpression = false
@@ -268,6 +269,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         let pending = AUInterstitialLoadCompletion(completion)
         self.completion = pending
         loadID = AUUniqHelper.makeUniqID()
+        analyticsPage = AUEventsManager.shared.capturePageContext()
         emit("loadRequested")
         let receive: (Result<AUInterstitialPresenting, Error>) -> Void = { [weak self] result in
             guard let self else { pending.finish(.failure(AURemoteConfigInterstitialError.deallocated)); return }
@@ -304,7 +306,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         // interstitials at all, so targeted line items could not be selected for them.
         let template = AUTargeting.shared.customTargetingManager
             .applyToGamRequest(request: AdManagerRequest())
-        let request = requestContext.nextRequest(from: template)
+        let request = requestContext.nextRequest(from: template, isInterstitial: true)
         let prebidGuard = AUAuctionTargeting.PrebidGuard(request)
         request.publisherProvidedID = PPIDManager.shared.getPPID()
         analyticsAdUnitPath = config.adUnitPath
@@ -463,6 +465,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         event.adUnitId = analyticsAdUnitPath
         event.adViewId = adViewID
         event.auctionId = loadID
+        event.pageContext = analyticsPage
         event.adType = AUAdType.interstitial
         event.adSubtype = loadCapabilities.adSubtype
         event.apiType = AUEventApiType.original

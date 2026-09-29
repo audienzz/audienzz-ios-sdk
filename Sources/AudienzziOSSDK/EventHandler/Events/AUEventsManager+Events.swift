@@ -56,12 +56,23 @@ struct AURenderEconomics {
     var mediaType: String? = nil
     var size: String? = nil
     var cpm: Double? = nil
+    var cpmSource: String? = nil
     var currency: String? = nil
     var creativeId: String? = nil
     var auctionId: String? = nil
     var adId: String? = nil
     var timeToRespond: Int64? = nil
     var slotReload: Int? = nil
+    var pageContext: AUAnalyticsPageContext? = nil
+}
+
+extension AURenderEconomics {
+    mutating func applyGooglePaidValue(cpm: Double?, currency: String?) {
+        guard let cpm, cpm.isFinite, cpm >= 0, let currency, !currency.isEmpty else { return }
+        self.cpm = cpm
+        self.currency = currency
+        self.cpmSource = "google_paid"
+    }
 }
 
 extension AUEventDomain {
@@ -77,12 +88,14 @@ extension AUEventDomain {
         mediaType = ec.mediaType
         size = ec.size
         cpm = ec.cpm
+        cpmSource = ec.cpmSource
         currency = ec.currency
         creativeId = ec.creativeId
         auctionId = ec.auctionId
         adId = ec.adId
         if timeToRespond == nil { timeToRespond = ec.timeToRespond }
         slotReload = ec.slotReload
+        pageContext = ec.pageContext
     }
 }
 
@@ -93,12 +106,14 @@ extension AUEventsManager {
                     adType: String, adSubtype: String, apiType: String,
                     isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
                     mediaTypes: String? = nil, auctionId: String? = nil,
-                    slotReload: Int? = nil) {
+                    slotReload: Int? = nil,
+                    pageContext: AUAnalyticsPageContext? = nil) {
         var e = AUEventDomain(type: .bidRequest)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
         e.mediaTypes = mediaTypes; e.auctionId = auctionId; e.slotReload = slotReload
+        e.pageContext = pageContext ?? e.pageContext
         logEvent(e)
     }
 
@@ -106,13 +121,15 @@ extension AUEventsManager {
                      adType: String, adSubtype: String, apiType: String,
                      isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
                      resultCode: String?, timeToRespond: Int64? = nil,
-                     economics: AURenderEconomics? = nil) {
+                     economics: AURenderEconomics? = nil,
+                     pageContext: AUAnalyticsPageContext? = nil) {
         var e = AUEventDomain(type: .bidResponse)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
         e.resultCode = resultCode; e.timeToRespond = timeToRespond
         e.apply(economics)
+        e.pageContext = pageContext ?? e.pageContext
         logEvent(e)
     }
 
@@ -121,12 +138,14 @@ extension AUEventsManager {
     func bidWon(adUnitId: String, adViewId: String? = nil, sizes: String? = nil,
                 adType: String, adSubtype: String, apiType: String,
                 isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
-                economics: AURenderEconomics? = nil) {
+                economics: AURenderEconomics? = nil,
+                pageContext: AUAnalyticsPageContext? = nil) {
         var e = AUEventDomain(type: .bidWon)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
         e.apply(economics)
+        e.pageContext = pageContext ?? e.pageContext
         logEvent(e)
     }
 
@@ -134,7 +153,8 @@ extension AUEventsManager {
                adType: String, adSubtype: String, apiType: String,
                isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool, resultCode: String?,
                mediaTypes: String? = nil, auctionId: String? = nil,
-               slotReload: Int? = nil) {
+               slotReload: Int? = nil,
+               pageContext: AUAnalyticsPageContext? = nil) {
         var e = AUEventDomain(type: .noBid)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
@@ -144,45 +164,54 @@ extension AUEventsManager {
         // bidders were asked or which of them declined. `bidder_code` is therefore left nil — the
         // collector receives no key at all — rather than inventing one or reusing the last winner.
         e.slotReload = slotReload
+        e.pageContext = pageContext ?? e.pageContext
         logEvent(e)
     }
 
     func adImpression(adUnitId: String, adType: String, adSubtype: String, apiType: String,
                       adViewId: String? = nil, bidderCode: String? = nil,
-                      winnerBidderCode: String? = nil, economics: AURenderEconomics? = nil) {
+                      winnerBidderCode: String? = nil, economics: AURenderEconomics? = nil,
+                      pageContext: AUAnalyticsPageContext? = nil) {
         var e = AUEventDomain(type: .adImpression)
         e.adUnitId = adUnitId; e.adViewId = adViewId
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.bidderCode = bidderCode; e.winnerBidderCode = winnerBidderCode
         e.apply(economics)
+        e.pageContext = pageContext ?? e.pageContext
         logEvent(e)
     }
 
     func adClick(adUnitId: String, adType: String? = nil, adSubtype: String? = nil,
                  apiType: String? = nil, adViewId: String? = nil,
-                 economics: AURenderEconomics? = nil) {
+                 economics: AURenderEconomics? = nil,
+                 pageContext: AUAnalyticsPageContext? = nil) {
         var e = AUEventDomain(type: .adClick)
         e.adUnitId = adUnitId; e.adViewId = adViewId
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.apply(economics)
+        e.pageContext = pageContext ?? e.pageContext
         logEvent(e)
     }
 
     func viewabilityStart(adUnitId: String, adType: String, adSubtype: String, apiType: String,
-                          adViewId: String? = nil, economics: AURenderEconomics? = nil) {
+                          adViewId: String? = nil, economics: AURenderEconomics? = nil,
+                          pageContext: AUAnalyticsPageContext? = nil) {
         var e = AUEventDomain(type: .viewabilityStart)
         e.adUnitId = adUnitId; e.adViewId = adViewId
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.apply(economics)
+        e.pageContext = pageContext ?? e.pageContext
         logEvent(e)
     }
 
     func viewabilitySuccess(adUnitId: String, adType: String, adSubtype: String, apiType: String,
-                            adViewId: String? = nil, economics: AURenderEconomics? = nil) {
+                            adViewId: String? = nil, economics: AURenderEconomics? = nil,
+                            pageContext: AUAnalyticsPageContext? = nil) {
         var e = AUEventDomain(type: .viewabilitySuccess)
         e.adUnitId = adUnitId; e.adViewId = adViewId
         e.adType = adType; e.adSubtype = adSubtype; e.apiType = apiType
         e.apply(economics)
+        e.pageContext = pageContext ?? e.pageContext
         logEvent(e)
     }
 }

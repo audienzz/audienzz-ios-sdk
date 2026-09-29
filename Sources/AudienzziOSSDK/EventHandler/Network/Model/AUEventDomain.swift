@@ -38,11 +38,14 @@ struct AUEventDomain {
     var uuid: String?
     var visitorId: String?
     var companyId: String?
+    var publisherId: String?
+    var environment = "production"
     var sessionId: String?
     var sessionStartTimestamp: Int64?
     var sessionSeq: Int?
     var deviceId: String?
     var pageImpressionId: String?
+    var pageContext: AUAnalyticsPageContext?
 
     // Ad context (per-event attributes)
     var adUnitId: String?
@@ -69,6 +72,7 @@ struct AUEventDomain {
     var mediaTypes: String?
     var size: String?
     var cpm: Double?
+    var cpmSource: String? = nil
     var currency: String?
     var creativeId: String?
     var auctionId: String?

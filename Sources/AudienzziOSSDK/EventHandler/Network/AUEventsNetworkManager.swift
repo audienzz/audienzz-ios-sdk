@@ -21,10 +21,12 @@ class AUEventsNetworkManager<T: APIResult> {
     private let queue = DispatchQueue.global(qos: .background)
     private let urlSession: URLSession!
     
-    init() {
+    init(urlSession: URLSession? = nil) {
         let configuration = URLSessionConfiguration.default
-        let session = URLSession(configuration: configuration, delegate: nil, delegateQueue: OperationQueue.main)
-        self.urlSession = session
+        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForResource = 30
+        self.urlSession = urlSession ?? URLSession(configuration: configuration, delegate: nil,
+                                                   delegateQueue: OperationQueue.main)
         self.startMonitoring()
     }
     
@@ -44,7 +46,7 @@ class AUEventsNetworkManager<T: APIResult> {
             guard let strongSelf = self else { handler(.failure(.couldNotParseResponse)); return }
             switch result {
             case .success(let responce):
-                self?.handleResult(responce: responce, method: method, handler: handler)
+                strongSelf.handleResult(responce: responce, method: method, handler: handler)
             case .failure(let error):
                 handler(.failure(strongSelf.makeApiError(for: error)))
             }
@@ -65,20 +67,14 @@ fileprivate extension AUEventsNetworkManager {
     
     func handleResult(responce: HTTPResponse, method: APIMethod<T>, handler: @escaping (Result<T, AUAPIError>) -> Void) {
         
-        if responce.statusCode == 200 {
-            var jObject = JSONObject()
-            jObject["code"] = responce.statusCode
-            handler(extractAPIResponce(jsonObject: jObject, parser: method.resultParser))
-            // Success is fully handled above; returning here prevents a second `handler` call from
-            // the body-parsing path below (which would double-account a batch in the event queue).
+        // Collector acknowledgements do not require a JSON body (e.g. HTTP 204). Every response
+        // must settle the request, otherwise AUEventQueue remains in flight indefinitely. Trust
+        // the HTTP status, never an error response's JSON "code" or an HTML proxy error page.
+        guard (200..<300).contains(responce.statusCode) else {
+            handler(.failure(.httpStatus(responce.statusCode)))
             return
         }
-
-        guard let data = responce.body, let json = try? decodeJSON(data), let jsonObject = json as? JSONObject else {
-            return
-        }
-        
-        handler(extractAPIResponce(jsonObject: jsonObject, parser: method.resultParser))
+        handler(extractAPIResponce(jsonObject: ["code": responce.statusCode], parser: method.resultParser))
     }
     
     func extractAPIResponce(jsonObject: JSONObject, parser: (JSONObject) -> T?) -> Result<T, AUAPIError> {

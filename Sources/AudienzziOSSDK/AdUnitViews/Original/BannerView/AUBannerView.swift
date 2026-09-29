@@ -96,6 +96,7 @@ public class AUBannerView: AUAdView {
     /// auction (bidRequest → bidResponse/bidWon/noBid → adImpression/adClick/viewability). Prebid
     /// only assigns its own id after the request, so we pre-generate one for full-funnel counting.
     internal var currentAuctionId: String?
+    @nonobjc internal var currentAnalyticsPage = AUAnalyticsPageContext()
     /// Currency + value captured from the GMA paid event (`AdValue`), which fires around impression.
     /// Backfills `currency` (and cpm on a direct fill) on the render events, since exact economics
     /// aren't available on the original API without the Prebid fork.
@@ -129,6 +130,17 @@ public class AUBannerView: AUAdView {
     /// still on screen.
     internal var displayedPrebidBidder: String?
     internal var displayedPrebidLineItemWon: Bool = false
+    internal var displayedImpressionRecorded = false
+    private var lastImpressionResponseId: String?
+
+    /// Idempotent per received creative, not per auction in flight or placement.
+    internal func claimDisplayedImpression(responseId: String?) -> Bool {
+        guard !displayedImpressionRecorded else { return false }
+        if let responseId, responseId == lastImpressionResponseId { return false }
+        displayedImpressionRecorded = true
+        lastImpressionResponseId = responseId
+        return true
+    }
 
     /// The single owner of periodic refresh for this banner. Prebid is never given an interval —
     /// its `Dispatcher` is created only by `AdUnit.setAutoRefreshMillis`, which the SDK no longer

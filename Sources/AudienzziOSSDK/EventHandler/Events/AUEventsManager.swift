@@ -22,7 +22,7 @@ import UIKit
 fileprivate let keyVisitorId = "keyVisitorId"
 
 /// Clickstream analytics logger. Each event is enriched with identity/session data, serialized, and
-/// handed to `AUEventQueue`, which coalesces events into batched POSTs to the collector (mirrors the
+/// handed to `AUEventQueue` for immediate durable delivery to the collector (mirrors the
 /// Android `EventLoggerImpl` + `EventBatcher`).
 final class AUEventsManager: AULogEventType {
     static let shared = AUEventsManager()
@@ -51,16 +51,31 @@ final class AUEventsManager: AULogEventType {
     private let seqLock = NSLock()
 
     /// Regenerated on every `onScreenResumed`; tags all ad events with the current screen visit.
-    private var currentPageImpressionId: String?
-    private var currentScreenName: String?
+    private var currentPageContext = AUAnalyticsPageContext()
+    private let pageLock = NSLock()
+
+    func capturePageContext() -> AUAnalyticsPageContext {
+        pageLock.lock(); defer { pageLock.unlock() }
+        return currentPageContext
+    }
 
     private let mapper = AUEventNetworkMapper()
     private var eventQueue: AUEventQueue?
+    private let makeQueue: () -> AUEventQueue
+    private let configureLock = NSLock()
     private var lifecycleObserved = false
 
+    init(makeQueue: @escaping () -> AUEventQueue = {
+        AUEventQueue(networkManager: AUEventsNetworkManager<AUBatchResultModel>())
+    }) {
+        self.makeQueue = makeQueue
+    }
+
     func configure(companyId: String) {
-        let networkManager = AUEventsNetworkManager<AUBatchResultModel>()
-        eventQueue = AUEventQueue(networkManager: networkManager)
+        configureLock.lock()
+        defer { configureLock.unlock() }
+        // Reinitializing the SDK must not create a second writer for the same durable outbox.
+        if eventQueue == nil { eventQueue = makeQueue() }
         visitorId = makeVisitorId()
         self.companyId = companyId
         observeAppLifecycle()
@@ -68,12 +83,15 @@ final class AUEventsManager: AULogEventType {
 
     // MARK: - Screen tracking
 
-    /// Call from every screen (UIViewController) that shows ads. Generates a fresh page-impression
-    /// id and fires a `pageImpression`; subsequent ad events are tagged with that id.
+    /// Report every screen visit, including screens without ads. Refreshes retain the visit ID;
+    /// another page impression (including returning to the same screen) creates a new one.
     func onScreenResumed(screenName: String) {
-        currentPageImpressionId = AUUniqHelper.makeUniqID()
-        currentScreenName = screenName
+        let page = AUAnalyticsPageContext(pageImpressionId: AUUniqHelper.makeUniqID(), screenName: screenName)
+        pageLock.lock()
+        currentPageContext = page
+        pageLock.unlock()
         var event = AUEventDomain(type: .pageImpression)
+        event.pageContext = page
         event.screenName = screenName
         event.consentString = AUTargeting.shared.gdprConsentString
         logEvent(event)
@@ -86,29 +104,22 @@ final class AUEventsManager: AULogEventType {
     var observerForTesting: ((AUEventDomain) -> Void)?
 
     func logEvent(_ event: AUEventDomain) {
-        observerForTesting?(event)
+        var enriched = event
+        let page = event.pageContext ?? capturePageContext()
+        enriched.pageImpressionId = event.pageImpressionId ?? page.pageImpressionId
+        enriched.screenName = event.screenName ?? page.screenName
+        observerForTesting?(enriched)
         guard let eventQueue = eventQueue else { return }
         requestDeviceId()
 
-        // Safety net: if an ad event fires before any onScreenResumed (e.g. a banner prefetches
-        // during layout, before the host's viewWillAppear), lazily start a page-impression id so the
-        // event is never orphaned. onScreenResumed normally sets this first, so this rarely triggers.
-        if currentPageImpressionId == nil, event.type != .pageImpression {
-            currentPageImpressionId = AUUniqHelper.makeUniqID()
-        }
-
-        var enriched = event
         enriched.uuid = AUUniqHelper.makeUniqID()
         enriched.visitorId = visitorId
-        enriched.companyId = companyId
+        let context = AUAnalyticsContext.shared.snapshot()
+        enriched.publisherId = context.publisherId
+        enriched.environment = context.environment
         enriched.sessionId = sessionId
         enriched.sessionStartTimestamp = sessionStartTimestamp
         enriched.deviceId = deviceId
-        enriched.pageImpressionId = currentPageImpressionId
-        // Screen name of the current visit rides on every event (not just pageImpression).
-        enriched.screenName = enriched.screenName ?? currentScreenName
-        // website_id — the remote-config publisher id (resolved async; nil for very early events).
-        enriched.websiteId = AudienzzRemoteConfig.shared.publisherId
         enriched.sessionSeq = nextSequence()
 
         let network = mapper.toNetwork(enriched)
@@ -126,12 +137,11 @@ final class AUEventsManager: AULogEventType {
             print("[AUAnalytics] ▶︎ \(network.eventType) seq=\(network.sessionSeq)\n\(str)")
         }
         #endif
-        // Enqueue for batched delivery; the queue coalesces events and POSTs them to /submit/batch
-        // on size/time/background triggers, with bounded retry.
+        // Persist off the UI thread, then attempt immediate delivery with persistent retries.
         eventQueue.enqueue(json)
     }
 
-    // MARK: - App lifecycle (batch flush)
+    // MARK: - App lifecycle (delivery hint)
 
     /// Flush the event queue when the app backgrounds (so a pending buffer isn't stranded) and again
     /// when it returns to the foreground (drains anything left after a failed/backoff cycle). Uses

@@ -80,6 +80,49 @@ final class InterstitialLifecycleTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(requests, 1)
         XCTAssertEqual(ad.shows, 0)
     }
+
+    func testThreeManualPresentationCyclesIncludingAnInactiveOpportunity() throws {
+        var foreground = true
+        owner.isForeground = { foreground }
+        let controller = UIViewController()
+        for cycle in 1...3 {
+            owner.prefetch { result in
+                if case .failure(let error) = result { XCTFail("Unexpected load failure: \(error)") }
+            }
+            XCTAssertEqual(requests, cycle)
+            let ad = Ad()
+            response(.success(ad))
+            XCTAssertTrue(owner.isReady)
+            XCTAssertEqual(ad.shows, 0)
+
+            if cycle == 2 {
+                foreground = false
+                XCTAssertFalse(owner.show(from: controller))
+                XCTAssertEqual(events.last, "opportunitySkipped")
+                XCTAssertTrue(owner.isReady, "an inactive opportunity keeps ready inventory")
+                var answered = false
+                owner.prefetch { result in
+                    if case .success = result { answered = true }
+                }
+                XCTAssertTrue(answered)
+                XCTAssertEqual(requests, cycle, "cached inventory must not be replaced")
+                XCTAssertEqual(ad.shows, 0)
+                foreground = true
+            }
+
+            XCTAssertTrue(owner.show(from: controller))
+            XCTAssertEqual(ad.shows, 1)
+            XCTAssertFalse(owner.isReady)
+            let delegate = try XCTUnwrap(ad.delegate)
+            delegate.adWillPresentFullScreenContent?(ad)
+            delegate.adDidRecordImpression?(ad)
+            delegate.adDidDismissFullScreenContent?(ad)
+            XCTAssertEqual(events.last, "dismissed")
+            XCTAssertFalse(owner.isReady)
+        }
+        XCTAssertEqual(events.filter { $0 == "presented" }.count, 3)
+        XCTAssertEqual(events.filter { $0 == "dismissed" }.count, 3)
+    }
     func testConcurrentPrefetchAndShowCoalescesOntoOneRequestAndShowsOnce() {
         let ad = Ad()
         var completions = 0

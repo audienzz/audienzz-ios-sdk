@@ -404,6 +404,7 @@ extension AUBannerView {
 
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
+        currentAnalyticsPage = AUEventsManager.shared.capturePageContext()
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         let generationAtRequest = auctionGeneration
         if !headerBiddingEnabled {
@@ -578,7 +579,8 @@ extension AUBannerView {
             isRefresh: !isInitialAutorefresh,
             mediaTypes: Self.mediaTypesJSON(subtype: makeAdSubType()),
             auctionId: currentAuctionId,
-            slotReload: emittedSlotReload
+            slotReload: emittedSlotReload,
+            pageContext: currentAnalyticsPage
         )
     }
 
@@ -618,19 +620,19 @@ extension AUBannerView {
                 bidderCode: bidder, winnerBidderCode: bidder, winnerType: AUWinnerType.rtb,
                 priceBucket: priceBucket, hbSize: hbSize, hbFormat: hbFormat,
                 mediaType: hbFormat, size: hbSize,
-                // Fork-free economics: exact cpm/currency/crid aren't on the original (GAM) API.
-                // cpm = bucketed hb_pb; currency is backfilled from the GMA paid event at render;
-                // creative_id = bidder-specific targeting key when present, else "0"; ad_id = hb_adid.
-                cpm: priceBucket.flatMap { Double($0) }, currency: nil, creativeId: creativeId ?? "0",
-                auctionId: currentAuctionId, adId: adId ?? "0",
-                timeToRespond: timeToRespond, slotReload: emittedSlotReload)
+                // Stock Prebid exposes targeting, not the exact bid price/currency on this API.
+                // Keep hb_pb as price_bucket; do not pretend it is an exact, denominated CPM.
+                cpm: nil, currency: nil, creativeId: creativeId,
+                auctionId: currentAuctionId, adId: adId,
+                timeToRespond: timeToRespond, slotReload: emittedSlotReload, pageContext: currentAnalyticsPage)
         }
 
         AUEventsManager.shared.bidResponse(
             adUnitId: adUnitID, adViewId: configId, sizes: sizes,
             adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
             isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-            resultCode: codeName, timeToRespond: timeToRespond, economics: economics
+            resultCode: codeName, timeToRespond: timeToRespond, economics: economics,
+            pageContext: currentAnalyticsPage
         )
 
         if let economics {
@@ -640,7 +642,8 @@ extension AUBannerView {
                 adUnitId: adUnitID, adViewId: configId, sizes: sizes,
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-                economics: economics
+                economics: economics,
+                pageContext: currentAnalyticsPage
             )
         } else {
             self.prebidWinningBidder = nil
@@ -650,7 +653,8 @@ extension AUBannerView {
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
                 resultCode: codeName, mediaTypes: Self.mediaTypesJSON(subtype: subtype),
-                auctionId: currentAuctionId, slotReload: emittedSlotReload
+                auctionId: currentAuctionId, slotReload: emittedSlotReload,
+                pageContext: currentAnalyticsPage
             )
         }
         // Count this load; next auction/refresh reports the incremented value.
@@ -664,8 +668,10 @@ extension AUBannerView {
     /// identity, so a late impression or viewability callback for it is reported under its own
     /// auction — and a replacement that never arrives changes nothing at all.
     @nonobjc func commitDisplayedCreative() {
+        displayedImpressionRecorded = false
         var ec = lastRenderEconomics ?? AURenderEconomics()
         ec.auctionId = ec.auctionId ?? currentAuctionId
+        ec.pageContext = currentAnalyticsPage
         // The reported flag is binary and belongs to the creative, not to the slot's current count.
         ec.slotReload = ec.slotReload ?? emittedSlotReload
         displayedEconomics = ec
@@ -698,17 +704,14 @@ extension AUBannerView {
         let isPrebidRender = displayedPrebidLineItemWon
         ec.bidderCode = isPrebidRender ? (displayedPrebidBidder ?? AD_SERVER_BIDDER) : AD_SERVER_BIDDER
         if !isPrebidRender {
-            // The ad server (Google/direct) rendered — the Prebid bid's creative id would make the
-            // enricher misclassify a direct-sold impression as RTB. Report the GAM creative id when
-            // available, else the "0" stub. (GMA exposes no served-creative id for banners → "0".)
-            ec.creativeId = "0"
+            ec.creativeId = nil
+            ec.adId = nil
+            ec.cpm = nil
+            ec.currency = nil
         }
-        // Always carry the SDK-minted auction id, even on a direct fill with no Prebid economics.
         ec.auctionId = ec.auctionId ?? renderAuctionId
-        // Currency (and, on a direct fill with no Prebid bid, cpm) come from the GMA paid event,
-        // which fires around impression — so they populate on adImpression/adClick/viewability.
-        ec.currency = ec.currency ?? lastPaidCurrency
-        ec.cpm = ec.cpm ?? lastPaidCpm
+        // This is impression revenue converted to CPM, never a currency label for a Prebid bucket.
+        ec.applyGooglePaidValue(cpm: lastPaidCpm, currency: lastPaidCurrency)
         return ec
     }
 

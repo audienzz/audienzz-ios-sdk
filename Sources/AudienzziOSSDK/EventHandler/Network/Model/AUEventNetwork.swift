@@ -20,6 +20,9 @@ import Foundation
 struct AUEventNetwork: Encodable {
     let eventType: String
     let companyId: String?
+    let publisherId: String?
+    let environment: String
+    let osVersion: String
     let source: String
     let eventId: String
     let pageImpressionId: String?
@@ -51,6 +54,9 @@ struct AUEventNetwork: Encodable {
     enum CodingKeys: String, CodingKey {
         case eventType = "event_type"
         case companyId = "company_id"
+        case publisherId = "publisher_id"
+        case environment
+        case osVersion = "os_version"
         case source
         case eventId = "event_id"
         case pageImpressionId = "page_impression_id"

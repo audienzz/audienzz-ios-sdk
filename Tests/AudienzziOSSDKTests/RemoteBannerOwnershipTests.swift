@@ -1,5 +1,6 @@
 import XCTest
 import UIKit
+import GoogleMobileAds
 @testable import AudienzziOSSDK
 
 /// One placement must be served by one banner.
@@ -33,6 +34,43 @@ final class RemoteBannerOwnershipTests: AudienzzLifecycleTestCase {
       "prebidConfig": { "placementId": "placement", "adSizes": ["320x50"] }
     }]
     """
+
+
+    func testReviewAdaptiveLazySlotHasNonzeroFrameAndCanRequest() throws {
+        Audienzz.shared.pageImpression(host)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.rootViewController = host
+        window.isHidden = false
+        container.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            container.leadingAnchor.constraint(equalTo: host.view.leadingAnchor),
+            container.topAnchor.constraint(equalTo: host.view.topAnchor, constant: 100),
+            container.widthAnchor.constraint(equalToConstant: 320)
+        ])
+        host.view.layoutIfNeeded()
+        let owner = AURemoteConfigBannerView(adConfigId: "adaptive-banner")
+        var requests = 0
+        owner.loadGoogle = { google, _ in
+            requests += 1
+            XCTAssertEqual(nsValue(for: google.adSize),
+                           nsValue(for: currentOrientationInlineAdaptiveBanner(width: 320)),
+                           "the real Google handoff must keep adaptive flags, not just reserve space")
+            google.resize(adSizeFor(cgSize: CGSize(width: 320, height: 140)))
+        }
+        owner.load(in: container, rootViewController: host)
+        defer { owner.destroy(); window.isHidden = true }
+        let banner = try XCTUnwrap(banners().first)
+        banner.headerBiddingEnabled = false
+        host.view.layoutIfNeeded()
+        banner.refreshVisibilityNow()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        XCTAssertGreaterThan(banner.bounds.height, 0, "adaptive lazy slot must reserve space before load")
+        XCTAssertEqual(requests, 1, "a visible adaptive slot must reach Google once")
+        let handoff = try XCTUnwrap(banner.onLoadRequest)
+        handoff(AdManagerRequest())
+        XCTAssertEqual(requests, 2, "a later handoff must also restore adaptive sizing")
+        XCTAssertGreaterThan(banner.bounds.height, 0)
+    }
 
     private func seedConfig(_ present: Bool) {
         var configs: [RemoteAdConfiguration]?

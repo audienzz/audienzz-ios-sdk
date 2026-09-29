@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 @testable import AudienzziOSSDK
 
 /// The analytics contract, asserted on the SERIALIZED payload rather than on the domain object.
@@ -188,5 +189,77 @@ final class AnalyticsContractTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(stillOnScreen.auctionId, "auction-A")
         XCTAssertEqual(stillOnScreen.bidderCode, "seatA")
         XCTAssertEqual(stillOnScreen.cpm, 1.42)
+    }
+
+    func testPublisherIdentityEnvironmentAndDeviceMetadataOnTheWire() throws {
+        var event = AUEventDomain(type: .pageImpression)
+        event.publisherId = "publisher-fixture"
+        event.companyId = "seller-is-not-company"
+        event.websiteId = "publisher-is-not-website"
+        event.environment = "test"
+        let json = try payload(event)
+        XCTAssertEqual(json["publisher_id"] as? String, "publisher-fixture")
+        XCTAssertEqual(json["environment"] as? String, "test")
+        XCTAssertEqual(json["os_name"] as? String, "iOS")
+        XCTAssertEqual(json["os_version"] as? String, UIDevice.current.systemVersion)
+        XCTAssertTrue(["Smartphone", "Tablet"].contains(try XCTUnwrap(json["device_category"] as? String)))
+        XCTAssertNil(json["company_id"])
+        XCTAssertNil(try attributes(event)["website_id"])
+        XCTAssertNil(try payload(AUEventDomain(type: .pageImpression))["publisher_id"])
+    }
+
+    func testCPMIsPlainDecimalAndUnavailableMetadataIsAbsent() throws {
+        var event = adEvent(slotReload: 0)
+        event.cpm = 0.00001
+        event.cpmSource = "google_paid"
+        event.currency = "CHF"
+        event.creativeId = "0"
+        event.adId = "0"
+        let attrs = try attributes(event)
+        XCTAssertEqual(attrs["cpm"], "0.00001")
+        XCTAssertEqual(attrs["cpm_source"], "google_paid")
+        XCTAssertEqual(attrs["currency"], "CHF")
+        XCTAssertNil(attrs["creative_id"])
+        XCTAssertNil(attrs["ad_id"])
+        event.cpm = .infinity
+        XCTAssertNil(try attributes(event)["cpm"])
+    }
+
+    func testAnalyticsConfigurationValidatesBeforeMutating() {
+        let context = AUAnalyticsContext()
+        XCTAssertEqual(context.snapshot().environment, "production")
+        XCTAssertTrue(context.configure(publisherId: " 35 ", environment: "test"))
+        XCTAssertFalse(context.configure(publisherId: "81", environment: "typo"))
+        XCTAssertEqual(context.snapshot().publisherId, "35")
+        XCTAssertEqual(context.snapshot().environment, "test")
+        context.setPublisherId("34")
+        XCTAssertEqual(context.snapshot().publisherId, "34")
+        XCTAssertEqual(context.snapshot().environment, "test")
+    }
+
+    func testGooglePaidCPMAndCurrencyReplaceAsAPair() {
+        var economics = AURenderEconomics(cpm: 1.42, currency: "USD")
+        economics.applyGooglePaidValue(cpm: 2.5, currency: "CHF")
+        XCTAssertEqual(economics.cpm, 2.5)
+        XCTAssertEqual(economics.currency, "CHF")
+        XCTAssertEqual(economics.cpmSource, "google_paid")
+        economics.applyGooglePaidValue(cpm: 9, currency: nil)
+        XCTAssertEqual(economics.cpm, 2.5, "incomplete economics cannot overwrite the paired amount")
+    }
+
+    func testGoogleDirectFillDoesNotInheritTheLosingPrebidBid() {
+        let banner = AUBannerView(configId: "probe", adSize: CGSize(width: 300, height: 250), adFormats: [.banner])
+        banner.lastRenderEconomics = AURenderEconomics(cpm: 1.42, currency: "USD", creativeId: "cr", adId: "bid")
+        banner.prebidLineItemWon = false
+        banner.commitDisplayedCreative()
+        let ec = banner.resolvedRenderEconomics()
+        XCTAssertNil(ec.cpm)
+        XCTAssertNil(ec.currency)
+        XCTAssertNil(ec.creativeId)
+        XCTAssertNil(ec.adId)
+        banner.lastPaidCpm = 2.5
+        banner.lastPaidCurrency = "CHF"
+        XCTAssertEqual(banner.resolvedRenderEconomics().currency, "CHF")
+        XCTAssertEqual(banner.resolvedRenderEconomics().cpm, 2.5)
     }
 }
