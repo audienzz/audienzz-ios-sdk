@@ -16,81 +16,55 @@
 import Foundation
 import UIKit
 
-/// Drives `viewability.start` / `viewability.success` for full-screen ads (interstitial, rewarded),
-/// which are 100% visible while presented — no fraction sampling needed (mirrors Android
-/// `FullScreenViewabilityTimer`). `onShown` fires `onStart` immediately and schedules `onSuccess`
-/// after `successSeconds`; `cancel` stops a pending success (call on dismiss / failed-to-present).
-///
-/// While shown it observes app state: backgrounding cancels a pending success so it never elapses
-/// off-screen, and returning to the foreground re-arms (re-fires start + reschedules the full
-/// window) as long as success has not already been reported.
+/// One presentation, including foreground interruptions. Duplicate presentation callbacks are inert.
 final class AUFullScreenViewabilityTimer {
-
     private let successSeconds: TimeInterval
     private let onStart: () -> Void
     private let onSuccess: () -> Void
     private var successWorkItem: DispatchWorkItem?
-    private var succeeded = false
+    private var shown = false
+    private var terminal = false
+    private var measuring = false
+    private var backgrounded = false
+    private var generation = 0
 
-    init(successSeconds: TimeInterval = 1.0,
-         onStart: @escaping () -> Void,
-         onSuccess: @escaping () -> Void) {
-        self.successSeconds = successSeconds
-        self.onStart = onStart
-        self.onSuccess = onSuccess
+    init(successSeconds: TimeInterval = 1, onStart: @escaping () -> Void, onSuccess: @escaping () -> Void) {
+        self.successSeconds = successSeconds; self.onStart = onStart; self.onSuccess = onSuccess
     }
-
     func onShown() {
-        cancel()
-        succeeded = false
-        observeAppState()
+        guard !shown, !terminal else { return }
+        shown = true
+        backgrounded = Audienzz.shared.isAppBackgrounded
+        let nc = NotificationCenter.default
+        nc.addObserver(self, selector: #selector(background), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        nc.addObserver(self, selector: #selector(foreground), name: UIApplication.didBecomeActiveNotification, object: nil)
+        resume()
+    }
+    private func resume() {
+        guard shown, !terminal, !measuring, !backgrounded, !Audienzz.shared.isAppBackgrounded else { return }
+        measuring = true
+        let token = generation
         onStart()
-        schedule()
-    }
-
-    func cancel() {
-        NotificationCenter.default.removeObserver(self)
-        successWorkItem?.cancel()
-        successWorkItem = nil
-    }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
-    private func schedule() {
-        successWorkItem?.cancel()
+        guard shown, !terminal, token == generation else { return }
         let work = DispatchWorkItem { [weak self] in
-            guard let self = self else { return }
-            self.succeeded = true
+            guard let self, self.shown, !self.terminal, token == self.generation else { return }
+            guard !self.backgrounded, !Audienzz.shared.isAppBackgrounded else { self.pause(); return }
+            self.cancel()
             self.onSuccess()
-            // Terminal for this presentation — stop observing app state.
-            NotificationCenter.default.removeObserver(self)
         }
         successWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + successSeconds, execute: work)
     }
-
-    private func observeAppState() {
-        let center = NotificationCenter.default
-        center.addObserver(
-            self, selector: #selector(handleBackground),
-            name: UIApplication.didEnterBackgroundNotification, object: nil)
-        center.addObserver(
-            self, selector: #selector(handleForeground),
-            name: UIApplication.didBecomeActiveNotification, object: nil)
+    private func pause() {
+        generation += 1; measuring = false
+        successWorkItem?.cancel(); successWorkItem = nil
     }
-
-    @objc private func handleBackground() {
-        guard !succeeded else { return }
-        successWorkItem?.cancel()
-        successWorkItem = nil
+    func cancel() {
+        terminal = true; shown = false
+        pause()
+        NotificationCenter.default.removeObserver(self)
     }
-
-    @objc private func handleForeground() {
-        guard !succeeded else { return }
-        // Still presented full-screen — restart the continuous-view window and re-fire start.
-        onStart()
-        schedule()
-    }
+    @objc private func background() { backgrounded = true; pause() }
+    @objc private func foreground() { backgrounded = false; resume() }
+    deinit { cancel() }
 }

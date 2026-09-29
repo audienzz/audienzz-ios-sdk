@@ -209,6 +209,24 @@ final class AUEventQueueTests: XCTestCase {
         XCTAssertEqual(ids(network.sent[1]), ["c"])
     }
 
+    func testSeptember25BacklogKeepsTimestampAndDoesNotReturnAfterAcknowledgement() {
+        var old = event("old")
+        old["event_timestamp"] = "2026-09-25T12:00:00.000Z"
+        XCTAssertEqual(store().append(old), .stored)
+        var queue: AUEventQueue? = sender()
+        XCTAssertEqual(network.sent.count, 1)
+        XCTAssertEqual(network.sent[0][0]["event_timestamp"] as? String, "2026-09-25T12:00:00.000Z")
+        XCTAssertEqual(ids(network.sent[0]), ["old"])
+        complete(queue!, 0)
+        XCTAssertTrue(store().loadAll().isEmpty)
+        queue = nil
+        network = Network()
+        let restarted = sender()
+        clock.advance(86_400)
+        XCTAssertTrue(network.sent.isEmpty)
+        withExtendedLifetime(restarted) {}
+    }
+
     func testRejectedBatchSplitsAndQuarantinesOnlyInvalidSingleton() {
         let queue = sender()
         ["a", "bad", "c", "d"].forEach { queue.enqueue(event($0)) }; queue.flush(); queue.syncForTesting()

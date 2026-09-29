@@ -108,6 +108,7 @@ public class AUBannerView: AUAdView {
     /// reported value, so a slot that refreshed four times emitted `slot_reload` 0,1,2,3 — the
     /// collector's contract is "first load or not".
     internal var slotReloadCount: Int = 0
+    internal var requestSlotReload = 0
 
     /// `slot_reload` as the collector defines it: `0` for a slot's first load, `1` for every load
     /// after it. Serialized as a string, like the other `attributes` values.
@@ -131,6 +132,7 @@ public class AUBannerView: AUAdView {
     internal var displayedPrebidBidder: String?
     internal var displayedPrebidLineItemWon: Bool = false
     internal var displayedImpressionRecorded = false
+    internal var displayedResponseId: String?
     private var lastImpressionResponseId: String?
 
     /// Idempotent per received creative, not per auction in flight or placement.
@@ -315,6 +317,8 @@ public class AUBannerView: AUAdView {
     }
 
     public override func removeFromSuperview() {
+        viewabilityTracker?.stop()
+        viewabilityTracker = nil
         super.removeFromSuperview()
         AUScreenAdCoordinator.shared.deregister(self)
         googleLoadTimeout?.cancel()
@@ -331,6 +335,8 @@ public class AUBannerView: AUAdView {
     /// `removeFromSuperview` as a destructor — call it when you're done with the
     /// ad (e.g. the owning controller's `deinit`). Safe to call more than once.
     public func destroy() {
+        viewabilityTracker?.stop()
+        viewabilityTracker = nil
         AUScreenAdCoordinator.shared.deregister(self)
         googleLoadTimeout?.cancel()
         googleLoadTimeout = nil

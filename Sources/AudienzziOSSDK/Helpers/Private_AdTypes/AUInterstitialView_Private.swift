@@ -108,7 +108,7 @@ extension AUInterstitialView {
             adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
             adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
             isAutorefresh: false, autorefreshTime: 0, isRefresh: false,
-            resultCode: codeName, timeToRespond: timeToRespond, economics: economics,
+            resultCode: codeName, timeToRespond: timeToRespond, economics: economics, auctionId: currentAuctionId,
             pageContext: currentAnalyticsPage
         )
 
@@ -128,7 +128,7 @@ extension AUInterstitialView {
             AUEventsManager.shared.noBid(
                 adUnitId: adUnitID, adViewId: configId, sizes: AUUniqHelper.sizesJSON(adSize),
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
-                isAutorefresh: false, autorefreshTime: 0, isRefresh: false, resultCode: codeName,
+                isAutorefresh: false, autorefreshTime: 0, isRefresh: false, resultCode: resultCode == .prebidDemandFetchSuccess ? "NO_BIDS" : codeName,
                 mediaTypes: AUBannerView.mediaTypesJSON(subtype: subtype),
                 auctionId: currentAuctionId,
                 pageContext: currentAnalyticsPage

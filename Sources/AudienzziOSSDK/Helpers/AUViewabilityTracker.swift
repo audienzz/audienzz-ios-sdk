@@ -16,125 +16,87 @@
 import Foundation
 import UIKit
 
-/// Tracks viewability for a banner ad view and reports two events (mirrors Android `ViewabilityTracker`):
-/// - `onStart` fires each time the view crosses **up** through `threshold` (default 50%) visible,
-///   while `onSuccess` has not yet fired (re-arms after a drop).
-/// - `onSuccess` fires **once**, after the view stays ≥ `threshold` for `successSeconds` continuous
-///   seconds; the session is then terminal until `start()` is called again (next creative).
-///
-/// Visibility is polled on a timer (iOS has no per-frame pre-draw hook like Android); the success
-/// timer runs independently so it elapses even if the view is static.
+/// One creative's continuous exposure. Starts can repeat after an interruption; success is terminal.
 final class AUViewabilityTracker {
-
-    /// Reported as `tracker_version` on viewability events (shared with the full-screen timer).
     static let trackerVersion = "1.0.0"
-
     private weak var view: VisibleView?
+    private let isEligible: () -> Bool
     private let onStart: () -> Void
     private let onSuccess: () -> Void
     private let threshold: CGFloat
     private let successSeconds: TimeInterval
     private let pollInterval: TimeInterval
-
     private var pollTimer: Timer?
     private var successWorkItem: DispatchWorkItem?
+    private var running = false
     private var aboveThreshold = false
-    private var successSent = false
+    private var backgrounded = false
+    private var generation = 0
 
-    init(view: VisibleView,
-         threshold: CGFloat = 0.5,
-         successSeconds: TimeInterval = 1.0,
-         pollInterval: TimeInterval = 0.2,
-         onStart: @escaping () -> Void,
-         onSuccess: @escaping () -> Void) {
-        self.view = view
-        self.threshold = threshold
-        self.successSeconds = successSeconds
-        self.pollInterval = pollInterval
-        self.onStart = onStart
-        self.onSuccess = onSuccess
+    init(view: VisibleView, threshold: CGFloat = 0.5, successSeconds: TimeInterval = 1,
+         pollInterval: TimeInterval = 0.2, isEligible: @escaping () -> Bool = { true },
+         onStart: @escaping () -> Void, onSuccess: @escaping () -> Void) {
+        self.view = view; self.threshold = threshold; self.successSeconds = successSeconds
+        self.pollInterval = pollInterval; self.isEligible = isEligible
+        self.onStart = onStart; self.onSuccess = onSuccess
     }
-
-    /// Begins (or restarts) a viewability session for the current creative.
     func start() {
         stop()
-        successSent = false
-        aboveThreshold = false
-        let timer = Timer(timeInterval: pollInterval, repeats: true) { [weak self] _ in
-            self?.evaluate()
-        }
+        running = true
+        backgrounded = Audienzz.shared.isAppBackgrounded
+        let nc = NotificationCenter.default
+        nc.addObserver(self, selector: #selector(background), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        nc.addObserver(self, selector: #selector(foreground), name: UIApplication.didBecomeActiveNotification, object: nil)
+        startPolling()
+        refreshVisibility()
+    }
+    private func startPolling() {
+        guard running, !backgrounded, pollTimer == nil else { return }
+        let timer = Timer(timeInterval: pollInterval, repeats: true) { [weak self] _ in self?.refreshVisibility() }
         RunLoop.main.add(timer, forMode: .common)
         pollTimer = timer
-        observeAppState()
-        evaluate()
     }
-
-    func stop() {
-        NotificationCenter.default.removeObserver(self)
-        pollTimer?.invalidate()
-        pollTimer = nil
-        cancelSuccess()
-        aboveThreshold = false
+    private var visible: Bool {
+        running && !backgrounded && !Audienzz.shared.isAppBackgrounded && isEligible()
+            && (view?.currentVisibleHeightFraction() ?? 0) >= threshold
     }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
-    // MARK: - App state
-
-    private func observeAppState() {
-        let center = NotificationCenter.default
-        center.addObserver(
-            self, selector: #selector(handleBackground),
-            name: UIApplication.didEnterBackgroundNotification, object: nil)
-        center.addObserver(
-            self, selector: #selector(handleForeground),
-            name: UIApplication.didBecomeActiveNotification, object: nil)
-    }
-
-    /// A pending success must not elapse while backgrounded (the `asyncAfter` deadline passes off
-    /// screen and would fire on resume). Cancel it and drop below threshold so foreground re-arms.
-    @objc private func handleBackground() {
-        guard !successSent else { return }
-        cancelSuccess()
-        aboveThreshold = false
-    }
-
-    /// On return to foreground re-evaluate immediately; if the ad is still ≥ threshold this re-fires
-    /// start and reschedules the full continuous-view window.
-    @objc private func handleForeground() {
-        guard !successSent else { return }
-        evaluate()
-    }
-
-    private func evaluate() {
-        guard !successSent, let view = view else { return }
-        let isAbove = view.currentVisibleHeightFraction() >= threshold
-        if isAbove && !aboveThreshold {
-            aboveThreshold = true
-            onStart()
-            scheduleSuccess()
-        } else if !isAbove && aboveThreshold {
-            aboveThreshold = false
-            cancelSuccess()
-        }
-    }
-
-    private func scheduleSuccess() {
-        cancelSuccess()
+    func refreshVisibility() {
+        guard running else { return }
+        if !visible { interruptExposure(); return }
+        guard !aboveThreshold else { return }
+        aboveThreshold = true
+        let token = generation
+        onStart()
+        guard running, token == generation else { return }
         let work = DispatchWorkItem { [weak self] in
-            guard let self = self else { return }
-            self.successSent = true
-            self.onSuccess()
+            guard let self, self.running, token == self.generation else { return }
+            guard self.visible else { self.interruptExposure(); return }
             self.stop()
+            self.onSuccess()
         }
         successWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + successSeconds, execute: work)
     }
-
-    private func cancelSuccess() {
-        successWorkItem?.cancel()
-        successWorkItem = nil
+    @objc private func background() {
+        backgrounded = true
+        pollTimer?.invalidate(); pollTimer = nil
+        interruptExposure()
     }
+    @objc private func foreground() {
+        backgrounded = false
+        startPolling()
+        refreshVisibility()
+    }
+    private func interruptExposure() {
+        generation += 1
+        successWorkItem?.cancel(); successWorkItem = nil
+        aboveThreshold = false
+    }
+    func stop() {
+        running = false
+        NotificationCenter.default.removeObserver(self)
+        pollTimer?.invalidate(); pollTimer = nil
+        interruptExposure()
+    }
+    deinit { stop() }
 }

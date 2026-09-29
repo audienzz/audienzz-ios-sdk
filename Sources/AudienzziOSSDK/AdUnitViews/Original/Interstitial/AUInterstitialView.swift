@@ -47,8 +47,6 @@ public class AUInterstitialView: AUAdView {
     /// on the render events, since exact economics aren't on the original API without the fork.
     internal var lastPaidCurrency: String?
     internal var lastPaidCpm: Double?
-    /// Full-screen viewability driver (start on present, success after 1s, cancel on dismiss).
-    internal var fullScreenViewabilityTimer: AUFullScreenViewabilityTimer?
 
     /// Video settings for the request: duration, bitrate, protocols, playback and so on.
     /// Its `api` list is ignored — the API frameworks an interstitial advertises are
@@ -109,6 +107,7 @@ public class AUInterstitialView: AUAdView {
     }
     
     public override func removeFromSuperview() {
+        eventHandler?.cancelMeasurement()
         super.removeFromSuperview()
         adUnit?.stopAutoRefresh()
         adUnit = nil
@@ -119,6 +118,7 @@ public class AUInterstitialView: AUAdView {
     /// ad unit and event handler. Prefer this over relying on
     /// `removeFromSuperview` as a destructor. Safe to call more than once.
     public func destroy() {
+        eventHandler?.cancelMeasurement()
         fullscreenDemand.destroy()
         adUnit?.stopAutoRefresh()
         adUnit = nil

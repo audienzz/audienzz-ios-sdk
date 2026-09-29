@@ -121,7 +121,7 @@ extension AUEventsManager {
                      adType: String, adSubtype: String, apiType: String,
                      isAutorefresh: Bool, autorefreshTime: Int, isRefresh: Bool,
                      resultCode: String?, timeToRespond: Int64? = nil,
-                     economics: AURenderEconomics? = nil,
+                     economics: AURenderEconomics? = nil, auctionId: String? = nil,
                      pageContext: AUAnalyticsPageContext? = nil) {
         var e = AUEventDomain(type: .bidResponse)
         e.adUnitId = adUnitId; e.adViewId = adViewId; e.sizes = sizes
@@ -129,6 +129,7 @@ extension AUEventsManager {
         e.isAutorefresh = isAutorefresh; e.autorefreshTime = autorefreshTime; e.isRefresh = isRefresh
         e.resultCode = resultCode; e.timeToRespond = timeToRespond
         e.apply(economics)
+        e.auctionId = auctionId ?? e.auctionId
         e.pageContext = pageContext ?? e.pageContext
         logEvent(e)
     }

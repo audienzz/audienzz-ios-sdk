@@ -67,6 +67,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     private let adViewID = AUUniqHelper.makeUniqID()
     private var analyticsAdUnitPath: String?
     private var recordedImpression = false
+    private var viewabilityTimer: AUFullScreenViewabilityTimer?
     /// Backstop for "at most one discard per load". The primary guarantee is that every discard
     /// site clears ``loadedAd`` immediately after reporting, so the nil check already rejects a
     /// second report; this flag keeps that true if a future release path forgets to clear it. It
@@ -501,6 +502,8 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     }
 
     internal func finishPresentation(discardReason: String? = nil) {
+        viewabilityTimer?.cancel()
+        viewabilityTimer = nil
         if let discardReason { reportDiscardIfUnused(discardReason) }
         presenting = false
         if Self.activePresentation === self { Self.activePresentation = nil }
@@ -514,7 +517,12 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     }
 
     public func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
-        guard owns(ad) else { return }
+        guard owns(ad), viewabilityTimer == nil else { return }
+        let timer = AUFullScreenViewabilityTimer(
+            onStart: { [weak self] in self?.recordAnalytics(.viewabilityStart) },
+            onSuccess: { [weak self] in self?.recordAnalytics(.viewabilitySuccess) })
+        viewabilityTimer = timer
+        timer.onShown()
         emit("presented")
         delegate?.adWillPresentFullScreenContent?(ad)
     }

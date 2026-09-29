@@ -29,3 +29,27 @@ quarantine. See the cross-platform contract above for retention, limits and requ
 acknowledgement / event-ID deduplication on the collector. No Dart/JS queue is needed. Flutter
 requires a small config-forwarding update because it fetches publisher config in Dart; RN uses
 native remote initialization. Release the matching native SDKs before updating bridge pins.
+
+September 29 lifecycle corrections on this branch:
+
+- Banner measurement is cancelled on page release, destruction or a received replacement, and
+  interrupted while hidden/backgrounded. A repeated callback for the same known Google response
+  keeps the original measurement. Each replacement must earn its own success.
+- Original fullscreen handlers retain the loaded ad's page/auction context. Remote interstitials
+  now report viewability; rewarded viewability carries the same context as its impression.
+- No-bid responses retain their auction ID; success without a bidder becomes `NO_BIDS`.
+  First-load Google banner impressions report `slot_reload=0`.
+- Repeated `viewability.start` after interrupted exposure is intentional; success is once per
+  creative. Explicit same-screen page reports still create new visits; use one navigation owner.
+
+`event_timestamp` remains the original creation time on disk recovery/retry. Old unsent events
+are not expired or rewritten. Diagnostics show restored count and oldest event timestamp, and
+send logs show the batch's oldest timestamp. Tests replay a September 25 payload unchanged and
+verify that reopening the store after acknowledgement cannot resend it. Ambiguous delivery can
+still repeat an event ID; collector deduplication is required. These changes do not establish the
+cause of the historical September 25 traffic without sample payloads/event IDs.
+
+Validation: 334 iOS and 306 Android tests pass. Reverting iOS fullscreen attribution to the mutable
+owner, or removing the same-response load guard, fails the targeted regression tests; restoring
+the fixes passes. See the [cross-platform review](https://github.com/audienzz/audienzz-android-sdk/blob/feature/durable-analytics-batching/docs/analytics-review-2026-09-29.md).
+No live-device/collector validation was performed for these lifecycle fixes.

@@ -37,16 +37,31 @@ class AUInterstitialHandler: NSObject,
     weak var adView: AUInterstitialView?
     weak var fullScreentDelegate: FullScreenContentDelegate?
     private var recordedImpression = false
-    private let analyticsPage: AUAnalyticsPageContext
+    private let economics: AURenderEconomics
+    private let viewId: String
+    private let subtype: String
+    private var lastPaidCpm: Double?
+    private var lastPaidCurrency: String?
+    private var viewabilityTimer: AUFullScreenViewabilityTimer?
+    private var terminal = false
 
     init(handler: AUInterstitialEventHandler, adView: AUInterstitialView) {
         self.handler = handler
         self.fullScreentDelegate = handler.adUnit.fullScreenContentDelegate
         self.adView = adView
-        self.analyticsPage = adView.currentAnalyticsPage
+        var snapshot = adView.lastRenderEconomics ?? AURenderEconomics()
+        snapshot.auctionId = snapshot.auctionId ?? adView.currentAuctionId
+        snapshot.pageContext = adView.currentAnalyticsPage
+        snapshot.bidderCode = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
+        snapshot.slotReload = snapshot.slotReload ?? 0
+        self.economics = snapshot
+        self.viewId = adView.configId
+        self.subtype = adView.makeAdSubType()
         super.init()
         addListener()
     }
+
+    func cancelMeasurement() { terminal = true; viewabilityTimer?.cancel() }
 
     var adUnitID: String {
         self.handler.adUnit.adUnitID
@@ -55,34 +70,36 @@ class AUInterstitialHandler: NSObject,
     private func addListener() {
         handler.adUnit.fullScreenContentDelegate = self
         // GMA paid value + currency (the only fork-free currency source), stashed for the render events.
-        handler.adUnit.paidEventHandler = { [weak adView] adValue in
-            adView?.lastPaidCurrency = adValue.currencyCode
-            adView?.lastPaidCpm = adValue.value.doubleValue * 1_000
+        handler.adUnit.paidEventHandler = { [weak self] adValue in
+            self?.lastPaidCurrency = adValue.currencyCode
+            self?.lastPaidCpm = adValue.value.doubleValue * 1_000
         }
     }
 
     deinit {
+        viewabilityTimer?.cancel()
         AULogEvent.logDebug("AUInterstitialHandler")
     }
 
     func adDidRecordImpression(_ ad: any FullScreenPresentingAd) {
-        guard !recordedImpression else { return }
+        guard !terminal, !recordedImpression else { return }
         recordedImpression = true
         LogEvent("adDidRecordImpression")
         AUEventsManager.shared.adImpression(
             adUnitId: adUnitID, adType: AUAdType.interstitial,
-            adSubtype: adView?.makeAdSubType() ?? "", apiType: AUEventApiType.original,
-            adViewId: adView?.configId ?? "", economics: renderEconomics()
+            adSubtype: subtype, apiType: AUEventApiType.original,
+            adViewId: viewId, economics: renderEconomics()
         )
         fullScreentDelegate?.adDidRecordImpression?(ad)
     }
 
     func adDidRecordClick(_ ad: any FullScreenPresentingAd) {
+        guard !terminal else { return }
         LogEvent("adDidRecordClick")
         AUEventsManager.shared.adClick(
             adUnitId: adUnitID, adType: AUAdType.interstitial,
-            adSubtype: adView?.makeAdSubType() ?? "", apiType: AUEventApiType.original,
-            adViewId: adView?.configId ?? "", economics: renderEconomics()
+            adSubtype: subtype, apiType: AUEventApiType.original,
+            adViewId: viewId, economics: renderEconomics()
         )
         fullScreentDelegate?.adDidRecordClick?(ad)
     }
@@ -90,9 +107,8 @@ class AUInterstitialHandler: NSObject,
     /// Full-screen ads expose no app event; carry the winning-bid economics and best-effort
     /// bidder_code (the Prebid auction winner if there was one, else the ad server).
     private func renderEconomics() -> AURenderEconomics {
-        guard let adView else { return AURenderEconomics(pageContext: analyticsPage) }
-        var ec = adView.lastRenderEconomics ?? AURenderEconomics()
-        let bidder = adView.prebidWinningBidder ?? AD_SERVER_BIDDER
+        var ec = economics
+        let bidder = ec.bidderCode ?? AD_SERVER_BIDDER
         ec.bidderCode = bidder
         if bidder == AD_SERVER_BIDDER {
             ec.creativeId = nil
@@ -100,9 +116,7 @@ class AUInterstitialHandler: NSObject,
             ec.cpm = nil
             ec.currency = nil
         }
-        ec.auctionId = ec.auctionId ?? adView.currentAuctionId
-        ec.pageContext = analyticsPage
-        ec.applyGooglePaidValue(cpm: adView.lastPaidCpm, currency: adView.lastPaidCurrency)
+        ec.applyGooglePaidValue(cpm: lastPaidCpm, currency: lastPaidCurrency)
         return ec
     }
 
@@ -111,7 +125,8 @@ class AUInterstitialHandler: NSObject,
         didFailToPresentFullScreenContentWithError error: any Error
     ) {
         LogEvent("didFailToPresentFullScreenContentWithError")
-        adView?.fullScreenViewabilityTimer?.cancel()
+        terminal = true
+        viewabilityTimer?.cancel()
         fullScreentDelegate?.ad?(
             ad,
             didFailToPresentFullScreenContentWithError: error
@@ -119,10 +134,11 @@ class AUInterstitialHandler: NSObject,
     }
 
     func adWillPresentFullScreenContent(_ ad: any FullScreenPresentingAd) {
+        guard !terminal, viewabilityTimer == nil else { return }
         LogEvent("adWillPresentFullScreenContent")
         let adUnitID = self.adUnitID
-        let subtype = adView?.makeAdSubType() ?? ""
-        let viewId = adView?.configId ?? ""
+        let subtype = self.subtype
+        let viewId = self.viewId
         let economics = renderEconomics()
         let timer = AUFullScreenViewabilityTimer(
             onStart: {
@@ -138,7 +154,7 @@ class AUInterstitialHandler: NSObject,
                     adViewId: viewId, economics: economics)
             }
         )
-        adView?.fullScreenViewabilityTimer = timer
+        viewabilityTimer = timer
         timer.onShown()
         fullScreentDelegate?.adWillPresentFullScreenContent?(ad)
     }
@@ -150,7 +166,8 @@ class AUInterstitialHandler: NSObject,
 
     func adDidDismissFullScreenContent(_ ad: any FullScreenPresentingAd) {
         LogEvent("adDidDismissFullScreenContent")
-        adView?.fullScreenViewabilityTimer?.cancel()
+        terminal = true
+        viewabilityTimer?.cancel()
         fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
     }
 }

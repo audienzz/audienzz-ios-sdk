@@ -104,6 +104,10 @@ final class AUEventQueue {
             buffer = store.loadAll()
             guard !store.readFailed else { storageRetryAt = scheduler.now + Double(config.retryBaseDelayMs) / 1000; return }
             restored = true; drain = !buffer.isEmpty
+            if !buffer.isEmpty {
+                AUDiagnostics.log("analytics", "restored", [("count", buffer.count),
+                    ("oldestEventTimestamp", buffer.compactMap { $0["event_timestamp"] as? String }.min())])
+            }
             for event in buffer { if let id = event["event_id"] as? String { arrived[id] = scheduler.now } }
         }
         while let event = unsaved.first {
@@ -169,7 +173,8 @@ final class AUEventQueue {
         if !plans.isEmpty { plans.removeFirst() }
         inFlight = true; drain = true; lastStart = scheduler.now
         let sent = batch
-        AUDiagnostics.log("analytics", "sending", [("count", sent.count), ("attempt", failureCount + 1)])
+        AUDiagnostics.log("analytics", "sending", [("count", sent.count), ("attempt", failureCount + 1),
+            ("oldestEventTimestamp", sent.compactMap { $0["event_timestamp"] as? String }.min())])
         var completed = false
         networkManager.request(.batchEvents(sent)) { [weak self] result in
             guard let self else { return }

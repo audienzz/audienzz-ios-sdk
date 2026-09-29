@@ -105,7 +105,7 @@ class AUBannerHandler: NSObject,
         LogEvent("bannerViewDidReceiveAd")
         // This is the moment the replacement becomes what the reader sees, so it is the moment its
         // economics become the ones render events describe.
-        auBannerView?.commitDisplayedCreative()
+        auBannerView?.commitDisplayedCreative(responseId: bannerView.responseInfo?.responseIdentifier)
         restoreFromBlankIfNeeded()
 
         if let gamBannerView = bannerView as? AdManagerBannerView {

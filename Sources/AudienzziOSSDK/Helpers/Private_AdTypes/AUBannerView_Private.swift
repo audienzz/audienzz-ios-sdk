@@ -88,6 +88,7 @@ extension AUBannerView {
     /// Mirrors Android's `AudienzzAdViewHandler.resumeSmartRefresh()`.
     public func resumeSmartRefresh() {
         refreshController.unblock(.hostReportedHidden, schedule: false)
+        viewabilityTracker?.refreshVisibility()
         resumeEligibleWork()
     }
 
@@ -95,6 +96,7 @@ extension AUBannerView {
     /// request. Mirrors Android's `AudienzzAdViewHandler.pauseSmartRefresh()`.
     public func pauseSmartRefresh() {
         refreshController.block(.hostReportedHidden)
+        viewabilityTracker?.refreshVisibility()
     }
 
     /// Shared by the viewport gate and its external equivalent.
@@ -141,6 +143,8 @@ extension AUBannerView {
     /// runs. `screenActive` (set by the coordinator) and the `.pageInactive` block are what keep the
     /// viewport gate from resuming it in the meantime.
     func releaseForPage() {
+        viewabilityTracker?.stop()
+        viewabilityTracker = nil
         creativePageGeneration += 1
         refreshController.block(.pageInactive)
         retireCurrentAuction()
@@ -157,6 +161,8 @@ extension AUBannerView {
     /// back-navigation or a return from the background show a current creative rather than a stale
     /// one. A never-loaded banner is left for its normal lazy/prefetch first load.
     func recreateForPage() {
+        viewabilityTracker?.stop()
+        viewabilityTracker = nil
         // A hard transition supersedes the outgoing auction even when the SAME page is re-reported,
         // so a response from the previous visit can't load a creative or overwrite this visit's
         // auction analytics.
@@ -217,6 +223,8 @@ extension AUBannerView {
     func blankForReloadIfNeeded() {
         guard Audienzz.shared.blankOnScreenReload, !blankedForReload else { return }
         guard let gamView = eventHandler?.gamView, !gamView.isHidden else { return }
+        viewabilityTracker?.stop()
+        viewabilityTracker = nil
         gamView.isHidden = true
         blankedForReload = true
         AUDiagnostics.log("slot", "blank", [("config", configId)])
@@ -405,6 +413,7 @@ extension AUBannerView {
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
         currentAnalyticsPage = AUEventsManager.shared.capturePageContext()
+        requestSlotReload = emittedSlotReload
         let requestStartMs = Int64(Date().timeIntervalSince1970 * 1000)
         let generationAtRequest = auctionGeneration
         if !headerBiddingEnabled {
@@ -631,7 +640,7 @@ extension AUBannerView {
             adUnitId: adUnitID, adViewId: configId, sizes: sizes,
             adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
             isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-            resultCode: codeName, timeToRespond: timeToRespond, economics: economics,
+            resultCode: codeName, timeToRespond: timeToRespond, economics: economics, auctionId: currentAuctionId,
             pageContext: currentAnalyticsPage
         )
 
@@ -652,7 +661,7 @@ extension AUBannerView {
                 adUnitId: adUnitID, adViewId: configId, sizes: sizes,
                 adType: adTypeString, adSubtype: subtype, apiType: apiTypeString,
                 isAutorefresh: isAutorefresh, autorefreshTime: autorefreshTime, isRefresh: isRefresh,
-                resultCode: codeName, mediaTypes: Self.mediaTypesJSON(subtype: subtype),
+                resultCode: resultCode == .prebidDemandFetchSuccess ? "NO_BIDS" : codeName, mediaTypes: Self.mediaTypesJSON(subtype: subtype),
                 auctionId: currentAuctionId, slotReload: emittedSlotReload,
                 pageContext: currentAnalyticsPage
             )
@@ -667,13 +676,18 @@ extension AUBannerView {
     /// actually becomes the thing the reader sees. Until then the previous creative keeps its own
     /// identity, so a late impression or viewability callback for it is reported under its own
     /// auction — and a replacement that never arrives changes nothing at all.
-    @nonobjc func commitDisplayedCreative() {
+    @nonobjc func commitDisplayedCreative(responseId: String? = nil) {
+        // A repeated load callback for the same creative must not cancel its exposure timer.
+        if let responseId, responseId == displayedResponseId { return }
+        displayedResponseId = responseId
+        viewabilityTracker?.stop()
+        viewabilityTracker = nil
         displayedImpressionRecorded = false
         var ec = lastRenderEconomics ?? AURenderEconomics()
         ec.auctionId = ec.auctionId ?? currentAuctionId
         ec.pageContext = currentAnalyticsPage
         // The reported flag is binary and belongs to the creative, not to the slot's current count.
-        ec.slotReload = ec.slotReload ?? emittedSlotReload
+        ec.slotReload = ec.slotReload ?? requestSlotReload
         displayedEconomics = ec
         displayedPrebidBidder = prebidWinningBidder
         displayedPrebidLineItemWon = prebidLineItemWon
@@ -720,22 +734,27 @@ extension AUBannerView {
         guard let adUnitID = eventHandler?.adUnitID else { return }
         let subtype = makeAdSubType()
         let viewId = configId
+        viewabilityTracker?.stop()
+        let economics = resolvedRenderEconomics()
         let tracker = AUViewabilityTracker(
             view: self,
-            onStart: { [weak self] in
-                guard let self else { return }
+            isEligible: { [weak self] in
+                guard let self else { return false }
+                return self.acceptsGoogleEvents && !self.blankedForReload
+                    && !self.refreshController.blockReasons.contains(.hostReportedHidden)
+            },
+            onStart: {
                 AUEventsManager.shared.viewabilityStart(
                     adUnitId: adUnitID, adType: adTypeString,
                     adSubtype: subtype, apiType: apiTypeString,
-                    adViewId: viewId, economics: self.resolvedRenderEconomics()
+                    adViewId: viewId, economics: economics
                 )
             },
-            onSuccess: { [weak self] in
-                guard let self else { return }
+            onSuccess: {
                 AUEventsManager.shared.viewabilitySuccess(
                     adUnitId: adUnitID, adType: adTypeString,
                     adSubtype: subtype, apiType: apiTypeString,
-                    adViewId: viewId, economics: self.resolvedRenderEconomics()
+                    adViewId: viewId, economics: economics
                 )
             }
         )
