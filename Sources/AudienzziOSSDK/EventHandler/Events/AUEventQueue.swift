@@ -32,7 +32,7 @@ private struct AUAnalyticsSystemScheduler: AUAnalyticsScheduler {
 /// Persist immediately on a utility worker, then send bounded batches. No disk/network work on UI.
 final class AUEventQueue {
     struct Config {
-        var batchSize = 25
+        var batchSize = AUAnalyticsBatchSettings.defaultSize
         var batchBytes = 128 * 1024
         var batchDelayMs = 5000
         var minIntervalMs = 2000
@@ -45,6 +45,7 @@ final class AUEventQueue {
     private let store: AUEventStore
     private let scheduler: AUAnalyticsScheduler
     private let jitter: () -> Double
+    private let backendBatchSize: (() -> Int?)?
     private let queue = DispatchQueue(label: "com.audienzz.eventqueue", qos: .utility)
     private let admissionLock = NSLock()
     private var enqueuedCount = 0
@@ -65,9 +66,11 @@ final class AUEventQueue {
 
     init(networkManager: AUEventsNetworkManager<AUBatchResultModel>, store: AUEventStore = AUEventStore(),
          config: Config = .default, scheduler: AUAnalyticsScheduler? = nil,
-         jitter: @escaping () -> Double = { Double.random(in: 0.5...1) }) {
+         jitter: @escaping () -> Double = { Double.random(in: 0.5...1) },
+         backendBatchSize: (() -> Int?)? = nil) {
         self.networkManager = networkManager; self.store = store; self.config = config
         self.scheduler = scheduler ?? AUAnalyticsSystemScheduler(); self.jitter = jitter
+        self.backendBatchSize = backendBatchSize
         queue.async { [weak self] in self?.pump() }
         networkManager.onConnectionRestored = { [weak self] in self?.flush() }
     }
@@ -130,12 +133,20 @@ final class AUEventQueue {
             if !unsaved.isEmpty || !restored { later(storageRetryAt) } else { drain = false }
             return
         }
+        let batchSize = AUAnalyticsBatchSettings.resolve(backendBatchSize?() ?? config.batchSize)
+        if let first = plans.first, first.count > batchSize {
+            plans.removeFirst()
+            let chunks = stride(from: 0, to: first.count, by: batchSize).map {
+                Array(first[$0..<min($0 + batchSize, first.count)])
+            }
+            plans.insert(contentsOf: chunks, at: 0)
+        }
         var batch = plans.first ?? []
         if batch.isEmpty {
             var bytes = 2
             for event in buffer {
                 let added = (AUEventStore.encode(event)?.count ?? config.batchBytes) + (batch.isEmpty ? 0 : 1)
-                if batch.count >= config.batchSize || bytes + added > config.batchBytes { break }
+                if batch.count >= batchSize || bytes + added > config.batchBytes { break }
                 batch.append(event); bytes += added
             }
             if batch.isEmpty {
@@ -148,7 +159,7 @@ final class AUEventQueue {
                 return
             }
         }
-        let full = batch.count >= config.batchSize || batch.count < buffer.count
+        let full = batch.count >= batchSize || batch.count < buffer.count
         let deadline = drain || !plans.isEmpty || full ? scheduler.now :
             (arrived[batch[0]["event_id"] as? String ?? ""] ?? scheduler.now) + Double(config.batchDelayMs) / 1000
         let allowed = max(deadline, retryAt, (lastStart ?? -Double.greatestFiniteMagnitude) + Double(config.minIntervalMs) / 1000)

@@ -86,6 +86,9 @@ public struct RemotePublisherConfiguration: Codable {
     /// switch, not a preference. Absent/nil → enabled.
     public let ppidEnabled: Bool?
 
+    /// Events per analytics POST. Missing/invalid → 10; positive integers capped at 15.
+    public let analyticsBatchSize: Int?
+
     enum CodingKeys: String, CodingKey {
         case id
         case prebidServer
@@ -94,5 +97,22 @@ public struct RemotePublisherConfiguration: Codable {
         case ios
         case smartRefreshV2
         case ppidEnabled
+        case analyticsBatchSize
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(Int.self, forKey: .id)
+        prebidServer = try values.decode(PrebidServer.self, forKey: .prebidServer)
+        gamConfig = try values.decodeIfPresent(GamConfig.self, forKey: .gamConfig)
+        ortb = try values.decodeIfPresent(OrtbConfig.self, forKey: .ortb)
+        ios = try values.decodeIfPresent(IosConfig.self, forKey: .ios)
+        smartRefreshV2 = try values.decodeIfPresent(Bool.self, forKey: .smartRefreshV2)
+        ppidEnabled = try values.decodeIfPresent(Bool.self, forKey: .ppidEnabled)
+        // This optional tuning field must never break publisher config or cached-config decoding.
+        let number = (try? values.decode(Int.self, forKey: .analyticsBatchSize)) ??
+            (try? values.decode(String.self, forKey: .analyticsBatchSize))
+                .flatMap { Int($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+        analyticsBatchSize = number.flatMap { $0 > 0 ? min(15, $0) : nil }
     }
 }

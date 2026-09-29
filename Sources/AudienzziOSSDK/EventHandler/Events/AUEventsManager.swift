@@ -66,7 +66,8 @@ final class AUEventsManager: AULogEventType {
     private var lifecycleObserved = false
 
     init(makeQueue: @escaping () -> AUEventQueue = {
-        AUEventQueue(networkManager: AUEventsNetworkManager<AUBatchResultModel>())
+        AUEventQueue(networkManager: AUEventsNetworkManager<AUBatchResultModel>(),
+                     backendBatchSize: { AUAnalyticsBatchSettings.shared.current })
     }) {
         self.makeQueue = makeQueue
     }

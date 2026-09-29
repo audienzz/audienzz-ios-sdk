@@ -3,6 +3,7 @@ import XCTest
 
 final class AUEventQueueTests: XCTestCase {
     private final class Network: AUEventsNetworkManager<AUBatchResultModel> {
+        init() { super.init(monitorConnectivity: false) }
         private let lock = NSLock()
         private var requests: [[JSONObject]] = []
         private var handlers: [(Result<AUBatchResultModel, AUAPIError>) -> Void] = []
@@ -60,8 +61,8 @@ final class AUEventQueueTests: XCTestCase {
     private func store() -> AUEventStore { AUEventStore(directory: directory) }
     private func event(_ id: String) -> JSONObject { ["event_id": id, "event_type": "adClick", "page_impression_id": "original"] }
     private func ids(_ events: [JSONObject]) -> [String] { events.compactMap { $0["event_id"] as? String } }
-    private func sender(config: AUEventQueue.Config = .default, storage: AUEventStore? = nil) -> AUEventQueue {
-        let result = AUEventQueue(networkManager: network, store: storage ?? store(), config: config, scheduler: clock, jitter: { 1 })
+    private func sender(config: AUEventQueue.Config = .default, storage: AUEventStore? = nil, backend: (() -> Int?)? = nil) -> AUEventQueue {
+        let result = AUEventQueue(networkManager: network, store: storage ?? store(), config: config, scheduler: clock, jitter: { 1 }, backendBatchSize: backend)
         result.syncForTesting(); return result
     }
     private func complete(_ queue: AUEventQueue, _ index: Int, _ error: AUAPIError? = nil) {
@@ -90,18 +91,54 @@ final class AUEventQueueTests: XCTestCase {
 
     func testThresholdSingleFlightRateLimitAndExactBatchAcknowledgement() {
         let queue = sender()
-        (0..<60).forEach { queue.enqueue(event(String($0))) }; queue.syncForTesting()
-        XCTAssertEqual(network.sent.map(ids), [(0..<25).map(String.init)])
+        (0..<25).forEach { queue.enqueue(event(String($0))) }; queue.syncForTesting()
+        XCTAssertEqual(network.sent.map(ids), [(0..<10).map(String.init)])
         clock.advance(1); XCTAssertEqual(network.sent.count, 1)
         complete(queue, 0)
-        XCTAssertEqual(ids(store().loadAll()), (25..<60).map(String.init))
+        XCTAssertEqual(ids(store().loadAll()), (10..<25).map(String.init))
         clock.advance(0.999); XCTAssertEqual(network.sent.count, 1)
-        clock.advance(0.001); XCTAssertEqual(network.sent.map(ids), [(0..<25).map(String.init), (25..<50).map(String.init)])
+        clock.advance(0.001); XCTAssertEqual(network.sent.map(ids), [(0..<10).map(String.init), (10..<20).map(String.init)])
         complete(queue, 0) // Duplicate callback must not settle the next batch.
-        XCTAssertEqual(ids(store().loadAll()), (25..<60).map(String.init))
+        XCTAssertEqual(ids(store().loadAll()), (10..<25).map(String.init))
         complete(queue, 1); clock.advance(2)
-        XCTAssertEqual(ids(network.sent[2]), (50..<60).map(String.init))
+        XCTAssertEqual(ids(network.sent[2]), (20..<25).map(String.init))
         complete(queue, 2); XCTAssertTrue(store().loadAll().isEmpty)
+    }
+
+    func testBackendLimitCannotExceedFifteen() {
+        let queue = sender(backend: { 100 })
+        (0..<14).forEach { queue.enqueue(event(String($0))) }; queue.syncForTesting()
+        XCTAssertTrue(network.sent.isEmpty)
+        queue.enqueue(event("14")); queue.syncForTesting()
+        XCTAssertEqual(network.sent.map(ids), [(0..<15).map(String.init)])
+    }
+
+    func testSmallerBackendLimitSplitsRetryWithoutLosingEvents() {
+        var limit: Int? = 10
+        let queue = sender(backend: { limit })
+        (0..<10).forEach { queue.enqueue(event(String($0))) }; queue.syncForTesting()
+        XCTAssertEqual(network.sent.map(ids), [(0..<10).map(String.init)])
+        limit = 3
+        complete(queue, 0, .httpStatus(503)); clock.advance(2)
+        XCTAssertEqual(ids(network.sent[1]), ["0", "1", "2"])
+        complete(queue, 1); clock.advance(2)
+        XCTAssertEqual(ids(network.sent[2]), ["3", "4", "5"])
+        complete(queue, 2); clock.advance(2)
+        XCTAssertEqual(ids(network.sent[3]), ["6", "7", "8"])
+        complete(queue, 3); clock.advance(2)
+        XCTAssertEqual(ids(network.sent[4]), ["9"])
+        complete(queue, 4)
+        XCTAssertTrue(store().loadAll().isEmpty)
+    }
+
+    func testRemovedFieldUsesTenInsteadOfPreviousBackendLimit() {
+        let settings = AUAnalyticsBatchSettings()
+        settings.applyBackendConfig(15)
+        let queue = sender(backend: { settings.current })
+        (0..<9).forEach { queue.enqueue(event(String($0))) }; queue.syncForTesting()
+        clock.advance(4); settings.applyBackendConfig(nil)
+        queue.enqueue(event("9")); queue.syncForTesting()
+        XCTAssertEqual(network.sent.map(ids), [(0..<10).map(String.init)])
     }
 
     func testByteLimitUsesUTF8AndOversizedSingletonIsRetainedInQuarantine() {
@@ -129,6 +166,21 @@ final class AUEventQueueTests: XCTestCase {
         clock.advance(0.001); XCTAssertEqual(network.sent.map(ids), [["a"], ["a"]])
         complete(queue, 1); clock.advance(2)
         XCTAssertEqual(ids(network.sent[2]), ["b"])
+    }
+
+    func testConnectivityFlushesEarlyWithoutBypassingBackoff() {
+        let queue = sender()
+        queue.enqueue(event("a")); queue.syncForTesting()
+        XCTAssertTrue(network.sent.isEmpty)
+        XCTAssertNotNil(network.onConnectionRestored)
+        network.onConnectionRestored?(); queue.syncForTesting()
+        XCTAssertEqual(network.sent.map(ids), [["a"]])
+        complete(queue, 0, .httpStatus(503))
+        network.onConnectionRestored?(); queue.syncForTesting()
+        clock.advance(1.999); XCTAssertEqual(network.sent.count, 1)
+        clock.advance(0.001); XCTAssertEqual(network.sent.map(ids), [["a"], ["a"]])
+        complete(queue, 1)
+        XCTAssertTrue(store().loadAll().isEmpty)
     }
 
     func testFailuresRemainDurableBeyondThreeAttempts() {

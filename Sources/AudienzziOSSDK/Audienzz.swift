@@ -371,6 +371,11 @@ public class Audienzz: NSObject {
         backendPpidEnabled = ppidEnabled
     }
 
+    /// For bridges that fetch publisher configuration themselves; not an app-facing override.
+    public func applyBackendAnalyticsConfig(batchSize: Int?) {
+        AUAnalyticsBatchSettings.shared.applyBackendConfig(batchSize)
+    }
+
     internal var isSmartRefreshV2Enabled: Bool {
         smartRefreshV2Override
             ?? AudienzzRemoteConfig.shared.publisherConfig?.smartRefreshV2

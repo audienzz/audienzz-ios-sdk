@@ -24,7 +24,9 @@ public class AudienzzRemoteConfig: NSObject {
     private(set) var publisherId: String?
     private var remoteUrl: URL?
 
-    private(set) var publisherConfig: RemotePublisherConfiguration?
+    private(set) var publisherConfig: RemotePublisherConfiguration? {
+        didSet { AUAnalyticsBatchSettings.shared.applyBackendConfig(publisherConfig?.analyticsBatchSize) }
+    }
     private(set) var adUnitConfigs: [RemoteAdConfiguration]?
 
     private override init() {
@@ -38,6 +40,7 @@ public class AudienzzRemoteConfig: NSObject {
     }
 
     public func configureRemote(remoteUrl: URL, publisherId: String) {
+        AUAnalyticsBatchSettings.shared.applyBackendConfig(nil)
         self.remoteUrl = remoteUrl
         self.publisherId = publisherId
     }

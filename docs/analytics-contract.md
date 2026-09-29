@@ -19,8 +19,13 @@ loading ads; a request made before the first page report has no page ID. No manu
 is needed in Dart/JS. These guarantees require the matching native release.
 
 The batching branch persists events immediately on the native utility worker, then POSTs at
-25 events or after 5 seconds. Batches are capped at 128 KiB; one request runs at a time with at
+the publisher's `analyticsBatchSize` or after 5 seconds. Missing, null, blank, invalid or nonpositive
+values default to 10; positive integers are capped at 15. Numeric strings are tolerated. The field
+is cached with publisher configuration and read before each send, including pending retries.
+Batches are also capped at 128 KiB; one request runs at a time with at
 least 2 seconds between starts. Failures remain durable and retry with jitter/Retry-After.
 The 20 MiB store preserves existing events on overflow and retains rejected singletons in
 quarantine. See the cross-platform contract above for retention, limits and required whole-batch
-acknowledgement / event-ID deduplication on the collector. No Dart/JS queue changes are required.
+acknowledgement / event-ID deduplication on the collector. No Dart/JS queue is needed. Flutter
+requires a small config-forwarding update because it fetches publisher config in Dart; RN uses
+native remote initialization. Release the matching native SDKs before updating bridge pins.
