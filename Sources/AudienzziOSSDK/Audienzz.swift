@@ -461,10 +461,10 @@ public class Audienzz: NSObject {
         AUTargeting.shared.setGlobalOrtbConfig(ortbConfig: schain)
     }
 
-    /// Report an ad-bearing screen, dialog, or popup by its view controller — call from `viewDidAppear`
-    /// (or when a dialog/overlay appears). The screen name is derived from the controller's type unless
-    /// `name` is provided. Fires a `pageImpression` and a fresh page-impression id that ties all
-    /// subsequent ad events on this visit together. Screens without ads don't need to call it.
+    /// Report every navigation destination, including ad-free screens, before creating its ads.
+    /// The screen name is derived from the controller's type unless `name` is provided. Each call
+    /// starts a new analytics page visit. Do not call solely for app resume or SDK interstitial
+    /// dismissal; native recovers those ads while preserving the current page identity.
     public func pageImpression(_ viewController: UIViewController, name: String? = nil) {
         let screenName = name ?? String(describing: type(of: viewController))
         AULogEvent.logDebug(
@@ -472,7 +472,7 @@ public class Audienzz: NSObject {
         notifyScreenResumed(viewController, name: screenName)
     }
 
-    /// Report an ad-bearing screen, dialog, or popup by an explicit name (e.g. a SwiftUI or route
+    /// Report a navigation destination by an explicit name (e.g. a SwiftUI or route
     /// name). Fires the page impression and drives screen-aware smart refresh (v2) for banners tagged
     /// with the same name via `AUBannerView.setScreen(_:)` — matched by value.
     @objc(pageImpressionWithName:)
@@ -641,6 +641,15 @@ public class Audienzz: NSObject {
     /// owns the recovery and a deferred retry must stand down rather than auction as well.
     internal var hasPendingForegroundRecovery: Bool { pendingForegroundRecovery != nil }
 
+    internal func recoverAfterInterstitial() {
+        guard !isAppBackgrounded,
+              let (screen, name) = AUScreenAdCoordinator.shared.activeScreenAndName else { return }
+        reportedInThisForegroundVisit = true
+        cancelPendingForegroundRecovery()
+        AUScreenAdCoordinator.shared.recoverActivePage()
+        pageImpressionObserver?((screen as? NSString) as String? ?? name)
+    }
+
     internal func cancelPendingForegroundRecovery() {
         pendingForegroundRecovery?.cancel()
         pendingForegroundRecovery = nil
@@ -674,7 +683,7 @@ public class Audienzz: NSObject {
     internal private(set) var isAppBackgrounded = false
 
     private var didEnterBackground = false
-    /// Page lifecycle notification after explicit navigation OR foreground ad recovery.
+    /// Page lifecycle notification after explicit navigation OR foreground/interstitial ad recovery.
     /// The routing key stays the same during recovery. Despite the legacy name, this is not an
     /// analytics event: Flutter/RN use it to remount views and refresh rendering banners.
     /// Their local view revision may advance without changing page_impression_id or au_page_seq.

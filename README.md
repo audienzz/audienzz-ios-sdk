@@ -51,10 +51,8 @@ Run your CMP **before** this and forward the result through `AUTargeting.shared`
 ### 3. Report every screen
 
 ```swift
-override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-    Audienzz.shared.pageImpression(self)
-}
+// In your navigation callback, before creating the destination's ads:
+Audienzz.shared.pageImpression(destinationViewController)
 ```
 
 This is the one thing the SDK cannot do for you, and everything else follows from it: it groups a
@@ -71,6 +69,16 @@ slot's `hb_refresh_count` and gets a fresh auction ID. Visibility, page ownershi
 pause still apply. Do not call `pageImpression` from app-resume callbacks just because the app
 became active. Report actual navigation, including ad-free screens, back navigation and a new
 article. An explicit call still starts a new page impression, even for the same screen.
+
+**Closing an SDK interstitial also keeps the same page.** The native SDK holds banner refresh
+while it is presented, then replaces the active page's banners with the same page ID and sequence.
+Do not call `pageImpression` from its dismissal callback or simply because the covered screen
+reappeared. A navigation that occurred during the ad remains a new page; dismissal does not
+restore the previous page or repeat that navigation's reload. Failed presentation does not force
+a reload. The interstitial's own analytics keep the page captured at prefetch, even if shown on
+another page. These changes require the matching native continuity release; Flutter also needs
+the updated bridge that removes its old dismissal page report.
+
 
 ### 4. Place a banner
 
@@ -451,7 +459,7 @@ same key you report — otherwise it resolves to the host view controller and wo
 ```swift
 let banner = AUBannerView(configId: "…", adSize: …, adFormats: [.banner])
 banner.setScreen("home")                  // AURemoteConfigBannerView.setScreen("home") likewise
-// …on that screen's appearance:
+// …on navigation to that screen, before creating its ads:
 Audienzz.shared.pageImpression("home")    // reloads banners tagged "home"; pauses the rest
 ```
 
@@ -459,12 +467,12 @@ The key is matched **by value**, so the string reported to `pageImpression` and 
 `setScreen` just have to be equal.
 
 Notes:
-- A sheet or popover that covers a screen is a screen: report it, and report the screen underneath
-  again when it is dismissed.
+- An app-owned sheet or popover that covers a screen is a screen: report it, and report the screen underneath
+  again when it is dismissed. SDK interstitials are handled automatically; do not report their dismissal.
 - `setScreen` isn't needed for `UIViewController`-hosted banners (those are matched by the responder
   chain), only where several screens share one controller.
 - There is **no `onPause`/teardown counterpart**. If no screen is ever reported, ad events still send
-  with a fallback page-impression id; they just aren't tied to a named screen.
+  without a page-impression id; the SDK does not invent a visit.
 
 ### Demand-source attribution (`bidder_code`) — optional GAM setup
 

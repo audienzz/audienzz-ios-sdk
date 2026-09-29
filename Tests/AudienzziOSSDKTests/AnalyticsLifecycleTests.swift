@@ -277,6 +277,199 @@ final class AnalyticsLifecycleTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 2)
     }
 
+    private func originalInterstitial() throws -> (AUInterstitialView, ProbeInterstitialAd, FullScreenContentDelegate) {
+        let owner = AUInterstitialView(configId: "probe", isLazyLoad: false)
+        owner.demand = { _, _, done in done(.prebidDemandNoBids) }
+        owner.onLoadRequest = { _ in }
+        owner.createAd(with: AdManagerRequest(), adUnitID: "/probe")
+        let ad = ProbeInterstitialAd()
+        owner.connectHandler(AUInterstitialEventHandler(adUnit: ad))
+        return (owner, ad, try XCTUnwrap(ad.fullScreenContentDelegate))
+    }
+
+    func testInterstitialReturnPreservesPageAndReloadsExactlyOnceForRepeatedShows() throws {
+        Audienzz.shared.blankOnScreenReload = true
+        defer { Audienzz.shared.blankOnScreenReload = false }
+        var requests: [AdManagerRequest] = []
+        banner.onLoadRequest = { [unowned self] request in handoffs += 1; requests.append(request as! AdManagerRequest) }
+        loaded(); impression()
+        let page = try XCTUnwrap(AUEventsManager.shared.capturePageContext().pageImpressionId)
+        let seq = try XCTUnwrap(requests.first?.customTargeting?["au_page_seq"] as? String)
+        let slot = try XCTUnwrap(requests.first?.customTargeting?["au_slot"] as? String)
+        for cycle in 1...3 {
+            let (owner, ad, delegate) = try originalInterstitial()
+            defer { owner.destroy() }
+            delegate.adWillPresentFullScreenContent?(ad)
+            XCTAssertTrue(banner.refreshController.blockReasons.contains(.interstitial))
+            delegate.adDidRecordImpression?(ad)
+            delegate.adDidDismissFullScreenContent?(ad)
+            delegate.adDidDismissFullScreenContent?(ad)
+            wait(0.05)
+            XCTAssertEqual(handoffs, cycle + 1)
+            XCTAssertTrue(google.isHidden)
+            XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 1)
+            google.delegate?.bannerViewDidReceiveAd?(google); impression()
+            XCTAssertFalse(google.isHidden)
+            XCTAssertEqual(requests.last?.customTargeting?["au_page_seq"] as? String, seq)
+            XCTAssertEqual(requests.last?.customTargeting?["au_slot"] as? String, slot)
+            XCTAssertEqual(requests.last?.customTargeting?["hb_refresh_count"] as? String, String(cycle))
+        }
+        XCTAssertEqual(count(.pageImpression), 0)
+        for event in events { XCTAssertEqual(event.pageImpressionId, page) }
+        let bannerBids = events.filter { $0.type == .bidRequest && $0.adUnitId == "/fixture/banner" }
+        XCTAssertEqual(bannerBids.count, 4)
+        XCTAssertEqual(Set(try bannerBids.map { try XCTUnwrap($0.auctionId) }).count, 4)
+    }
+
+    func testInterstitialCoverInterruptsBannerViewabilityAndFailureReleasesIt() throws {
+        loaded(); impression()
+        let (owner, ad, delegate) = try originalInterstitial()
+        defer { owner.destroy() }
+        delegate.adWillPresentFullScreenContent?(ad)
+        wait(1.2)
+        XCTAssertEqual(events.filter { $0.type == .viewabilitySuccess && $0.adUnitId == "/fixture/banner" }.count, 0)
+        delegate.ad?(ad, didFailToPresentFullScreenContentWithError: NSError(domain: "test", code: 1))
+        XCTAssertFalse(banner.refreshController.blockReasons.contains(.interstitial))
+        XCTAssertEqual(handoffs, 1)
+        XCTAssertEqual(count(.pageImpression), 0)
+    }
+
+    func testInterstitialPrefetchedOnAKeepsAWhileRecoveryUsesB() throws {
+        loaded()
+        let pageA = try XCTUnwrap(AUEventsManager.shared.capturePageContext().pageImpressionId)
+        let (owner, ad, delegate) = try originalInterstitial()
+        defer { owner.destroy() }
+        Audienzz.shared.pageImpression("B")
+        let pageB = try XCTUnwrap(AUEventsManager.shared.capturePageContext().pageImpressionId)
+        XCTAssertNotEqual(pageA, pageB)
+        delegate.adWillPresentFullScreenContent?(ad)
+        delegate.adDidRecordImpression?(ad)
+        let revision = AUScreenAdCoordinator.shared.adRevision
+        delegate.adDidDismissFullScreenContent?(ad)
+        XCTAssertEqual(AUScreenAdCoordinator.shared.adRevision, revision + 1)
+        XCTAssertEqual(AUEventsManager.shared.capturePageContext().pageImpressionId, pageB)
+        XCTAssertEqual(try XCTUnwrap(events.last { $0.type == .adImpression }).pageImpressionId, pageA)
+        XCTAssertEqual(count(.pageImpression), 1)
+        XCTAssertFalse(banner.screenActive)
+        XCTAssertEqual(handoffs, 1)
+    }
+
+    func testNavigationDuringPresentationDoesNotRecoverOrReclaimOldPage() throws {
+        loaded()
+        let (owner, ad, delegate) = try originalInterstitial()
+        defer { owner.destroy() }
+        delegate.adWillPresentFullScreenContent?(ad)
+        Audienzz.shared.pageImpression("B")
+        let revision = AUScreenAdCoordinator.shared.adRevision
+        delegate.adDidDismissFullScreenContent?(ad)
+        XCTAssertEqual(AUScreenAdCoordinator.shared.adRevision, revision)
+        XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 2)
+        XCTAssertFalse(banner.screenActive)
+        XCTAssertEqual(handoffs, 1)
+        XCTAssertEqual(count(.pageImpression), 1)
+    }
+
+    func testForegroundAndInterstitialDismissalCoalesceInEitherOrder() throws {
+        loaded()
+        for foregroundFirst in [true, false] {
+            let before = handoffs
+            let (owner, ad, delegate) = try originalInterstitial()
+            defer { owner.destroy() }
+            delegate.adWillPresentFullScreenContent?(ad)
+            NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+            if foregroundFirst {
+                NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+                wait(0.5)
+                XCTAssertEqual(handoffs, before)
+                delegate.adDidDismissFullScreenContent?(ad)
+            } else {
+                delegate.adDidDismissFullScreenContent?(ad)
+                XCTAssertEqual(handoffs, before)
+                NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+            }
+            wait(0.6)
+            XCTAssertEqual(handoffs, before + 1)
+            google.delegate?.bannerViewDidReceiveAd?(google)
+            XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 1)
+            XCTAssertEqual(count(.pageImpression), 0)
+        }
+    }
+
+    func testRemoteInterstitialDismissalUsesTheSameRecoveryAsOriginal() throws {
+        loaded()
+        let owner = AURemoteConfigInterstitial(adConfigId: "probe")
+        owner.configuration = { _ in ("probe", "/gam/remote-interstitial", [CGSize(width: 320, height: 480)]) }
+        owner.demand = { _, _, reply in reply(.prebidDemandNoBids) }
+        owner.isForeground = { true }
+        var receive: ((Result<AUInterstitialPresenting, Error>) -> Void)?
+        owner.loadOverride = { receive = $0 }
+        defer { owner.finishPresentation(); owner.destroy() }
+        for cycle in 1...2 {
+            owner.prefetch { _ in }
+            let ad = InterstitialLifecycleTests.Ad()
+            try XCTUnwrap(receive)(.success(ad))
+            XCTAssertTrue(owner.show(from: UIViewController()))
+            let delegate = try XCTUnwrap(ad.delegate)
+            delegate.adWillPresentFullScreenContent?(ad)
+            XCTAssertTrue(banner.refreshController.blockReasons.contains(.interstitial))
+            delegate.adDidDismissFullScreenContent?(ad)
+            wait(0.05)
+            XCTAssertEqual(handoffs, cycle + 1)
+            google.delegate?.bannerViewDidReceiveAd?(google)
+        }
+        XCTAssertEqual(count(.pageImpression), 0)
+        XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 1)
+    }
+
+    func testBannerFirstLoadWaitsWhenRegisteredUnderInterstitial() throws {
+        let (owner, ad, delegate) = try originalInterstitial()
+        defer { owner.destroy() }
+        delegate.adWillPresentFullScreenContent?(ad)
+        banner.createAd(with: AdManagerRequest(), gamBanner: google)
+        wait(0.05)
+        XCTAssertEqual(handoffs, 0)
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.interstitial))
+        delegate.adDidDismissFullScreenContent?(ad)
+        wait(0.05)
+        XCTAssertEqual(handoffs, 1)
+        XCTAssertEqual(count(.pageImpression), 0)
+    }
+
+    func testDismissalConsumesPendingForegroundDelayWithoutDoubleLoading() throws {
+        loaded()
+        let (owner, ad, delegate) = try originalInterstitial()
+        defer { owner.destroy() }
+        delegate.adWillPresentFullScreenContent?(ad)
+        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        XCTAssertTrue(Audienzz.shared.hasPendingForegroundRecovery)
+        delegate.adDidDismissFullScreenContent?(ad)
+        wait(0.6)
+        XCTAssertEqual(handoffs, 2)
+        XCTAssertFalse(Audienzz.shared.hasPendingForegroundRecovery)
+        XCTAssertEqual(count(.pageImpression), 0)
+    }
+
+    func testInterstitialRecoveryRetainsOffscreenAndPublisherBlocks() throws {
+        loaded()
+        banner.smartRefresh = true
+        let (owner, ad, delegate) = try originalInterstitial()
+        defer { owner.destroy() }
+        delegate.adWillPresentFullScreenContent?(ad)
+        banner.adUnitConfiguration.stopAutoRefresh()
+        banner.frame.origin.y = 2000; banner.refreshVisibilityNow()
+        delegate.adDidDismissFullScreenContent?(ad)
+        wait(0.05)
+        XCTAssertEqual(handoffs, 1)
+        banner.frame.origin.y = 100; banner.refreshVisibilityNow()
+        wait(0.05)
+        XCTAssertEqual(handoffs, 1)
+        banner.adUnitConfiguration.resumeAutoRefresh()
+        wait(0.05)
+        XCTAssertEqual(handoffs, 2)
+        XCTAssertEqual(count(.pageImpression), 0)
+    }
+
 }
 private final class ProbeInterstitialAd: GoogleMobileAds.InterstitialAd {
     override var adUnitID: String { "/probe/interstitial" }

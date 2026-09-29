@@ -44,6 +44,7 @@ class AUInterstitialHandler: NSObject,
     private var lastPaidCurrency: String?
     private var viewabilityTimer: AUFullScreenViewabilityTimer?
     private var terminal = false
+    private let pageRecovery = AUInterstitialPageRecovery()
 
     init(handler: AUInterstitialEventHandler, adView: AUInterstitialView) {
         self.handler = handler
@@ -61,7 +62,7 @@ class AUInterstitialHandler: NSObject,
         addListener()
     }
 
-    func cancelMeasurement() { terminal = true; viewabilityTimer?.cancel() }
+    func cancelMeasurement() { terminal = true; viewabilityTimer?.cancel(); pageRecovery.finish(dismissed: false) }
 
     var adUnitID: String {
         self.handler.adUnit.adUnitID
@@ -124,8 +125,10 @@ class AUInterstitialHandler: NSObject,
         _ ad: any FullScreenPresentingAd,
         didFailToPresentFullScreenContentWithError error: any Error
     ) {
-        LogEvent("didFailToPresentFullScreenContentWithError")
+        guard !terminal else { return }
         terminal = true
+        pageRecovery.finish(dismissed: false)
+        LogEvent("didFailToPresentFullScreenContentWithError")
         viewabilityTimer?.cancel()
         fullScreentDelegate?.ad?(
             ad,
@@ -135,6 +138,7 @@ class AUInterstitialHandler: NSObject,
 
     func adWillPresentFullScreenContent(_ ad: any FullScreenPresentingAd) {
         guard !terminal, viewabilityTimer == nil else { return }
+        pageRecovery.onShown()
         LogEvent("adWillPresentFullScreenContent")
         let adUnitID = self.adUnitID
         let subtype = self.subtype
@@ -165,8 +169,10 @@ class AUInterstitialHandler: NSObject,
     }
 
     func adDidDismissFullScreenContent(_ ad: any FullScreenPresentingAd) {
-        LogEvent("adDidDismissFullScreenContent")
+        guard !terminal else { return }
         terminal = true
+        pageRecovery.finish(dismissed: true)
+        LogEvent("adDidDismissFullScreenContent")
         viewabilityTimer?.cancel()
         fullScreentDelegate?.adDidDismissFullScreenContent?(ad)
     }

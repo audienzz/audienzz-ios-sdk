@@ -69,7 +69,7 @@ final class RemoteConfigViewController: UIViewController {
         super.viewWillAppear(animated)
         // Track the screen visit for analytics (fires `pageImpression` and a fresh page-impression
         // id that ties this screen's ad events together). Call it before ads load.
-        Audienzz.shared.pageImpression(self)
+        DemoPageReporting.report(self)
         // Identical loads coalesce. On a return visit pageImpression reactivates the existing ads.
         loadBanners()
     }
@@ -336,11 +336,23 @@ final class RemoteConfigAdScreenViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        Audienzz.shared.pageImpression(self)
+        DemoPageReporting.report(self)
         banner.load(in: bannerContainer, rootViewController: self)
     }
 
     deinit {
         banner.destroy()
     }
+}
+
+/// Demo navigation state. Every destination (including the ad-free menu) reports here;
+/// reappearing beneath a dismissed interstitial is still the same visit.
+enum DemoPageReporting {
+    private static weak var current: UIViewController?
+    static func report(_ screen: UIViewController) {
+        guard current !== screen else { return }
+        current = screen
+        Audienzz.shared.pageImpression(screen)
+    }
+    static func rewardedOpened() { current = nil }
 }

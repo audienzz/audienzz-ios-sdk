@@ -65,6 +65,7 @@ extension SeparateViewController {
 
 extension SeparateViewController: AURewardedAdUnitDelegate {
     func rewardedAdDidDisplayOnScreen() {
+        DemoPageReporting.rewardedOpened()
         DispatchQueue.main.async {
             print("rewardedAdDidDisplayOnScreen")
             self.stopScroll()

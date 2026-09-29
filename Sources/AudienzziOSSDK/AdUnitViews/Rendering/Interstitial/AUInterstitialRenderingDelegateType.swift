@@ -18,6 +18,7 @@ import PrebidMobile
 
 internal class AUInterstitialRenderingDelegateType: NSObject, InterstitialAdUnitDelegate {
     private weak var parent: AUInterstitialRenderingView?
+    private let pageRecovery = AUInterstitialPageRecovery()
     
     init(parent: AUInterstitialRenderingView) {
         super.init()
@@ -30,16 +31,19 @@ internal class AUInterstitialRenderingDelegateType: NSObject, InterstitialAdUnit
 
     public func interstitial(_ interstitial: InterstitialRenderingAdUnit, didFailToReceiveAdWithError error: Error?) {
         guard let parent = parent else { return }
+        pageRecovery.finish(dismissed: false)
         makeErrorEvent(parent: parent, error)
         parent.delegate?.interstitialDidFailToReceiveAdWithError?(error: error)
     }
 
     public func interstitialWillPresentAd(_ interstitial: InterstitialRenderingAdUnit) {
+        pageRecovery.onShown()
         parent?.delegate?.interstitialWillPresentAd?()
     }
 
     public func interstitialDidDismissAd(_ interstitial: InterstitialRenderingAdUnit) {
         guard let parent = parent else { return }
+        pageRecovery.finish(dismissed: true)
         makeCloseEvent(parent)
         parent.delegate?.interstitialDidDismissAd?()
     }

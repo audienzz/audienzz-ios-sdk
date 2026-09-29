@@ -214,6 +214,9 @@ extension ExamplesViewController {
 }
 
 extension ExamplesViewController: FullScreenContentDelegate {
+    func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
+        if ad is RewardedAd { DemoPageReporting.rewardedOpened() }
+    }
     func ad(
         _ ad: FullScreenPresentingAd,
         didFailToPresentFullScreenContentWithError error: Error

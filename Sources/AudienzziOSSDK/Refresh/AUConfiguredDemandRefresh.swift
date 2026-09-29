@@ -80,6 +80,11 @@ internal final class AUConfiguredDemandRefresh {
         else { controller.unblock(.detached, schedule: false); resume() }
     }
 
+    func setInterstitialCovered(_ covered: Bool) {
+        if covered { controller.block(.interstitial) }
+        else { controller.unblock(.interstitial, schedule: false); resume() }
+    }
+
     func background() {
         controller.block(.appBackground)
         controller.invalidatePending()

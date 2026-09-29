@@ -56,6 +56,7 @@ extension ExamplesViewController {
 extension ExamplesViewController: AURewardedAdUnitDelegate {
     @MainActor
     func rewardedAdDidDisplayOnScreen() {
+        DemoPageReporting.rewardedOpened()
         print("rewardedAdDidDisplayOnScreen")
         stopScroll()
         

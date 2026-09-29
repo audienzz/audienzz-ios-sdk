@@ -72,6 +72,17 @@ final class RemoteConfigExampleTests: AudienzzLifecycleTestCase {
         XCTAssertTrue(ads.allSatisfy { $0.pageEpoch == AUScreenAdCoordinator.shared.epoch })
     }
 
+    func testReappearingUnderAnInterstitialKeepsTheSamePage() throws {
+        let screen = makeScreen()
+        appear(screen)
+        let page = try XCTUnwrap(AUEventsManager.shared.capturePageContext().pageImpressionId)
+        disappear(screen)
+        appear(screen)
+        XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 1)
+        XCTAssertEqual(AUEventsManager.shared.capturePageContext().pageImpressionId, page)
+        XCTAssertEqual(banners(in: screen.view).count, 2)
+    }
+
     func testBothBannersStillHandOffToGoogleAfterLoadReturns() throws {
         let screen = makeScreen()
         appear(screen)

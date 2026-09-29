@@ -68,6 +68,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
     private var analyticsAdUnitPath: String?
     private var recordedImpression = false
     private var viewabilityTimer: AUFullScreenViewabilityTimer?
+    private let pageRecovery = AUInterstitialPageRecovery()
     /// Backstop for "at most one discard per load". The primary guarantee is that every discard
     /// site clears ``loadedAd`` immediately after reporting, so the nil check already rejects a
     /// second report; this flag keeps that true if a future release path forgets to clear it. It
@@ -518,6 +519,7 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
 
     public func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
         guard owns(ad), viewabilityTimer == nil else { return }
+        pageRecovery.onShown()
         let timer = AUFullScreenViewabilityTimer(
             onStart: { [weak self] in self?.recordAnalytics(.viewabilityStart) },
             onSuccess: { [weak self] in self?.recordAnalytics(.viewabilitySuccess) })
@@ -546,12 +548,14 @@ public class AURemoteConfigInterstitial: NSObject, FullScreenContentDelegate {
         // Presented and dismissed with no impression callback in between: the creative was on
         // screen but Google never counted it. Distinct from a presentation that failed outright.
         finishPresentation(discardReason: "dismissedWithoutImpression")
+        pageRecovery.finish(dismissed: true)
         delegate?.adDidDismissFullScreenContent?(ad)
     }
     public func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         guard owns(ad) else { return }
         emit("showFailed", error: error)
         finishPresentation(discardReason: "presentationFailed")
+        pageRecovery.finish(dismissed: false)
         onPresentationError?(error as NSError)
         delegate?.ad?(ad, didFailToPresentFullScreenContentWithError: error)
     }

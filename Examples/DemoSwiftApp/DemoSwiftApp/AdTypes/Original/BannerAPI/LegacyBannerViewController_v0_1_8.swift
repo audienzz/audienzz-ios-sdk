@@ -72,7 +72,7 @@ class LegacyBannerViewController_v0_1_8: UIViewController {
         super.viewWillAppear(animated)
         // Track the screen visit for analytics (fires `pageImpression` and a fresh page-impression
         // id that ties this screen's ad events together). Call it before ads load.
-        Audienzz.shared.pageImpression(self)
+        DemoPageReporting.report(self)
     }
 
 

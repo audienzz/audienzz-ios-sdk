@@ -33,6 +33,9 @@ internal enum AURefreshBlockReason: String, CaseIterable {
     /// not resume a banner that is also scrolled out of view.
     case appBackground
 
+    /// An SDK interstitial covers the page; first loads are held too.
+    case interstitial
+
     /// The banner is not in a window / has been torn down.
     case detached
 

@@ -97,6 +97,11 @@ class MainNavigationViewController: UIViewController {
 //        .rewardedRender
     ]
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        DemoPageReporting.report(self)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")

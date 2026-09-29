@@ -308,6 +308,17 @@ extension AUBannerView {
         }
     }
 
+    func setInterstitialCovered(_ covered: Bool) {
+        if covered {
+            refreshController.block(.interstitial)
+            viewabilityTracker?.refreshVisibility()
+        } else {
+            refreshController.unblock(.interstitial, schedule: false)
+            viewabilityTracker?.refreshVisibility()
+            resumeEligibleWork()
+        }
+    }
+
     func resumeEligibleWork() {
         guard !refreshController.isDestroyed, screenActive else { return }
         if pendingLoadReason == .firstLoad || lastRefreshTime == nil {
@@ -742,6 +753,7 @@ extension AUBannerView {
                 guard let self else { return false }
                 return self.acceptsGoogleEvents && !self.blankedForReload
                     && !self.refreshController.blockReasons.contains(.hostReportedHidden)
+                    && !self.refreshController.blockReasons.contains(.interstitial)
             },
             onStart: {
                 AUEventsManager.shared.viewabilityStart(

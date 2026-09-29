@@ -33,7 +33,10 @@ internal final class AUScreenAdCoordinator {
     /// Live banners. Weak so views deallocate freely and entries auto-prune.
     private let ads = NSHashTable<AUBannerView>.weakObjects()
     private let configuredAds = NSHashTable<AUConfiguredDemandRefresh>.weakObjects()
-    func registerConfigured(_ ad: AUConfiguredDemandRefresh) { configuredAds.add(ad) }
+    func registerConfigured(_ ad: AUConfiguredDemandRefresh) {
+        configuredAds.add(ad)
+        if !interstitials.isEmpty { ad.setInterstitialCovered(true) }
+    }
     func deregisterConfigured(_ ad: AUConfiguredDemandRefresh) { configuredAds.remove(ad) }
 
     /// The most recent `pageImpression` screen. A `UIViewController` host is held weakly (so it
@@ -56,6 +59,25 @@ internal final class AUScreenAdCoordinator {
     /// the current epoch belongs to a page the user has left.
     private(set) var epoch: Int = 0
     let requestLedger = AUAdRequestLedger()
+    private(set) var adRevision = 0
+    private var interstitials = Set<UUID>()
+
+    func beginInterstitial(_ token: UUID) -> Int {
+        if interstitials.insert(token).inserted {
+            ads.allObjects.forEach { $0.setInterstitialCovered(true) }
+            configuredAds.allObjects.forEach { $0.setInterstitialCovered(true) }
+        }
+        return adRevision
+    }
+
+    func endInterstitial(_ token: UUID, revision: Int, dismissed: Bool) {
+        guard interstitials.remove(token) != nil, interstitials.isEmpty else { return }
+        // Recreate before clearing the hold; otherwise an overdue timer can auction twice.
+        if dismissed, revision == adRevision { Audienzz.shared.recoverAfterInterstitial() }
+        guard interstitials.isEmpty else { return } // An observer can synchronously present another ad.
+        ads.allObjects.forEach { $0.setInterstitialCovered(false) }
+        configuredAds.allObjects.forEach { $0.setInterstitialCovered(false) }
+    }
 
     private func setActiveScreen(_ screen: AnyObject) {
         if let vc = screen as? UIViewController {
@@ -79,6 +101,7 @@ internal final class AUScreenAdCoordinator {
         ])
         assertMain()
         ads.add(ad)
+        if !interstitials.isEmpty { ad.setInterstitialCovered(true) }
         if isActiveScreen(for: ad) { ad.requestContext.register() }
     }
 
@@ -152,6 +175,7 @@ internal final class AUScreenAdCoordinator {
     }
 
     private func refreshBanners(_ screen: AnyObject, name: String, live: [AUBannerView]) {
+        adRevision += 1
         for ad in configuredAds.allObjects { ad.pageChanged(screen) }
         for ad in live {
             let hostName = ad.resolveHostViewController().map { String(describing: type(of: $0)) }
@@ -233,6 +257,8 @@ internal final class AUScreenAdCoordinator {
         activeScreenToken = nil
         activeScreenName = nil
         epoch = 0
+        adRevision = 0
+        interstitials.removeAll()
         requestLedger.beginPage(0, retained: [])
     }
     #endif
