@@ -363,6 +363,20 @@ final class AUEventQueueTests: XCTestCase {
     }
 
     func testFailedAckPersistenceRetriesLocallyWhileAnotherAuctionProceeds() throws {
+        let oldEnabled = AUDiagnostics.isEnabled, oldSink = AUDiagnostics.sink
+        let attemptLock = NSLock(), testClock = clock!
+        var attemptedAt: [TimeInterval] = []
+        AUDiagnostics.isEnabled = true
+        AUDiagnostics.sink = { line in
+            // Both events are already persisted before the directory becomes unwritable, so
+            // each store write failure here is an actual acknowledgement attempt, not enqueue.
+            guard line == "AUDZ analytics persistenceFailed" else { return }
+            attemptLock.lock(); attemptedAt.append(testClock.now); attemptLock.unlock()
+        }
+        defer { AUDiagnostics.isEnabled = oldEnabled; AUDiagnostics.sink = oldSink }
+        func ackAttempts() -> [TimeInterval] {
+            attemptLock.lock(); defer { attemptLock.unlock() }; return attemptedAt
+        }
         let queue = sender()
         queue.enqueue(event("a")); queue.flush(); queue.syncForTesting()
         queue.enqueue(auctionEvent("b", "B")); queue.syncForTesting()
@@ -371,18 +385,35 @@ final class AUEventQueueTests: XCTestCase {
         try FileManager.default.moveItem(at: directory, to: backup)
         try Data("unwritable".utf8).write(to: directory)
         complete(queue, 0)
-        clock.advance(2)
-        XCTAssertEqual(network.sent.map(ids), [["a"], ["b"]])
-        complete(queue, 1)
-        clock.advance(600)
-        XCTAssertEqual(network.sent.map(ids), [["a"], ["b"]])
+        var expectedAttempts: [TimeInterval] = [0]
+        XCTAssertEqual(ackAttempts(), expectedAttempts)
+        XCTAssertEqual(network.sent.map(ids), [["a"]])
+        let delays: [TimeInterval] = [2, 4, 8, 16, 32] + Array(repeating: 60, count: 8)
+        for (index, delay) in delays.enumerated() {
+            // Binary-exact fractions avoid rounding a deadline out of this virtual-clock tick.
+            clock.advance(delay - 0.125); queue.wake(); queue.flush(); queue.syncForTesting()
+            XCTAssertEqual(ackAttempts(), expectedAttempts)
+            XCTAssertEqual(network.sent.map(ids), index == 0 ? [["a"]] : [["a"], ["b"]])
+            clock.advance(0.125)
+            expectedAttempts.append(expectedAttempts.last! + delay)
+            XCTAssertEqual(ackAttempts(), expectedAttempts)
+            XCTAssertEqual(network.sent.map(ids), [["a"], ["b"]])
+            if index == 0 {
+                // An isolation regression should fail an assertion, not subscript-crash the suite.
+                guard network.sent.count == 2 else { return }
+                complete(queue, 1)
+                XCTAssertEqual(ackAttempts(), expectedAttempts, "A new HTTP success cannot bypass ack backoff")
+            }
+        }
+        clock.advance(600 - clock.now)
+        XCTAssertEqual(ackAttempts(), expectedAttempts)
         XCTAssertEqual(ids(AUEventStore(directory: backup).loadAll()), ["a", "b"])
         try FileManager.default.removeItem(at: directory)
         try FileManager.default.moveItem(at: backup, to: directory)
         clock.advance(60)
         XCTAssertTrue(store().loadAll().isEmpty)
         XCTAssertEqual(clock.activeJobs, 0)
-        XCTAssertEqual(network.sent.count, 2)
+        XCTAssertEqual(network.sent.map(ids), [["a"], ["b"]])
     }
 
     func testAcceptedBatchWithFailedLocalAckReplaysAfterRestart() throws {
