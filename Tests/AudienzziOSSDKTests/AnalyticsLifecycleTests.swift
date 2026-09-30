@@ -334,6 +334,100 @@ final class AnalyticsLifecycleTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(count(.pageImpression), 0)
     }
 
+    func testInstalledRenderingInterstitialDelegateRecoversBannerWithoutANewPage() throws {
+        var requests: [AdManagerRequest] = []
+        banner.onLoadRequest = { [unowned self] request in
+            handoffs += 1; requests.append(request as! AdManagerRequest)
+        }
+        loaded(); impression()
+        let page = try XCTUnwrap(AUEventsManager.shared.capturePageContext().pageImpressionId)
+        let sequence = try XCTUnwrap(requests.first?.customTargeting?["au_page_seq"] as? String)
+        let slot = try XCTUnwrap(requests.first?.customTargeting?["au_slot"] as? String)
+        XCTAssertEqual(requests.first?.customTargeting?["hb_refresh_count"] as? String, "0")
+
+        // Keep the lazy owner unattached to avoid a real network load. createAd installs
+        // the production delegate on its real Prebid unit; invoke THAT delegate, not a helper.
+        let owner = AUInterstitialRenderingView(configId: "probe", isLazyLoad: true,
+            adFormat: .banner, eventHandler: AUGAMInterstitialEventHandler(adUnitID: "/probe/rendering"))
+        owner.createAd()
+        let unit = try XCTUnwrap(Mirror(reflecting: owner).children.first { $0.label == "adUnit" }?.value as? InterstitialRenderingAdUnit)
+        let delegate = try XCTUnwrap(unit.delegate)
+        defer { delegate.interstitialDidDismissAd?(unit); owner.removeFromSuperview() }
+        delegate.interstitialWillPresentAd?(unit)
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.interstitial))
+        XCTAssertEqual(handoffs, 1)
+        delegate.interstitialDidDismissAd?(unit)
+        delegate.interstitialDidDismissAd?(unit)
+        wait(0.05)
+        XCTAssertFalse(banner.refreshController.blockReasons.contains(.interstitial))
+        XCTAssertEqual(handoffs, 2)
+        XCTAssertEqual(requests.count, 2)
+        google.delegate?.bannerViewDidReceiveAd?(google); impression()
+        XCTAssertEqual(requests.last?.customTargeting?["au_page_seq"] as? String, sequence)
+        XCTAssertEqual(requests.last?.customTargeting?["au_slot"] as? String, slot)
+        XCTAssertEqual(requests.last?.customTargeting?["hb_refresh_count"] as? String, "1")
+        XCTAssertEqual(count(.bidRequest), 2)
+        XCTAssertEqual(count(.adImpression), 2)
+        XCTAssertEqual(count(.pageImpression), 0)
+        XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 1)
+        XCTAssertEqual(AUEventsManager.shared.capturePageContext().pageImpressionId, page)
+        for event in events { XCTAssertEqual(try XCTUnwrap(event.pageImpressionId), page) }
+    }
+
+    func testOverdueBannerRefreshAndDismissalProduceOnlyOneReplacement() throws {
+        try assertOneReplacementAfterOverdueInterstitial(deferManualReload: false)
+    }
+
+    func testDismissalRecoversBeforeUncoverCanStartADeferredReload() throws {
+        try assertOneReplacementAfterOverdueInterstitial(deferManualReload: true)
+    }
+
+    private func assertOneReplacementAfterOverdueInterstitial(deferManualReload: Bool) throws {
+        var requests: [AdManagerRequest] = []
+        banner.onLoadRequest = { [unowned self] request in
+            handoffs += 1; requests.append(request as! AdManagerRequest)
+        }
+        loaded()
+        let page = try XCTUnwrap(AUEventsManager.shared.capturePageContext().pageImpressionId)
+        let sequence = try XCTUnwrap(requests.first?.customTargeting?["au_page_seq"] as? String)
+        let slot = try XCTUnwrap(requests.first?.customTargeting?["au_slot"] as? String)
+        let (owner, ad, delegate) = try originalInterstitial()
+        defer { owner.destroy() }
+        var replies: [(ResultCode) -> Void] = []
+        banner.demand = { _, _, reply in replies.append(reply) }
+        // Shorten only the test controller's interval; retain the real main-queue scheduler.
+        banner.refreshController.setIntervalMillis(50)
+        delegate.adWillPresentFullScreenContent?(ad)
+        XCTAssertTrue(banner.refreshController.blockReasons.contains(.interstitial))
+        wait(0.15)
+        XCTAssertTrue(replies.isEmpty)
+        XCTAssertEqual(handoffs, 1)
+        if deferManualReload {
+            // A publisher reload under the cover is deferred. Unlike the periodic timer,
+            // it resumes synchronously on uncover, so this catches incorrect sweep ordering.
+            banner.reloadAd()
+            XCTAssertTrue(replies.isEmpty)
+        }
+        delegate.adDidDismissFullScreenContent?(ad)
+        wait(0.05)
+        XCTAssertEqual(replies.count, 1, "Recovery must retire deferred work before uncover can start it")
+        let bids = events.filter { $0.type == .bidRequest && $0.adUnitId == "/fixture/banner" }
+        XCTAssertEqual(bids.count, 2) // original + one recovery, including requests still awaiting Prebid
+        XCTAssertEqual(Set(try bids.map { try XCTUnwrap($0.auctionId) }).count, 2)
+        banner.refreshController.setIntervalMillis(0) // isolate recovery from subsequent normal refreshes
+        try XCTUnwrap(replies.last)(.prebidDemandNoBids)
+        google.delegate?.bannerViewDidReceiveAd?(google)
+        wait(0.05)
+        XCTAssertEqual(handoffs, 2)
+        XCTAssertEqual(requests.count, 2)
+        XCTAssertEqual(requests.last?.customTargeting?["au_page_seq"] as? String, sequence)
+        XCTAssertEqual(requests.last?.customTargeting?["au_slot"] as? String, slot)
+        XCTAssertEqual(requests.last?.customTargeting?["hb_refresh_count"] as? String, "1")
+        XCTAssertEqual(count(.pageImpression), 0)
+        XCTAssertEqual(AUScreenAdCoordinator.shared.epoch, 1)
+        for event in events { XCTAssertEqual(try XCTUnwrap(event.pageImpressionId), page) }
+    }
+
     func testInterstitialPrefetchedOnAKeepsAWhileRecoveryUsesB() throws {
         loaded()
         let pageA = try XCTUnwrap(AUEventsManager.shared.capturePageContext().pageImpressionId)
