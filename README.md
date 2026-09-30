@@ -103,6 +103,9 @@ loading and report that same key instead of the controller. Keep keys distinct f
 instances. Destroy an owner when its placement is permanently removed; keep it alive through
 ordinary page returns. For custom covers, pair `pauseSmartRefresh()` with `resumeSmartRefresh()`.
 
+Periodic refresh uses backend `config.refreshTimeSeconds` and pauses its clock while ineligible.
+The upcoming native release defaults to 10 eligible seconds; see [Smart Refresh](#smart-refresh).
+
 ### 5. Show an interstitial
 
 Retain one owner per placement as a property of its presenting scope:
@@ -361,11 +364,19 @@ A refreshed ad config that changes either value replaces the banner on the next 
 
 ## Smart Refresh
 
-Smart Refresh makes banner auto-refresh viewport-aware: refresh is paused while the ad is off-screen, and resumes intelligently when it returns.
+> **Unreleased:** eligible-time timing below is implemented on `main`; it is not part of `0.4.2`.
 
-When the ad scrolls back into view the SDK checks how long it was hidden:
-- **Stale** (hidden ≥ refresh interval) → a new ad is fetched immediately, then normal auto-refresh resumes.
-- **Not stale** (hidden < refresh interval) → the remaining time is waited before the next fetch, then normal auto-refresh resumes.
+Periodic refresh counts **only time when the banner is eligible to refresh**: its page is active,
+the app is foregrounded, the viewport gate allows it, and no attachment, cover or publisher hold
+blocks it. Pausing preserves accrued time. With a 10-second interval, 6 eligible seconds followed
+by 40 hidden seconds leave 4 eligible seconds before the next request. A fresh interval starts
+after each request completes; time spent loading does not count.
+
+Remote banners read `config.refreshTimeSeconds` from the backend: missing/null defaults to **10
+seconds**, `0` disables periodic refresh, and positive values are honored without the former
+30-second minimum. An explicit backend value of `30` still means 30 eligible seconds. Initial
+prefetch, explicit page changes, foreground recovery and interstitial-dismissal recovery keep
+their existing behavior. No publisher timer is needed.
 
 Enable it by setting `smartRefresh = true` on any `AUBannerView`:
 

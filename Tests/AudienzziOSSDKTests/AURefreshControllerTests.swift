@@ -173,27 +173,119 @@ final class AURefreshControllerTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(requests, [.periodicRefresh])
     }
 
-    func testAnOverdueBannerRefreshesAsSoonAsItIsUnblocked() {
-        // Elapsed time keeps counting while blocked, which is the existing stale-aware resume.
+    func testSixEligibleSecondsThenFortyHiddenSecondsLeavesFourSeconds() {
+        controller.setIntervalMillis(10_000)
         completeARequest()
+        scheduler.advance(6)
         controller.block(.notVisible)
-        scheduler.advance(interval * 2)
-
+        scheduler.advance(40)
         controller.unblock(.notVisible)
-
-        XCTAssertEqual(scheduler.pendingDelay, 0)
-        scheduler.advance(0)
+        XCTAssertEqual(scheduler.pendingDelay, 4)
+        scheduler.advance(3.875)
+        XCTAssertEqual(requests, [])
+        scheduler.advance(0.125)
         XCTAssertEqual(requests, [.periodicRefresh])
     }
 
-    func testAnInDateBannerWaitsOutTheRemainderAfterUnblocking() {
-        completeARequest()
+    func testEveryBlockPausesTimeAndOverlappingDuplicateBlocksDoNotCountTwice() {
+        for reason in AURefreshBlockReason.allCases {
+            requests.removeAll()
+            controller.setIntervalMillis(10_000)
+            completeARequest()
+            scheduler.advance(6)
+            controller.block(reason)
+            scheduler.advance(20)
+            controller.block(reason)
+            controller.block(.publisher)
+            scheduler.advance(20)
+            controller.unblock(reason)
+            if reason != .publisher {
+                XCTAssertFalse(scheduler.hasPending)
+                scheduler.advance(20)
+                controller.unblock(.publisher)
+            }
+            XCTAssertEqual(scheduler.pendingDelay, 4, "remaining time for \(reason)")
+            scheduler.advance(4)
+            XCTAssertEqual(requests, [.periodicRefresh])
+        }
+    }
+
+    func testPrefetchCompletedWhileHiddenEarnsNoTimeUntilVisible() {
+        controller.setIntervalMillis(10_000)
         controller.block(.notVisible)
-        scheduler.advance(10)
-
+        completeARequest()
+        scheduler.advance(86_400)
         controller.unblock(.notVisible)
+        XCTAssertEqual(scheduler.pendingDelay, 10)
+        scheduler.advance(9.875)
+        XCTAssertEqual(requests, [])
+        scheduler.advance(0.125)
+        XCTAssertEqual(requests, [.periodicRefresh])
+    }
 
-        XCTAssertEqual(scheduler.pendingDelay, interval - 10)
+    func testIntervalChangesPreserveEligibleTimeWithoutCreditForDisabledTime() {
+        controller.setIntervalMillis(10_000)
+        completeARequest()
+        scheduler.advance(6)
+        controller.setIntervalMillis(0)
+        scheduler.advance(86_400)
+        XCTAssertFalse(scheduler.hasPending)
+        controller.setIntervalMillis(17_000)
+        XCTAssertEqual(scheduler.pendingDelay, 11)
+        scheduler.advance(5)
+        controller.setIntervalMillis(17_000)
+        controller.scheduleNext()
+        XCTAssertEqual(scheduler.pendingDelay, 6)
+        scheduler.advance(5.875)
+        XCTAssertEqual(requests, [])
+        scheduler.advance(0.125)
+        XCTAssertEqual(requests, [.periodicRefresh])
+    }
+
+    func testShorteningABlockedIntervalRetainsOnlyPreviouslyEarnedTime() {
+        completeARequest()
+        scheduler.advance(6)
+        controller.block(.notVisible)
+        scheduler.advance(40)
+        controller.setIntervalMillis(10_000)
+        controller.unblock(.notVisible)
+        XCTAssertEqual(scheduler.pendingDelay, 4)
+    }
+
+    func testMultipleVisibleSegmentsAccumulateAndTheReplacementStartsAFreshCycle() {
+        controller.setIntervalMillis(10_000)
+        completeARequest()
+        for _ in 0..<3 {
+            scheduler.advance(3)
+            controller.block(.notVisible)
+            scheduler.advance(40)
+            controller.unblock(.notVisible)
+        }
+        XCTAssertEqual(scheduler.pendingDelay, 1)
+        scheduler.advance(1)
+        XCTAssertEqual(requests.count, 1)
+        let generation = controller.onRequestStarted(.periodicRefresh)
+        scheduler.advance(20)
+        controller.onRequestCompleted(generationAtRequest: generation, success: true)
+        XCTAssertEqual(scheduler.pendingDelay, 10)
+        scheduler.advance(9.875)
+        XCTAssertEqual(requests.count, 1)
+        scheduler.advance(0.125)
+        XCTAssertEqual(requests.count, 2)
+    }
+
+    func testAnEarlyCancelledCallbackCannotConsumeTheRemainingInterval() {
+        controller.setIntervalMillis(10_000)
+        completeARequest()
+        scheduler.advance(6)
+        controller.block(.notVisible)
+        scheduler.advance(40)
+        controller.unblock(.notVisible)
+        scheduler.fireIgnoringCancellation()
+        XCTAssertEqual(requests, [])
+        XCTAssertEqual(scheduler.pendingDelay, 4)
+        scheduler.advance(4)
+        XCTAssertEqual(requests.count, 1)
     }
 
     func testEligibilityIsRecheckedWhenTheScheduledTaskRuns() {
@@ -292,7 +384,7 @@ final class AURefreshControllerTests: AudienzzLifecycleTestCase {
         controller.onRequestCompleted(generationAtRequest: stale, success: true)
         controller.scheduleNext()
 
-        XCTAssertEqual(scheduler.pendingDelay, 0, "the banner was already overdue and must stay overdue")
+        XCTAssertFalse(scheduler.hasPending, "invalidated work must await a new completed request")
     }
 
     // MARK: - Failures and retries

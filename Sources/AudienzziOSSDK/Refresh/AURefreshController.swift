@@ -39,10 +39,8 @@ import Foundation
 ///   slow auction does not shorten the gap between creatives.
 /// - Durations use a monotonic clock (`AURefreshScheduler.now()`). Wall-clock time would let a
 ///   device clock change fire a refresh instantly or suppress it indefinitely.
-/// - Blocking cancels the pending task but does **not** move the due time: elapsed time keeps
-///   counting while a banner is off screen, which preserves the existing stale-aware resume. When
-///   the last block clears, an overdue banner refreshes immediately and an in-date one waits out the
-///   remainder. (Charging only visible time is deliberately out of scope for this migration.)
+/// - Only eligible time counts. The first block freezes accumulated time; clearing the last block
+///   resumes the remaining interval. Hidden/background/covered time never makes a banner overdue.
 /// - An interval of 0 disables periodic refresh entirely; nothing is ever scheduled.
 ///
 /// ## Ownership rules
@@ -84,8 +82,21 @@ internal final class AURefreshController {
 
     private var blocks: [AURefreshBlockReason] = []
 
-    /// Monotonic time the last request completed, or nil before the first completion.
-    private var lastCompletionAt: TimeInterval?
+    /// Eligible time earned in this cycle; nil until a current request completes.
+    private var eligibleElapsed: TimeInterval?
+    private var eligibleSince: TimeInterval?
+
+    private func pauseEligibleClock() {
+        if let since = eligibleSince {
+            eligibleElapsed = (eligibleElapsed ?? 0) + max(0, scheduler.now() - since)
+        }
+        eligibleSince = nil
+    }
+
+    private var remainingSeconds: TimeInterval {
+        max(0, intervalSeconds - (eligibleElapsed ?? 0) -
+            (eligibleSince.map { max(0, scheduler.now() - $0) } ?? 0))
+    }
 
     /// Generation of the outstanding request, or nil when none is.
     ///
@@ -108,7 +119,9 @@ internal final class AURefreshController {
 
     /// Applies the configured interval. Passing 0 disables refresh and cancels pending work.
     func setIntervalMillis(_ millis: Double) {
-        intervalMillis = millis > 0 ? millis : 0
+        guard !isDestroyed else { return }
+        pauseEligibleClock()
+        intervalMillis = millis.isFinite && millis > 0 ? millis : 0
         if intervalMillis == 0 {
             scheduler.cancel()
         } else {
@@ -127,6 +140,7 @@ internal final class AURefreshController {
     /// this cannot schedule a successor.
     func block(_ reason: AURefreshBlockReason) {
         guard !isDestroyed else { return }
+        pauseEligibleClock()
         if !blocks.contains(reason) {
             blocks.append(reason)
             AULogEvent.logDebug("[AURefresh] \(label) blocked by \(reason.rawValue) (now \(blocks.map(\.rawValue)))")
@@ -175,6 +189,8 @@ internal final class AURefreshController {
     /// to; the caller passes that back on completion so a superseded response can be recognised.
     @discardableResult
     func onRequestStarted(_ reason: AURefreshRequestReason) -> Int {
+        eligibleSince = nil
+        eligibleElapsed = nil
         generation += 1
         inFlightGeneration = generation
         AUDiagnostics.log("auction", "start", [
@@ -203,7 +219,8 @@ internal final class AURefreshController {
             return
         }
         inFlightGeneration = nil
-        lastCompletionAt = scheduler.now()
+        eligibleElapsed = 0
+        eligibleSince = nil
         AUDiagnostics.log("auction", "end", [
             ("slot", label), ("gen", generationAtRequest),
             ("result", success ? "filled" : "failed"),
@@ -236,16 +253,17 @@ internal final class AURefreshController {
 
     // MARK: - Scheduling
 
-    /// Schedules the next periodic refresh, or fires one immediately if the banner is already
-    /// overdue. Safe to call repeatedly; the scheduler keeps at most one pending task.
+    /// Schedules only the remaining eligible time. Repeated calls do not restart the clock;
+    /// the scheduler keeps at most one pending task.
     func scheduleNext() {
         guard !isDestroyed, intervalMillis > 0, !isBlocked, !hasRequestInFlight else { return }
-        guard let last = lastCompletionAt else {
+        guard eligibleElapsed != nil else {
             // Nothing has loaded yet, so there is no interval to measure from. The first load is
             // driven by lazy loading or an explicit load, not by this controller.
             return
         }
-        let delay = max(0, last + intervalSeconds - scheduler.now())
+        if eligibleSince == nil { eligibleSince = scheduler.now() }
+        let delay = remainingSeconds
         AULogEvent.logDebug("[AURefresh] \(label) next refresh in \(String(format: "%.1f", delay))s")
         scheduler.schedule(after: delay) { [weak self] in
             self?.fireIfStillEligible(.periodicRefresh)
@@ -273,13 +291,22 @@ internal final class AURefreshController {
             AULogEvent.logDebug("[AURefresh] \(label) \(reason.rawValue) due but a request is already in flight; skipping")
             return
         }
-        if reason == .periodicRefresh, intervalMillis <= 0 { return }
+        if reason == .periodicRefresh {
+            guard intervalMillis > 0, eligibleElapsed != nil else { return }
+            // A cancelled callback must not spend the interval of a newer cycle or resume.
+            if remainingSeconds > 0 {
+                scheduleNext()
+                return
+            }
+        }
         onRequestDue(reason, generation)
     }
 
     /// Invalidates outstanding work without blocking. Used by a page transition, which issues its
     /// own replacement and must not also let a pending periodic refresh or retry fire.
     func invalidatePending() {
+        eligibleSince = nil
+        eligibleElapsed = nil
         scheduler.cancel()
         generation += 1
         inFlightGeneration = nil
@@ -288,11 +315,14 @@ internal final class AURefreshController {
     /// Marks the banner as having just loaded, so the interval is measured from now. Used when a
     /// load is issued outside the controller (a first load or a page replacement).
     func noteLoadedNow() {
-        lastCompletionAt = scheduler.now()
+        eligibleElapsed = 0
+        eligibleSince = nil
     }
 
     func destroy() {
         isDestroyed = true
+        eligibleSince = nil
+        eligibleElapsed = nil
         scheduler.cancel()
         generation += 1
         blocks.removeAll()

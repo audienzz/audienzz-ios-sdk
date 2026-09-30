@@ -84,15 +84,15 @@ final class RefreshOwnershipTests: AudienzzLifecycleTestCase {
         XCTAssertNil(prebidDispatcher(of: view.adUnit))
     }
 
-    func testTheIntervalIsClampedToTheSupportedMinimum() {
+    func testPositiveIntervalsBelowPrebidMinimumAreHonored() {
         let view = banner()
 
         view.adUnitConfiguration.setAutoRefreshMillis(time: 5_000)
 
         XCTAssertEqual(
             view.refreshController.intervalMillis,
-            AUAdUnitConfiguration.minimumRefreshMillis,
-            "below the floor Prebid's original API enforced, clamped rather than silently sped up"
+            5_000,
+            "SDK-owned timer honors the configured interval"
         )
     }
 

@@ -82,8 +82,8 @@ extension AUBannerView {
     ///
     /// Clears **only** the visibility reason. A publisher pause or a released page is a separate,
     /// durable reason and stays in force, so scrolling a released banner back into view cannot
-    /// revive it. The timing itself belongs to ``AURefreshController``: an overdue banner refreshes
-    /// at once and an in-date one waits out the remainder of its interval.
+    /// revive it. ``AURefreshController`` resumes the remaining eligible interval, preserving time
+    /// earned before the pause and excluding time spent hidden.
     ///
     /// Mirrors Android's `AudienzzAdViewHandler.resumeSmartRefresh()`.
     public func resumeSmartRefresh() {
@@ -159,7 +159,7 @@ extension AUBannerView {
     }
 
     /// Page (re)activation: this ad's screen is the incoming page, so serve a fresh creative.
-    /// Unlike a viewport resume (stale-aware), this always forces a new auction when the ad has
+    /// Unlike a viewport resume (remaining eligible time), this always forces a new auction when the ad has
     /// loaded before — that is the "new page impression → fresh ad" semantics, and it's what makes a
     /// back-navigation or a return from the background show a current creative rather than a stale
     /// one. A never-loaded banner is left for its normal lazy/prefetch first load.
@@ -199,7 +199,7 @@ extension AUBannerView {
         fetchRequest(request, reason: .pageImpression)
     }
 
-    /// Force a fresh auction now, ignoring the stale-aware timing of the viewport resume.
+    /// Force a fresh auction now, ignoring the remaining eligible interval of the viewport resume.
     ///
     /// Public entry point for a manual reload — e.g. the React Native / Flutter bridges reloading a
     /// banner when its screen (route/tab) becomes active again, or a publisher triggering a refresh

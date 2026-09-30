@@ -111,6 +111,24 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
                        "a placement must be switchable to eager from the backend alone")
     }
 
+    func testBackendRefreshSecondsAndMissingFallbackReachTheBuiltBanner() throws {
+        for (field, expected) in [("", 10_000.0), (", \"refreshTimeSeconds\": null", 10_000),
+                                  (", \"refreshTimeSeconds\": 10", 10_000),
+                                  (", \"refreshTimeSeconds\": 17", 17_000),
+                                  (", \"refreshTimeSeconds\": 5", 5_000),
+                                  (", \"refreshTimeSeconds\": 600", 600_000),
+                                  (", \"refreshTimeSeconds\": 0", 0),
+                                  (", \"refreshTimeSeconds\": -1", 0)] {
+            let config = try Self.decodeConfig("{\"adType\": \"banner\"\(field)}")
+            AudienzzRemoteConfig.shared.setAdUnitConfigsForTesting([config])
+            let remote = AURemoteConfigBannerView(adConfigId: "x")
+            remote.load(in: container, size: CGSize(width: 320, height: 50), rootViewController: host)
+            let built = try XCTUnwrap(banner())
+            XCTAssertEqual(built.refreshController.intervalMillis, expected, field)
+            remote.destroy()
+        }
+    }
+
     // MARK: - A changed setting is not coalesced away
 
     func testARefreshedAdConfigThatChangesASettingReplacesTheBanner() throws {

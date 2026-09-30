@@ -125,23 +125,11 @@ extension AUAdUnitConfiguration: AUAdUnitConfigurationAutorefreshProtocol {
         autorefreshPauseObserver?(false)
     }
 
-    /// 0 (or less) disables refresh. Anything positive is raised to the floor the original Prebid
-    /// API enforced (`AdUnit.PB_MIN_RefreshTime`, 30 000 ms): below it Prebid refused to arm a
-    /// timer at all, so a smaller value never produced a periodic refresh and silently accepting
-    /// one now would speed a slot up rather than preserve its behaviour.
+    /// The SDK owns the timer: honor positive backend intervals without Prebid's 30s floor.
+    /// Zero, negative and non-finite values disable periodic refresh.
     private static func clampInterval(_ millis: Double) -> Double {
-        guard millis > 0 else { return 0 }
-        if millis < minimumRefreshMillis {
-            AULogEvent.logWarn(
-                "[AUAdUnitConfiguration] refresh interval \(millis)ms is below the supported minimum; using \(minimumRefreshMillis)ms"
-            )
-            return minimumRefreshMillis
-        }
-        return millis
+        millis.isFinite && millis > 0 ? millis : 0
     }
-
-    /// Mirrors Prebid's `AdUnit.PB_MIN_RefreshTime`, which is private to Prebid.
-    internal static let minimumRefreshMillis: Double = 30_000
 }
 
 // MARK: GPID

@@ -84,7 +84,7 @@ public class AURemoteConfigBannerView: VisibleView {
         bannerView?.hostScreenOverride = pendingScreenKey
     }
 
-    /// Force a fresh auction now on the underlying banner, ignoring the stale-aware refresh timing.
+    /// Force a fresh auction now on the underlying banner, ignoring the remaining eligible refresh interval.
     /// Forwards to `AUBannerView.reloadAd()` — used by the RN/Flutter bridges to reload on screen
     /// change, and for a manual reload. No-op until the underlying banner has been built.
     @objc public func reloadAd() {
@@ -259,10 +259,10 @@ public class AURemoteConfigBannerView: VisibleView {
         if let pendingScreenKey { bannerView.hostScreenOverride = pendingScreenKey }
 
         // Routed through `adUnitConfiguration`, which is what owns the interval: it stores the value
-        // for `AURefreshController` (and for analytics' `autorefresh_time`) and applies the 30s
-        // floor. The banner installs its observer in `createAd`, which has already run by the time
+        // for `AURefreshController` (and for analytics' `autorefresh_time`) without a Prebid floor.
+        // The banner installs its observer in `createAd`, which has already run by the time
         // the remote config arrives, so this reaches the controller.
-        let configuredRefreshMs = Double((remoteConfig.config.refreshTimeSeconds ?? Self.defaultRefreshSeconds) * 1000)
+        let configuredRefreshMs = Double(remoteConfig.config.refreshTimeSeconds ?? Self.defaultRefreshSeconds) * 1000
         bannerView.adUnitConfiguration.setAutoRefreshMillis(time: configuredRefreshMs)
         bannerView.smartRefresh = true
         bannerView.prefetchMarginPoints = resolvedPrefetchMarginPoints(for: remoteConfig)
@@ -415,7 +415,7 @@ public class AURemoteConfigBannerView: VisibleView {
         CGFloat(remoteConfig.config.prefetchDistancePt ?? Self.defaultPrefetchDistancePt)
     }
 
-    private static let defaultRefreshSeconds = 30
+    private static let defaultRefreshSeconds = 10
     private static let defaultPrefetchDistancePt = 200
 
     /// Remote-config banners defer their auction until the slot approaches the viewport unless the

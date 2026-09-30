@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Banner periodic refresh now counts only eligible time, preserving the remaining interval across
+  visibility, attachment, app, page, cover and publisher holds. Loading time is excluded.
+- Remote banners use backend `config.refreshTimeSeconds`, defaulting to 10 seconds when absent/null.
+  Positive intervals are honored without the old Prebid clamp; 0 disables periodic refresh.
+  Initial prefetch and explicit page/foreground/interstitial recovery are unchanged.
+
 ## 0.4.0 (unreleased) — breaking: interstitial formats and API frameworks are backend-controlled
 
 - **Publisher key-values and the SDK's never clear each other.** Prebid iOS deletes every `hb_` key
