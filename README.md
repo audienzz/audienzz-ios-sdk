@@ -69,8 +69,7 @@ advance `hb_refresh_count`. Visibility and publisher pauses still apply. Interst
 the page captured at prefetch. Actual navigation during an interstitial still needs a page report.
 
 Do not report unconditionally from `viewWillAppear` / `viewDidAppear`: these can also run after an
-interstitial closes. The automatic return behavior described here is in current `main`; it requires
-a native release containing the page-continuity changes, which postdate `0.4.1`.
+interstitial closes. The automatic return behavior described here requires iOS SDK `0.4.2` or newer.
 
 ### 4. Place a remote banner
 
