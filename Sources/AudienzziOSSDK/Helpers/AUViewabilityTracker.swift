@@ -16,7 +16,7 @@
 import Foundation
 import UIKit
 
-/// One creative's continuous exposure. Starts can repeat after an interruption; success is terminal.
+/// One creative's exposure. Start is emitted once; success requires a continuous visible second.
 final class AUViewabilityTracker {
     static let trackerVersion = "1.0.0"
     private weak var view: VisibleView?
@@ -30,6 +30,7 @@ final class AUViewabilityTracker {
     private var successWorkItem: DispatchWorkItem?
     private var running = false
     private var aboveThreshold = false
+    private var startRecorded = false
     private var backgrounded = false
     private var generation = 0
 
@@ -66,7 +67,10 @@ final class AUViewabilityTracker {
         guard !aboveThreshold else { return }
         aboveThreshold = true
         let token = generation
-        onStart()
+        if !startRecorded {
+            startRecorded = true
+            onStart()
+        }
         guard running, token == generation else { return }
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.running, token == self.generation else { return }

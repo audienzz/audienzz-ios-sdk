@@ -44,7 +44,7 @@ acknowledgement / event-ID deduplication on the collector. No Dart/JS queue is n
 requires a small config-forwarding update because it fetches publisher config in Dart; RN uses
 native remote initialization. Release the matching native SDKs before updating bridge pins.
 
-September 29 lifecycle corrections on this branch:
+Lifecycle and delivery rules:
 
 - Banner measurement is cancelled on page release, destruction or a received replacement, and
   interrupted while hidden/backgrounded. A repeated callback for the same known Google response
@@ -53,8 +53,11 @@ September 29 lifecycle corrections on this branch:
   now report viewability; rewarded viewability carries the same context as its impression.
 - No-bid responses retain their auction ID; success without a bidder becomes `NO_BIDS`.
   First-load Google banner impressions report `slot_reload=0`.
-- Repeated `viewability.start` after interrupted exposure is intentional; success is once per
-  creative. Explicit same-screen page reports still create new visits; use one navigation owner.
+- `viewability.start` is emitted only on the creative's first eligible exposure, with its
+  `auction_id`. Scrolling away/back, uncovering or returning from background restarts the exposure
+  timer without another start for that ad. Success still requires one continuous eligible second
+  and is emitted once. A refreshed creative under a new auction gets its own first start and
+  success. Explicit same-screen page reports still create new visits; use one navigation owner.
 
 `event_timestamp` remains the original creation time on disk recovery/retry. Old unsent events
 are not expired or rewritten. Diagnostics show restored count and oldest event timestamp, and

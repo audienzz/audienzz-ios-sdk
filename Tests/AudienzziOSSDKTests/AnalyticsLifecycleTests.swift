@@ -62,6 +62,75 @@ final class AnalyticsLifecycleTests: AudienzzLifecycleTestCase {
         wait(1.2)
         XCTAssertEqual(count(.viewabilitySuccess), 0)
     }
+    func testBannerViewabilityStartIsOncePerAuctionAcrossInterruptedExposure() throws {
+        loaded(); impression()
+        XCTAssertEqual(count(.viewabilityStart), 1)
+        let auction = try XCTUnwrap(events.first { $0.type == .viewabilityStart }?.auctionId)
+        let tracker = try XCTUnwrap(banner.viewabilityTracker)
+        for _ in 0..<2 {
+            wait(0.6)
+            banner.frame.origin.y = 2000
+            tracker.refreshVisibility()
+            wait(1.1)
+            XCTAssertEqual(count(.viewabilitySuccess), 0)
+            banner.frame.origin.y = 100
+            tracker.refreshVisibility()
+            XCTAssertEqual(count(.viewabilityStart), 1)
+        }
+        // Exposure before scrolling away must not count toward the new continuous second.
+        wait(0.6)
+        XCTAssertEqual(count(.viewabilitySuccess), 0)
+        wait(0.6)
+        XCTAssertEqual(count(.viewabilitySuccess), 1)
+        XCTAssertEqual(events.first { $0.type == .viewabilitySuccess }?.auctionId, auction)
+        banner.frame.origin.y = 2000; tracker.refreshVisibility()
+        banner.frame.origin.y = 100; tracker.refreshVisibility(); wait(1.1)
+        XCTAssertEqual(count(.viewabilityStart), 1)
+        XCTAssertEqual(count(.viewabilitySuccess), 1)
+
+        banner.reloadAd(); wait(0.1); XCTAssertEqual(handoffs, 2)
+        google.delegate?.bannerViewDidReceiveAd?(google); impression(); wait(1.2)
+        XCTAssertEqual(count(.viewabilityStart), 2)
+        XCTAssertEqual(count(.viewabilitySuccess), 2)
+        let replacementAuction = try XCTUnwrap(events.last { $0.type == .viewabilityStart }?.auctionId)
+        XCTAssertNotEqual(auction, replacementAuction)
+        XCTAssertEqual(events.last { $0.type == .viewabilitySuccess }?.auctionId, replacementAuction)
+    }
+    func testRemoteInterstitialViewabilityStartIsOncePerAuctionAcrossBackgroundReturns() throws {
+        let owner = AURemoteConfigInterstitial(adConfigId: "probe")
+        owner.configuration = { _ in ("probe", "/gam/remote-interstitial", [CGSize(width: 320, height: 480)]) }
+        owner.demand = { _, _, reply in reply(.prebidDemandNoBids) }
+        owner.isForeground = { true }
+        var receive: ((Result<AUInterstitialPresenting, Error>) -> Void)?
+        owner.loadOverride = { receive = $0 }
+        defer { owner.finishPresentation(); owner.destroy() }
+        var auctions = Set<String>()
+        for index in 0..<2 {
+            owner.prefetch { _ in }
+            let ad = InterstitialLifecycleTests.Ad()
+            try XCTUnwrap(receive)(.success(ad))
+            XCTAssertTrue(owner.show(from: UIViewController()))
+            let delegate = try XCTUnwrap(ad.delegate)
+            delegate.adWillPresentFullScreenContent?(ad)
+            delegate.adDidRecordImpression?(ad)
+            let auction = try XCTUnwrap(events.last { $0.type == .viewabilityStart }?.auctionId)
+            XCTAssertTrue(auctions.insert(auction).inserted)
+            for _ in 0..<2 {
+                wait(0.6)
+                NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+                wait(1.1)
+                XCTAssertEqual(count(.viewabilitySuccess), index)
+                NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+                NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+                delegate.adWillPresentFullScreenContent?(ad)
+                XCTAssertEqual(count(.viewabilityStart), index + 1)
+            }
+            wait(0.6); XCTAssertEqual(count(.viewabilitySuccess), index)
+            wait(0.6); XCTAssertEqual(count(.viewabilitySuccess), index + 1)
+            XCTAssertEqual(events.last { $0.type == .viewabilitySuccess }?.auctionId, auction)
+            delegate.adDidDismissFullScreenContent?(ad)
+        }
+    }
     func testBackgroundPollingCannotRearmViewability() {
         loaded(); impression(); XCTAssertEqual(count(.viewabilityStart), 1)
         NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
@@ -153,19 +222,21 @@ final class AnalyticsLifecycleTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(noBid.resultCode, "NO_BIDS")
     }
 
-    func testHostCoverInterruptsExposureButReturningCanEarnSuccess() {
+    func testHostCoverInterruptsExposureButReturningCanEarnSuccess() throws {
         loaded(); impression()
         XCTAssertEqual(count(.viewabilityStart), 1)
+        let auction = try XCTUnwrap(events.first { $0.type == .viewabilityStart }?.auctionId)
         banner.pauseSmartRefresh(); wait(1.2)
         XCTAssertEqual(count(.viewabilitySuccess), 0)
         banner.resumeSmartRefresh(); wait(0.2)
-        XCTAssertEqual(count(.viewabilityStart), 2)
+        XCTAssertEqual(count(.viewabilityStart), 1)
         XCTAssertEqual(count(.viewabilitySuccess), 0)
         wait(1.0)
         XCTAssertEqual(count(.viewabilitySuccess), 1)
         banner.pauseSmartRefresh(); banner.resumeSmartRefresh(); wait(1.2)
         XCTAssertEqual(count(.viewabilitySuccess), 1)
-        XCTAssertEqual(count(.viewabilityStart), 2)
+        XCTAssertEqual(count(.viewabilityStart), 1)
+        XCTAssertEqual(events.first { $0.type == .viewabilitySuccess }?.auctionId, auction)
     }
 
     func testOriginalInterstitialKeepsItsOwnAuctionAfterOwnerReuse() throws {

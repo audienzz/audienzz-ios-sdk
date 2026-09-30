@@ -16,7 +16,7 @@
 import Foundation
 import UIKit
 
-/// One presentation, including foreground interruptions. Duplicate presentation callbacks are inert.
+/// One presentation. Foreground restarts exposure, but never emits another start.
 final class AUFullScreenViewabilityTimer {
     private let successSeconds: TimeInterval
     private let onStart: () -> Void
@@ -25,6 +25,7 @@ final class AUFullScreenViewabilityTimer {
     private var shown = false
     private var terminal = false
     private var measuring = false
+    private var startRecorded = false
     private var backgrounded = false
     private var generation = 0
 
@@ -44,7 +45,10 @@ final class AUFullScreenViewabilityTimer {
         guard shown, !terminal, !measuring, !backgrounded, !Audienzz.shared.isAppBackgrounded else { return }
         measuring = true
         let token = generation
-        onStart()
+        if !startRecorded {
+            startRecorded = true
+            onStart()
+        }
         guard shown, !terminal, token == generation else { return }
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.shown, !self.terminal, token == self.generation else { return }
