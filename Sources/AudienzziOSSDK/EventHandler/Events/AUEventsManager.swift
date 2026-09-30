@@ -59,10 +59,20 @@ final class AUEventsManager: AULogEventType {
         return currentPageContext
     }
 
+    #if DEBUG
+    func resetPageForTesting() {
+        configureLock.lock(); defer { configureLock.unlock() }
+        pendingPageEvents.removeAll()
+        pageLock.lock(); defer { pageLock.unlock() }
+        currentPageContext = AUAnalyticsPageContext()
+    }
+    #endif
+
     private let mapper = AUEventNetworkMapper()
     private var eventQueue: AUEventQueue?
     private let makeQueue: () -> AUEventQueue
     private let configureLock = NSLock()
+    private var pendingPageEvents: [AUEventDomain] = []
     private var lifecycleObserved = false
 
     init(makeQueue: @escaping () -> AUEventQueue = {
@@ -79,6 +89,12 @@ final class AUEventsManager: AULogEventType {
         if eventQueue == nil { eventQueue = makeQueue() }
         visitorId = makeVisitorId()
         self.companyId = companyId
+        // Preserve the original page identity/time, and enqueue before initialization resumes ads.
+        // Calling onScreenResumed again here would mint a different visit and sweep banners twice.
+        if let eventQueue {
+            for event in pendingPageEvents { enqueue(event, in: eventQueue) }
+            pendingPageEvents.removeAll()
+        }
         observeAppLifecycle()
     }
 
@@ -110,7 +126,18 @@ final class AUEventsManager: AULogEventType {
         enriched.pageImpressionId = event.pageImpressionId ?? page.pageImpressionId
         enriched.screenName = event.screenName ?? page.screenName
         observerForTesting?(enriched)
-        guard let eventQueue = eventQueue else { return }
+        configureLock.lock()
+        defer { configureLock.unlock() }
+        guard let eventQueue = eventQueue else {
+            if enriched.type == .pageImpression { pendingPageEvents.append(enriched) }
+            return
+        }
+        enqueue(enriched, in: eventQueue)
+    }
+
+    /// Caller holds configureLock so fresh events cannot overtake pages waiting for setup.
+    private func enqueue(_ event: AUEventDomain, in eventQueue: AUEventQueue) {
+        var enriched = event
         requestDeviceId()
 
         enriched.uuid = AUUniqHelper.makeUniqID()

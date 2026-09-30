@@ -127,6 +127,9 @@ extension AUBannerView {
     /// Routing this through `pauseSmartRefresh()` — as an earlier revision did — left the banner
     /// blocked on a visibility reason that nothing would ever clear.
     private func retireCurrentAuction() {
+        // Retiring an initial delivery before Google's accepted terminal callback must not
+        // classify its replacement as a refresh. Completed loads retain their retry semantics.
+        if lastRefreshTime == nil { isInitialAutorefresh = true }
         // Bump first so an auction already in flight is recognised as stale by its completion.
         auctionGeneration += 1
         refreshController.invalidatePending()

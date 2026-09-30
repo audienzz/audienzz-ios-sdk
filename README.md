@@ -58,6 +58,12 @@ Audienzz.shared.pageImpression(destinationViewController)
 This is the one thing the SDK cannot do for you, and everything else follows from it: it groups a
 visit's ad events, and it is what releases the *previous* screen's banners.
 
+**On cold start, report the visible page before loading its ads**, for example in `viewWillAppear`
+before the banner's `load(in:)` call. Do not start an auction in `viewDidLoad` and report its page
+later in `viewDidAppear` or an initialization callback. This update preserves page events received
+while remote initialization is pending and enqueues them when analytics becomes ready, keeping
+their original page ID and timestamp. Do not report the same visit again when configuration finishes.
+
 **Report ad-free screens too.** A settings page with no ads still has to be reported — skipping it
 leaves the previous screen's banners auctioning for a screen nobody is looking at.
 
