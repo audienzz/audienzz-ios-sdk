@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.3
 
 - Banner periodic refresh now counts only eligible time, preserving the remaining interval across
   visibility, attachment, app, page, cover and publisher holds. Loading time is excluded.

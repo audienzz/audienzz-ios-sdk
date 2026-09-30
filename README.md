@@ -104,7 +104,7 @@ instances. Destroy an owner when its placement is permanently removed; keep it a
 ordinary page returns. For custom covers, pair `pauseSmartRefresh()` with `resumeSmartRefresh()`.
 
 Periodic refresh uses backend `config.refreshTimeSeconds` and pauses its clock while ineligible.
-The upcoming native release defaults to 10 eligible seconds; see [Smart Refresh](#smart-refresh).
+iOS SDK `0.4.3` defaults to 10 eligible seconds; see [Smart Refresh](#smart-refresh).
 
 ### 5. Show an interstitial
 
@@ -364,7 +364,7 @@ A refreshed ad config that changes either value replaces the banner on the next 
 
 ## Smart Refresh
 
-> **Unreleased:** eligible-time timing below is implemented on `main`; it is not part of `0.4.2`.
+> Eligible-time refresh requires iOS SDK `0.4.3` or newer.
 
 Periodic refresh counts **only time when the banner is eligible to refresh**: its page is active,
 the app is foregrounded, the viewport gate allows it, and no attachment, cover or publisher hold
