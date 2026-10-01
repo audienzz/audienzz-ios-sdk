@@ -10,10 +10,16 @@ Audienzz iOS SDK
 Initialize once, report navigation, and keep one owner per placement. Remote configuration controls
 banner sizes, lazy loading and refresh; you do not need your own refresh timers.
 
+**Start here for RemoteBanners and remote interstitials.** Follow steps 1–5 in order. The Original
+and Rendering API examples later in this document are separate, advanced integrations.
+Ask Audienzz for your **publisher ID** and **banner/interstitial configuration IDs**; use your own
+Google Mobile Ads **app ID**. GAM ad-unit paths and Prebid placement IDs come from remote config.
+
 ### 1. Install
 
-Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git`.
-CocoaPods: `pod 'AudienzziOSSDK'`.
+This guide targets iOS SDK **0.4.3**, with a minimum deployment target of **iOS 15.0**.
+Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git` and select `0.4.3`.
+CocoaPods: `pod 'AudienzziOSSDK', '~> 0.4.3'`.
 
 Add your GAM/AdMob app ID to `Info.plist` under `GADApplicationIdentifier`.
 In GAM, leave each banner ad unit's **refresh rate unset**; Audienzz owns refresh.
@@ -103,8 +109,13 @@ loading and report that same key instead of the controller. Keep keys distinct f
 instances. Destroy an owner when its placement is permanently removed; keep it alive through
 ordinary page returns. For custom covers, pair `pauseSmartRefresh()` with `resumeSmartRefresh()`.
 
-Periodic refresh uses backend `config.refreshTimeSeconds` and pauses its clock while ineligible.
-iOS SDK `0.4.3` defaults to 10 eligible seconds; see [Smart Refresh](#smart-refresh).
+Periodic refresh uses backend `config.refreshTimeSeconds`: missing/null means **10 seconds**,
+`0` disables periodic refresh, and an explicit value such as `7` or `30` is respected.
+The clock starts after loading completes and advances only while the banner is attached, on the
+active page, in the foreground, allowed by the viewport gate, and not paused or covered by an SDK
+interstitial or a reported overlay. Hidden time does not count; returning resumes the remaining
+time. With `7`, the next request starts after **seven eligible seconds**, then needs time to load.
+Navigation/foreground/interstitial recovery is separate from this timer. See [Smart Refresh](#smart-refresh).
 
 ### 5. Show an interstitial
 
@@ -134,6 +145,14 @@ frequency-cap and screen-policy decision. Observe delegate callbacks / `onPresen
 presentation outcomes. Repeated prefetches share an outstanding load or retain the ready ad.
 Keep the owner through dismissal and call `destroy()` when finished. See
 [interstitial details](#interstitial-ad-remote-config).
+
+### Verify the integration
+
+- Open the app directly on an ad screen: report one page before its first ad request.
+- Scroll a banner off-screen and back: periodic refresh pauses, then counts the remaining eligible time.
+- Navigate to an ad-free screen and back: the hidden page stops requesting; each visit gets a new PI.
+- Background/restore the app and show/dismiss an interstitial: eligible banners recover without a
+  new PI. Try `prefetch()` → `show()` twice with the same interstitial owner.
 
 ---
 
@@ -197,7 +216,7 @@ Functionality:
 
 ## Minimum Supported iOS Version
 
-The Audienzz iOS SDK requires a minimum iOS version of **13.0** or higher.
+The Audienzz iOS SDK requires a minimum iOS version of **15.0** or higher.
 
 Download using SPM
 ========
@@ -206,56 +225,42 @@ Open your project in XCode. Go to the file "Add package dependencies" and insert
 
 ## Quick Start
 
-Follow these steps to get your first ad showing:
-
-1. Install the SDK via Swift Package Manager (SPM)
-   - Add package dependency: `https://github.com/audienzz/audienzz-ios-sdk.git`
-2. Configure Info.plist
-   - Add Google Mobile Ads App ID: key `GADApplicationIdentifier` with your GAM/AdMob app ID
-   - Ensure ATS/networking permissions per your org policy if needed
-3. Initialize in AppDelegate
-   - Call `Audienzz.shared.configureSDK(companyId: ..., gadMobileAdsVersion: ...)`
-   - Start Google Mobile Ads: `GADMobileAds.sharedInstance().start()`
-   - Initialize GAM helpers: `AudienzzGAMUtils.shared.initializeGAM()`
-4. Create an ad unit in your UI
-   - Banner: `AUBannerView(configId:..., adSize:..., adFormats:[.banner])`
-   - Interstitial: `AUInterstitialView(configId:..., isLazyLoad:...)` — formats and API frameworks are backend-controlled, see [docs/interstitial-capabilities.md](docs/interstitial-capabilities.md)
-5. Bridge to GAM and load
-   - Use `createAd(with: AdManagerRequest, ...)`
-   - In `onLoadRequest`, call the corresponding GAM `load` API
-6. Verify
-   - See Verification section below for what to look for
+Use the [five-step remote integration above](#quick-integration-remote-config--pageimpression).
+It includes consent/startup ordering, page reporting, banner ownership and interstitial presentation.
+The manual APIs below are reference material for apps that supply their own Prebid/GAM configuration;
+they do not fetch remote placement settings or replace the remote startup flow.
 
 ## Consent
 
 The SDK does **not** gate itself on user consent — that's the app's responsibility.
 Run your CMP (consent) flow and forward the result **before** you call
-`configureSDK` or load any ads:
+either SDK initialization method or load any ads:
 
 1. Show your CMP and obtain the user's choice.
 2. Forward the consent signals (GDPR subject, TCF consent string, purpose
    consents) via `AUTargeting.shared`.
-3. **Then** call `Audienzz.shared.configureSDK(...)` and load ads.
+3. **Then** initialize using the [remote startup flow](#2-initialize-once-from-app-startup),
+   report the current page and load ads. Manual integrations use `configureSDK(...)` instead.
 
 Initializing or loading ads before consent will request ads without the consent
 signals.
 
 ## Initialize SDK
 
-Initialize the SDK in your `AppDelegate`:
+For a **manual configuration only**, call this once after your CMP flow has completed. Remote
+integrations use `configureWithRemoteSDK()` from the quick guide instead; do not run both flows.
 
 ```swift
 import AudienzziOSSDK
 import GoogleMobileAds
 
-func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+func initializeManualAds() {
     Audienzz.shared.configureSDK(
         companyId: "COMPANY_ID",
-        gadMobileAdsVersion: GADGetStringFromVersionNumber(GADMobileAds.sharedInstance().versionNumber)
+        gadMobileAdsVersion: nil
     )
-    GADMobileAds.sharedInstance().start()
+    MobileAds.shared.start()
     AudienzzGAMUtils.shared.initializeGAM()
-    return true
 }
 ```
 
