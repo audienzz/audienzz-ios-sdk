@@ -109,8 +109,8 @@ loading and report that same key instead of the controller. Keep keys distinct f
 instances. Destroy an owner when its placement is permanently removed; keep it alive through
 ordinary page returns. For custom covers, pair `pauseSmartRefresh()` with `resumeSmartRefresh()`.
 
-Periodic refresh uses backend `config.refreshTimeSeconds`: missing/null means **10 seconds**,
-`0` disables periodic refresh, and an explicit value such as `7` or `30` is respected.
+Periodic refresh uses backend `config.refreshTimeSeconds`: missing/null or `0` means **no
+periodic refresh**, and an explicit value such as `7` or `30` is respected.
 The clock starts after loading completes and advances only while the banner is attached, on the
 active page, in the foreground, allowed by the viewport gate, and not paused or covered by an SDK
 interstitial or a reported overlay. Hidden time does not count; returning resumes the remaining
@@ -377,8 +377,8 @@ blocks it. Pausing preserves accrued time. With a 10-second interval, 6 eligible
 by 40 hidden seconds leave 4 eligible seconds before the next request. A fresh interval starts
 after each request completes; time spent loading does not count.
 
-Remote banners read `config.refreshTimeSeconds` from the backend: missing/null defaults to **10
-seconds**, `0` disables periodic refresh, and positive values are honored without the former
+Remote banners read `config.refreshTimeSeconds` from the backend: missing/null or `0` means **no
+periodic refresh** for that placement, and positive values are honored without the former
 30-second minimum. An explicit backend value of `30` still means 30 eligible seconds. Initial
 prefetch, explicit page changes, foreground recovery and interstitial-dismissal recovery keep
 their existing behavior. No publisher timer is needed.

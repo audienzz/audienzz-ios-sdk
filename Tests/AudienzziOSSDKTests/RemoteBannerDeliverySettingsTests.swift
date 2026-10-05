@@ -111,8 +111,8 @@ final class RemoteBannerDeliverySettingsTests: AudienzzLifecycleTestCase {
                        "a placement must be switchable to eager from the backend alone")
     }
 
-    func testBackendRefreshSecondsAndMissingFallbackReachTheBuiltBanner() throws {
-        for (field, expected) in [("", 10_000.0), (", \"refreshTimeSeconds\": null", 10_000),
+    func testBackendRefreshSecondsReachTheBuiltBannerAndMissingMeansNoRefresh() throws {
+        for (field, expected) in [("", 0.0), (", \"refreshTimeSeconds\": null", 0),
                                   (", \"refreshTimeSeconds\": 10", 10_000),
                                   (", \"refreshTimeSeconds\": 17", 17_000),
                                   (", \"refreshTimeSeconds\": 5", 5_000),
