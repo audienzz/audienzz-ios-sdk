@@ -62,11 +62,24 @@ public struct RemotePublisherConfiguration: Codable {
     /// Google Mobile Ads global configuration, sourced from the backend publisher config.
     public struct GamConfig: Codable {
         /// Global app volume for GMA ad audio. Range: 0.0 (muted) – 1.0 (full volume).
-        /// Defaults to 0.0 (muted) if absent.
+        /// Defaults to 0.0 (muted) if absent. The backend sends `appVolume`; the legacy key
+        /// `setAppVolume` (what the SDK used to read) is still accepted.
         public let appVolume: Float?
 
         enum CodingKeys: String, CodingKey {
-            case appVolume = "setAppVolume"
+            case appVolume
+            case legacyAppVolume = "setAppVolume"
+        }
+
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            appVolume = try container.decodeIfPresent(Float.self, forKey: .appVolume)
+                ?? container.decodeIfPresent(Float.self, forKey: .legacyAppVolume)
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encodeIfPresent(appVolume, forKey: .appVolume)
         }
     }
 

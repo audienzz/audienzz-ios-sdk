@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Fix backend app volume being ignored: the publisher config's `gamConfig.appVolume` is now read
+  (the SDK looked for `setAppVolume`, which the backend never sends, so ads always started muted).
+  The legacy `setAppVolume` key is still accepted.
+
 ## 0.4.3
 
 - Banner periodic refresh now counts only eligible time, preserving the remaining interval across
