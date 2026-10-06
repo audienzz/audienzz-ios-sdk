@@ -17,9 +17,9 @@ Google Mobile Ads **app ID**. GAM ad-unit paths and Prebid placement IDs come fr
 
 ### 1. Install
 
-This guide targets iOS SDK **0.4.3**, with a minimum deployment target of **iOS 15.0**.
-Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git` and select `0.4.3`.
-CocoaPods: `pod 'AudienzziOSSDK', '~> 0.4.3'`.
+This guide targets iOS SDK **0.4.4**, with a minimum deployment target of **iOS 15.0**.
+Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git` and select `0.4.4`.
+CocoaPods: `pod 'AudienzziOSSDK', '~> 0.4.4'`.
 
 Add your GAM/AdMob app ID to `Info.plist` under `GADApplicationIdentifier`.
 In GAM, leave each banner ad unit's **refresh rate unset**; Audienzz owns refresh.

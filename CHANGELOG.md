@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.4
 
 - **Behavior change: a remote banner without a refresh interval no longer refreshes.** When the ad
   config's `refreshTimeSeconds` is missing or `null`, the banner now has no periodic refresh (same
