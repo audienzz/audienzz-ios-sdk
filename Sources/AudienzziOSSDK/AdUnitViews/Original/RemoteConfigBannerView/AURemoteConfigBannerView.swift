@@ -261,8 +261,9 @@ public class AURemoteConfigBannerView: VisibleView {
         // Routed through `adUnitConfiguration`, which is what owns the interval: it stores the value
         // for `AURefreshController` (and for analytics' `autorefresh_time`) without a Prebid floor.
         // The banner installs its observer in `createAd`, which has already run by the time
-        // the remote config arrives, so this reaches the controller.
-        let configuredRefreshMs = Double(remoteConfig.config.refreshTimeSeconds ?? Self.defaultRefreshSeconds) * 1000
+        // the remote config arrives, so this reaches the controller. A missing/null
+        // `refreshTimeSeconds` means no periodic refresh, the same as an explicit 0.
+        let configuredRefreshMs = Double(remoteConfig.config.refreshTimeSeconds ?? 0) * 1000
         bannerView.adUnitConfiguration.setAutoRefreshMillis(time: configuredRefreshMs)
         bannerView.smartRefresh = true
         bannerView.prefetchMarginPoints = resolvedPrefetchMarginPoints(for: remoteConfig)
@@ -415,7 +416,6 @@ public class AURemoteConfigBannerView: VisibleView {
         CGFloat(remoteConfig.config.prefetchDistancePt ?? Self.defaultPrefetchDistancePt)
     }
 
-    private static let defaultRefreshSeconds = 10
     private static let defaultPrefetchDistancePt = 200
 
     /// Remote-config banners defer their auction until the slot approaches the viewport unless the
