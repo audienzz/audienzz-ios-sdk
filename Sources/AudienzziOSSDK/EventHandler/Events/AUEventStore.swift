@@ -40,6 +40,16 @@ final class AUEventStore {
         self.quarantineMaxBytes = quarantineMaxBytes; self.quarantineMaxCount = quarantineMaxCount
     }
 
+    /// Events queued by an older SDK carry the ws-sdk-config id as `publisher_id`; it is sent as
+    /// `sdk_id` now, so a replayed event keeps its id under the name the collector reads.
+    static func migrated(_ object: JSONObject) -> JSONObject {
+        guard let legacy = object["publisher_id"] else { return object }
+        var event = object
+        event.removeValue(forKey: "publisher_id")
+        if event["sdk_id"] == nil { event["sdk_id"] = legacy }
+        return event
+    }
+
     func loadAll() -> [JSONObject] {
         if let cached { return cached.filter { !quarantinedIDs.contains($0["event_id"] as? String ?? "") } }
         var records: [String: JSONObject] = [:]
@@ -64,7 +74,7 @@ final class AUEventStore {
                         rejected.insert(id)
                     } else if let id = object["event_id"] as? String {
                         if seen.insert(id).inserted { order.append(id) }
-                        records[id] = object
+                        records[id] = Self.migrated(object)
                     } else { damaged = true }
                 }
             }

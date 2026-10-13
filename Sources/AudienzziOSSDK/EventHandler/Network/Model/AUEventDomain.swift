@@ -26,6 +26,7 @@ enum AUAnalyticsEventType: String {
     case adClick = "adClick"
     case viewabilityStart = "viewability.start"
     case viewabilitySuccess = "viewability.success"
+    case placementVisible = "placementVisible"
 }
 
 /// In-memory representation of a single analytics event, before it is enriched with

@@ -40,7 +40,12 @@ final class ColdStartPageTests: AudienzzLifecycleTestCase {
         recorder.configure(companyId: "fixture")
         // Capture real native event emissions and run them through the production logger,
         // mapper and queue with an isolated store and fake transport. No fixture leaves the device.
-        AUEventsManager.shared.observerForTesting = { [unowned self] event in recorder.logEvent(event) }
+        // `placementVisible` (the slot reaching the screen) is covered by PlacementVisibleTests; these
+        // tests assert the auction/page funnel alone.
+        AUEventsManager.shared.observerForTesting = { [unowned self] event in
+            guard event.type != .placementVisible else { return }
+            recorder.logEvent(event)
+        }
         window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844)); window.isHidden = false
         banner = AUBannerView(configId: "fixture", adSize: CGSize(width: 320, height: 50), adFormats: [.banner], isLazyLoad: false)
         banner.setScreen("A"); banner.frame = CGRect(x: 0, y: 100, width: 320, height: 50)

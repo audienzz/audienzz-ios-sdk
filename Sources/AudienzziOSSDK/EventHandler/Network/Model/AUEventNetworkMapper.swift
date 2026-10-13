@@ -67,8 +67,8 @@ struct AUEventNetworkMapper {
 
         return AUEventNetwork(
             eventType: event.type.rawValue,
-            companyId: nil, // company/website are resolved by the collector from publisher_id.
-            publisherId: event.publisherId,
+            companyId: nil, // company/website are resolved by the collector from sdk_id.
+            sdkId: event.publisherId,
             environment: event.environment,
             osVersion: UIDevice.current.systemVersion,
             source: Self.source,
