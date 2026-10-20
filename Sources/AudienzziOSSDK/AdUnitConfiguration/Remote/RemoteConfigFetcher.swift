@@ -10,27 +10,33 @@ import Foundation
 enum RemoteConfigError: Error {
     case missingBaseURL
     case invalidResponse
+    /// HTTP 404: the server does not serve this route.
+    case notFound
     case decodingFailed(Error)
 }
 
+/// ws-sdk-config. The SDK id the app initializes with addresses `sdks/{sdkId}`; the `publishers/`
+/// routes are what released SDKs call and are kept as a fallback when `sdks/` is not served.
 final class RemoteConfigFetcher {
     static let shared = RemoteConfigFetcher()
 
-    private init() {}
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
 
     func fetchPublisherConfig(remoteUrl: URL, publisherId: String) async throws -> RemotePublisherConfiguration {
         try await fetch(
             remoteUrl: remoteUrl,
-            pathComponents: ["publishers", publisherId],
+            sdkId: publisherId,
+            route: [],
             as: RemotePublisherConfiguration.self
         )
     }
 
     func fetchAdUnitConfigs(remoteUrl: URL, publisherId: String) async throws -> [RemoteAdConfiguration] {
-        let data = try await fetchData(
-            remoteUrl: remoteUrl,
-            pathComponents: ["publishers", publisherId, "ad-configs"]
-        )
+        let data = try await fetchData(remoteUrl: remoteUrl, sdkId: publisherId, route: ["ad-configs"])
 
         do {
             // Lossy decode: a single malformed ad-config entry must not discard
@@ -50,7 +56,8 @@ final class RemoteConfigFetcher {
     func fetchAdUnitConfig(remoteUrl: URL, publisherId: String, adConfigId: String) async throws -> RemoteAdConfiguration {
         try await fetch(
             remoteUrl: remoteUrl,
-            pathComponents: ["publishers", publisherId, "ad-configs", adConfigId],
+            sdkId: publisherId,
+            route: ["ad-configs", adConfigId],
             as: RemoteAdConfiguration.self
         )
     }
@@ -61,15 +68,27 @@ final class RemoteConfigFetcher {
 private extension RemoteConfigFetcher {
     func fetch<T: Decodable>(
         remoteUrl: URL,
-        pathComponents: [String],
+        sdkId: String,
+        route: [String],
         as type: T.Type
     ) async throws -> T {
-        let data = try await fetchData(remoteUrl: remoteUrl, pathComponents: pathComponents)
+        let data = try await fetchData(remoteUrl: remoteUrl, sdkId: sdkId, route: route)
 
         do {
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
             throw RemoteConfigError.decodingFailed(error)
+        }
+    }
+
+    /// `sdks/{sdkId}/…` first. Only a 404 — a server that does not serve that route yet — falls back
+    /// to `publishers/{id}/…`; any other failure is reported as it is.
+    func fetchData(remoteUrl: URL, sdkId: String, route: [String]) async throws -> Data {
+        do {
+            return try await fetchData(remoteUrl: remoteUrl, pathComponents: ["sdks", sdkId] + route)
+        } catch RemoteConfigError.notFound {
+            AULogEvent.logDebug("Remote Config: sdks/ route not found; falling back to publishers/")
+            return try await fetchData(remoteUrl: remoteUrl, pathComponents: ["publishers", sdkId] + route)
         }
     }
 
@@ -81,8 +100,9 @@ private extension RemoteConfigFetcher {
             url.appendingPathComponent(component)
         }
 
-        let (data, response) = try await URLSession.shared.data(from: requestURL)
+        let (data, response) = try await session.data(from: requestURL)
 
+        if (response as? HTTPURLResponse)?.statusCode == 404 { throw RemoteConfigError.notFound }
         guard let httpResponse = response as? HTTPURLResponse, (200..<300).contains(httpResponse.statusCode) else {
             throw RemoteConfigError.invalidResponse
         }

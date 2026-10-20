@@ -3,7 +3,7 @@
 The cross-platform contract is maintained in
 [audienzz-android-sdk/docs/analytics-contract.md](https://github.com/audienzz/audienzz-android-sdk/blob/feature/durable-analytics-batching/docs/analytics-contract.md).
 
-Current branch additions: top-level `sdk_id` (the ws-sdk-config id; `publisher_id` up to 0.4.4, and events queued under that name are re-sent as `sdk_id`), `environment`, `os_version`; company/website
+Current branch additions: top-level `sdk_id` (the remote config's `sdkId`, or the id passed to `configureRemote` until a config is available; `publisher_id` up to 0.4.4, and events queued under that name are re-sent as `sdk_id`), `environment`, `os_version`; company/website
 mapping moves to the collector; plain-decimal CPM with source-specific currency; unknown IDs
 omitted; iOS impressions guarded per creative. Stock Prebid iOS cannot expose exact bid economics,
 so those fields remain absent. Attribute values remain JSON strings.
