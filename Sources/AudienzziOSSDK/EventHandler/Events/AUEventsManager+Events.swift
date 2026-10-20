@@ -194,6 +194,17 @@ extension AUEventsManager {
         logEvent(e)
     }
 
+    /// Fill-rate denominator: a banner slot of a finished auction reached the screen.
+    func placementVisible(adUnitId: String, adViewId: String?, auctionId: String?, slotReload: Int,
+                          pageContext: AUAnalyticsPageContext? = nil) {
+        var e = AUEventDomain(type: .placementVisible)
+        e.adUnitId = adUnitId; e.adViewId = adViewId
+        e.adType = "BANNER"
+        e.auctionId = auctionId; e.slotReload = slotReload
+        e.pageContext = pageContext ?? e.pageContext
+        logEvent(e)
+    }
+
     func viewabilityStart(adUnitId: String, adType: String, adSubtype: String, apiType: String,
                           adViewId: String? = nil, economics: AURenderEconomics? = nil,
                           pageContext: AUAnalyticsPageContext? = nil) {

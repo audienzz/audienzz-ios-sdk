@@ -84,6 +84,8 @@ public struct RemotePublisherConfiguration: Codable {
     }
 
     public let id: Int
+    /// The id analytics reports as `sdk_id`. Absent from older configs → the id the app passed.
+    public let sdkId: String?
     public let prebidServer: PrebidServer
     public let gamConfig: GamConfig?
     public let ortb: OrtbConfig?
@@ -104,6 +106,7 @@ public struct RemotePublisherConfiguration: Codable {
 
     enum CodingKeys: String, CodingKey {
         case id
+        case sdkId
         case prebidServer
         case gamConfig
         case ortb
@@ -116,6 +119,10 @@ public struct RemotePublisherConfiguration: Codable {
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         id = try values.decode(Int.self, forKey: .id)
+        // A string or a number; blank → nil. Never breaks config or cached-config decoding.
+        let rawSdkId = (try? values.decode(String.self, forKey: .sdkId))
+            ?? (try? values.decode(Int.self, forKey: .sdkId)).map(String.init)
+        sdkId = rawSdkId.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.flatMap { $0.isEmpty ? nil : $0 }
         prebidServer = try values.decode(PrebidServer.self, forKey: .prebidServer)
         gamConfig = try values.decodeIfPresent(GamConfig.self, forKey: .gamConfig)
         ortb = try values.decodeIfPresent(OrtbConfig.self, forKey: .ortb)

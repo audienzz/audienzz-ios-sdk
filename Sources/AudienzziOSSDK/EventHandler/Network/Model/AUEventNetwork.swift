@@ -20,7 +20,9 @@ import Foundation
 struct AUEventNetwork: Encodable {
     let eventType: String
     let companyId: String?
-    let publisherId: String?
+    /// The ws-sdk-config id the SDK was initialized with. Sent as `sdk_id` (it was `publisher_id`,
+    /// which the collector confused with Xandr's publisher id).
+    let sdkId: String?
     let environment: String
     let osVersion: String
     let source: String
@@ -54,7 +56,7 @@ struct AUEventNetwork: Encodable {
     enum CodingKeys: String, CodingKey {
         case eventType = "event_type"
         case companyId = "company_id"
-        case publisherId = "publisher_id"
+        case sdkId = "sdk_id"
         case environment
         case osVersion = "os_version"
         case source

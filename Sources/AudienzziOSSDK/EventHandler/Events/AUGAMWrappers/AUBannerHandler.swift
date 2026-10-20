@@ -107,6 +107,7 @@ class AUBannerHandler: NSObject,
         // economics become the ones render events describe.
         auBannerView?.commitDisplayedCreative(responseId: bannerView.responseInfo?.responseIdentifier)
         restoreFromBlankIfNeeded()
+        auBannerView?.startPlacementVisibility()
 
         if let gamBannerView = bannerView as? AdManagerBannerView {
             // Determine the actual rendered size using two sources:
@@ -150,6 +151,8 @@ class AUBannerHandler: NSObject,
         LogEvent("didFailToReceiveAdWithError")
         LogEvent(error.localizedDescription)
         restoreFromBlankIfNeeded()
+        // Filled or not: fill rate counts a visible slot that got no ad too.
+        auBannerView?.startPlacementVisibility()
         bannerDelegate?.bannerView?(
             bannerView,
             didFailToReceiveAdWithError: error

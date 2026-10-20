@@ -260,4 +260,15 @@ final class AUEventStoreTests: XCTestCase {
         XCTAssertTrue(reopened.quarantinedIDs.isEmpty)
     }
 
+
+    func testAnEventQueuedAsPublisherIdBeforeTheRenameReplaysAsSdkId() throws {
+        var legacy = event("legacy"); legacy["publisher_id"] = "35"
+        let line = try JSONSerialization.data(withJSONObject: legacy) + Data("\n".utf8)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try line.write(to: fileURL)
+        let replayed = try XCTUnwrap(makeStore().loadAll().first)
+        XCTAssertEqual(replayed["sdk_id"] as? String, "35")
+        XCTAssertNil(replayed["publisher_id"])
+        XCTAssertEqual(replayed["event_id"] as? String, "legacy")
+    }
 }

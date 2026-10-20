@@ -148,6 +148,8 @@ extension AUBannerView {
     func releaseForPage() {
         viewabilityTracker?.stop()
         viewabilityTracker = nil
+        // Leaving the screen closes the auction: a later return must not report it as seen.
+        stopPlacementVisibility()
         creativePageGeneration += 1
         refreshController.block(.pageInactive)
         retireCurrentAuction()
@@ -424,6 +426,8 @@ extension AUBannerView {
         // request. Mirrors Android's AudienzzAdViewHandler.buildRequest().
         gamRequest.publisherProvidedID = PPIDManager.shared.getPPID()
 
+        // A new auction closes the previous one's placementVisible window.
+        stopPlacementVisibility()
         // Mint the auction id up front so bidRequest and every later event of this auction share it.
         currentAuctionId = AUUniqHelper.makeUniqID()
         currentAnalyticsPage = AUEventsManager.shared.capturePageContext()
@@ -741,6 +745,45 @@ extension AUBannerView {
         // This is impression revenue converted to CPM, never a currency label for a Prebid bucket.
         ec.applyGooglePaidValue(cpm: lastPaidCpm, currency: lastPaidCurrency)
         return ec
+    }
+
+    /// After an auction ended (filled or not): send `placementVisible` once, the first time at least
+    /// one pixel of the slot is on screen with the app in the foreground. The next auction, a page
+    /// release or `destroy()` closes the window; a slot that never shows sends nothing. Same
+    /// eligibility as viewability (not blanked, not reported hidden, not under an interstitial).
+    @nonobjc func startPlacementVisibility() {
+        stopPlacementVisibility()
+        guard let adUnitID = eventHandler?.adUnitID, let auctionId = renderAuctionId else { return }
+        let viewId = configId
+        let slotReload = requestSlotReload
+        let page = currentAnalyticsPage
+        let tracker = AUViewabilityTracker(
+            view: self,
+            // Any visible pixel: a 1pt sliver of the slot is above the smallest positive fraction.
+            threshold: .leastNonzeroMagnitude,
+            isEligible: { [weak self] in
+                guard let self else { return false }
+                return self.acceptsGoogleEvents && !self.blankedForReload
+                    && !self.refreshController.blockReasons.contains(.hostReportedHidden)
+                    && !self.refreshController.blockReasons.contains(.interstitial)
+            },
+            onStart: { [weak self] in
+                // Only the current tracker can start: every replacement stops its predecessor first.
+                self?.stopPlacementVisibility()
+                AUEventsManager.shared.placementVisible(
+                    adUnitId: adUnitID, adViewId: viewId, auctionId: auctionId,
+                    slotReload: slotReload, pageContext: page
+                )
+            },
+            onSuccess: {}
+        )
+        placementTracker = tracker
+        tracker.start()
+    }
+
+    @nonobjc func stopPlacementVisibility() {
+        placementTracker?.stop()
+        placementTracker = nil
     }
 
     /// Starts (or restarts) viewability tracking for the rendered banner creative.
