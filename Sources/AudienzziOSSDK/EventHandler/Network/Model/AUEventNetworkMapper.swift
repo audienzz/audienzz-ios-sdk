@@ -34,10 +34,40 @@ struct AUEventNetworkMapper {
 
     /// The real WebView user agent (the creative renders in a WKWebView). Resolved once on the main
     /// thread via KVC; nil if unavailable. Mirrors Android's `WebSettings.getDefaultUserAgent`.
-    private static let userAgent: String? = {
-        let resolve: () -> String? = { WKWebView().value(forKey: "userAgent") as? String }
-        return Thread.isMainThread ? resolve() : DispatchQueue.main.sync(execute: resolve)
-    }()
+    ///
+    /// Off the main thread it is never waited for: events are mapped under
+    /// `AUEventsManager.configureLock`, so a `main.sync` here deadlocks against a main thread that
+    /// is waiting for that lock. Such an event omits the field and resolution is scheduled on main.
+    private static var userAgent: String? {
+        if Thread.isMainThread { return resolveUserAgentOnMain() }
+        userAgentLock.lock(); defer { userAgentLock.unlock() }
+        if let resolvedUserAgent { return resolvedUserAgent }
+        if !userAgentScheduled {
+            userAgentScheduled = true
+            DispatchQueue.main.async { _ = resolveUserAgentOnMain() }
+        }
+        return nil
+    }
+    private static let userAgentLock = NSLock()
+    /// Outer optional: resolved yet; inner: the user agent, which may be unavailable.
+    private static var resolvedUserAgent: String??
+    private static var userAgentScheduled = false
+
+    /// Resolves the user agent now when called on main, so events mapped later off main (e.g. the
+    /// cold-start page flushed by a background `configure`) still carry it. No-op off main.
+    static func prepareUserAgent() {
+        if Thread.isMainThread { _ = resolveUserAgentOnMain() }
+    }
+
+    private static func resolveUserAgentOnMain() -> String? {
+        userAgentLock.lock()
+        if let resolvedUserAgent { userAgentLock.unlock(); return resolvedUserAgent }
+        userAgentLock.unlock()
+        let value = WKWebView().value(forKey: "userAgent") as? String
+        userAgentLock.lock(); defer { userAgentLock.unlock() }
+        resolvedUserAgent = .some(value)
+        return value
+    }
 
     /// Locale as a BCP-47 language tag with hyphens (e.g. `uk-UA`), matching Android's `toLanguageTag()`.
     private static let localeTag: String = {
