@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Fix app hangs from analytics reading the IDFA on the main thread
+  ([#62](https://github.com/audienzz/audienzz-ios-sdk/issues/62)). `advertisingIdentifier` is a
+  blocking XPC call to `lsd` even when ATT is not authorized, and it was made for every analytics
+  event. It is now read in the background at initialization and on every app activation, dropped
+  when the app backgrounds (so a revocation in Settings is never reported), and events only take
+  the cached value; events logged before the first read completes omit `device_id`.
+- Analytics no longer blocks on the main thread to resolve the WebView user agent when an event is
+  mapped off main, which could deadlock against the main thread logging an event.
+
 ## 0.4.4
 
 - **Behavior change: a remote banner without a refresh interval no longer refreshes.** When the ad
