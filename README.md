@@ -104,6 +104,11 @@ Give the container a real width before loading; omit `size` for backend adaptive
 updates its height after creative sizing, so do not keep adding height constraints in callbacks.
 Lazy loading defaults to `true` with a `200pt` prefetch margin; both are backend-controlled.
 
+With `gamConfig.includeFluid: true` in the ad config, the banner also requests GAM's fluid size
+(for example fluid GAM native styles) next to its fixed sizes; Prebid keeps its fixed sizes. A
+fluid ad spans the container's width and sets its own height, so give the container a width
+(e.g. leading and trailing constraints) and let its height follow the banner.
+
 For SwiftUI/custom routes sharing a controller, call `banner.setScreen(routeInstanceKey)` before
 loading and report that same key instead of the controller. Keep keys distinct for separate route
 instances. Destroy an owner when its placement is permanently removed; keep it alive through
