@@ -56,12 +56,19 @@ final class GamIncludeFluidTests: AudienzzLifecycleTestCase {
         handler = try XCTUnwrap(banner.eventHandler)
     }
 
+    override func setUp() {
+        super.setUp()
+        // Exercise the real ad config value, not the temporary mock.
+        MainActor.assumeIsolated { AURemoteConfigBannerView.mockIncludeFluid = false }
+    }
+
     override func tearDown() {
         MainActor.assumeIsolated {
             owner?.destroy()
             window?.isHidden = true
             owner = nil; window = nil; container = nil; banner = nil; google = nil; handler = nil
             AudienzzRemoteConfig.shared.setAdUnitConfigsForTesting(nil)
+            AURemoteConfigBannerView.mockIncludeFluid = true
         }
         super.tearDown()
     }
@@ -142,5 +149,11 @@ final class GamIncludeFluidTests: AudienzzLifecycleTestCase {
         window.layoutIfNeeded()
         XCTAssertEqual(banner.bounds.height, 50)
         XCTAssertEqual(banner.bounds.width, 390, "Google centers a fixed creative in the fluid container")
+    }
+
+    func testTemporaryMockRequestsFluidWhenTheConfigOmitsIt() throws {
+        AURemoteConfigBannerView.mockIncludeFluid = true
+        try loadSlot(includeFluid: nil)
+        XCTAssertTrue(requestsFluid())
     }
 }

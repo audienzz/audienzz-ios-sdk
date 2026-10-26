@@ -189,7 +189,7 @@ public class AURemoteConfigBannerView: VisibleView {
 
         // Fluid is a GAM-only addition: Prebid keeps bidding on its fixed sizes. The fixed sizes still
         // give the slot its placeholder height for the lazy-load gate.
-        let includeFluid = remoteConfig.gamConfig.includeFluid
+        let includeFluid = remoteConfig.gamConfig.includeFluid || Self.mockIncludeFluid
 
         let requestedKey = LoadKey(
             adConfigId: adConfigId,
@@ -443,4 +443,9 @@ public class AURemoteConfigBannerView: VisibleView {
     /// delivery pattern we are trying to reduce, not create. Eager remains available per placement
     /// (`lazyLoad: false` on the ad config) for slots that are always on screen.
     internal static let defaultLazyLoad = true
+
+    /// TEMPORARY MOCK — remove before release. The backend does not send `gamConfig.includeFluid`
+    /// yet, so every remote banner requests GAM's fluid size for testing. Tests switch it off to
+    /// exercise the real config value.
+    @MainActor internal static var mockIncludeFluid = true
 }
