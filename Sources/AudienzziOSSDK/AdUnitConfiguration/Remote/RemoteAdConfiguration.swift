@@ -56,6 +56,26 @@ public struct RemoteAdConfiguration: Codable {
         public let adUnitPath: String
         public let adSizes: [String]
         public let adaptiveBannerConfig: AdaptiveBannerConfig?
+        /// Also ask GAM for the fluid size, next to ``adSizes``: full slot width, height set by the
+        /// creative (e.g. a fluid GAM native style). Prebid is unaffected and keeps bidding on
+        /// `prebidConfig.adSizes`. `false` when absent or not a JSON boolean.
+        public let includeFluid: Bool
+
+        private enum CodingKeys: String, CodingKey {
+            case adUnitPath, adSizes, adaptiveBannerConfig, includeFluid
+        }
+
+        /// `includeFluid` is read leniently, like `prebidConfig.format`: a strict decode that met a
+        /// string there would throw and cost the publisher every ad config.
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            adUnitPath = try container.decode(String.self, forKey: .adUnitPath)
+            adSizes = try container.decode([String].self, forKey: .adSizes)
+            adaptiveBannerConfig = try container.decodeIfPresent(
+                AdaptiveBannerConfig.self, forKey: .adaptiveBannerConfig
+            )
+            includeFluid = ((try? container.decodeIfPresent(Bool.self, forKey: .includeFluid)) ?? nil) ?? false
+        }
 
         public struct AdaptiveBannerConfig: Codable {
             public let enabled: Bool

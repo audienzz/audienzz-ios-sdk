@@ -67,6 +67,7 @@ public class AURemoteConfigBannerView: VisibleView {
         /// coalesced into the banner built under the old values.
         let lazyLoad: Bool
         let prefetchMarginPoints: CGFloat
+        let includeFluid: Bool
     }
     private var activeLoadKey: LoadKey?
 
@@ -186,13 +187,18 @@ public class AURemoteConfigBannerView: VisibleView {
         let placeholderHeight = gadSize.size.height > 0 ? gadSize.size.height : configuredHeight
         let initialLayoutSize = CGSize(width: gadSize.size.width, height: placeholderHeight)
 
+        // Fluid is a GAM-only addition: Prebid keeps bidding on its fixed sizes. The fixed sizes still
+        // give the slot its placeholder height for the lazy-load gate.
+        let includeFluid = remoteConfig.gamConfig.includeFluid
+
         let requestedKey = LoadKey(
             adConfigId: adConfigId,
             container: ObjectIdentifier(container),
             rootViewController: ObjectIdentifier(rootViewController),
             resolvedSize: gadSize.size,
             lazyLoad: resolvedLazyLoad(for: remoteConfig),
-            prefetchMarginPoints: resolvedPrefetchMarginPoints(for: remoteConfig)
+            prefetchMarginPoints: resolvedPrefetchMarginPoints(for: remoteConfig),
+            includeFluid: includeFluid
         )
         // An identical repeat is a no-op, not a second banner. React Native re-runs this whenever
         // any prop changes, and a publisher may call it from a layout pass that fires more than
@@ -223,6 +229,7 @@ public class AURemoteConfigBannerView: VisibleView {
         gamBanner.validAdSizes = remoteConfig.gamConfig.adSizes
             .compactMap { CGSize.from(string: $0) }
             .map { nsValue(for: adSizeFor(cgSize: $0)) }
+            + (includeFluid ? [nsValue(for: AdSizeFluid)] : [])
 
         let gamRequest = AdManagerRequest()
         let ppid = PPIDManager.shared.getPPID()
@@ -275,6 +282,8 @@ public class AURemoteConfigBannerView: VisibleView {
         bannerView.frame = CGRect(origin: .zero, size: initialLayoutSize)
         bannerView.translatesAutoresizingMaskIntoConstraints = false
         bannerView.backgroundColor = .clear
+        // A fluid ad takes its width from Google's view, so that view spans the slot.
+        bannerView.fillsWidthWithAdSubview = includeFluid
         container.addSubview(bannerView)
 
         let handler = AUBannerEventHandler(
@@ -314,7 +323,11 @@ public class AURemoteConfigBannerView: VisibleView {
 
         bannerView.createAd(with: gamRequest, gamBanner: gamBanner, eventHandler: handler)
 
-        let bannerWidthConstraint = bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width)
+        // With fluid requested the slot spans the container the host sized; otherwise it is as wide
+        // as the creative.
+        let bannerWidthConstraint = includeFluid
+            ? bannerView.widthAnchor.constraint(equalTo: container.widthAnchor)
+            : bannerView.widthAnchor.constraint(equalToConstant: gadSize.size.width)
         let bannerHeightConstraint = bannerView.heightAnchor.constraint(equalToConstant: initialLayoutSize.height)
         let containerWidthConstraint = container.widthAnchor.constraint(equalToConstant: gadSize.size.width)
         // The host owns the container's width: the RN bridge lets React Native size the
@@ -345,9 +358,12 @@ public class AURemoteConfigBannerView: VisibleView {
         // the ad is neither clipped nor surrounded by blank space.
         bannerView.onAdSizeChanged = { [weak self, weak container] newSize in
             guard let self, self.loadGeneration == generation else { return }
-            bannerWidthConstraint.constant = newSize.width
+            // A fluid slot keeps the container's width; only the creative's height applies.
+            if !includeFluid {
+                bannerWidthConstraint.constant = newSize.width
+                containerWidthConstraint.constant = newSize.width
+            }
             bannerHeightConstraint.constant = newSize.height
-            containerWidthConstraint.constant = newSize.width
             containerHeightConstraint.constant = newSize.height
             // layoutIfNeeded on the superview ensures constraints attached to `container`
             // itself (not just inside it) are also resolved in the same layout pass.
