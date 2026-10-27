@@ -49,14 +49,31 @@ class AUBannerHandler: NSObject,
     /// their own callback rather than waiting for another load.
     private var pendingGAMSize: CGSize?
 
+    /// Sizes the banner to the Prebid creative when GAM served it in a creative of another size,
+    /// and owns reporting the size through `onAdSizeChanged`. See `AUBannerView.resizeToPrebidCreative`.
+    let creativeSizer: AUPrebidCreativeSizer
+
     init(auBannerView: AUBannerView, gamView: AdManagerBannerView) {
         self.auBannerView = auBannerView
         self.gamView = gamView
         self.bannerDelegate = (gamView.delegate as? AUBannerHandler).map { $0.bannerDelegate } ?? gamView.delegate
         self.eventDelegate = gamView.appEventDelegate
         self.sizeDelegate = gamView.adSizeDelegate
+        self.creativeSizer = AUPrebidCreativeSizer(gamView: gamView)
         super.init()
+        creativeSizer.report = { [weak auBannerView] size in
+            auBannerView?.onAdSizeChanged?(size)
+            // The GAM banner resized itself in place; re-center it so a creative narrower than the
+            // host doesn't drift to the leading edge (AUAdView.layoutSubviews).
+            auBannerView?.setNeedsLayout()
+        }
+        creativeSizer.isCurrent = { [weak auBannerView] in auBannerView?.acceptsGoogleEvents == true }
         addListener()
+    }
+
+    /// A new Google request is starting. `prebidSize` is the winning bid's `hb_size`, or nil.
+    func beginGoogleLoad(prebidSize: CGSize?) {
+        creativeSizer.beginLoad(prebidSize: prebidSize)
     }
 
     var adUnitID: String? {
@@ -123,10 +140,10 @@ class AUBannerHandler: NSObject,
 
             if actualSize.width > 0 && actualSize.height > 0 {
                 gamBannerView.resize(adSizeFor(cgSize: actualSize))
-                auBannerView?.onAdSizeChanged?(actualSize)
-                // The GAM banner just resized itself in place; re-center it so a creative
-                // narrower than the host doesn't drift to the leading edge (AUAdView.layoutSubviews).
-                auBannerView?.setNeedsLayout()
+                // Reported by the sizer: as is, as the Prebid creative's size, or once it knows which.
+                creativeSizer.googleDidLoad(size: actualSize)
+            } else {
+                creativeSizer.googleDidLoad(size: nil)
             }
         }
         pendingGAMSize = nil
@@ -232,6 +249,7 @@ class AUBannerHandler: NSObject,
         // its absence by impression time means the ad server (Google) rendered.
         if name.caseInsensitiveCompare(PREBID_APP_EVENT) == .orderedSame {
             auBannerView?.notePrebidLineItemRendered()
+            creativeSizer.prebidDidRender()
         }
         eventDelegate?.adView?(banner, didReceiveAppEvent: name, with: info)
     }
@@ -244,8 +262,7 @@ class AUBannerHandler: NSObject,
         // Google will resize its own view after this callback. Resize our container now, using
         // the callback value, not the still-old adSize. This must also work after didReceiveAd.
         pendingGAMSize = size.size
-        auBannerView?.onAdSizeChanged?(size.size)
-        auBannerView?.setNeedsLayout()
+        creativeSizer.gamSizeChanged(size.size)
         sizeDelegate?.adView(bannerView, willChangeAdSizeTo: size)
     }
 }

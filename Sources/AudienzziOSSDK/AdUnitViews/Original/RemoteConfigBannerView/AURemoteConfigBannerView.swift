@@ -251,6 +251,7 @@ public class AURemoteConfigBannerView: VisibleView {
             isLazyLoad: resolvedLazyLoad(for: remoteConfig)
         )
         bannerView.headerBiddingEnabled = headerBidding
+        bannerView.resizeToPrebidCreative = remoteConfig.config.resizeToPrebidCreative ?? true
         bannerView.requestContext = requestContext
         self.bannerView = bannerView
         // So the delivery trace reports the ad config the publisher configured, not the Prebid

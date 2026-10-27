@@ -70,6 +70,13 @@ public class AUBannerView: AUAdView {
     /// auction still sent a request that could never be filled.
     public var headerBiddingEnabled: Bool = true
 
+    /// Size the banner to the Prebid creative when the GAM creative that served it has another size.
+    /// A 300x250 bid served through a 300x600 creative was left smaller and off-centre; a 300x600
+    /// bid served through a 300x250 creative was cut off. A creative GAM served itself keeps GAM's
+    /// size. `onAdSizeChanged` reports the size shown. On by default; `AURemoteConfigBannerView`
+    /// takes it from the ad config's `resizeToPrebidCreative`. Read at the start of every load.
+    public var resizeToPrebidCreative: Bool = true
+
     /// Asks Prebid for demand. A seam so a test can see whether an auction reached Prebid at all.
     @nonobjc internal var demand: (AdUnit, AdManagerRequest, @escaping (ResultCode) -> Void) -> Void = {
         unit, request, completion in unit.fetchDemand(adObject: request, completion: completion)

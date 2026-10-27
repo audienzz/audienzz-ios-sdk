@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- **Banners are sized to the Prebid creative.** When a Prebid bid renders through a GAM creative of
+  another size (a 300x250 bid in a 300x600 creative was left smaller and off-centre; a 300x600 bid
+  in a 300x250 creative was cut off), the banner is resized to the winning `hb_size` and
+  `onAdSizeChanged` reports that size. A creative GAM served itself keeps GAM's size. The Prebid
+  creative is recognised by GAM's `Prebid` app event or, for creatives that never send it, by
+  `hb_size` in the creative's markup, read for up to 1 s after the load; meanwhile GAM's size is
+  held back, so the slot no longer bounces (250 → 600 → 250). On by default
+  (`AUBannerView.resizeToPrebidCreative = false` turns it off); `AURemoteConfigBannerView` takes it
+  from the ad config's `config.resizeToPrebidCreative`. The proper fix is still in GAM: size the
+  Prebid line items' creatives by `hb_size`.
+
 ## 0.4.4
 
 - **Behavior change: a remote banner without a refresh interval no longer refreshes.** When the ad

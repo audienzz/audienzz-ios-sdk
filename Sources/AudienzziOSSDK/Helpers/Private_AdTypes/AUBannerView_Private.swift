@@ -533,11 +533,18 @@ extension AUBannerView {
         googleEventPageGeneration = creativePageGeneration
         renderAuctionId = currentAuctionId
         eventHandler?.ensureListeners()
+        eventHandler?.beginGoogleLoad(prebidSize: prebidSizeToResizeTo)
         watchGoogleLoad(load)
         onLoadRequest?(gamRequest)
     }
 
 
+
+    /// The winning bid's `hb_size` the next Google load may be resized to, or nil. Only a real
+    /// Prebid win can render a Prebid creative; `prebidWinningBidder` is set for one.
+    @nonobjc var prebidSizeToResizeTo: CGSize? {
+        resizeToPrebidCreative && prebidWinningBidder != nil ? lastPrebidCreativeSize : nil
+    }
 
     /// Reads a Prebid targeting keyword that may be a String or a single-element [String].
     static func keyword(_ key: String, in targeting: [AnyHashable: Any]) -> String? {

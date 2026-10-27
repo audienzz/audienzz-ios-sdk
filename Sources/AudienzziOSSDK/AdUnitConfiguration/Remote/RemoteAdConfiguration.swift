@@ -25,12 +25,15 @@ public struct RemoteAdConfiguration: Codable {
         /// Y offset (points) from the scroll viewport top where the sticky ad should pin.
         /// `nil` falls back to the scroll view's safe-area inset.
         public let stickyTopOffset: Int?
+        /// Whether the banner is sized to the Prebid creative when the GAM creative that served it
+        /// has another size. `nil` falls back to on. See `AUBannerView.resizeToPrebidCreative`.
+        public let resizeToPrebidCreative: Bool?
 
         /// Explicit so the one backend key is used for decoding AND for the local cache, which
         /// re-encodes this struct. iOS alone read `prefetchDistancePt`, so a margin the backend
         /// set for every platform would have reached Android, Flutter and React Native only.
         private enum CodingKeys: String, CodingKey {
-            case adType, refreshTimeSeconds, lazyLoad, stickyMaxHeight, stickyTopOffset
+            case adType, refreshTimeSeconds, lazyLoad, stickyMaxHeight, stickyTopOffset, resizeToPrebidCreative
             case prefetchDistancePt = "prefetchDistanceDp"
         }
 
@@ -44,6 +47,7 @@ public struct RemoteAdConfiguration: Codable {
             lazyLoad = try container.decodeIfPresent(Bool.self, forKey: .lazyLoad)
             stickyMaxHeight = try container.decodeIfPresent(Int.self, forKey: .stickyMaxHeight)
             stickyTopOffset = try container.decodeIfPresent(Int.self, forKey: .stickyTopOffset)
+            resizeToPrebidCreative = try container.decodeIfPresent(Bool.self, forKey: .resizeToPrebidCreative)
         }
     }
 
