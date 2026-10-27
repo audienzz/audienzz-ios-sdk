@@ -34,6 +34,9 @@ public struct RemoteAdConfiguration: Codable {
         /// closed, the app back from the background), like every other banner. `true` only for a
         /// JSON boolean `true`; off (the default), a gallery ad is kept across leaving and returning.
         public let refreshOnBack: Bool
+        /// Whether the banner is sized to the Prebid creative when the GAM creative that served it
+        /// has another size. `nil` falls back to on. See `AUBannerView.resizeToPrebidCreative`.
+        public let resizeToPrebidCreative: Bool?
 
         /// Explicit so the one backend key is used for decoding AND for the local cache, which
         /// re-encodes this struct. iOS alone read `prefetchDistancePt`, so a margin the backend
@@ -41,6 +44,7 @@ public struct RemoteAdConfiguration: Codable {
         private enum CodingKeys: String, CodingKey {
             case adType, refreshTimeSeconds, lazyLoad, stickyMaxHeight, stickyTopOffset
             case preloadDistancePages, refreshOnBack
+            case resizeToPrebidCreative
             case prefetchDistancePt = "prefetchDistanceDp"
         }
 
@@ -61,6 +65,7 @@ public struct RemoteAdConfiguration: Codable {
                 preloadDistancePages = nil
             }
             refreshOnBack = ((try? container.decodeIfPresent(Bool.self, forKey: .refreshOnBack)) ?? nil) ?? false
+            resizeToPrebidCreative = try container.decodeIfPresent(Bool.self, forKey: .resizeToPrebidCreative)
         }
     }
 

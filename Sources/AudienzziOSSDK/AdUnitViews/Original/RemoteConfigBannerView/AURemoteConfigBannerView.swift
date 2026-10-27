@@ -293,6 +293,7 @@ public class AURemoteConfigBannerView: VisibleView {
         )
         bannerView.headerBiddingEnabled = headerBidding
         bannerView.keepsAdAcrossPages = galleryMode && !remoteConfig.config.refreshOnBack
+        bannerView.resizeToPrebidCreative = remoteConfig.config.resizeToPrebidCreative ?? true
         bannerView.requestContext = requestContext
         self.bannerView = bannerView
         // So the delivery trace reports the ad config the publisher configured, not the Prebid
