@@ -88,6 +88,26 @@ final class AUEventQueueTests: XCTestCase {
         complete(queue, 1)
     }
 
+    func testPlacementVisibleIsBundledWithItsOwnAuction() {
+        let queue = sender()
+        func of(_ id: String, _ type: String, _ auction: String) -> JSONObject {
+            var value = auctionEvent(id, auction); value["event_type"] = type; return value
+        }
+        queue.enqueue(of("request", "bidRequest", "A")); queue.enqueue(of("impression", "adImpression", "A"))
+        queue.enqueue(of("other", "bidRequest", "B")); queue.syncForTesting()
+        clock.advance(1); queue.enqueue(of("visible", "placementVisible", "A")); queue.syncForTesting()
+        clock.advance(1)
+        XCTAssertEqual(network.sent.map(ids), [["other"]]); complete(queue, 0)
+        clock.advance(2)
+        XCTAssertEqual(network.sent.map(ids), [["other"], ["request", "impression", "visible"]]); complete(queue, 1)
+        // Seen only after its auction's batch went: still its auction's own batch, never another's.
+        queue.enqueue(of("late", "placementVisible", "B")); queue.enqueue(of("next", "bidRequest", "C"))
+        queue.syncForTesting()
+        clock.advance(2); complete(queue, 2)
+        clock.advance(2); complete(queue, 3)
+        XCTAssertEqual(Set(network.sent.suffix(2).map(ids)), [["late"], ["next"]])
+    }
+
     func testMissingAndBlankAuctionIDsUseASeparateDebouncedBucket() {
         let queue = sender()
         var page = auctionEvent("page", nil); page["event_type"] = "pageImpression"

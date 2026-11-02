@@ -112,6 +112,12 @@ public class Audienzz: NSObject {
         }
     }
 
+    /// Analytics reports the config's own `sdkId` (fetched or cached); without one it keeps the id
+    /// the app initialized with.
+    internal func applyConfiguredSdkId(_ config: RemotePublisherConfiguration?) {
+        if let sdkId = config?.sdkId { AUAnalyticsContext.shared.setPublisherId(sdkId) }
+    }
+
     public func configureWithRemoteSDK(
         gadMobileAdsVersion: String? = nil
     ) async throws {
@@ -130,6 +136,8 @@ public class Audienzz: NSObject {
                 "Audienzz Remote Config fetch failed: \(error). Falling back to default Prebid host/account."
             )
         }
+
+        applyConfiguredSdkId(AudienzzRemoteConfig.shared.publisherConfig)
 
         guard let publisherConfig = AudienzzRemoteConfig.shared.publisherConfig else {
             // Cold start with no cache and no network: initialize Prebid with the
