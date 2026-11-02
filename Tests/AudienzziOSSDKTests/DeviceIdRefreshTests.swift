@@ -141,4 +141,45 @@ final class DeviceIdRefreshTests: XCTestCase {
         XCTAssertNil(manager.deviceIdForTesting,
                      "a read that began before the app left must not repopulate the dropped identifier")
     }
+
+    // MARK: - isIFAavailable
+
+    func testAvailabilityIsUnknownUntilTheFirstReadFinishes() {
+        lookup.blocks = true
+        manager.configure(companyId: "fixture")
+        XCTAssertNil(manager.advertisingIdAvailable, "no guess while the lookup is in flight")
+
+        lookup.gate.signal()
+        manager.waitForDeviceIdRefreshForTesting()
+        XCTAssertEqual(manager.advertisingIdAvailable, true)
+    }
+
+    func testTheAllZeroIdentifierMeansNotAvailable() {
+        lookup.set("00000000-0000-0000-0000-000000000000")
+        manager.configure(companyId: "fixture")
+        manager.waitForDeviceIdRefreshForTesting()
+        XCTAssertEqual(manager.advertisingIdAvailable, false)
+    }
+
+    func testAvailabilityFollowsTheBackgroundAndActivationCycle() {
+        manager.configure(companyId: "fixture")
+        manager.waitForDeviceIdRefreshForTesting()
+        XCTAssertEqual(manager.advertisingIdAvailable, true)
+
+        background()
+        XCTAssertNil(manager.advertisingIdAvailable, "unknown again until the next activation's read")
+        lookup.set("00000000-0000-0000-0000-000000000000")
+        activate()
+        manager.waitForDeviceIdRefreshForTesting()
+        XCTAssertEqual(manager.advertisingIdAvailable, false)
+    }
+
+    func testALookupStartedBeforeBackgroundLeavesAvailabilityUnknown() {
+        lookup.blocks = true
+        manager.configure(companyId: "fixture")
+        background()
+        lookup.gate.signal()
+        manager.waitForDeviceIdRefreshForTesting()
+        XCTAssertNil(manager.advertisingIdAvailable)
+    }
 }

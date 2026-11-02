@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Every original-API GAM request now carries the reportable key-value `isIFAavailable` = `true` /
+  `false`: whether a usable IDFA is available (ATT authorized, identifier not all zeros). It comes
+  from the background IDFA cache, so the key is omitted until the first read after launch or
+  activation completes. SDK-owned, like `au_sdk`. See `docs/ad-request-targeting.md`.
 - New analytics event `placementVisible` (banners) for fill rate: sent once per auction when at
   least 1 pt of the slot is on screen with the app in the foreground after the auction ended,
   filled or not. Carries `auction_id` (same as `adImpression`), `slot_reload` and `ad_unit_code`.

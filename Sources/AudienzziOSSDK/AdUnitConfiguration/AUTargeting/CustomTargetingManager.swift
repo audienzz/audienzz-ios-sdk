@@ -20,7 +20,17 @@ class CustomTargetingManager {
     /// one, in which case the value is the bare platform. Android sends the identical shape.
     private let sdkPlatformVersion: String
 
-    init(sdkPlatform: String = "ios", sdkVersion: String = "") {
+    /// Reportable GAM key: whether a usable IDFA is available on this device (ATT authorized and
+    /// not the all-zero sentinel), sent as `true` / `false`. Omitted while the SDK does not know
+    /// yet — the IDFA is read in the background, so the first auctions after launch can start
+    /// before the answer is in — rather than reporting a guess. iOS only.
+    static let ifaAvailableKey = "isIFAavailable"
+
+    private let ifaAvailable: () -> Bool?
+
+    init(sdkPlatform: String = "ios", sdkVersion: String = "",
+         ifaAvailable: @escaping () -> Bool? = { AUEventsManager.shared.advertisingIdAvailable }) {
+        self.ifaAvailable = ifaAvailable
         // Combined once here rather than at every request: the two halves have no separate
         // meaning any more, so keeping them as fields would just invite someone to send one.
         sdkPlatformVersion = sdkVersion.isEmpty ? sdkPlatform : "\(sdkPlatform)-\(sdkVersion)"
@@ -101,11 +111,15 @@ class CustomTargetingManager {
         var targeting = request.customTargeting ?? [:]
         targetingMap.forEach { targeting[$0.key] = $0.value }
         targeting["au_sdk"] = sdkPlatformVersion
+        // SDK-owned: a publisher value under this name never travels, known or not.
+        let ifa = ifaAvailable().map { $0 ? "true" : "false" }
+        targeting[Self.ifaAvailableKey] = ifa
         reservedTargetingMap.forEach { targeting[$0.key] = $0.value }
         request.customTargeting = targeting
 
         AULogEvent.logDebug("GAM custom targeting applied:")
         AULogEvent.logDebug("  au_sdk = \(sdkPlatformVersion)")
+        AULogEvent.logDebug("  \(Self.ifaAvailableKey) = \(ifa ?? "<unknown, omitted>")")
         reservedTargetingMap.forEach { AULogEvent.logDebug("  \($0.key) = \($0.value) [reserved]") }
         targetingMap.forEach { AULogEvent.logDebug("  \($0.key) = \($0.value)") }
 

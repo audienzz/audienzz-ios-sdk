@@ -38,4 +38,38 @@ final class CustomTargetingManagerTests: XCTestCase {
         XCTAssertEqual(keys["section"], "sport")
         XCTAssertEqual(keys["au_sdk"], "ios-0.3.2")
     }
+
+    // MARK: - isIFAavailable
+
+    private func manager(ifa: Bool?) -> CustomTargetingManager {
+        CustomTargetingManager(sdkPlatform: "ios", sdkVersion: "0.3.2", ifaAvailable: { ifa })
+    }
+
+    func testIFAAvailabilityIsSentAsTrueOrFalse() {
+        XCTAssertEqual(applied(manager(ifa: true))["isIFAavailable"], "true")
+        XCTAssertEqual(applied(manager(ifa: false))["isIFAavailable"], "false")
+    }
+
+    func testIFAAvailabilityIsOmittedWhileUnknown() {
+        XCTAssertNil(applied(manager(ifa: nil))["isIFAavailable"])
+    }
+
+    func testIFAAvailabilityIsSDKOwned() {
+        let known = manager(ifa: false)
+        known.addCustomTargeting(key: "isIFAavailable", value: "true")
+        XCTAssertEqual(applied(known)["isIFAavailable"], "false")
+
+        let unknown = manager(ifa: nil)
+        unknown.addCustomTargeting(key: "isIFAavailable", value: "true")
+        XCTAssertNil(applied(unknown)["isIFAavailable"], "a publisher value must not stand in for the SDK's")
+
+        let request = AdManagerRequest()
+        request.customTargeting = ["isIFAavailable": "true"]
+        let perRequest = manager(ifa: nil).applyToGamRequest(request: request)
+        XCTAssertNil(perRequest.customTargeting?["isIFAavailable"])
+    }
+
+    func testIFAAvailabilityIsRestoredAfterPrebid() {
+        XCTAssertTrue(AUAuctionTargeting.sdkKeys.contains("isIFAavailable"))
+    }
 }

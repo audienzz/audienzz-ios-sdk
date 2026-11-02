@@ -46,6 +46,10 @@ final class AUEventsManager: AULogEventType {
     /// all-zero IDFA that ATT returns when tracking is not authorized is not an identity, so it is
     /// never sent either.
     private var deviceId: String?
+    /// Whether `deviceId` holds the result of a finished read. `false` before the first read
+    /// completes and again from background until the next read lands, which is when
+    /// ``advertisingIdAvailable`` does not know the answer.
+    private var deviceIdResolved = false
     /// Bumped whenever the cached IDFA is dropped, so a read that started before the drop cannot
     /// put a possibly withdrawn identifier back.
     private var deviceIdGeneration = 0
@@ -260,6 +264,7 @@ final class AUEventsManager: AULogEventType {
             deviceIdLock.lock(); defer { deviceIdLock.unlock() }
             guard generation == deviceIdGeneration else { return }
             deviceId = idfa
+            deviceIdResolved = true
         }
     }
 
@@ -267,11 +272,21 @@ final class AUEventsManager: AULogEventType {
         deviceIdLock.lock(); defer { deviceIdLock.unlock() }
         deviceIdGeneration += 1
         deviceId = nil
+        deviceIdResolved = false
     }
 
     private func currentDeviceId() -> String? {
         deviceIdLock.lock(); defer { deviceIdLock.unlock() }
         return deviceId
+    }
+
+    /// Whether a usable IDFA is available right now, from the same cache analytics uses: `true` when
+    /// ATT is authorized and the identifier is not the all-zero sentinel, `false` when it is not,
+    /// `nil` while the background read has not finished (startup, and between background and the
+    /// next activation). Never reads the IDFA itself, so it is safe on any thread.
+    var advertisingIdAvailable: Bool? {
+        deviceIdLock.lock(); defer { deviceIdLock.unlock() }
+        return deviceIdResolved ? deviceId != nil : nil
     }
 
     #if DEBUG
