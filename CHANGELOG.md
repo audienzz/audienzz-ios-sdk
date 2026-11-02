@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.5
 
 - Every original-API GAM request now carries the reportable key-value `isIFAavailable` = `true` /
   `false`: whether a usable IDFA is available (ATT authorized, identifier not all zeros). It comes
