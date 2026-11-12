@@ -356,3 +356,186 @@ enum DemoPageReporting {
     }
     static func rewardedOpened() { current = nil }
 }
+
+// MARK: - ePaper (gallery ads)
+
+/// An ePaper: one page per printed page, swiped horizontally, with ad pages 5 and 13.
+/// `AUGalleryAds` requests each ad when the reader is within the ad config's
+/// `config.preloadDistancePages` (2 by default) of it — not when the screen opens, not when the
+/// page's cell is built. Tap a printed page to open its article, then go back: the ad is kept,
+/// not reloaded. Follow it with diagnostics: `AUDZ gallery preload …`.
+final class GalleryAdsViewController: UIViewController, UICollectionViewDataSource,
+    UICollectionViewDelegateFlowLayout, AUGalleryAdsDelegate {
+
+    private static let pageCount = 16
+    private let slots = [
+        AUGalleryAdSlot(slotKey: "epaper-1", adConfigId: "46", pageIndex: 4),
+        AUGalleryAdSlot(slotKey: "epaper-2", adConfigId: "46", pageIndex: 12),
+    ]
+    private lazy var galleryAds = AUGalleryAds(slots: slots, rootViewController: self)
+    private var slotStatus: [String: String] = [:]
+    private let statusLabel = UILabel()
+    private lazy var collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumLineSpacing = 0
+        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.isPagingEnabled = true
+        view.showsHorizontalScrollIndicator = false
+        view.backgroundColor = .systemBackground
+        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "page")
+        view.dataSource = self
+        view.delegate = self
+        return view
+    }()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "ePaper (gallery ads)"
+        view.backgroundColor = .systemBackground
+        statusLabel.numberOfLines = 0
+        statusLabel.font = .systemFont(ofSize: 13)
+        let stack = UIStackView(arrangedSubviews: [statusLabel, collectionView])
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+        ])
+        galleryAds.delegate = self
+        renderStatus(page: 0)
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        DemoPageReporting.report(self)
+        galleryAds.updatePosition(currentPage)
+    }
+
+    deinit {
+        MainActor.assumeIsolated { galleryAds.destroy() }
+    }
+
+    private var currentPage: CGFloat {
+        let width = collectionView.bounds.width
+        return width > 0 ? collectionView.contentOffset.x / width : 0
+    }
+
+    private func renderStatus(page: Int) {
+        statusLabel.text = "  Page \(page + 1)/\(Self.pageCount) · ads on pages 5 and 13 · "
+            + slots.map { "\($0.slotKey): \(slotStatus[$0.slotKey] ?? "not requested")" }.joined(separator: " · ")
+    }
+
+    private func setStatus(_ slotKey: String, _ value: String) {
+        slotStatus[slotKey] = value
+        renderStatus(page: Int(currentPage.rounded()))
+    }
+
+    // MARK: AUGalleryAdsDelegate
+
+    func galleryAds(_ galleryAds: AUGalleryAds, didCreateAdViewFor slotKey: String) {
+        setStatus(slotKey, "requested")
+        if let slot = slots.first(where: { $0.slotKey == slotKey }) {
+            collectionView.reloadItems(at: [IndexPath(item: slot.pageIndex, section: 0)])
+        }
+    }
+
+    func galleryAds(_ galleryAds: AUGalleryAds, didLoadAdFor slotKey: String) { setStatus(slotKey, "loaded") }
+
+    func galleryAds(_ galleryAds: AUGalleryAds, didFailToLoadAdFor slotKey: String, error: Error?) {
+        setStatus(slotKey, error == nil ? "no config" : "failed")
+    }
+
+    // MARK: Paging
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        galleryAds.updatePosition(currentPage)
+        renderStatus(page: Int(currentPage.rounded()))
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout: UICollectionViewLayout,
+                        sizeForItemAt indexPath: IndexPath) -> CGSize {
+        collectionView.bounds.size
+    }
+
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        Self.pageCount
+    }
+
+    func collectionView(_ collectionView: UICollectionView,
+                        cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "page", for: indexPath)
+        // A reused cell may hold another page's content or a gallery ad's host view; the gallery
+        // takes its host back on the next embed, so only our own labels are cleared here.
+        cell.contentView.subviews.filter { $0 is UILabel }.forEach { $0.removeFromSuperview() }
+        if let slot = slots.first(where: { $0.pageIndex == indexPath.item }) {
+            cell.contentView.backgroundColor = .systemBackground
+            if !galleryAds.embed(slot.slotKey, in: cell.contentView) {
+                addLabel("Ad not loaded yet", to: cell)
+            }
+        } else {
+            // A page cell must not keep a gallery host it was reused from.
+            cell.contentView.subviews.forEach { $0.removeFromSuperview() }
+            cell.contentView.backgroundColor = UIColor(white: 0.93, alpha: 1)
+            addLabel("Printed page \(indexPath.item + 1)\n(tap for the article)", to: cell)
+        }
+        return cell
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard !slots.contains(where: { $0.pageIndex == indexPath.item }) else { return }
+        navigationController?.pushViewController(GalleryArticleViewController(page: indexPath.item + 1), animated: true)
+    }
+
+    private func addLabel(_ text: String, to cell: UICollectionViewCell) {
+        let label = UILabel()
+        label.text = text
+        label.numberOfLines = 0
+        label.textAlignment = .center
+        label.font = .systemFont(ofSize: 22)
+        label.textColor = .darkGray
+        label.translatesAutoresizingMaskIntoConstraints = false
+        cell.contentView.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: cell.contentView.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
+        ])
+    }
+}
+
+/// The mobile article view opened from a printed page: its own page, ad-free.
+final class GalleryArticleViewController: UIViewController {
+    private let page: Int
+
+    init(page: Int) {
+        self.page = page
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "Article from page \(page)"
+        view.backgroundColor = .systemBackground
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.text = "Go back: the ePaper ad you saw is still there, no new request."
+        label.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+        ])
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        DemoPageReporting.report(self)
+    }
+}

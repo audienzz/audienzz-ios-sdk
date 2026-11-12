@@ -207,7 +207,24 @@ public class AUBannerView: AUAdView {
 
     /// Caller-supplied screen token (a route key) for hosts not inferable from the responder chain —
     /// SwiftUI destinations, or a custom navigation model. Wins over view-controller resolution.
-    internal var hostScreenOverride: AnyObject?
+    ///
+    /// A view controller is held weakly: the screen usually owns this banner (through its view or a
+    /// gallery), and a strong reference back kept both alive after the screen was gone. A route
+    /// key is a value and is held strongly.
+    internal var hostScreenOverride: AnyObject? {
+        get { strongHostScreen ?? weakHostScreen }
+        set {
+            if newValue is UIViewController {
+                weakHostScreen = newValue
+                strongHostScreen = nil
+            } else {
+                strongHostScreen = newValue
+                weakHostScreen = nil
+            }
+        }
+    }
+    private weak var weakHostScreen: AnyObject?
+    private var strongHostScreen: AnyObject?
 
     /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
     /// destination, or a custom route). Pass the same token you report to

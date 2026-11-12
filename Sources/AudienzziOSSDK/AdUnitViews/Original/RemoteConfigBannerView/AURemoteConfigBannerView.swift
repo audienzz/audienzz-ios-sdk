@@ -29,8 +29,23 @@ public class AURemoteConfigBannerView: VisibleView {
     // `prefetchDistanceDp`, else the SDK defaults. There is deliberately no publisher override, so
     // one placement behaves the same in every app and on every platform.
 
-    /// Screen token applied to the underlying `AUBannerView` once it's built (see `setScreen`).
-    private var pendingScreenKey: AnyObject?
+    /// Screen token applied to the underlying `AUBannerView` once it's built (see `setScreen`). A view
+    /// controller is held weakly, like `AUBannerView.hostScreenOverride`, so a screen that owns this
+    /// banner is not kept alive by it.
+    private var pendingScreenKey: AnyObject? {
+        get { strongScreenKey ?? weakScreenKey }
+        set {
+            if newValue is UIViewController {
+                weakScreenKey = newValue
+                strongScreenKey = nil
+            } else {
+                strongScreenKey = newValue
+                weakScreenKey = nil
+            }
+        }
+    }
+    private weak var weakScreenKey: AnyObject?
+    private var strongScreenKey: AnyObject?
 
     /// Publisher state requested before the inner banner existed.
     ///
@@ -40,6 +55,11 @@ public class AURemoteConfigBannerView: VisibleView {
     /// went on refreshing, and a reported cover was never applied.
     private var pendingPublisherStop = false
     private var pendingHostCover = false
+
+    /// Set by `AUGalleryAds` before `load`: load eagerly whatever the ad config's `lazyLoad` says (a
+    /// gallery slot is requested ahead of its page, while nothing is on screen for a viewport
+    /// trigger to watch), and keep the ad across page transitions.
+    internal var galleryMode = false
 
     /// Held strongly: this class owns the banner's lifetime.
     ///
@@ -258,6 +278,7 @@ public class AURemoteConfigBannerView: VisibleView {
             isLazyLoad: resolvedLazyLoad(for: remoteConfig)
         )
         bannerView.headerBiddingEnabled = headerBidding
+        bannerView.keepsAdAcrossPages = galleryMode
         bannerView.requestContext = requestContext
         self.bannerView = bannerView
         // So the delivery trace reports the ad config the publisher configured, not the Prebid
@@ -424,7 +445,7 @@ public class AURemoteConfigBannerView: VisibleView {
 
     /// Resolved lazy loading: the ad config, then ``defaultLazyLoad``.
     internal func resolvedLazyLoad(for remoteConfig: RemoteAdConfiguration) -> Bool {
-        remoteConfig.config.lazyLoad ?? Self.defaultLazyLoad
+        !galleryMode && (remoteConfig.config.lazyLoad ?? Self.defaultLazyLoad)
     }
 
     /// Resolved prefetch margin in points: the ad config's `prefetchDistanceDp`, then 200 pt.
