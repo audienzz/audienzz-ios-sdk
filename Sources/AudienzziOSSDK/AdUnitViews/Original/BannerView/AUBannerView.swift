@@ -197,6 +197,8 @@ public class AUBannerView: AUAdView {
 
     /// Viewability tracker for the current creative; restarted on each `adImpression`.
     internal var viewabilityTracker: AUViewabilityTracker?
+    /// Watches whether the slot of the last completed auction reaches the screen (`placementVisible`).
+    internal var placementTracker: AUViewabilityTracker?
 
     /// Cached host UIViewController (the "screen") for smart-refresh-v2 screen matching.
     private weak var cachedHostVC: UIViewController?
@@ -275,7 +277,8 @@ public class AUBannerView: AUAdView {
     private func wireRefreshConfiguration() {
         guard let configuration = adUnitConfiguration as? AUAdUnitConfiguration else { return }
         adLoadCompletion = { [weak self] rendered, retryable in
-            _ = self?.completeGoogleLoad(received: rendered, retryableFailure: retryable)
+            guard self?.completeGoogleLoad(received: rendered, retryableFailure: retryable) == true else { return }
+            self?.startPlacementVisibility()
         }
         configuration.autorefreshIntervalObserver = { [weak self] millis in
             self?.refreshController.setIntervalMillis(millis)
@@ -350,6 +353,7 @@ public class AUBannerView: AUAdView {
     public override func removeFromSuperview() {
         viewabilityTracker?.stop()
         viewabilityTracker = nil
+        stopPlacementVisibility()
         super.removeFromSuperview()
         AUScreenAdCoordinator.shared.deregister(self)
         googleLoadTimeout?.cancel()
@@ -368,6 +372,7 @@ public class AUBannerView: AUAdView {
     public func destroy() {
         viewabilityTracker?.stop()
         viewabilityTracker = nil
+        stopPlacementVisibility()
         AUScreenAdCoordinator.shared.deregister(self)
         googleLoadTimeout?.cancel()
         googleLoadTimeout = nil

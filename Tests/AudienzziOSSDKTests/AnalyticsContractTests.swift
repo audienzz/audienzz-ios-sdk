@@ -198,14 +198,28 @@ final class AnalyticsContractTests: AudienzzLifecycleTestCase {
         event.websiteId = "publisher-is-not-website"
         event.environment = "test"
         let json = try payload(event)
-        XCTAssertEqual(json["publisher_id"] as? String, "publisher-fixture")
+        // `sdk_id`, not `publisher_id`: the collector read that as Xandr's publisher id.
+        XCTAssertEqual(json["sdk_id"] as? String, "publisher-fixture")
+        XCTAssertNil(json["publisher_id"])
         XCTAssertEqual(json["environment"] as? String, "test")
         XCTAssertEqual(json["os_name"] as? String, "iOS")
         XCTAssertEqual(json["os_version"] as? String, UIDevice.current.systemVersion)
         XCTAssertTrue(["Smartphone", "Tablet"].contains(try XCTUnwrap(json["device_category"] as? String)))
         XCTAssertNil(json["company_id"])
         XCTAssertNil(try attributes(event)["website_id"])
-        XCTAssertNil(try payload(AUEventDomain(type: .pageImpression))["publisher_id"])
+        XCTAssertNil(try payload(AUEventDomain(type: .pageImpression))["sdk_id"])
+    }
+
+    func testPlacementVisibleCarriesAuctionSlotReloadAndAdUnitCode() throws {
+        var event = AUEventDomain(type: .placementVisible)
+        event.adUnitId = "/1234/unit"; event.adViewId = "placement"
+        event.auctionId = "auction-1"; event.slotReload = 1
+        XCTAssertEqual(try payload(event)["event_type"] as? String, "placementVisible")
+        let attrs = try attributes(event)
+        XCTAssertEqual(attrs["auction_id"], "auction-1")
+        XCTAssertEqual(attrs["slot_reload"], "1")
+        XCTAssertEqual(attrs["ad_unit_code"], "placement")
+        XCTAssertNil(attrs["tracker_version"])
     }
 
     func testCPMIsPlainDecimalAndUnavailableMetadataIsAbsent() throws {

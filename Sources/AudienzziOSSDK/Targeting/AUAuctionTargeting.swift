@@ -7,7 +7,7 @@ import GoogleMobileAds
 /// publisher can never remove or override the SDK's.
 /// - Layers, later winning a name clash: the publisher's per-request keys (the request passed to
 ///   `createAd`), then the current global targeting (`AUTargeting.addGlobalTargeting`), then the
-///   SDK's own keys (`au_sdk`, reserved keys, and the per-slot counters).
+///   SDK's own keys (`au_sdk`, `isIFAavailable`, reserved keys, and the per-slot counters).
 /// - Assembled on a COPY for every auction. The publisher's request object is never modified, so
 ///   one request can serve several ads, and a global key-value added or removed after the ad was
 ///   created reaches its next auction instead of being frozen at `createAd`.
@@ -25,7 +25,7 @@ enum AUAuctionTargeting {
     /// Keys only the SDK sets. Restored after Prebid unconditionally.
     static var sdkKeys: Set<String> {
         Set(AUAdRequestSnapshot.keys)
-            .union(["au_sdk"])
+            .union(["au_sdk", CustomTargetingManager.ifaAvailableKey])
             .union(AUTargeting.shared.customTargetingManager.reservedKeys)
     }
 

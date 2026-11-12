@@ -17,9 +17,9 @@ Google Mobile Ads **app ID**. GAM ad-unit paths and Prebid placement IDs come fr
 
 ### 1. Install
 
-This guide targets iOS SDK **0.4.4**, with a minimum deployment target of **iOS 15.0**.
-Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git` and select `0.4.4`.
-CocoaPods: `pod 'AudienzziOSSDK', '~> 0.4.4'`.
+This guide targets iOS SDK **0.4.5**, with a minimum deployment target of **iOS 15.0**.
+Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git` and select `0.4.5`.
+CocoaPods: `pod 'AudienzziOSSDK', '~> 0.4.5'`.
 
 Add your GAM/AdMob app ID to `Info.plist` under `GADApplicationIdentifier`.
 In GAM, leave each banner ad unit's **refresh rate unset**; Audienzz owns refresh.
@@ -479,12 +479,13 @@ viewability tracking yourself. Report each navigation visit, including ad-free d
 | `adClick` | The user taps the ad |
 | `viewability.start` | The ad first becomes ≥ 50% visible; once for that creative/auction, even after scrolling away and back |
 | `viewability.success` | The ad stays ≥ 50% visible for 1 continuous second |
+| `placementVisible` | Banner slot first has ≥ 1 pt on screen, app in foreground, after its auction ended (filled or not); once per auction — `auction_id`, `slot_reload`, `ad_unit_code` |
 
 Banner, interstitial and rewarded ads on the Original API are all covered.
 
 ### Step 1 — Initialize the SDK
 
-Analytics uses the **publisher ID** from remote configuration as `publisher_id`; the collector
+Analytics sends the ws-sdk-config **publisher ID** from remote configuration as `sdk_id`; the collector
 resolves company and website IDs. Direct integrations can supply the publisher through
 `configureAnalytics`. See [the analytics contract](docs/analytics-contract.md).
 
@@ -1331,7 +1332,7 @@ for page resets, automatic slot ordering and request-count semantics. No new pub
 
 ### Analytics environments and publisher identity
 
-Remote initialization supplies the ws-sdk-config `publisher_id` automatically (including Flutter).
+Remote initialization supplies the ws-sdk-config id as `sdk_id` automatically (including Flutter).
 The collector resolves company and website IDs. Analytics defaults to `environment=production`;
 set `test` or `staging` before initializing a non-production app. Our examples use `test`.
 See [the analytics contract](docs/analytics-contract.md) for configuration, currency provenance,

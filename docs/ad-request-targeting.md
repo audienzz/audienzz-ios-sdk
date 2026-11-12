@@ -57,6 +57,21 @@ No analytics schema or refresh scheduling behavior changes. Rendering-API reques
 this change. GAM-managed automatic refresh is not an SDK-owned request and does not advance
 these counters; keep GAM automatic refresh unset, as required by the SDK-owned refresh setup.
 
+## `isIFAavailable` (iOS)
+
+Every original-API GAM request on iOS (native SDK, and the React Native / Flutter bridges running on
+iOS) also carries the reportable key `isIFAavailable`:
+
+| Value | Meaning |
+| --- | --- |
+| `true` | A usable IDFA is available: ATT is authorized and the identifier is not all zeros |
+| `false` | No usable IDFA: ATT not determined, denied or restricted (the IDFA reads as all zeros) |
+| *(absent)* | Not known yet — the IDFA is read in the background at initialization and on every app activation, so the first auctions after launch may start before the answer is in |
+
+The SDK never prompts for ATT. Like `au_sdk`, the key is the SDK's: a publisher value under the
+same name is replaced, or removed while the answer is unknown. Define the key in Ad Manager as
+reportable (values `true` / `false`) to break reports down by it.
+
 ## Publisher key-values and the SDK's, side by side
 
 The SDK preserves publisher key-values outside its reserved names, and a publisher can never remove or override the
@@ -69,7 +84,7 @@ Every auction's GAM request is assembled from three layers, later ones winning a
    `AdManagerAdRequest.Builder` (Android) passed to the ad.
 2. **Global targeting** — `addGlobalTargeting` (iOS `AUTargeting`, Android
    `AudienzzTargetingParams`, and the React Native / Flutter `Targeting` APIs, which forward to them).
-3. **The SDK's keys** — `au_sdk`, `au_page_seq`, `au_slot`, `hb_refresh_count` and any reserved
+3. **The SDK's keys** — `au_sdk`, `isIFAavailable` (iOS), `au_page_seq`, `au_slot`, `hb_refresh_count` and any reserved
    bridge keys. `removeGlobalTargeting` / `clearGlobalTargeting` cannot remove them, and a publisher
    key of the same name is replaced (or removed for interstitial `au_slot`).
 

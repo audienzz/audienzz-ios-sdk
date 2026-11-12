@@ -38,13 +38,24 @@ final class AUEventsManager: AULogEventType {
     /// remain milliseconds; only this absolute timestamp moved.
     private let sessionStartTimestamp: Int64 = Int64(Date().timeIntervalSince1970)
 
-    /// The advertising identifier, re-read per event rather than cached for the session.
+    /// The advertising identifier, cached and refreshed off the main thread (see
+    /// `refreshDeviceId()`); guarded by `deviceIdLock`.
     ///
     /// `nil` means "not available" and the field is omitted from the payload: analytics must work
     /// without it. Nothing is substituted — not the PPID, not the IDFV, not a fingerprint — and the
     /// all-zero IDFA that ATT returns when tracking is not authorized is not an identity, so it is
     /// never sent either.
     private var deviceId: String?
+    /// Whether `deviceId` holds the result of a finished read. `false` before the first read
+    /// completes and again from background until the next read lands, which is when
+    /// ``advertisingIdAvailable`` does not know the answer.
+    private var deviceIdResolved = false
+    /// Bumped whenever the cached IDFA is dropped, so a read that started before the drop cannot
+    /// put a possibly withdrawn identifier back.
+    private var deviceIdGeneration = 0
+    private let deviceIdLock = NSLock()
+    private let deviceIdQueue = DispatchQueue(label: "com.audienzz.analytics.idfa", qos: .utility)
+    private let readAdvertisingId: () -> String?
 
     /// Monotonic per-session counter so the backend can order events regardless of POST arrival.
     private var sessionSeq: Int = 0
@@ -78,8 +89,11 @@ final class AUEventsManager: AULogEventType {
     init(makeQueue: @escaping () -> AUEventQueue = {
         AUEventQueue(networkManager: AUEventsNetworkManager<AUBatchResultModel>(),
                      backendBatchSize: { AUAnalyticsBatchSettings.shared.current })
+    }, readAdvertisingId: @escaping () -> String? = {
+        ASIdentifierManager.shared().advertisingIdentifier.uuidString
     }) {
         self.makeQueue = makeQueue
+        self.readAdvertisingId = readAdvertisingId
     }
 
     func configure(companyId: String) {
@@ -87,6 +101,7 @@ final class AUEventsManager: AULogEventType {
         defer { configureLock.unlock() }
         // Reinitializing the SDK must not create a second writer for the same durable outbox.
         if eventQueue == nil { eventQueue = makeQueue() }
+        refreshDeviceId()
         visitorId = makeVisitorId()
         self.companyId = companyId
         // Preserve the original page identity/time, and enqueue before initialization resumes ads.
@@ -126,6 +141,7 @@ final class AUEventsManager: AULogEventType {
         enriched.pageImpressionId = event.pageImpressionId ?? page.pageImpressionId
         enriched.screenName = event.screenName ?? page.screenName
         observerForTesting?(enriched)
+        AUEventNetworkMapper.prepareUserAgent()
         configureLock.lock()
         defer { configureLock.unlock() }
         guard let eventQueue = eventQueue else {
@@ -138,7 +154,6 @@ final class AUEventsManager: AULogEventType {
     /// Caller holds configureLock so fresh events cannot overtake pages waiting for setup.
     private func enqueue(_ event: AUEventDomain, in eventQueue: AUEventQueue) {
         var enriched = event
-        requestDeviceId()
 
         enriched.uuid = AUUniqHelper.makeUniqID()
         enriched.visitorId = visitorId
@@ -147,7 +162,7 @@ final class AUEventsManager: AULogEventType {
         enriched.environment = context.environment
         enriched.sessionId = sessionId
         enriched.sessionStartTimestamp = sessionStartTimestamp
-        enriched.deviceId = deviceId
+        enriched.deviceId = currentDeviceId()
         enriched.sessionSeq = nextSequence()
 
         let network = mapper.toNetwork(enriched)
@@ -172,7 +187,8 @@ final class AUEventsManager: AULogEventType {
     // MARK: - App lifecycle (delivery hint)
 
     /// Flush pending events when the app backgrounds; wake on foreground without breaking the
-    /// inactivity window of a newly active auction. Uses
+    /// inactivity window of a newly active auction. The IDFA is dropped on background and re-read
+    /// on activation (see `refreshDeviceId()`). Uses
     /// block-based observers (added once) since `AUEventsManager` is not an `NSObject`.
     private func observeAppLifecycle() {
         #if canImport(UIKit)
@@ -181,10 +197,12 @@ final class AUEventsManager: AULogEventType {
         let nc = NotificationCenter.default
         nc.addObserver(forName: UIApplication.didEnterBackgroundNotification,
                        object: nil, queue: .main) { [weak self] _ in
+            self?.dropDeviceId()
             self?.flushOnBackground()
         }
         nc.addObserver(forName: UIApplication.didBecomeActiveNotification,
                        object: nil, queue: .main) { [weak self] _ in
+            self?.refreshDeviceId()
             self?.eventQueue?.wake()
         }
         #endif
@@ -219,20 +237,63 @@ final class AUEventsManager: AULogEventType {
         return obj
     }
 
-    /// Re-read the advertising identifier for every event.
+    /// Re-read the advertising identifier in the background and cache the result.
     ///
-    /// Caching it for the session was wrong in both directions: authorization granted after the
-    /// first event was never picked up, and — worse — authorization *revoked* after an authorized
-    /// event left the SDK emitting an identifier the user had withdrawn. `ASIdentifierManager` is a
-    /// cheap local read, so there is nothing to gain by holding it.
+    /// `advertisingIdentifier` is not a local read: it is a synchronous XPC round-trip to `lsd`,
+    /// and it does that round-trip even when ATT is not authorized. Read per event on the main
+    /// thread it hung host apps for seconds when the daemon was slow (audienzz-ios-sdk#62), so
+    /// events only ever take the cached value.
+    ///
+    /// Reading it once per session would be wrong in both directions: authorization granted after
+    /// the first event would never be picked up, and — worse — authorization *revoked* in Settings
+    /// would leave the SDK emitting an identifier the user had withdrawn. ATT only changes while
+    /// the user is outside the app (Settings) or in the system prompt, which resigns the app, so
+    /// the cache is dropped on background and re-read on every activation; events logged before a
+    /// read finishes omit the field rather than wait for it.
     ///
     /// The all-zero UUID is what ATT returns when tracking is not authorized (and what the
     /// simulator returns by default). It is a sentinel, not an identity, so it becomes `nil` and
     /// the field is omitted. The SDK never prompts for ATT on the publisher's behalf.
-    private func requestDeviceId() {
-        let idfa = ASIdentifierManager.shared().advertisingIdentifier.uuidString.lowercased()
-        deviceId = Self.usableDeviceId(idfa)
+    private func refreshDeviceId() {
+        deviceIdLock.lock()
+        let generation = deviceIdGeneration
+        deviceIdLock.unlock()
+        deviceIdQueue.async { [weak self] in
+            guard let self else { return }
+            let idfa = Self.usableDeviceId(readAdvertisingId())
+            deviceIdLock.lock(); defer { deviceIdLock.unlock() }
+            guard generation == deviceIdGeneration else { return }
+            deviceId = idfa
+            deviceIdResolved = true
+        }
     }
+
+    private func dropDeviceId() {
+        deviceIdLock.lock(); defer { deviceIdLock.unlock() }
+        deviceIdGeneration += 1
+        deviceId = nil
+        deviceIdResolved = false
+    }
+
+    private func currentDeviceId() -> String? {
+        deviceIdLock.lock(); defer { deviceIdLock.unlock() }
+        return deviceId
+    }
+
+    /// Whether a usable IDFA is available right now, from the same cache analytics uses: `true` when
+    /// ATT is authorized and the identifier is not the all-zero sentinel, `false` when it is not,
+    /// `nil` while the background read has not finished (startup, and between background and the
+    /// next activation). Never reads the IDFA itself, so it is safe on any thread.
+    var advertisingIdAvailable: Bool? {
+        deviceIdLock.lock(); defer { deviceIdLock.unlock() }
+        return deviceIdResolved ? deviceId != nil : nil
+    }
+
+    #if DEBUG
+    var deviceIdForTesting: String? { currentDeviceId() }
+    /// Blocks until every IDFA read scheduled so far has finished.
+    func waitForDeviceIdRefreshForTesting() { deviceIdQueue.sync {} }
+    #endif
 
     /// Exposed for tests: the session-start value the manager actually emits, so its UNIT can be
     /// asserted where it is chosen rather than where it is merely copied.

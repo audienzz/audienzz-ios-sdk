@@ -3,7 +3,7 @@
 The cross-platform contract is maintained in
 [audienzz-android-sdk/docs/analytics-contract.md](https://github.com/audienzz/audienzz-android-sdk/blob/feature/durable-analytics-batching/docs/analytics-contract.md).
 
-Current branch additions: top-level `publisher_id`, `environment`, `os_version`; company/website
+Current branch additions: top-level `sdk_id` (the remote config's `sdkId`, or the id passed to `configureRemote` until a config is available; `publisher_id` up to 0.4.4, and events queued under that name are re-sent as `sdk_id`), `environment`, `os_version`; company/website
 mapping moves to the collector; plain-decimal CPM with source-specific currency; unknown IDs
 omitted; iOS impressions guarded per creative. Stock Prebid iOS cannot expose exact bid economics,
 so those fields remain absent. Attribute values remain JSON strings.
@@ -53,6 +53,12 @@ Lifecycle and delivery rules:
   now report viewability; rewarded viewability carries the same context as its impression.
 - No-bid responses retain their auction ID; success without a bidder becomes `NO_BIDS`.
   First-load Google banner impressions report `slot_reload=0`.
+- `placementVisible` (banners) is the fill-rate denominator: once per auction, the first time at
+  least one point of the slot is on screen with the app in the foreground after the auction ended,
+  whether Google filled it or not. It carries that auction's `auction_id` (the one `adImpression`
+  uses), `slot_reload` and `ad_unit_code`. A slot that never shows sends nothing; the next auction
+  (refresh), a page release or destruction closes the window. Same exclusions as viewability
+  (blanked for reload, hidden by the host, under an interstitial).
 - `viewability.start` is emitted only on the creative's first eligible exposure, with its
   `auction_id`. Scrolling away/back, uncovering or returning from background restarts the exposure
   timer without another start for that ad. Success still requires one continuous eligible second
