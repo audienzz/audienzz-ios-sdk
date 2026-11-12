@@ -58,7 +58,8 @@ public class AURemoteConfigBannerView: VisibleView {
 
     /// Set by `AUGalleryAds` before `load`: load eagerly whatever the ad config's `lazyLoad` says (a
     /// gallery slot is requested ahead of its page, while nothing is on screen for a viewport
-    /// trigger to watch), and keep the ad across page transitions.
+    /// trigger to watch), and keep the ad across page transitions unless the ad config sets
+    /// `config.refreshOnBack`.
     internal var galleryMode = false
 
     /// Held strongly: this class owns the banner's lifetime.
@@ -278,7 +279,7 @@ public class AURemoteConfigBannerView: VisibleView {
             isLazyLoad: resolvedLazyLoad(for: remoteConfig)
         )
         bannerView.headerBiddingEnabled = headerBidding
-        bannerView.keepsAdAcrossPages = galleryMode
+        bannerView.keepsAdAcrossPages = galleryMode && !remoteConfig.config.refreshOnBack
         bannerView.requestContext = requestContext
         self.bannerView = bannerView
         // So the delivery trace reports the ad config the publisher configured, not the Prebid

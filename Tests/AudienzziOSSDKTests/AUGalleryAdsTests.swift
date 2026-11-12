@@ -27,8 +27,11 @@ final class AUGalleryAdsTests: AudienzzLifecycleTestCase {
         AUGalleryAdSlot(slotKey: "ad-2", adConfigId: "b", pageIndex: 12),
     ]
 
-    private func config(_ id: String, distance: String? = nil, lazy: Bool = true) throws -> RemoteAdConfiguration {
-        let field = distance.map { ",\"preloadDistancePages\":\($0)" } ?? ""
+    private func config(
+        _ id: String, distance: String? = nil, lazy: Bool = true, refreshOnBack: String? = nil
+    ) throws -> RemoteAdConfiguration {
+        let field = (distance.map { ",\"preloadDistancePages\":\($0)" } ?? "")
+            + (refreshOnBack.map { ",\"refreshOnBack\":\($0)" } ?? "")
         return try JSONDecoder().decode(RemoteAdConfiguration.self, from: Data("""
         {"id":"\(id)", "config":{"adType":"banner","refreshTimeSeconds":30,"lazyLoad":\(lazy)\(field)},
          "gamConfig":{"adUnitPath":"/test/\(id)","adSizes":["300x250","300x600"]},
@@ -93,6 +96,28 @@ final class AUGalleryAdsTests: AudienzzLifecycleTestCase {
         XCTAssertNil(try config("a", distance: "\"2\"").config.preloadDistancePages)
         XCTAssertNil(try config("a", distance: "true").config.preloadDistancePages)
         XCTAssertNil(try config("a", distance: "null").config.preloadDistancePages)
+    }
+
+    func testRefreshOnBackIsReadLenientlyAndOffByDefault() throws {
+        XCTAssertFalse(try config("a").config.refreshOnBack)
+        XCTAssertFalse(try config("a", refreshOnBack: "false").config.refreshOnBack)
+        XCTAssertTrue(try config("a", refreshOnBack: "true").config.refreshOnBack)
+        XCTAssertFalse(try config("a", refreshOnBack: "\"true\"").config.refreshOnBack)
+        XCTAssertFalse(try config("a", refreshOnBack: "null").config.refreshOnBack)
+        let cached = try JSONDecoder().decode(
+            RemoteAdConfiguration.self,
+            from: try JSONEncoder().encode(config("a", refreshOnBack: "true"))
+        )
+        XCTAssertTrue(cached.config.refreshOnBack, "kept in the cache")
+    }
+
+    func testRefreshOnBackMakesAGalleryAdReloadOnReturnStillPreloadedEagerly() throws {
+        seed([try config("a", lazy: true, refreshOnBack: "true"), try config("b")])
+        let gallery = makeGallery()
+        gallery.updatePosition(4)
+        let banner = try XCTUnwrap(banner(in: gallery.adView(for: "ad-1")))
+        XCTAssertFalse(banner.keepsAdAcrossPages)
+        XCTAssertFalse(try XCTUnwrap(owners["a"]).resolvedLazyLoad(for: try config("a", lazy: true)))
     }
 
     func testPreloadDistancePagesSurvivesTheCache() throws {

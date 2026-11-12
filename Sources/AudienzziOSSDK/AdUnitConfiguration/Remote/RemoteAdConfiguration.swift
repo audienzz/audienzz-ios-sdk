@@ -30,13 +30,17 @@ public struct RemoteAdConfiguration: Codable {
         /// `AUGalleryAds` then uses its default. Read leniently, so a malformed value cannot drop the
         /// whole ad config.
         public let preloadDistancePages: Int?
+        /// Gallery ads: reload the slot's ad when the reader comes back to the gallery (an article
+        /// closed, the app back from the background), like every other banner. `true` only for a
+        /// JSON boolean `true`; off (the default), a gallery ad is kept across leaving and returning.
+        public let refreshOnBack: Bool
 
         /// Explicit so the one backend key is used for decoding AND for the local cache, which
         /// re-encodes this struct. iOS alone read `prefetchDistancePt`, so a margin the backend
         /// set for every platform would have reached Android, Flutter and React Native only.
         private enum CodingKeys: String, CodingKey {
             case adType, refreshTimeSeconds, lazyLoad, stickyMaxHeight, stickyTopOffset
-            case preloadDistancePages
+            case preloadDistancePages, refreshOnBack
             case prefetchDistancePt = "prefetchDistanceDp"
         }
 
@@ -56,6 +60,7 @@ public struct RemoteAdConfiguration: Codable {
             } else {
                 preloadDistancePages = nil
             }
+            refreshOnBack = ((try? container.decodeIfPresent(Bool.self, forKey: .refreshOnBack)) ?? nil) ?? false
         }
     }
 

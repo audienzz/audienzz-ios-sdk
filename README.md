@@ -152,6 +152,8 @@ func scrollViewDidScroll(_ scrollView: UIScrollView) {
 - **Screen:** `rootViewController` (or `screen:` — pass your page id string if you report one).
   Leaving it (an article on top, background) and coming back keeps the ad: it is paused, and refresh
   resumes where it stopped. Neither is retained by the gallery.
+- **Refresh on back:** `config.refreshOnBack: true` reloads the slot's ad when the reader comes back
+  instead, like any other banner. Default `false` (kept); only a JSON boolean `true` turns it on.
 - **Cells:** the ad lives in a host view the gallery owns; `embed` moves only that host, because
   removing an `AUBannerView` from its superview destroys it.
 

@@ -10,7 +10,8 @@
   `embed(_:in:)` (full width, centered vertically); the banner stays in a host view the gallery
   owns, so reusing cells never destroys it. Refresh is the ad config's `refreshTimeSeconds`,
   counted only while on screen. Leaving the gallery's screen and coming back keeps the ad
-  (`keepsAdAcrossPages`).
+  (`keepsAdAcrossPages`), unless the ad config's new `config.refreshOnBack` is `true` (default
+  `false`), which reloads it on return like any other banner.
 - **Fix: a view controller passed as a screen is no longer retained.** `AUBannerView.setScreen` and
   `AURemoteConfigBannerView.setScreen` hold a `UIViewController` weakly (route keys stay strong): a
   screen that owns its banners was kept alive by them.
