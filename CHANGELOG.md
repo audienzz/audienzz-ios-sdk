@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.6
 
 - **Gallery ads (`AUGalleryAds`) for paged screens (ePaper).** Each
   `AUGalleryAdSlot(slotKey:adConfigId:pageIndex:)` requests its remote-config banner once the reader
