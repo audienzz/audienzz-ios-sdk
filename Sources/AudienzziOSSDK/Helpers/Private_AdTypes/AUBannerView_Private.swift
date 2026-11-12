@@ -146,6 +146,10 @@ extension AUBannerView {
     /// runs. `screenActive` (set by the coordinator) and the `.pageInactive` block are what keep the
     /// viewport gate from resuming it in the meantime.
     func releaseForPage() {
+        if keepsAdAcrossPages && showsCreative {
+            holdForPage()
+            return
+        }
         viewabilityTracker?.stop()
         viewabilityTracker = nil
         // Leaving the screen closes the auction: a later return must not report it as seen.
@@ -160,12 +164,80 @@ extension AUBannerView {
         blankForReloadIfNeeded()
     }
 
+    /// `keepsAdAcrossPages`: the page went away. Pause, keep the creative.
+    ///
+    /// The viewability and `placementVisible` watchers stay installed: `countsExposure` is false
+    /// while `screenActive` is (the coordinator clears it before calling) and while the hold is
+    /// pending, so nothing is counted while the page is away, and a creative not yet seen is still
+    /// counted once its page returns and it is on screen. Restarting them would report the same
+    /// creative twice. Its impression is recorded when Google records it (`keptOnInactivePage`).
+    private func holdForPage() {
+        AULogEvent.logDebug("[AUBannerView] \(configId) — page inactive, holding the ad")
+        // Blocking alone pauses the refresh clock and keeps the eligible time already earned, so
+        // the return resumes the remaining interval.
+        refreshController.block(.pageInactive)
+        if googleLoad != nil {
+            // Google is already loading a creative into this view, and that cannot be cancelled:
+            // retiring it would let its creative replace the displayed one while its completion,
+            // impression and placementVisible were dropped. Let it complete as part of the visit that
+            // started it (the coordinator cleared `screenActive`, which completion requires), then
+            // hold — see `applyPendingHold()`.
+            screenActive = true
+            holdPending = true
+            // Exposure stops now (`countsExposure`), not when the load completes.
+            refreshKeptTrackers()
+            return
+        }
+        retireAuctionKeepingClock()
+        refreshKeptTrackers()
+    }
+
+    /// Applies a page hold deferred while a Google load was in flight (see `holdForPage()`).
+    func applyPendingHold() {
+        guard holdPending else { return }
+        holdPending = false
+        screenActive = false
+        refreshKeptTrackers()
+    }
+
+    /// Retires an auction still at the Prebid stage, keeping the displayed creative (nothing is
+    /// blanked). Retiring clears the refresh clock, which would leave a kept ad with nothing to
+    /// measure its next refresh from, so the interval restarts from now. With nothing in flight
+    /// there is nothing to retire, and the clock keeps the eligible time already earned.
+    private func retireAuctionKeepingClock() {
+        guard refreshController.hasRequestInFlight else { return }
+        retireCurrentAuction()
+        refreshController.noteLoadedNow()
+    }
+
+    /// Ends any exposure in progress now, rather than on the trackers' next layout or poll.
+    private func refreshKeptTrackers() {
+        viewabilityTracker?.refreshVisibility()
+        placementTracker?.refreshVisibility()
+    }
+
+    /// `keepsAdAcrossPages`: the page is back. Resume the remaining refresh interval, no auction.
+    private func resumeKeptAdForPage() {
+        holdPending = false
+        AULogEvent.logDebug("[AUBannerView] \(configId) — page active, keeping the ad")
+        refreshController.unblock(.pageInactive, schedule: false)
+        if !Audienzz.shared.isAppBackgrounded {
+            refreshController.unblock(.appBackground, schedule: false)
+        }
+        refreshVisibilityNow()
+        resumeEligibleWork()
+    }
+
     /// Page (re)activation: this ad's screen is the incoming page, so serve a fresh creative.
     /// Unlike a viewport resume (remaining eligible time), this always forces a new auction when the ad has
     /// loaded before — that is the "new page impression → fresh ad" semantics, and it's what makes a
     /// back-navigation or a return from the background show a current creative rather than a stale
     /// one. A never-loaded banner is left for its normal lazy/prefetch first load.
     func recreateForPage() {
+        if keepsAdAcrossPages && showsCreative {
+            resumeKeptAdForPage()
+            return
+        }
         viewabilityTracker?.stop()
         viewabilityTracker = nil
         // A hard transition supersedes the outgoing auction even when the SAME page is re-reported,
@@ -211,6 +283,10 @@ extension AUBannerView {
         // Never re-auction a banner the page sweep has released — the bridges broadcast reloads,
         // and without this a released banner on a kept-mounted route would come back to life.
         guard screenActive else { return }
+        // Nor one whose page is leaving: the Google load still in flight completes for the visit
+        // that started it, then the hold applies. A reload now would retire that load while its
+        // creative still replaced the displayed one.
+        guard !holdPending else { return }
         guard let request = gamRequest as? AdManagerRequest else { return }
         // This reload owns the replacement, so a pending periodic refresh or retry is retired rather
         // than allowed to issue a second one for the same transition.
@@ -250,6 +326,14 @@ extension AUBannerView {
     /// backgrounding produces a creative nobody can see.
     func blockForBackground() {
         refreshController.block(.appBackground)
+        if keepsAdAcrossPages && showsCreative {
+            // A kept ad comes back to the same creative, so its refresh clock must survive the
+            // background: retiring unconditionally cleared it and refresh never resumed. Only an
+            // auction still at the Prebid stage is retired; a Google load in flight completes.
+            if googleLoad == nil { retireAuctionKeepingClock() }
+            refreshKeptTrackers()
+            return
+        }
         retireCurrentAuction()
     }
 
@@ -340,7 +424,13 @@ extension AUBannerView {
     /// Unsolicited terminal events belong to the view and must still reach its publisher.
     @nonobjc @discardableResult
     func completeGoogleLoad(received: Bool, retryableFailure: Bool) -> Bool {
-        guard let load = googleLoad else { return acceptsGoogleEvents }
+        guard let load = googleLoad else {
+            // A late result after the watchdog released the wait. When it is accepted, the creative
+            // is on screen: without this a kept slot was reloaded on return while the bridge, told
+            // a creative arrived, skipped rebuilding its view.
+            if received && acceptsGoogleEvents { showsCreative = true }
+            return acceptsGoogleEvents
+        }
         googleLoadTimeout?.cancel()
         googleLoadTimeout = nil
         googleLoad = nil
@@ -351,13 +441,22 @@ extension AUBannerView {
             // callback attributed that creative's impression to a delivery that never loaded.
             if received {
                 renderedDeliveryId = pendingDeliveryId
+                showsCreative = true
             }
             lastRefreshTime = Date()
             refreshController.onRequestCompleted(generationAtRequest: load.refresh, success: !retryableFailure)
         } else {
             resumeEligibleWork()
         }
+        schedulePendingHold()
         return current
+    }
+
+    /// A deferred page hold applies once the caller has finished handling the completed load (its
+    /// commit, impression bookkeeping and `placementVisible` tracker run in the same callback).
+    private func schedulePendingHold() {
+        guard holdPending else { return }
+        DispatchQueue.main.async { [weak self] in self?.applyPendingHold() }
     }
 
     @nonobjc func watchGoogleLoad(_ load: GoogleLoad) {
@@ -375,6 +474,7 @@ extension AUBannerView {
                 self.refreshController.onRequestCompleted(generationAtRequest: load.refresh, success: true)
                 self.restoreFromBlankIfNeeded()
             } else { self.resumeEligibleWork() }
+            self.schedulePendingHold()
         }
         googleLoadTimeout = timeout
         DispatchQueue.main.asyncAfter(deadline: .now() + googleLoadTimeoutSeconds, execute: timeout)
@@ -763,7 +863,7 @@ extension AUBannerView {
             threshold: .leastNonzeroMagnitude,
             isEligible: { [weak self] in
                 guard let self else { return false }
-                return self.acceptsGoogleEvents && !self.blankedForReload
+                return self.countsExposure && !self.blankedForReload
                     && !self.refreshController.blockReasons.contains(.hostReportedHidden)
                     && !self.refreshController.blockReasons.contains(.interstitial)
             },
@@ -797,7 +897,7 @@ extension AUBannerView {
             view: self,
             isEligible: { [weak self] in
                 guard let self else { return false }
-                return self.acceptsGoogleEvents && !self.blankedForReload
+                return self.countsExposure && !self.blankedForReload
                     && !self.refreshController.blockReasons.contains(.hostReportedHidden)
                     && !self.refreshController.blockReasons.contains(.interstitial)
             },

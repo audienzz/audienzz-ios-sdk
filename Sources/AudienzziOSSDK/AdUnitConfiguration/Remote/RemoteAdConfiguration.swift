@@ -25,12 +25,22 @@ public struct RemoteAdConfiguration: Codable {
         /// Y offset (points) from the scroll viewport top where the sticky ad should pin.
         /// `nil` falls back to the scroll view's safe-area inset.
         public let stickyTopOffset: Int?
+        /// Gallery ads: how many pages before the reader reaches it a slot requests its ad. A
+        /// non-negative whole number, else `nil` (absent, negative, fractional or not a number), and
+        /// `AUGalleryAds` then uses its default. Read leniently, so a malformed value cannot drop the
+        /// whole ad config.
+        public let preloadDistancePages: Int?
+        /// Gallery ads: reload the slot's ad when the reader comes back to the gallery (an article
+        /// closed, the app back from the background), like every other banner. `true` only for a
+        /// JSON boolean `true`; off (the default), a gallery ad is kept across leaving and returning.
+        public let refreshOnBack: Bool
 
         /// Explicit so the one backend key is used for decoding AND for the local cache, which
         /// re-encodes this struct. iOS alone read `prefetchDistancePt`, so a margin the backend
         /// set for every platform would have reached Android, Flutter and React Native only.
         private enum CodingKeys: String, CodingKey {
             case adType, refreshTimeSeconds, lazyLoad, stickyMaxHeight, stickyTopOffset
+            case preloadDistancePages, refreshOnBack
             case prefetchDistancePt = "prefetchDistanceDp"
         }
 
@@ -44,6 +54,13 @@ public struct RemoteAdConfiguration: Codable {
             lazyLoad = try container.decodeIfPresent(Bool.self, forKey: .lazyLoad)
             stickyMaxHeight = try container.decodeIfPresent(Int.self, forKey: .stickyMaxHeight)
             stickyTopOffset = try container.decodeIfPresent(Int.self, forKey: .stickyTopOffset)
+            let distance = (try? container.decodeIfPresent(Double.self, forKey: .preloadDistancePages)) ?? nil
+            if let distance, distance >= 0, distance == distance.rounded(), distance <= Double(Int32.max) {
+                preloadDistancePages = Int(distance)
+            } else {
+                preloadDistancePages = nil
+            }
+            refreshOnBack = ((try? container.decodeIfPresent(Bool.self, forKey: .refreshOnBack)) ?? nil) ?? false
         }
     }
 
@@ -56,6 +73,26 @@ public struct RemoteAdConfiguration: Codable {
         public let adUnitPath: String
         public let adSizes: [String]
         public let adaptiveBannerConfig: AdaptiveBannerConfig?
+        /// Also ask GAM for the fluid size, next to ``adSizes``: full slot width, height set by the
+        /// creative (e.g. a fluid GAM native style). Prebid is unaffected and keeps bidding on
+        /// `prebidConfig.adSizes`. `false` when absent or not a JSON boolean.
+        public let includeFluid: Bool
+
+        private enum CodingKeys: String, CodingKey {
+            case adUnitPath, adSizes, adaptiveBannerConfig, includeFluid
+        }
+
+        /// `includeFluid` is read leniently, like `prebidConfig.format`: a strict decode that met a
+        /// string there would throw and cost the publisher every ad config.
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            adUnitPath = try container.decode(String.self, forKey: .adUnitPath)
+            adSizes = try container.decode([String].self, forKey: .adSizes)
+            adaptiveBannerConfig = try container.decodeIfPresent(
+                AdaptiveBannerConfig.self, forKey: .adaptiveBannerConfig
+            )
+            includeFluid = ((try? container.decodeIfPresent(Bool.self, forKey: .includeFluid)) ?? nil) ?? false
+        }
 
         public struct AdaptiveBannerConfig: Codable {
             public let enabled: Bool

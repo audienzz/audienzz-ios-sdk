@@ -92,6 +92,16 @@ public class AUAdView: VisibleView {
     /// `layoutSubviews`. Weak so `collapseBehaviour` (which removes subviews) clears it.
     internal weak var centeredAdSubview: UIView?
 
+    /// Stretch the Google banner to this view's full width instead of centering it. Set it when the
+    /// slot also requests GAM's fluid size (`AdSizeFluid` in `validAdSizes`): a fluid ad takes its
+    /// width from its view, and Google centers a fixed-size creative inside that full-width
+    /// container itself. The SDK then reports only the creative's height through
+    /// `onAdSizeChanged`, with this view's width. `AURemoteConfigBannerView` sets it from the ad
+    /// config's `gamConfig.includeFluid`; bridges that build their own banner set it themselves.
+    public var fillsWidthWithAdSubview = false {
+        didSet { setNeedsLayout() }
+    }
+
     public override func awakeFromNib() {
         super.awakeFromNib()
     }
@@ -103,6 +113,13 @@ public class AUAdView: VisibleView {
     public override func layoutSubviews() {
         super.layoutSubviews()
         guard let banner = centeredAdSubview, banner.superview === self else { return }
+        if fillsWidthWithAdSubview {
+            let filled = CGRect(x: 0, y: banner.frame.minY, width: bounds.width, height: banner.frame.height)
+            if banner.frame != filled {
+                banner.frame = filled
+            }
+            return
+        }
         let centeredX = ((bounds.width - banner.frame.width) / 2).rounded()
         if banner.frame.origin.x != centeredX {
             banner.frame.origin.x = centeredX

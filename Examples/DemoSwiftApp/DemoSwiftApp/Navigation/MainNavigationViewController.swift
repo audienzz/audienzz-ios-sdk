@@ -35,6 +35,7 @@ enum AdTypeExample: String {
     case adaptive = "Adaptive - 'multi-size GAM'"
     case targetingTesting = "Targeting Testing Page"
     case remoteConfig = "Remote Configuration Testing Page"
+    case galleryAds = "ePaper (gallery ads)"
     case stickyAdExample = "Sticky Ad Example"
     case longArticleStickyAds = "Long Article – 5 Sticky Ads"
     case fixedBanner = "Fixed Banner Example"
@@ -86,6 +87,7 @@ class MainNavigationViewController: UIViewController {
         .cpu,
         .targetingTesting,
         .remoteConfig,
+        .galleryAds,
         .stickyAdExample,
         .longArticleStickyAds,
         .fixedBanner,
@@ -205,6 +207,8 @@ extension MainNavigationViewController: UITableViewDelegate, UITableViewDataSour
                 withIdentifier: "RemoteConfigViewController"
             ) as! RemoteConfigViewController
             self.navigationController?.pushViewController(destination, animated: true)
+        case .galleryAds:
+            self.navigationController?.pushViewController(GalleryAdsViewController(), animated: true)
         case .stickyAdExample:
             let destination = StickyAdExampleViewController()
             self.navigationController?.pushViewController(destination, animated: true)

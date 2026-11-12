@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased
+
+- **Gallery ads (`AUGalleryAds`) for paged screens (ePaper).** Each
+  `AUGalleryAdSlot(slotKey:adConfigId:pageIndex:)` requests its remote-config banner once the reader
+  is within the ad config's new `config.preloadDistancePages` (default 2) of its page, instead of
+  when the screen opens or when the page's cell is built. Feed the position with
+  `updatePosition(_:)` (paging scroll view: `contentOffset.x / bounds.width`) and place the ad with
+  `embed(_:in:)` (full width, centered vertically); the banner stays in a host view the gallery
+  owns, so reusing cells never destroys it. Refresh is the ad config's `refreshTimeSeconds`,
+  counted only while on screen. Leaving the gallery's screen and coming back keeps the ad
+  (`keepsAdAcrossPages`), unless the ad config's new `config.refreshOnBack` is `true` (default
+  `false`), which reloads it on return like any other banner.
+- **Fix: a view controller passed as a screen is no longer retained.** `AUBannerView.setScreen` and
+  `AURemoteConfigBannerView.setScreen` hold a `UIViewController` weakly (route keys stay strong): a
+  screen that owns its banners was kept alive by them.
+- **`AUBannerView.keepsAdAcrossPages`** (default `false`). When on, a banner that has loaded is
+  only paused while its page is not the active one: the creative stays (no release, no blanking),
+  no auction runs and no viewability or `placementVisible` is counted (an impression Google
+  records meanwhile is recorded too, so the two agree); on return (page or foreground recovery) its refresh
+  resumes with the remaining eligible interval instead of a forced new auction. For bridges'
+  gallery (ePaper) slots that a reader leaves for an article and comes back to. Set before the
+  first load.
+- **Fluid GAM size for remote banners.** An ad config can set `gamConfig.includeFluid: true`. The
+  banner then also asks GAM for the fluid size next to its fixed `gamConfig.adSizes`, so fluid
+  creatives such as GAM native styles can serve into the same slot (full container width, height
+  set by the creative). Prebid is unaffected and keeps bidding on `prebidConfig.adSizes`. Off when
+  absent or not a JSON boolean. The host must give the container its width (as for full-width
+  slots); a fixed creative served into a fluid slot is centered by Google.
+
 ## 0.4.5
 
 - Every original-API GAM request now carries the reportable key-value `isIFAavailable` = `true` /

@@ -32,6 +32,12 @@ public class AUBannerView: AUAdView {
         let refresh: Int
     }
     internal var googleLoad: GoogleLoad?
+
+    /// A Google creative has been delivered to this view. Only then is there an ad worth keeping
+    /// across pages: a slot whose requests only failed retries on return like any other.
+    internal var showsCreative = false
+    /// `keepsAdAcrossPages`: the page went inactive while a Google load was in flight.
+    internal var holdPending = false
     internal var googleLoadTimeout: DispatchWorkItem?
     internal var googleLoadTimeoutSeconds: TimeInterval = 120
     internal var creativePageGeneration = 0
@@ -39,6 +45,16 @@ public class AUBannerView: AUAdView {
     internal var googleEventPageGeneration: Int?
     internal var acceptsGoogleEvents: Bool {
         googleEventPageGeneration == creativePageGeneration && screenActive && !refreshController.isDestroyed
+    }
+    /// Viewability and `placementVisible` may count. Not while a page hold waits for a Google load
+    /// to complete: that load may still finish, but its page is already away.
+    internal var countsExposure: Bool { acceptsGoogleEvents && !holdPending }
+    /// `keepsAdAcrossPages`: the displayed creative of a page that is away (or leaving, with its
+    /// Google load completing). Google still records its impression, and so does the SDK, so the two
+    /// agree; its viewability waits for the return (`countsExposure`).
+    internal var keptOnInactivePage: Bool {
+        keepsAdAcrossPages && showsCreative && (holdPending || !screenActive)
+            && googleEventPageGeneration == creativePageGeneration && !refreshController.isDestroyed
     }
     internal var pendingLoadReason: AURefreshRequestReason?
 
@@ -69,6 +85,20 @@ public class AUBannerView: AUAdView {
     /// instead did not skip header bidding: stock Prebid only rejects negative sizes, so every
     /// auction still sent a request that could never be filled.
     public var headerBiddingEnabled: Bool = true
+
+    /// Keep the delivered ad across page transitions instead of releasing it and loading a new one.
+    ///
+    /// Off (the default), leaving the banner's page releases it (auction retired, creative blanked)
+    /// and coming back forces a fresh auction. On, a banner that has loaded is only paused while its
+    /// page is not the active one: the creative stays, no auction runs and no viewability or
+    /// `placementVisible` is counted; on return its refresh resumes with the remaining eligible
+    /// interval, exactly as after scrolling back into view. A foreground recovery is the same kind
+    /// of return. A banner that never loaded keeps the default behaviour (released, first load
+    /// re-armed on return).
+    ///
+    /// For slots a reader leaves and comes back to within one visit, such as the ad tiles of an
+    /// ePaper whose articles open on top of it. Set it before the first load.
+    public var keepsAdAcrossPages: Bool = false
 
     /// Asks Prebid for demand. A seam so a test can see whether an auction reached Prebid at all.
     @nonobjc internal var demand: (AdUnit, AdManagerRequest, @escaping (ResultCode) -> Void) -> Void = {
@@ -195,7 +225,37 @@ public class AUBannerView: AUAdView {
 
     /// Caller-supplied screen token (a route key) for hosts not inferable from the responder chain —
     /// SwiftUI destinations, or a custom navigation model. Wins over view-controller resolution.
-    internal var hostScreenOverride: AnyObject?
+    ///
+    /// A view controller is held weakly: the screen usually owns this banner (through its view or a
+    /// gallery), and a strong reference back kept both alive after the screen was gone. A route
+    /// key is a value and is held strongly.
+    internal var hostScreenOverride: AnyObject? {
+        get { strongHostScreen ?? weakHostScreen }
+        set {
+            hostScreenOverrideSet = newValue != nil
+            if newValue is UIViewController {
+                weakHostScreen = newValue
+                strongHostScreen = nil
+            } else {
+                strongHostScreen = newValue
+                weakHostScreen = nil
+            }
+        }
+    }
+    private weak var weakHostScreen: AnyObject?
+    private var strongHostScreen: AnyObject?
+    /// An explicit owner was set. If it was a view controller that has since been deallocated, the
+    /// banner belongs to no screen; falling back to the responder chain would hand it to whichever
+    /// screen it happens to sit in.
+    private var hostScreenOverrideSet = false
+    internal var hostScreenOverrideExpired: Bool { hostScreenOverrideSet && hostScreenOverride == nil }
+
+    /// Carries over an owner that expired before this banner was built (`AURemoteConfigBannerView`):
+    /// the banner belongs to no screen rather than to whichever one it is added to.
+    internal func markHostScreenOverrideExpired() {
+        hostScreenOverride = nil
+        hostScreenOverrideSet = true
+    }
 
     /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
     /// destination, or a custom route). Pass the same token you report to
@@ -214,6 +274,7 @@ public class AUBannerView: AUAdView {
             if let a = override as? NSObject, let b = screen as? NSObject { return a.isEqual(b) }
             return false
         }
+        if hostScreenOverrideExpired { return false }
         guard let host = resolveHostViewController() else { return false }
         return host === screen
     }

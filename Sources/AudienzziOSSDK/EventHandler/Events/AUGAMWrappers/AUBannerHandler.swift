@@ -79,7 +79,8 @@ class AUBannerHandler: NSObject,
         // GMA reports revenue for one impression and its currency. Convert the amount to CPM;
         // the pair may arrive after the impression callback, so never delay or re-emit that event.
         self.gamView.paidEventHandler = { [weak auBannerView] adValue in
-            guard auBannerView?.acceptsGoogleEvents == true else { return }
+            // Also for a kept creative whose page is away: its impression is recorded too.
+            guard let view = auBannerView, view.acceptsGoogleEvents || view.keptOnInactivePage else { return }
             auBannerView?.lastPaidCurrency = adValue.currencyCode
             auBannerView?.lastPaidCpm = adValue.value.doubleValue * 1_000
         }
@@ -122,7 +123,16 @@ class AUBannerHandler: NSObject,
             // sized to the Prebid bid size even when GAM served its own ad at the primary size.
             let actualSize = pendingGAMSize ?? gamBannerView.adSize.size
 
-            if actualSize.width > 0 && actualSize.height > 0 {
+            if let host = auBannerView, host.fillsWidthWithAdSubview {
+                // Fluid slot: Google's view stays full width (a fixed creative is centered inside it
+                // by Google), so only the height comes from the creative. A fluid creative reports
+                // that height through willChangeAdSizeTo; until then its adSize has none.
+                if actualSize.height > 0 {
+                    gamBannerView.frame.size.height = actualSize.height
+                    host.onAdSizeChanged?(CGSize(width: host.bounds.width, height: actualSize.height))
+                    host.setNeedsLayout()
+                }
+            } else if actualSize.width > 0 && actualSize.height > 0 {
                 gamBannerView.resize(adSizeFor(cgSize: actualSize))
                 auBannerView?.onAdSizeChanged?(actualSize)
                 // The GAM banner just resized itself in place; re-center it so a creative
@@ -165,7 +175,9 @@ class AUBannerHandler: NSObject,
             AUAdTrace.log(placement: $0.tracePlacement ?? $0.configId, delivery: $0.renderedDeliveryId,
                           event: .googleImpression, visible: $0.isViewRefreshEligible)
         }
-        guard auBannerView?.acceptsGoogleEvents == true else { return }
+        // A kept creative whose page is away still had its impression recorded by Google; recording
+        // it too keeps the two in step (dropping it lost it for good). Its viewability waits.
+        guard let view = auBannerView, view.acceptsGoogleEvents || view.keptOnInactivePage else { return }
         guard auBannerView?.claimDisplayedImpression(
             responseId: bannerView.responseInfo?.responseIdentifier) == true else { return }
         LogEvent("bannerViewDidRecordImpression")
@@ -229,7 +241,9 @@ class AUBannerHandler: NSObject,
         didReceiveAppEvent name: String,
         with info: String?
     ) {
-        guard auBannerView?.acceptsGoogleEvents == true else { return }
+        // A kept creative whose page is away still gets its attribution: its impression is recorded
+        // too (`keptOnInactivePage`), and must not be reported as an ad-server fill.
+        guard let view = auBannerView, view.acceptsGoogleEvents || view.keptOnInactivePage else { return }
         LogEvent("didReceiveAppEvent")
         // A Prebid line item's creative fires this app event when it wins the GAM auction;
         // its absence by impression time means the ad server (Google) rendered.
@@ -243,11 +257,17 @@ class AUBannerHandler: NSObject,
     func adView(_ bannerView: BannerView, willChangeAdSizeTo size: AdSize) {
         guard auBannerView?.acceptsGoogleEvents == true else { return }
         LogEvent("willChangeAdSizeTo")
-        guard size.size.width > 0, size.size.height > 0 else { return }
+        // A fluid slot spans its host, so only the height is taken from Google (a fluid size
+        // need not carry a width).
+        let fills = auBannerView?.fillsWidthWithAdSubview == true
+        let reported = fills
+            ? CGSize(width: auBannerView?.bounds.width ?? 0, height: size.size.height)
+            : size.size
+        guard reported.height > 0, fills || reported.width > 0 else { return }
         // Google will resize its own view after this callback. Resize our container now, using
         // the callback value, not the still-old adSize. This must also work after didReceiveAd.
-        pendingGAMSize = size.size
-        auBannerView?.onAdSizeChanged?(size.size)
+        pendingGAMSize = reported
+        auBannerView?.onAdSizeChanged?(reported)
         auBannerView?.setNeedsLayout()
         sizeDelegate?.adView(bannerView, willChangeAdSizeTo: size)
     }

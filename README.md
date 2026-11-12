@@ -104,6 +104,11 @@ Give the container a real width before loading; omit `size` for backend adaptive
 updates its height after creative sizing, so do not keep adding height constraints in callbacks.
 Lazy loading defaults to `true` with a `200pt` prefetch margin; both are backend-controlled.
 
+With `gamConfig.includeFluid: true` in the ad config, the banner also requests GAM's fluid size
+(for example fluid GAM native styles) next to its fixed sizes; Prebid keeps its fixed sizes. A
+fluid ad spans the container's width and sets its own height, so give the container a width
+(e.g. leading and trailing constraints) and let its height follow the banner.
+
 For SwiftUI/custom routes sharing a controller, call `banner.setScreen(routeInstanceKey)` before
 loading and report that same key instead of the controller. Keep keys distinct for separate route
 instances. Destroy an owner when its placement is permanently removed; keep it alive through
@@ -116,6 +121,41 @@ active page, in the foreground, allowed by the viewport gate, and not paused or 
 interstitial or a reported overlay. Hidden time does not count; returning resumes the remaining
 time. With `7`, the next request starts after **seven eligible seconds**, then needs time to load.
 Navigation/foreground/interstitial recovery is separate from this timer. See [Smart Refresh](#smart-refresh).
+
+### Gallery ads (ePaper, paged screens)
+
+A pager builds a page only when it is about to show it, so an ad page further along is requested
+too late if it is requested when its cell is built, and requesting every ad page when the screen
+opens buys ads for pages most readers never reach. `AUGalleryAds` owns the ads instead: each slot
+requests its ad once the reader is within its preload distance and keeps it while cells are reused.
+
+```swift
+private lazy var galleryAds = AUGalleryAds(slots: [
+    AUGalleryAdSlot(slotKey: "epaper-1", adConfigId: "123", pageIndex: 4),
+    AUGalleryAdSlot(slotKey: "epaper-2", adConfigId: "124", pageIndex: 12),
+], rootViewController: self) // the screen is `self`, as reported to pageImpression(self)
+
+func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    galleryAds.updatePosition(scrollView.contentOffset.x / scrollView.bounds.width)
+}
+// Ad page cell: galleryAds.embed("epaper-1", in: cell.contentView) — false while there is no ad yet;
+// AUGalleryAdsDelegate.galleryAds(_:didCreateAdViewFor:) says when to reload that cell.
+// deinit: galleryAds.destroy()
+```
+
+- **Ad config:** each slot is a normal remote banner ad config (ad unit, sizes, Prebid,
+  `gamConfig.includeFluid`). It loads as soon as it is in range; `lazyLoad` and
+  `prefetchDistanceDp` do not apply.
+- **Preload distance:** `config.preloadDistancePages`: the reader is that many pages away or closer,
+  in either direction, fractional while swiping. Absent or invalid: **2**; `0` = only on its own page.
+- **Refresh:** `config.refreshTimeSeconds`, counted only while the ad is on screen.
+- **Screen:** `rootViewController` (or `screen:` — pass your page id string if you report one).
+  Leaving it (an article on top, background) and coming back keeps the ad: it is paused, and refresh
+  resumes where it stopped. Neither is retained by the gallery.
+- **Refresh on back:** `config.refreshOnBack: true` reloads the slot's ad when the reader comes back
+  instead, like any other banner. Default `false` (kept); only a JSON boolean `true` turns it on.
+- **Cells:** the ad lives in a host view the gallery owns; `embed` moves only that host, because
+  removing an `AUBannerView` from its superview destroys it.
 
 ### 5. Show an interstitial
 
