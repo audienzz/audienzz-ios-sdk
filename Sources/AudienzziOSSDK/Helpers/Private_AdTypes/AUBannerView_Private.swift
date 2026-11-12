@@ -424,7 +424,13 @@ extension AUBannerView {
     /// Unsolicited terminal events belong to the view and must still reach its publisher.
     @nonobjc @discardableResult
     func completeGoogleLoad(received: Bool, retryableFailure: Bool) -> Bool {
-        guard let load = googleLoad else { return acceptsGoogleEvents }
+        guard let load = googleLoad else {
+            // A late result after the watchdog released the wait. When it is accepted, the creative
+            // is on screen: without this a kept slot was reloaded on return while the bridge, told
+            // a creative arrived, skipped rebuilding its view.
+            if received && acceptsGoogleEvents { showsCreative = true }
+            return acceptsGoogleEvents
+        }
         googleLoadTimeout?.cancel()
         googleLoadTimeout = nil
         googleLoad = nil

@@ -275,6 +275,26 @@ final class KeepsAdAcrossPagesTests: AudienzzLifecycleTestCase {
         XCTAssertFalse(view.countsExposure, "its viewability still waits for the return")
     }
 
+    func testAPrebidWinReportedAfterTheHoldStillAttributesTheKeptCreative() {
+        let (view, gamView, handler) = leaveWithGoogleLoadInFlight()
+        handler.bannerViewDidReceiveAd(gamView)
+        drainMain()
+        XCTAssertFalse(view.holdPending)
+        XCTAssertFalse(view.displayedPrebidLineItemWon)
+
+        handler.adView(gamView, didReceiveAppEvent: "Prebid", with: nil)
+        XCTAssertTrue(view.displayedPrebidLineItemWon, "B is credited to Prebid, not the ad server")
+    }
+
+    func testALateSuccessAfterTheWatchdogMarksTheSlotAsShowingACreative() {
+        let (view, _) = loadedBanner(keeps: true)
+        view.showsCreative = false
+        view.googleEventPageGeneration = view.creativePageGeneration
+        view.googleLoad = nil
+        XCTAssertTrue(view.completeGoogleLoad(received: true, retryableFailure: false))
+        XCTAssertTrue(view.showsCreative, "a kept slot that shows a creative is kept on return")
+    }
+
     func testAnOrdinaryReleasedBannerRecordsNoImpression() {
         let (view, gamView) = loadedBanner(keeps: false)
         view.googleEventPageGeneration = view.creativePageGeneration
