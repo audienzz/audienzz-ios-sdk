@@ -17,7 +17,8 @@
   screen that owns its banners was kept alive by them.
 - **`AUBannerView.keepsAdAcrossPages`** (default `false`). When on, a banner that has loaded is
   only paused while its page is not the active one: the creative stays (no release, no blanking),
-  no auction runs and nothing is counted; on return (page or foreground recovery) its refresh
+  no auction runs and no viewability or `placementVisible` is counted (an impression Google
+  records meanwhile is recorded too, so the two agree); on return (page or foreground recovery) its refresh
   resumes with the remaining eligible interval instead of a forced new auction. For bridges'
   gallery (ePaper) slots that a reader leaves for an article and comes back to. Set before the
   first load.

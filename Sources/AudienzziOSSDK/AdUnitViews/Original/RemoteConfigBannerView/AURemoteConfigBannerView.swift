@@ -35,6 +35,7 @@ public class AURemoteConfigBannerView: VisibleView {
     private var pendingScreenKey: AnyObject? {
         get { strongScreenKey ?? weakScreenKey }
         set {
+            screenKeySet = newValue != nil
             if newValue is UIViewController {
                 weakScreenKey = newValue
                 strongScreenKey = nil
@@ -46,6 +47,18 @@ public class AURemoteConfigBannerView: VisibleView {
     }
     private weak var weakScreenKey: AnyObject?
     private var strongScreenKey: AnyObject?
+    /// A screen was set. When it was a view controller that is gone by the time the banner is built,
+    /// the banner must belong to no screen, not fall back to the responder chain.
+    private var screenKeySet = false
+
+    private func applyScreenKey(to bannerView: AUBannerView) {
+        guard screenKeySet else { return }
+        if let pendingScreenKey {
+            bannerView.hostScreenOverride = pendingScreenKey
+        } else {
+            bannerView.markHostScreenOverrideExpired()
+        }
+    }
 
     /// Publisher state requested before the inner banner existed.
     ///
@@ -103,7 +116,7 @@ public class AURemoteConfigBannerView: VisibleView {
     /// the underlying banner is built asynchronously, so the key is applied when ready.
     public func setScreen(_ screenKey: Any) {
         pendingScreenKey = screenKey as AnyObject
-        bannerView?.hostScreenOverride = pendingScreenKey
+        if let bannerView { applyScreenKey(to: bannerView) }
     }
 
     /// Force a fresh auction now on the underlying banner, ignoring the remaining eligible refresh interval.
@@ -285,7 +298,7 @@ public class AURemoteConfigBannerView: VisibleView {
         // So the delivery trace reports the ad config the publisher configured, not the Prebid
         // placement id, and matches the owner lines above.
         bannerView.tracePlacement = adConfigId
-        if let pendingScreenKey { bannerView.hostScreenOverride = pendingScreenKey }
+        applyScreenKey(to: bannerView)
 
         // Routed through `adUnitConfiguration`, which is what owns the interval: it stores the value
         // for `AURefreshController` (and for analytics' `autorefresh_time`) without a Prebid floor.

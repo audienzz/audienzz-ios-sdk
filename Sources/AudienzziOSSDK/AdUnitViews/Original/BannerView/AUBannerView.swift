@@ -46,6 +46,16 @@ public class AUBannerView: AUAdView {
     internal var acceptsGoogleEvents: Bool {
         googleEventPageGeneration == creativePageGeneration && screenActive && !refreshController.isDestroyed
     }
+    /// Viewability and `placementVisible` may count. Not while a page hold waits for a Google load
+    /// to complete: that load may still finish, but its page is already away.
+    internal var countsExposure: Bool { acceptsGoogleEvents && !holdPending }
+    /// `keepsAdAcrossPages`: the displayed creative of a page that is away (or leaving, with its
+    /// Google load completing). Google still records its impression, and so does the SDK, so the two
+    /// agree; its viewability waits for the return (`countsExposure`).
+    internal var keptOnInactivePage: Bool {
+        keepsAdAcrossPages && showsCreative && (holdPending || !screenActive)
+            && googleEventPageGeneration == creativePageGeneration && !refreshController.isDestroyed
+    }
     internal var pendingLoadReason: AURefreshRequestReason?
 
     /// Placement name used in the delivery trace. Defaults to the Prebid config id; a remote-config
@@ -239,6 +249,13 @@ public class AUBannerView: AUAdView {
     /// screen it happens to sit in.
     private var hostScreenOverrideSet = false
     internal var hostScreenOverrideExpired: Bool { hostScreenOverrideSet && hostScreenOverride == nil }
+
+    /// Carries over an owner that expired before this banner was built (`AURemoteConfigBannerView`):
+    /// the banner belongs to no screen rather than to whichever one it is added to.
+    internal func markHostScreenOverrideExpired() {
+        hostScreenOverride = nil
+        hostScreenOverrideSet = true
+    }
 
     /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
     /// destination, or a custom route). Pass the same token you report to

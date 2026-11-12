@@ -160,21 +160,43 @@ final class KeepsAdAcrossPagesTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(view.pendingLoadReason, .pageImpression, "retried on return")
     }
 
-    func testAGoogleLoadInFlightCompletesBeforeTheHold() {
+    /// A kept banner showing creative A whose refresh B is already loading in Google, then leaves.
+    private func leaveWithGoogleLoadInFlight() -> (AUBannerView, AdManagerBannerView, AUBannerHandler) {
         let (view, gamView) = loadedBanner(keeps: true)
+        let handler = view.eventHandler as! AUBannerHandler
         completedLoad(view)
+        view.googleEventPageGeneration = view.creativePageGeneration
+        view.renderedDeliveryId = "A"
+        view.commitDisplayedCreative(responseId: "response-A")
+        // Refresh B reaches Google.
         let generation = view.refreshController.onRequestStarted(.periodicRefresh)
+        gamView.adUnitID = "/test/unit"
+        view.pendingDeliveryId = "B"
+        view.renderAuctionId = "auction-B"
+        view.lastRenderEconomics = AURenderEconomics(auctionId: "auction-B")
         view.googleLoad = AUBannerView.GoogleLoad(auction: view.auctionGeneration, refresh: generation)
-
         leave(view)
-        XCTAssertTrue(view.screenActive, "the visit that started the load owns its completion")
         XCTAssertTrue(view.holdPending)
+        XCTAssertTrue(view.acceptsGoogleEvents, "the visit that started the load owns its completion")
+        return (view, gamView, handler)
+    }
 
-        XCTAssertTrue(view.completeGoogleLoad(received: true, retryableFailure: false),
-                      "creative B is committed, not dropped")
-        let held = expectation(description: "hold applied")
-        DispatchQueue.main.async { held.fulfill() }
-        wait(for: [held], timeout: 1)
+    private func drainMain() {
+        let done = expectation(description: "main queue")
+        DispatchQueue.main.async { done.fulfill() }
+        wait(for: [done], timeout: 1)
+    }
+
+    func testAGoogleLoadInFlightCommitsItsCreativeThenHolds() {
+        let (view, gamView, handler) = leaveWithGoogleLoadInFlight()
+
+        handler.bannerViewDidReceiveAd(gamView)
+        XCTAssertEqual(view.renderedDeliveryId, "B", "creative B is what the slot shows")
+        XCTAssertEqual(view.displayedEconomics?.auctionId, "auction-B", "and what render events describe")
+        XCTAssertNotNil(view.placementTracker, "B's placementVisible watcher is installed")
+        XCTAssertFalse(view.countsExposure, "but nothing is counted: the page is already away")
+
+        drainMain()
         XCTAssertFalse(view.screenActive)
         XCTAssertFalse(view.holdPending)
         XCTAssertFalse(gamView.isHidden)
@@ -182,6 +204,83 @@ final class KeepsAdAcrossPagesTests: AudienzzLifecycleTestCase {
 
         comeBack(view)
         XCTAssertNil(view.pendingLoadReason, "no auction on return")
+        XCTAssertEqual(view.renderedDeliveryId, "B")
+        XCTAssertTrue(view.countsExposure, "B counts once its page is back")
+    }
+
+    func testNoExposureIsCountedWhileTheHoldIsPending() {
+        let (view, _, _) = leaveWithGoogleLoadInFlight()
+        XCTAssertFalse(view.countsExposure)
+        XCTAssertTrue(view.keptOnInactivePage)
+    }
+
+    func testAReloadCannotRetireTheLoadAHoldIsWaitingFor() {
+        let (view, gamView, handler) = leaveWithGoogleLoadInFlight()
+        let auction = view.auctionGeneration
+
+        view.reloadAd()
+        XCTAssertEqual(view.auctionGeneration, auction, "the protected load is not retired")
+        XCTAssertNotNil(view.googleLoad)
+
+        handler.bannerViewDidReceiveAd(gamView)
+        XCTAssertEqual(view.renderedDeliveryId, "B")
+        drainMain()
+        XCTAssertFalse(view.holdPending)
+        XCTAssertFalse(view.screenActive)
+    }
+
+    func testAFailedLoadStillSettlesTheHold() {
+        let (view, gamView, handler) = leaveWithGoogleLoadInFlight()
+        handler.bannerView(gamView, didFailToReceiveAdWithError: NSError(domain: GADErrorDomain, code: RequestError.noFill.rawValue))
+        XCTAssertEqual(view.renderedDeliveryId, "A", "a failed replacement leaves A displayed")
+        drainMain()
+        XCTAssertFalse(view.holdPending)
+        XCTAssertFalse(view.screenActive)
+        comeBack(view)
+        XCTAssertNil(view.pendingLoadReason, "A is still kept: no auction on return")
+    }
+
+    func testAGoogleLoadThatNeverCompletesStillSettlesTheHold() {
+        let (view, _, _) = leaveWithGoogleLoadInFlight()
+        view.googleLoadTimeoutSeconds = 0.05
+        view.watchGoogleLoad(view.googleLoad!)
+        let settled = expectation(description: "hold settled")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { settled.fulfill() }
+        wait(for: [settled], timeout: 2)
+        XCTAssertNil(view.googleLoad)
+        XCTAssertFalse(view.holdPending)
+        XCTAssertFalse(view.screenActive)
+    }
+
+    func testABackgroundWhileTheHoldIsPendingLetsTheLoadComplete() {
+        let (view, gamView, handler) = leaveWithGoogleLoadInFlight()
+        let auction = view.auctionGeneration
+        view.blockForBackground()
+        XCTAssertEqual(view.auctionGeneration, auction)
+        handler.bannerViewDidReceiveAd(gamView)
+        XCTAssertEqual(view.renderedDeliveryId, "B")
+        drainMain()
+        XCTAssertFalse(view.holdPending)
+    }
+
+    func testTheImpressionOfAKeptCreativeIsRecordedWhileItsPageIsAway() {
+        let (view, gamView, handler) = leaveWithGoogleLoadInFlight()
+        handler.bannerViewDidReceiveAd(gamView)
+        drainMain()
+        XCTAssertFalse(view.acceptsGoogleEvents)
+
+        // Google records B's impression after the hold applied: it counts (Google counted it too).
+        handler.bannerViewDidRecordImpression(gamView)
+        XCTAssertTrue(view.displayedImpressionRecorded)
+        XCTAssertFalse(view.countsExposure, "its viewability still waits for the return")
+    }
+
+    func testAnOrdinaryReleasedBannerRecordsNoImpression() {
+        let (view, gamView) = loadedBanner(keeps: false)
+        view.googleEventPageGeneration = view.creativePageGeneration
+        leave(view)
+        (view.eventHandler as! AUBannerHandler).bannerViewDidRecordImpression(gamView)
+        XCTAssertFalse(view.displayedImpressionRecorded)
     }
 
     func testAnExpiredViewControllerOwnerDoesNotHandTheBannerToAnotherScreen() {

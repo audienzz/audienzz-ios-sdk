@@ -166,10 +166,11 @@ extension AUBannerView {
 
     /// `keepsAdAcrossPages`: the page went away. Pause, keep the creative.
     ///
-    /// The viewability and `placementVisible` watchers stay installed: `acceptsGoogleEvents` is false
-    /// while `screenActive` is (the coordinator clears it before calling), so nothing is counted
-    /// while the page is away, and a creative not yet seen is still counted once its page returns and
-    /// it is on screen. Restarting them would report the same creative twice.
+    /// The viewability and `placementVisible` watchers stay installed: `countsExposure` is false
+    /// while `screenActive` is (the coordinator clears it before calling) and while the hold is
+    /// pending, so nothing is counted while the page is away, and a creative not yet seen is still
+    /// counted once its page returns and it is on screen. Restarting them would report the same
+    /// creative twice. Its impression is recorded when Google records it (`keptOnInactivePage`).
     private func holdForPage() {
         AULogEvent.logDebug("[AUBannerView] \(configId) — page inactive, holding the ad")
         // Blocking alone pauses the refresh clock and keeps the eligible time already earned, so
@@ -183,6 +184,8 @@ extension AUBannerView {
             // hold — see `applyPendingHold()`.
             screenActive = true
             holdPending = true
+            // Exposure stops now (`countsExposure`), not when the load completes.
+            refreshKeptTrackers()
             return
         }
         retireAuctionKeepingClock()
@@ -280,6 +283,10 @@ extension AUBannerView {
         // Never re-auction a banner the page sweep has released — the bridges broadcast reloads,
         // and without this a released banner on a kept-mounted route would come back to life.
         guard screenActive else { return }
+        // Nor one whose page is leaving: the Google load still in flight completes for the visit
+        // that started it, then the hold applies. A reload now would retire that load while its
+        // creative still replaced the displayed one.
+        guard !holdPending else { return }
         guard let request = gamRequest as? AdManagerRequest else { return }
         // This reload owns the replacement, so a pending periodic refresh or retry is retired rather
         // than allowed to issue a second one for the same transition.
@@ -850,7 +857,7 @@ extension AUBannerView {
             threshold: .leastNonzeroMagnitude,
             isEligible: { [weak self] in
                 guard let self else { return false }
-                return self.acceptsGoogleEvents && !self.blankedForReload
+                return self.countsExposure && !self.blankedForReload
                     && !self.refreshController.blockReasons.contains(.hostReportedHidden)
                     && !self.refreshController.blockReasons.contains(.interstitial)
             },
@@ -884,7 +891,7 @@ extension AUBannerView {
             view: self,
             isEligible: { [weak self] in
                 guard let self else { return false }
-                return self.acceptsGoogleEvents && !self.blankedForReload
+                return self.countsExposure && !self.blankedForReload
                     && !self.refreshController.blockReasons.contains(.hostReportedHidden)
                     && !self.refreshController.blockReasons.contains(.interstitial)
             },

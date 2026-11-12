@@ -283,6 +283,24 @@ final class AUGalleryAdsTests: AudienzzLifecycleTestCase {
         XCTAssertNil(banner?.hostScreenOverride)
     }
 
+    func testAScreenGoneBeforeTheBannerIsBuiltLeavesItWithNoScreen() {
+        let owner = AURemoteConfigBannerView(adConfigId: "a")
+        owner.loadGoogle = { _, _ in }
+        autoreleasepool {
+            let screen = UIViewController()
+            owner.setScreen(screen)
+        }
+        let container = UIView()
+        owner.load(in: container, rootViewController: host, delegate: nil)
+        let banner = try? XCTUnwrap(self.banner(in: container))
+        XCTAssertEqual(banner?.hostScreenOverrideExpired, true,
+                       "an owner that expired before the build is carried over, not dropped")
+        let other = UIViewController()
+        if let banner { other.view.addSubview(banner) }
+        XCTAssertEqual(banner?.isHostedBy(other), false)
+        owner.destroy()
+    }
+
     func testARouteKeyScreenIsStillMatchedByValue() {
         let banner = AUBannerView(configId: "c", adSize: CGSize(width: 320, height: 50), adFormats: [.banner])
         banner.setScreen("route-1")

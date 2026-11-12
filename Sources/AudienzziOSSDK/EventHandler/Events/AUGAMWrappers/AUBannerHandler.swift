@@ -174,7 +174,9 @@ class AUBannerHandler: NSObject,
             AUAdTrace.log(placement: $0.tracePlacement ?? $0.configId, delivery: $0.renderedDeliveryId,
                           event: .googleImpression, visible: $0.isViewRefreshEligible)
         }
-        guard auBannerView?.acceptsGoogleEvents == true else { return }
+        // A kept creative whose page is away still had its impression recorded by Google; recording
+        // it too keeps the two in step (dropping it lost it for good). Its viewability waits.
+        guard let view = auBannerView, view.acceptsGoogleEvents || view.keptOnInactivePage else { return }
         guard auBannerView?.claimDisplayedImpression(
             responseId: bannerView.responseInfo?.responseIdentifier) == true else { return }
         LogEvent("bannerViewDidRecordImpression")
