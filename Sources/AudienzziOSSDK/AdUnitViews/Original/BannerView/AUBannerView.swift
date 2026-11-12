@@ -70,6 +70,20 @@ public class AUBannerView: AUAdView {
     /// auction still sent a request that could never be filled.
     public var headerBiddingEnabled: Bool = true
 
+    /// Keep the delivered ad across page transitions instead of releasing it and loading a new one.
+    ///
+    /// Off (the default), leaving the banner's page releases it (auction retired, creative blanked)
+    /// and coming back forces a fresh auction. On, a banner that has loaded is only paused while its
+    /// page is not the active one: the creative stays, no auction runs and no viewability or
+    /// `placementVisible` is counted; on return its refresh resumes with the remaining eligible
+    /// interval, exactly as after scrolling back into view. A foreground recovery is the same kind
+    /// of return. A banner that never loaded keeps the default behaviour (released, first load
+    /// re-armed on return).
+    ///
+    /// For slots a reader leaves and comes back to within one visit, such as the ad tiles of an
+    /// ePaper whose articles open on top of it. Set it before the first load.
+    public var keepsAdAcrossPages: Bool = false
+
     /// Asks Prebid for demand. A seam so a test can see whether an auction reached Prebid at all.
     @nonobjc internal var demand: (AdUnit, AdManagerRequest, @escaping (ResultCode) -> Void) -> Void = {
         unit, request, completion in unit.fetchDemand(adObject: request, completion: completion)

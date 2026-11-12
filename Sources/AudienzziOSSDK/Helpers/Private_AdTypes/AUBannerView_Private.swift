@@ -146,6 +146,10 @@ extension AUBannerView {
     /// runs. `screenActive` (set by the coordinator) and the `.pageInactive` block are what keep the
     /// viewport gate from resuming it in the meantime.
     func releaseForPage() {
+        if keepsAdAcrossPages && lastRefreshTime != nil {
+            holdForPage()
+            return
+        }
         viewabilityTracker?.stop()
         viewabilityTracker = nil
         creativePageGeneration += 1
@@ -158,12 +162,41 @@ extension AUBannerView {
         blankForReloadIfNeeded()
     }
 
+    /// `keepsAdAcrossPages`: the page went away. Pause, keep the creative.
+    ///
+    /// The viewability and `placementVisible` watchers stay installed: `acceptsGoogleEvents` is false
+    /// while `screenActive` is (the coordinator clears it before calling), so nothing is counted
+    /// while the page is away, and a creative not yet seen is still counted once its page returns and
+    /// it is on screen. Restarting them would report the same creative twice.
+    private func holdForPage() {
+        AULogEvent.logDebug("[AUBannerView] \(configId) — page inactive, holding the ad")
+        refreshController.block(.pageInactive)
+        // An auction in flight belongs to the visit that is ending. Retiring it keeps the displayed
+        // creative (nothing is blanked) and stops its Prebid loader.
+        retireCurrentAuction()
+    }
+
+    /// `keepsAdAcrossPages`: the page is back. Resume the remaining refresh interval, no auction.
+    private func resumeKeptAdForPage() {
+        AULogEvent.logDebug("[AUBannerView] \(configId) — page active, keeping the ad")
+        refreshController.unblock(.pageInactive, schedule: false)
+        if !Audienzz.shared.isAppBackgrounded {
+            refreshController.unblock(.appBackground, schedule: false)
+        }
+        refreshVisibilityNow()
+        resumeEligibleWork()
+    }
+
     /// Page (re)activation: this ad's screen is the incoming page, so serve a fresh creative.
     /// Unlike a viewport resume (remaining eligible time), this always forces a new auction when the ad has
     /// loaded before — that is the "new page impression → fresh ad" semantics, and it's what makes a
     /// back-navigation or a return from the background show a current creative rather than a stale
     /// one. A never-loaded banner is left for its normal lazy/prefetch first load.
     func recreateForPage() {
+        if keepsAdAcrossPages && lastRefreshTime != nil {
+            resumeKeptAdForPage()
+            return
+        }
         viewabilityTracker?.stop()
         viewabilityTracker = nil
         // A hard transition supersedes the outgoing auction even when the SAME page is re-reported,
