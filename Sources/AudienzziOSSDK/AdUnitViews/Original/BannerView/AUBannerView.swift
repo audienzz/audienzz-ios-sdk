@@ -32,6 +32,12 @@ public class AUBannerView: AUAdView {
         let refresh: Int
     }
     internal var googleLoad: GoogleLoad?
+
+    /// A Google creative has been delivered to this view. Only then is there an ad worth keeping
+    /// across pages: a slot whose requests only failed retries on return like any other.
+    internal var showsCreative = false
+    /// `keepsAdAcrossPages`: the page went inactive while a Google load was in flight.
+    internal var holdPending = false
     internal var googleLoadTimeout: DispatchWorkItem?
     internal var googleLoadTimeoutSeconds: TimeInterval = 120
     internal var creativePageGeneration = 0
@@ -216,6 +222,7 @@ public class AUBannerView: AUAdView {
     internal var hostScreenOverride: AnyObject? {
         get { strongHostScreen ?? weakHostScreen }
         set {
+            hostScreenOverrideSet = newValue != nil
             if newValue is UIViewController {
                 weakHostScreen = newValue
                 strongHostScreen = nil
@@ -227,6 +234,11 @@ public class AUBannerView: AUAdView {
     }
     private weak var weakHostScreen: AnyObject?
     private var strongHostScreen: AnyObject?
+    /// An explicit owner was set. If it was a view controller that has since been deallocated, the
+    /// banner belongs to no screen; falling back to the responder chain would hand it to whichever
+    /// screen it happens to sit in.
+    private var hostScreenOverrideSet = false
+    internal var hostScreenOverrideExpired: Bool { hostScreenOverrideSet && hostScreenOverride == nil }
 
     /// Associate this banner with a screen the SDK can't infer from the view hierarchy (a SwiftUI
     /// destination, or a custom route). Pass the same token you report to
@@ -245,6 +257,7 @@ public class AUBannerView: AUAdView {
             if let a = override as? NSObject, let b = screen as? NSObject { return a.isEqual(b) }
             return false
         }
+        if hostScreenOverrideExpired { return false }
         guard let host = resolveHostViewController() else { return false }
         return host === screen
     }

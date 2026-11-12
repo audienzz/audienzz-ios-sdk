@@ -34,6 +34,7 @@ final class KeepsAdAcrossPagesTests: AudienzzLifecycleTestCase {
         view.eventHandler = AUBannerHandler(auBannerView: view, gamView: gamView)
         view.gamRequest = AdManagerRequest()
         view.lastRefreshTime = Date()
+        view.showsCreative = true
         view.keepsAdAcrossPages = keeps
         return (view, gamView)
     }
@@ -89,6 +90,7 @@ final class KeepsAdAcrossPagesTests: AudienzzLifecycleTestCase {
     func testABannerThatNeverLoadedIsReleasedAsBefore() {
         let (view, gamView) = loadedBanner(keeps: true)
         view.lastRefreshTime = nil
+        view.showsCreative = false
 
         leave(view)
 
@@ -125,6 +127,75 @@ final class KeepsAdAcrossPagesTests: AudienzzLifecycleTestCase {
 
         XCTAssertFalse(view.refreshController.hasRequestInFlight, "the visit's auction was retired")
         XCTAssertTrue(view.refreshController.hasRefreshClock)
+    }
+
+    func testABackgroundKeepsTheRefreshClockOfAKeptAd() {
+        let (view, _) = loadedBanner(keeps: true)
+        completedLoad(view)
+
+        view.blockForBackground()
+
+        XCTAssertTrue(view.refreshController.blockReasons.contains(.appBackground))
+        XCTAssertTrue(view.refreshController.hasRefreshClock,
+                      "foreground recovery keeps the ad, so the clock must survive the background")
+    }
+
+    func testABackgroundStillRetiresAnOrdinaryBannersAuction() {
+        let (view, _) = loadedBanner(keeps: false)
+        completedLoad(view)
+
+        view.blockForBackground()
+
+        XCTAssertFalse(view.refreshController.hasRefreshClock, "unchanged: recovery reloads it")
+    }
+
+    func testASlotWhoseRequestOnlyFailedIsReleasedNotKept() {
+        let (view, gamView) = loadedBanner(keeps: true)
+        view.showsCreative = false
+
+        leave(view)
+        XCTAssertTrue(gamView.isHidden, "no creative to keep: the default release applies")
+        comeBack(view)
+
+        XCTAssertEqual(view.pendingLoadReason, .pageImpression, "retried on return")
+    }
+
+    func testAGoogleLoadInFlightCompletesBeforeTheHold() {
+        let (view, gamView) = loadedBanner(keeps: true)
+        completedLoad(view)
+        let generation = view.refreshController.onRequestStarted(.periodicRefresh)
+        view.googleLoad = AUBannerView.GoogleLoad(auction: view.auctionGeneration, refresh: generation)
+
+        leave(view)
+        XCTAssertTrue(view.screenActive, "the visit that started the load owns its completion")
+        XCTAssertTrue(view.holdPending)
+
+        XCTAssertTrue(view.completeGoogleLoad(received: true, retryableFailure: false),
+                      "creative B is committed, not dropped")
+        let held = expectation(description: "hold applied")
+        DispatchQueue.main.async { held.fulfill() }
+        wait(for: [held], timeout: 1)
+        XCTAssertFalse(view.screenActive)
+        XCTAssertFalse(view.holdPending)
+        XCTAssertFalse(gamView.isHidden)
+        XCTAssertTrue(view.refreshController.hasRefreshClock)
+
+        comeBack(view)
+        XCTAssertNil(view.pendingLoadReason, "no auction on return")
+    }
+
+    func testAnExpiredViewControllerOwnerDoesNotHandTheBannerToAnotherScreen() {
+        let banner = AUBannerView(configId: "c", adSize: CGSize(width: 320, height: 50), adFormats: [.banner])
+        autoreleasepool {
+            let owner = UIViewController()
+            banner.setScreen(owner)
+        }
+        XCTAssertTrue(banner.hostScreenOverrideExpired)
+        let other = UIViewController()
+        other.view.addSubview(banner)
+        XCTAssertFalse(banner.isHostedBy(other), "its explicit owner is gone; it is nobody's")
+        banner.setScreen("route-2")
+        XCTAssertTrue(banner.isHostedBy("route-2" as NSString), "a new owner can be set")
     }
 
     func testNothingIsCountedWhileThePageIsAway() {

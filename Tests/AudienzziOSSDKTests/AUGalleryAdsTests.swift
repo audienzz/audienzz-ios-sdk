@@ -226,6 +226,28 @@ final class AUGalleryAdsTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(hostView.center.y, 350, accuracy: 0.5, "centered vertically")
     }
 
+    func testEmbeddingAReusedPageTakesOutTheOtherSlotsAd() throws {
+        let gallery = makeGallery()
+        let page = UIView()
+        gallery.updatePosition(4)
+        gallery.updatePosition(12)
+        let firstBanner = try XCTUnwrap(banner(in: gallery.adView(for: "ad-1")))
+        XCTAssertTrue(gallery.embed("ad-1", in: page))
+        XCTAssertTrue(gallery.embed("ad-2", in: page))
+        XCTAssertEqual(page.subviews.count, 1)
+        XCTAssertTrue(page.subviews.first === gallery.adView(for: "ad-2"))
+        XCTAssertFalse(firstBanner.refreshController.isDestroyed, "only its host left the page")
+    }
+
+    func testEmbeddingASlotWithoutAnAdStillClearsTheReusedPage() {
+        let gallery = makeGallery()
+        let page = UIView()
+        gallery.updatePosition(4)
+        XCTAssertTrue(gallery.embed("ad-1", in: page))
+        XCTAssertFalse(gallery.embed("ad-2", in: page), "ad-2 is not in range yet")
+        XCTAssertTrue(page.subviews.isEmpty, "ad-1 must not show as if it were ad-2")
+    }
+
     func testTheSlotsViewIsAnnouncedOutsideTheScrollCallback() {
         let gallery = makeGallery()
         gallery.updatePosition(4)

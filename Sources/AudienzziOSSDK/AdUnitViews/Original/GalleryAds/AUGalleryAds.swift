@@ -177,11 +177,17 @@ public final class AUGalleryAds: NSObject {
     }
 
     /// Puts the slot's ad into `container`, the view of its page: full width, centered
-    /// vertically. Takes it out of the page it was in before. Returns `false` while the slot has no
-    /// ad yet; `galleryAds(_:didCreateAdViewFor:)` says when to embed again.
+    /// vertically. Takes it out of the page it was in before, and takes another slot's ad out of a
+    /// reused `container` (also when this slot has no ad yet). Returns `false` while the slot has no
+    /// ad; `galleryAds(_:didCreateAdViewFor:)` says when to embed again.
     @discardableResult
     public func embed(_ slotKey: String, in container: UIView) -> Bool {
-        guard let host = ads[slotKey]?.host else { return false }
+        let host = ads[slotKey]?.host
+        // Only hosts move; the banners inside them are never removed from their superview.
+        for other in ads.values.map(\.host) where other !== host && other.superview === container {
+            other.removeFromSuperview()
+        }
+        guard let host else { return false }
         if host.superview === container { return true }
         // Only the host leaves its page; the banner inside it is never removed from its superview.
         host.removeFromSuperview()
