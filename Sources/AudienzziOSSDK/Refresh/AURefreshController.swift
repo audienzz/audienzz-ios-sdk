@@ -84,6 +84,9 @@ internal final class AURefreshController {
 
     /// Eligible time earned in this cycle; nil until a current request completes.
     private var eligibleElapsed: TimeInterval?
+    /// Whether a periodic refresh can be scheduled at all: false until a request completes, and
+    /// after `invalidatePending()`. For tests.
+    var hasRefreshClock: Bool { eligibleElapsed != nil }
     private var eligibleSince: TimeInterval?
 
     private func pauseEligibleClock() {

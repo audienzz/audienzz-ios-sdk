@@ -170,10 +170,17 @@ extension AUBannerView {
     /// it is on screen. Restarting them would report the same creative twice.
     private func holdForPage() {
         AULogEvent.logDebug("[AUBannerView] \(configId) — page inactive, holding the ad")
+        // Blocking alone pauses the refresh clock and keeps the eligible time already earned, so
+        // the return resumes the remaining interval.
         refreshController.block(.pageInactive)
-        // An auction in flight belongs to the visit that is ending. Retiring it keeps the displayed
-        // creative (nothing is blanked) and stops its Prebid loader.
-        retireCurrentAuction()
+        if refreshController.hasRequestInFlight {
+            // An auction in flight belongs to the visit that is ending. Retiring it keeps the
+            // displayed creative (nothing is blanked) and stops its Prebid loader. Retiring also
+            // clears the refresh clock, which would leave the kept ad with nothing to measure its
+            // next refresh from — so the interval restarts from now.
+            retireCurrentAuction()
+            refreshController.noteLoadedNow()
+        }
     }
 
     /// `keepsAdAcrossPages`: the page is back. Resume the remaining refresh interval, no auction.

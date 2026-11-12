@@ -95,6 +95,38 @@ final class KeepsAdAcrossPagesTests: AudienzzLifecycleTestCase {
         XCTAssertTrue(gamView.isHidden, "never loaded: the default release applies")
     }
 
+    /// A banner whose last request completed, so its refresh clock is running.
+    private func completedLoad(_ view: AUBannerView) {
+        view.refreshController.setIntervalMillis(30_000)
+        let generation = view.refreshController.onRequestStarted(.firstLoad)
+        view.refreshController.onRequestCompleted(generationAtRequest: generation, success: true)
+        XCTAssertTrue(view.refreshController.hasRefreshClock)
+    }
+
+    func testRefreshCanStillBeScheduledAfterAReturn() {
+        let (view, _) = loadedBanner(keeps: true)
+        completedLoad(view)
+
+        leave(view)
+        comeBack(view)
+
+        XCTAssertTrue(view.refreshController.hasRefreshClock,
+                      "a kept ad keeps its refresh clock, or it never refreshes again")
+    }
+
+    func testRetiringAnAuctionInFlightRestartsTheRefreshClock() {
+        let (view, _) = loadedBanner(keeps: true)
+        completedLoad(view)
+        _ = view.refreshController.onRequestStarted(.periodicRefresh)
+        XCTAssertTrue(view.refreshController.hasRequestInFlight)
+
+        leave(view)
+        comeBack(view)
+
+        XCTAssertFalse(view.refreshController.hasRequestInFlight, "the visit's auction was retired")
+        XCTAssertTrue(view.refreshController.hasRefreshClock)
+    }
+
     func testNothingIsCountedWhileThePageIsAway() {
         let (view, _) = loadedBanner(keeps: true)
         leave(view)
