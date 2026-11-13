@@ -5,18 +5,16 @@
 Audienzz iOS SDK
 ========
 
-## What's new in 0.4.6
+## What's new in 0.4.7
 
-- **Gallery ads for ePaper and other paged screens** (`AUGalleryAds`): an ad is preloaded once the
-  reader is within `config.preloadDistancePages` pages of it (default 2). It is kept when the reader
-  opens an article and comes back, unless `config.refreshOnBack` is `true`. Refresh follows
-  `refreshTimeSeconds` and only counts while the ad is on screen.
-  See [Gallery ads](#gallery-ads-epaper-paged-screens).
-- **`AUBannerView.keepsAdAcrossPages`** (off by default): a loaded banner is paused while its page is
-  not active and resumes on return, without a new auction.
-- **Fluid GAM size:** `gamConfig.includeFluid: true` also requests fluid creatives, such as GAM
-  native styles. Prebid is unchanged. See [Place a remote banner](#4-place-a-remote-banner).
-- **Fix:** a view controller passed as the screen is no longer retained by its banners.
+- **Banners are sized to the Prebid creative.** When a Prebid bid renders through a GAM creative of
+  another size (a 320x50 bid in a 300x250 creative, say), the banner and its container take the
+  bid's size instead of the GAM creative's. On by default; turn it off with
+  `AUBannerView.resizeToPrebidCreative = false` or the ad config's `config.resizeToPrebidCreative`.
+  Fluid slots are not resized. The proper fix is still in GAM: size the Prebid line items'
+  creatives by `hb_size`.
+- **`AURemoteConfigBannerView.onAdSizeChanged`:** the size the slot shows, for hosts that do not lay
+  out with the constraints the SDK installs (React Native, Flutter).
 
 All new ad config fields are optional; without them the defaults apply. Full list:
 [CHANGELOG](CHANGELOG.md).
@@ -33,9 +31,9 @@ Google Mobile Ads **app ID**. GAM ad-unit paths and Prebid placement IDs come fr
 
 ### 1. Install
 
-This guide targets iOS SDK **0.4.6**, with a minimum deployment target of **iOS 15.0**.
-Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git` and select `0.4.6`.
-CocoaPods: `pod 'AudienzziOSSDK', '~> 0.4.6'`.
+This guide targets iOS SDK **0.4.7**, with a minimum deployment target of **iOS 15.0**.
+Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git` and select `0.4.7`.
+CocoaPods: `pod 'AudienzziOSSDK', '~> 0.4.7'`.
 
 Add your GAM/AdMob app ID to `Info.plist` under `GADApplicationIdentifier`.
 In GAM, leave each banner ad unit's **refresh rate unset**; Audienzz owns refresh.

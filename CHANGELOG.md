@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.7
 
 - **Banners are sized to the Prebid creative.** When a Prebid bid renders through a GAM creative of
   another size (a 300x250 bid in a 300x600 creative was left smaller and off-centre; a 300x600 bid
@@ -13,6 +13,10 @@
   from the ad config's `config.resizeToPrebidCreative`. Fluid slots (`gamConfig.includeFluid`) are
   not resized: they span the host and take only GAM's height. The proper fix is still in GAM: size
   the Prebid line items' creatives by `hb_size`.
+- **`AURemoteConfigBannerView.onAdSizeChanged`** reports the size the slot shows, once per load and
+  on each change, including the Prebid creative's size. For hosts that do not lay out with the
+  constraints the SDK installs (React Native, Flutter). A banner the owner has retired no longer
+  reports.
 
 ## 0.4.6
 
