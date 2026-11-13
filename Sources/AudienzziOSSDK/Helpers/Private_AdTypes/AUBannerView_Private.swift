@@ -637,11 +637,22 @@ extension AUBannerView {
         googleEventPageGeneration = creativePageGeneration
         renderAuctionId = currentAuctionId
         eventHandler?.ensureListeners()
+        eventHandler?.beginGoogleLoad(prebidSize: prebidSizeToResizeTo)
         watchGoogleLoad(load)
         onLoadRequest?(gamRequest)
     }
 
 
+
+    /// The winning bid's `hb_size` the next Google load may be resized to, or nil. Only a real
+    /// Prebid win can render a Prebid creative; `prebidWinningBidder` is set for one. Never for a
+    /// fluid slot (`fillsWidthWithAdSubview`): its GAM view stays full width and takes only the
+    /// height, reported outside the sizer, so a size held for the Prebid creative would never be
+    /// released and a fluid creative's height would be lost.
+    @nonobjc var prebidSizeToResizeTo: CGSize? {
+        resizeToPrebidCreative && !fillsWidthWithAdSubview && prebidWinningBidder != nil
+            ? lastPrebidCreativeSize : nil
+    }
 
     /// Reads a Prebid targeting keyword that may be a String or a single-element [String].
     static func keyword(_ key: String, in targeting: [AnyHashable: Any]) -> String? {

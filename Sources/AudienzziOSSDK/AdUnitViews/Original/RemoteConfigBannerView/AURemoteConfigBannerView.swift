@@ -23,6 +23,13 @@ public class AURemoteConfigBannerView: VisibleView {
     public var bannerParameters: AUBannerParameters?
     public var videoParameters: AUVideoParameters?
 
+    /// The size the slot now shows, in points: once per load, and again whenever it changes (GAM
+    /// resized the creative, or the banner was sized to the Prebid creative). A fluid slot reports
+    /// the container's width. For hosts that lay the container out themselves (React Native,
+    /// Flutter) and so cannot rely on the constraints this view installs. Called on the main
+    /// thread; a size from a banner this view has since retired is never reported.
+    public var onAdSizeChanged: ((CGSize) -> Void)?
+
     // MARK: - Delivery settings
     //
     // Lazy loading and the prefetch margin are backend-driven only: the ad config's `lazyLoad` and
@@ -293,6 +300,7 @@ public class AURemoteConfigBannerView: VisibleView {
         )
         bannerView.headerBiddingEnabled = headerBidding
         bannerView.keepsAdAcrossPages = galleryMode && !remoteConfig.config.refreshOnBack
+        bannerView.resizeToPrebidCreative = remoteConfig.config.resizeToPrebidCreative ?? true
         bannerView.requestContext = requestContext
         self.bannerView = bannerView
         // So the delivery trace reports the ad config the publisher configured, not the Prebid
@@ -403,6 +411,7 @@ public class AURemoteConfigBannerView: VisibleView {
             // layoutIfNeeded on the superview ensures constraints attached to `container`
             // itself (not just inside it) are also resolved in the same layout pass.
             container?.superview?.layoutIfNeeded()
+            self.onAdSizeChanged?(newSize)
         }
     }
     
