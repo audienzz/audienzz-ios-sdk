@@ -290,4 +290,27 @@ final class PrebidCreativeResizeTests: AudienzzLifecycleTestCase {
         handler.adView(google, willChangeAdSizeTo: adSizeFor(cgSize: CGSize(width: 390, height: 420)))
         XCTAssertEqual(reported.last?.height, 420)
     }
+
+    func testTheOwnerReportsOnlyTheSizeShownToItsHost() throws {
+        try loadSlot()
+        var reported: [CGSize] = []
+        owner.onAdSizeChanged = { reported.append($0) }
+        handler.beginGoogleLoad(prebidSize: CGSize(width: 300, height: 250))
+        // GAM's own size for a Prebid creative is held, never reported first (no 600 -> 250 bounce).
+        handler.adView(google, willChangeAdSizeTo: adSizeFor(cgSize: CGSize(width: 300, height: 600)))
+        handler.adView(google, didReceiveAppEvent: "Prebid", with: nil)
+        handler.bannerViewDidReceiveAd(google)
+        XCTAssertEqual(reported, [CGSize(width: 300, height: 250)])
+    }
+
+    func testARetiredBannerNoLongerReportsToTheOwner() throws {
+        try loadSlot()
+        var reported: [CGSize] = []
+        owner.onAdSizeChanged = { reported.append($0) }
+        let retired = handler!
+        owner.destroy()
+        retired.beginGoogleLoad(prebidSize: nil)
+        retired.adView(google, willChangeAdSizeTo: adSizeFor(cgSize: CGSize(width: 300, height: 600)))
+        XCTAssertEqual(reported, [])
+    }
 }
