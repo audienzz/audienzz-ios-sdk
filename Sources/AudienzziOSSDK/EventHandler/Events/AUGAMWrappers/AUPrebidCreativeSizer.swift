@@ -58,15 +58,23 @@ final class AUPrebidCreativeSizer {
 
     /// Bumped for every Google request, so a late markup read cannot act on a newer load.
     private var generation = 0
-    private var prebidSize: CGSize?
-    private var prebidRendered = false
-    private var googleLoaded = false
+    private var prebidSize: CGSize? { didSet { updateClipping() } }
+    private var prebidRendered = false { didSet { updateClipping() } }
+    private var googleLoaded = false { didSet { updateClipping() } }
     /// The markup is being read: GAM's size for this load is not reported yet.
-    private(set) var probing = false
+    private(set) var probing = false { didSet { updateClipping() } }
     /// GAM's size for this load, held back until it is known whether it is the one to show.
-    private var heldSize: CGSize?
+    private var heldSize: CGSize? { didSet { updateClipping() } }
     /// GAM's latest size for this load.
-    private var deliveredSize: CGSize?
+    private var deliveredSize: CGSize? { didSet { updateClipping() } }
+
+    /// The slot GAM's view sits in, clipped while GAM's size is held back. GAM draws the new
+    /// creative at its own size straight away, but the slot keeps the size shown before until the
+    /// hold ends: unclipped, a creative taller than that drew over the content below the slot for
+    /// up to `probeTimeout`. Clipped only for the hold, so a creative may still draw outside its
+    /// slot otherwise (MRAID resize).
+    private weak var clippedSlot: UIView?
+    private var slotClippedBefore = false
 
     init(gamView: AdManagerBannerView) {
         self.gamView = gamView
@@ -124,6 +132,20 @@ final class AUPrebidCreativeSizer {
 
     private var holdsSize: Bool {
         prebidSize != nil && !prebidRendered && (!googleLoaded || probing)
+    }
+
+    /// Clips the slot from the moment GAM has a size for this load that is held back, until the
+    /// hold ends.
+    private func updateClipping() {
+        if holdsSize, (heldSize ?? deliveredSize) != nil {
+            guard clippedSlot == nil, let slot = gamView?.superview else { return }
+            slotClippedBefore = slot.clipsToBounds
+            slot.clipsToBounds = true
+            clippedSlot = slot
+        } else if let slot = clippedSlot {
+            slot.clipsToBounds = slotClippedBefore
+            clippedSlot = nil
+        }
     }
 
     /// Reports this load's size once: the Prebid size when the Prebid creative rendered, GAM's otherwise.

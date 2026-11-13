@@ -125,6 +125,42 @@ final class PrebidCreativeSizerTests: XCTestCase {
         XCTAssertEqual(reported, [large], "an answer after the timeout is ignored")
     }
 
+    /// GAM draws the new creative at its own size during the hold, while the slot keeps the size
+    /// shown before: unclipped, it drew over the content below the slot.
+    func testTheSlotIsClippedOnlyWhileGamsSizeIsHeld() {
+        let slot = UIView(frame: CGRect(origin: .zero, size: CGSize(width: 320, height: 50)))
+        slot.addSubview(google)
+        sizer.beginLoad(prebidSize: small)
+        XCTAssertFalse(slot.clipsToBounds, "nothing held yet: the shown creative fits its slot")
+        sizer.gamSizeChanged(large)
+        XCTAssertTrue(slot.clipsToBounds, "GAM's new size is held")
+        googleServes(large)
+        XCTAssertTrue(slot.clipsToBounds, "still held while the markup is read")
+        sizer.prebidDidRender()
+        XCTAssertFalse(slot.clipsToBounds, "the slot has the size to show")
+
+        sizer.beginLoad(prebidSize: small)
+        googleServes(large)
+        XCTAssertTrue(slot.clipsToBounds)
+        advance(sizer.probeTimeout)
+        XCTAssertFalse(slot.clipsToBounds, "released with GAM's size on the timeout")
+
+        sizer.beginLoad(prebidSize: nil)
+        sizer.gamSizeChanged(large)
+        googleServes(large)
+        XCTAssertFalse(slot.clipsToBounds, "without a Prebid win nothing is held")
+    }
+
+    func testASlotThatAlreadyClippedKeepsClipping() {
+        let slot = UIView(frame: CGRect(origin: .zero, size: CGSize(width: 320, height: 50)))
+        slot.clipsToBounds = true
+        slot.addSubview(google)
+        sizer.beginLoad(prebidSize: small)
+        googleServes(large)
+        sizer.prebidDidRender()
+        XCTAssertTrue(slot.clipsToBounds)
+    }
+
     func testAnAppEventAfterTheTimeoutStillCorrectsTheSize() {
         sizer.beginLoad(prebidSize: small)
         googleServes(large)
