@@ -997,7 +997,12 @@ audienzzInterstitialView.onLoadRequest = { [weak self] gamRequest in
 
 You can find more examples of practical implementation here:
 
-[Demo App](AudienzziOSSDK/Examples/DemoSwiftApp)
+[Demo App](Examples/DemoSwiftApp)
+
+To run the demo app on a device, open `Examples/DemoSwiftApp/DemoSwiftApp.xcodeproj`, select the
+**DemoSwiftApp** target → **Signing & Capabilities** and choose your team. If Xcode reports the
+bundle id as unavailable, change it to one your team owns. The project ships without a team, so it
+builds on the simulator as is.
 
 ## Remote Configuration Integration
 
