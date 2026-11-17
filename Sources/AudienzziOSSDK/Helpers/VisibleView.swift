@@ -207,7 +207,17 @@ public class VisibleView: UIView {
         contentOffsetObservations.append(view.observe(\.alpha, options: [.new], changeHandler: recheck))
         // A section that collapses, or a container that resizes to nothing, conceals the ad by
         // geometry rather than by a flag and emits no scroll event either.
-        contentOffsetObservations.append(view.observe(\.bounds, options: [.new], changeHandler: recheck))
+        if view is UIScrollView {
+            // Scrolling moves a scroll view's bounds origin, so this fired on every scroll frame
+            // next to the `contentOffset` observation above and every slot evaluated twice per
+            // frame. Only a size change is news here; an origin change is the scroll itself.
+            contentOffsetObservations.append(view.observe(\.bounds, options: [.old, .new]) { [weak self] _, change in
+                if let old = change.oldValue, let new = change.newValue, old.size == new.size { return }
+                self?.checkIfFrameIsVisible()
+            })
+        } else {
+            contentOffsetObservations.append(view.observe(\.bounds, options: [.new], changeHandler: recheck))
+        }
         contentOffsetObservations.append(view.observe(\.frame, options: [.new], changeHandler: recheck))
         // A transform moves the ad without changing its frame, and toggling clipsToBounds changes
         // what an ancestor shows without changing any geometry at all. Neither emits any of the
@@ -307,10 +317,14 @@ public class VisibleView: UIView {
     /// recurse through resume -> recompute -> resume.
     private var isEvaluatingVisibility = false
 
+    /// How many visibility evaluations ran. Tests use it to pin the per-scroll-frame cost.
+    internal private(set) var visibilityEvaluationCount = 0
+
     private func checkIfFrameIsVisible() {
         guard let window = self.window else { return }
         if isEvaluatingVisibility { return }
         isEvaluatingVisibility = true
+        visibilityEvaluationCount += 1
         defer { isEvaluatingVisibility = false }
 
         let frameInWindow = window.convert(self.bounds, from: self)

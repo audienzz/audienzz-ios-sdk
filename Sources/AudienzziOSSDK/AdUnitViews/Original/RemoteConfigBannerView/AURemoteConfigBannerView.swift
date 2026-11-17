@@ -30,6 +30,14 @@ public class AURemoteConfigBannerView: VisibleView {
     /// thread; a size from a banner this view has since retired is never reported.
     public var onAdSizeChanged: ((CGSize) -> Void)?
 
+    /// Whether the host sizes the container itself from ``onAdSizeChanged`` (React Native, which
+    /// lays the container out with Yoga). When `true` this view constrains only the banner inside
+    /// the container: it adds no width or height constraint to the container and, on a resize,
+    /// lays out the container's own subtree rather than its superview. Otherwise Auto Layout and
+    /// the host's layout both sized the container, and every resize laid the host's view out twice.
+    /// Defaults to `false`, where the container follows the ad. Set it before `load(in:)`.
+    @objc public var hostSizesContainer = false
+
     // MARK: - Delivery settings
     //
     // Lazy loading and the prefetch margin are backend-driven only: the ad config's `lazyLoad` and
@@ -109,6 +117,8 @@ public class AURemoteConfigBannerView: VisibleView {
         let lazyLoad: Bool
         let prefetchMarginPoints: CGFloat
         let includeFluid: Bool
+        /// Decides which constraints the banner was built with.
+        let hostSizesContainer: Bool
     }
     private var activeLoadKey: LoadKey?
 
@@ -239,7 +249,8 @@ public class AURemoteConfigBannerView: VisibleView {
             resolvedSize: gadSize.size,
             lazyLoad: resolvedLazyLoad(for: remoteConfig),
             prefetchMarginPoints: resolvedPrefetchMarginPoints(for: remoteConfig),
-            includeFluid: includeFluid
+            includeFluid: includeFluid,
+            hostSizesContainer: self.hostSizesContainer
         )
         // An identical repeat is a no-op, not a second banner. React Native re-runs this whenever
         // any prop changes, and a publisher may call it from a layout pass that fires more than
@@ -384,14 +395,16 @@ public class AURemoteConfigBannerView: VisibleView {
         containerWidthConstraint.priority = .defaultLow
         let containerHeightConstraint = container.heightAnchor.constraint(equalToConstant: initialLayoutSize.height)
 
-        let created = [
+        let hostSizesContainer = self.hostSizesContainer
+        var created = [
             bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             bannerView.topAnchor.constraint(equalTo: container.topAnchor),
             bannerWidthConstraint,
-            bannerHeightConstraint,
-            containerWidthConstraint,
-            containerHeightConstraint
+            bannerHeightConstraint
         ]
+        if !hostSizesContainer {
+            created += [containerWidthConstraint, containerHeightConstraint]
+        }
         NSLayoutConstraint.activate(created)
         ownedConstraints = created
 
@@ -408,9 +421,15 @@ public class AURemoteConfigBannerView: VisibleView {
             }
             bannerHeightConstraint.constant = newSize.height
             containerHeightConstraint.constant = newSize.height
-            // layoutIfNeeded on the superview ensures constraints attached to `container`
-            // itself (not just inside it) are also resolved in the same layout pass.
-            container?.superview?.layoutIfNeeded()
+            if hostSizesContainer {
+                // The host resizes the container when it hears the size below; only the banner
+                // inside it is ours to lay out.
+                container?.layoutIfNeeded()
+            } else {
+                // layoutIfNeeded on the superview ensures constraints attached to `container`
+                // itself (not just inside it) are also resolved in the same layout pass.
+                container?.superview?.layoutIfNeeded()
+            }
             self.onAdSizeChanged?(newSize)
         }
     }
