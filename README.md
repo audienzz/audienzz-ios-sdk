@@ -5,16 +5,14 @@
 Audienzz iOS SDK
 ========
 
-## What's new in 0.4.7
+## What's new in 0.4.8
 
-- **Banners are sized to the Prebid creative.** When a Prebid bid renders through a GAM creative of
-  another size (a 320x50 bid in a 300x250 creative, say), the banner and its container take the
-  bid's size instead of the GAM creative's. On by default; turn it off with
-  `AUBannerView.resizeToPrebidCreative = false` or the ad config's `config.resizeToPrebidCreative`.
-  Fluid slots are not resized. The proper fix is still in GAM: size the Prebid line items'
-  creatives by `hb_size`.
-- **`AURemoteConfigBannerView.onAdSizeChanged`:** the size the slot shows, for hosts that do not lay
-  out with the constraints the SDK installs (React Native, Flutter).
+- **Smoother scrolling with several banners.** Each banner checks whether it is on screen once per
+  scroll frame instead of twice. Visibility is still re-checked when a scroll view is moved through
+  its bounds, resized, or scrolled from inside a visibility callback.
+- **`AURemoteConfigBannerView.hostSizesContainer`** (default `false`): set it when your host sizes
+  the ad container itself from `onAdSizeChanged` (the React Native bridge does); the SDK then
+  constrains only the banner inside the container.
 
 All new ad config fields are optional; without them the defaults apply. Full list:
 [CHANGELOG](CHANGELOG.md).
@@ -31,9 +29,9 @@ Google Mobile Ads **app ID**. GAM ad-unit paths and Prebid placement IDs come fr
 
 ### 1. Install
 
-This guide targets iOS SDK **0.4.7**, with a minimum deployment target of **iOS 15.0**.
-Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git` and select `0.4.7`.
-CocoaPods: `pod 'AudienzziOSSDK', '~> 0.4.7'`.
+This guide targets iOS SDK **0.4.8**, with a minimum deployment target of **iOS 15.0**.
+Swift Package Manager: add `https://github.com/audienzz/audienzz-ios-sdk.git` and select `0.4.8`.
+CocoaPods: `pod 'AudienzziOSSDK', '~> 0.4.8'`.
 
 Add your GAM/AdMob app ID to `Info.plist` under `GADApplicationIdentifier`.
 In GAM, leave each banner ad unit's **refresh rate unset**; Audienzz owns refresh.

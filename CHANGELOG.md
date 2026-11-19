@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.8
 
 - **Half the visibility work while scrolling.** Every banner re-evaluated its visibility twice per
   scroll frame: once for the scroll view's `contentOffset` and again for its `bounds`, whose origin
@@ -12,6 +12,10 @@
   themselves from `onAdSizeChanged` (the React Native bridge) set it so the SDK constrains only the
   banner inside the container, with no width or height constraint on the container and no layout
   pass on its superview.
+- **A scroll made during a visibility check is evaluated.** A visibility callback that scrolled
+  synchronously left the banner with its previous verdict after it was back on screen; such a
+  scroll now gets one re-check right after the running one.
+- The demo app no longer hardcodes a signing team.
 
 ## 0.4.7
 
