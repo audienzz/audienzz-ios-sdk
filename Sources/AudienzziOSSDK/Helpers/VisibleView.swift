@@ -202,14 +202,38 @@ public class VisibleView: UIView {
         let position = ScrollPosition()
         contentOffsetObservations.append(scrollView.observe(\.contentOffset, options: [.new]) { [weak self] scrollView, _ in
             guard position.moved(to: scrollView.contentOffset) else { return }
-            self?.checkIfFrameIsVisible()
+            self?.scrollGeometryChanged()
         })
         contentOffsetObservations.append(scrollView.observe(\.bounds, options: [.old, .new]) { [weak self] _, change in
             guard let new = change.newValue else { return }
             let resized = change.oldValue.map { $0.size != new.size } ?? true
             guard position.moved(to: new.origin) || resized else { return }
-            self?.checkIfFrameIsVisible()
+            self?.scrollGeometryChanged()
         })
+    }
+
+    /// A recheck is queued for a scroll that arrived during an evaluation.
+    private var scrollRecheckPending = false
+
+    /// Evaluates a new scroll position now, or once the running evaluation has finished.
+    ///
+    /// A transition hook can scroll synchronously (a publisher restoring a position, say). The
+    /// nested notification records the new position as seen, so its pair stands down, but the
+    /// running evaluation has already measured the old geometry and the re-entrancy guard turns
+    /// the nested check away. Nothing would evaluate that position, and the slot kept the old
+    /// verdict after it was back on screen. One recheck reads the latest geometry instead.
+    private func scrollGeometryChanged() {
+        guard isEvaluatingVisibility else {
+            checkIfFrameIsVisible()
+            return
+        }
+        guard !scrollRecheckPending else { return }
+        scrollRecheckPending = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.scrollRecheckPending = false
+            self.checkIfFrameIsVisible()
+        }
     }
 
     /// The scroll position a slot last evaluated for one scroll view.

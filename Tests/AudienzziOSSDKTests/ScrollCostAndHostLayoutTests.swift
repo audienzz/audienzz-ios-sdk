@@ -19,7 +19,12 @@ final class ScrollCostAndHostLayoutTests: AudienzzLifecycleTestCase {
         override var usesDirectionalRefreshGate: Bool { true }
         private(set) var eligible: Bool?
         override func onRefreshBecameEligible() { eligible = true }
-        override func onRefreshBecameIneligible() { eligible = false }
+        override func onRefreshBecameIneligible() {
+            eligible = false
+            onIneligible?()
+        }
+        /// Runs inside the evaluation that reported the slot ineligible, as a publisher hook can.
+        var onIneligible: (() -> Void)?
     }
 
     private var window: UIWindow!
@@ -74,6 +79,25 @@ final class ScrollCostAndHostLayoutTests: AudienzzLifecycleTestCase {
         scrollView.bounds = CGRect(origin: CGPoint(x: 0, y: 120), size: scrollView.bounds.size)
 
         XCTAssertEqual(ad.eligible, false, "an origin-only bounds move is a scroll too")
+    }
+
+    func testAScrollMadeDuringAnEvaluationIsEvaluatedAfterIt() {
+        let (scrollView, ad) = makeScrolledAd()
+        XCTAssertEqual(ad.isViewRefreshEligible, true, "control — the ad starts on screen")
+        ad.onIneligible = { [weak scrollView] in
+            guard let scrollView else { return }
+            // Scrolls straight back while the evaluation that hid the slot is still running.
+            scrollView.bounds = CGRect(origin: .zero, size: scrollView.bounds.size)
+        }
+
+        scrollView.contentOffset = CGPoint(x: 0, y: 120)
+        ad.onIneligible = nil
+        settle()
+
+        XCTAssertEqual(scrollView.bounds.origin.y, 0)
+        // The cached verdict, not a fresh recomputation: refreshVisibilityNow() would hide the bug.
+        XCTAssertEqual(ad.isViewRefreshEligible, true,
+                       "the slot is back on screen; the scroll made mid-evaluation must still be evaluated")
     }
 
     func testResizingTheScrollViewStillReevaluates() {
