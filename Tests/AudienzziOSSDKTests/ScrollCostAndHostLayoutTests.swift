@@ -65,6 +65,17 @@ final class ScrollCostAndHostLayoutTests: AudienzzLifecycleTestCase {
         XCTAssertEqual(ad.eligible, false, "the ad's top edge scrolled above the viewport")
     }
 
+    func testMovingTheBoundsOriginStillUpdatesTheVerdict() {
+        let (scrollView, ad) = makeScrolledAd()
+        XCTAssertEqual(ad.eligible, true, "control — the ad starts on screen")
+
+        // Some code scrolls by setting the bounds origin rather than calling setContentOffset.
+        // Only the size-change half of the bounds observation is gone, so this must still count.
+        scrollView.bounds = CGRect(origin: CGPoint(x: 0, y: 120), size: scrollView.bounds.size)
+
+        XCTAssertEqual(ad.eligible, false, "an origin-only bounds move is a scroll too")
+    }
+
     func testResizingTheScrollViewStillReevaluates() {
         let (scrollView, ad) = makeScrolledAd()
         XCTAssertEqual(ad.eligible, true)

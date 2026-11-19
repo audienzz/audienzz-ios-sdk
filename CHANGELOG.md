@@ -4,7 +4,8 @@
 
 - **Half the visibility work while scrolling.** Every banner re-evaluated its visibility twice per
   scroll frame: once for the scroll view's `contentOffset` and again for its `bounds`, whose origin
-  is that offset. A scroll view's `bounds` now triggers a check only when its size changes. With
+  is that offset. Each scroll position is now evaluated once, whichever arrives first; a scroll view
+  moved by setting its `bounds` origin directly, or resized, is still evaluated. With
   several mounted slots in a deep (React Native) hierarchy this was a noticeable share of the main
   thread while scrolling.
 - **`AURemoteConfigBannerView.hostSizesContainer`** (default `false`). Hosts that size the container

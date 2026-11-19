@@ -185,12 +185,41 @@ public class VisibleView: UIView {
 
         for superview in superviews {
             if let scrollView = superview as? UIScrollView {
-                let observation = scrollView.observe(\.contentOffset, options: [.new]) { [weak self] _, _ in
-                    self?.checkIfFrameIsVisible()
-                }
-                contentOffsetObservations.append(observation)
+                observeScrolling(of: scrollView)
             }
             observeConcealment(of: superview)
+        }
+    }
+
+    /// Re-evaluates once per scroll position.
+    ///
+    /// A scroll view's `contentOffset` is its bounds origin, so `setContentOffset:` reports both
+    /// `contentOffset` and `bounds`, and every slot used to evaluate twice per scroll frame. Code
+    /// that moves the bounds origin directly reports only `bounds`. Whichever of the two arrives
+    /// first evaluates the new position; the other sees the same position and stands down. A
+    /// size change always evaluates: it can clip the ad without moving anything.
+    private func observeScrolling(of scrollView: UIScrollView) {
+        let position = ScrollPosition()
+        contentOffsetObservations.append(scrollView.observe(\.contentOffset, options: [.new]) { [weak self] scrollView, _ in
+            guard position.moved(to: scrollView.contentOffset) else { return }
+            self?.checkIfFrameIsVisible()
+        })
+        contentOffsetObservations.append(scrollView.observe(\.bounds, options: [.old, .new]) { [weak self] _, change in
+            guard let new = change.newValue else { return }
+            let resized = change.oldValue.map { $0.size != new.size } ?? true
+            guard position.moved(to: new.origin) || resized else { return }
+            self?.checkIfFrameIsVisible()
+        })
+    }
+
+    /// The scroll position a slot last evaluated for one scroll view.
+    private final class ScrollPosition {
+        private var evaluated: CGPoint?
+
+        /// Whether `origin` is a position not evaluated yet; records it.
+        func moved(to origin: CGPoint) -> Bool {
+            defer { evaluated = origin }
+            return evaluated != origin
         }
     }
 
@@ -207,15 +236,8 @@ public class VisibleView: UIView {
         contentOffsetObservations.append(view.observe(\.alpha, options: [.new], changeHandler: recheck))
         // A section that collapses, or a container that resizes to nothing, conceals the ad by
         // geometry rather than by a flag and emits no scroll event either.
-        if view is UIScrollView {
-            // Scrolling moves a scroll view's bounds origin, so this fired on every scroll frame
-            // next to the `contentOffset` observation above and every slot evaluated twice per
-            // frame. Only a size change is news here; an origin change is the scroll itself.
-            contentOffsetObservations.append(view.observe(\.bounds, options: [.old, .new]) { [weak self] _, change in
-                if let old = change.oldValue, let new = change.newValue, old.size == new.size { return }
-                self?.checkIfFrameIsVisible()
-            })
-        } else {
+        // A scroll view's bounds are observed with its scrolling (`observeScrolling`).
+        if !(view is UIScrollView) {
             contentOffsetObservations.append(view.observe(\.bounds, options: [.new], changeHandler: recheck))
         }
         contentOffsetObservations.append(view.observe(\.frame, options: [.new], changeHandler: recheck))
