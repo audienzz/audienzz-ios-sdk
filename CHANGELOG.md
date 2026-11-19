@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- **Half the visibility work while scrolling.** Every banner re-evaluated its visibility twice per
+  scroll frame: once for the scroll view's `contentOffset` and again for its `bounds`, whose origin
+  is that offset. Each scroll position is now evaluated once, whichever arrives first; a scroll view
+  moved by setting its `bounds` origin directly, or resized, is still evaluated. With
+  several mounted slots in a deep (React Native) hierarchy this was a noticeable share of the main
+  thread while scrolling.
+- **`AURemoteConfigBannerView.hostSizesContainer`** (default `false`). Hosts that size the container
+  themselves from `onAdSizeChanged` (the React Native bridge) set it so the SDK constrains only the
+  banner inside the container, with no width or height constraint on the container and no layout
+  pass on its superview.
+
 ## 0.4.7
 
 - **Banners are sized to the Prebid creative.** When a Prebid bid renders through a GAM creative of

@@ -185,12 +185,65 @@ public class VisibleView: UIView {
 
         for superview in superviews {
             if let scrollView = superview as? UIScrollView {
-                let observation = scrollView.observe(\.contentOffset, options: [.new]) { [weak self] _, _ in
-                    self?.checkIfFrameIsVisible()
-                }
-                contentOffsetObservations.append(observation)
+                observeScrolling(of: scrollView)
             }
             observeConcealment(of: superview)
+        }
+    }
+
+    /// Re-evaluates once per scroll position.
+    ///
+    /// A scroll view's `contentOffset` is its bounds origin, so `setContentOffset:` reports both
+    /// `contentOffset` and `bounds`, and every slot used to evaluate twice per scroll frame. Code
+    /// that moves the bounds origin directly reports only `bounds`. Whichever of the two arrives
+    /// first evaluates the new position; the other sees the same position and stands down. A
+    /// size change always evaluates: it can clip the ad without moving anything.
+    private func observeScrolling(of scrollView: UIScrollView) {
+        let position = ScrollPosition()
+        contentOffsetObservations.append(scrollView.observe(\.contentOffset, options: [.new]) { [weak self] scrollView, _ in
+            guard position.moved(to: scrollView.contentOffset) else { return }
+            self?.scrollGeometryChanged()
+        })
+        contentOffsetObservations.append(scrollView.observe(\.bounds, options: [.old, .new]) { [weak self] _, change in
+            guard let new = change.newValue else { return }
+            let resized = change.oldValue.map { $0.size != new.size } ?? true
+            guard position.moved(to: new.origin) || resized else { return }
+            self?.scrollGeometryChanged()
+        })
+    }
+
+    /// A recheck is queued for a scroll that arrived during an evaluation.
+    private var scrollRecheckPending = false
+
+    /// Evaluates a new scroll position now, or once the running evaluation has finished.
+    ///
+    /// A transition hook can scroll synchronously (a publisher restoring a position, say). The
+    /// nested notification records the new position as seen, so its pair stands down, but the
+    /// running evaluation has already measured the old geometry and the re-entrancy guard turns
+    /// the nested check away. Nothing would evaluate that position, and the slot kept the old
+    /// verdict after it was back on screen. One recheck reads the latest geometry instead.
+    private func scrollGeometryChanged() {
+        guard isEvaluatingVisibility else {
+            checkIfFrameIsVisible()
+            return
+        }
+        guard !scrollRecheckPending else { return }
+        scrollRecheckPending = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.scrollRecheckPending = false
+            self.checkIfFrameIsVisible()
+        }
+    }
+
+    /// The scroll position a slot last evaluated for one scroll view.
+    private final class ScrollPosition {
+        private var evaluated: CGPoint?
+
+        /// Whether `origin` is a position not evaluated yet; records it.
+        func moved(to origin: CGPoint) -> Bool {
+            defer { evaluated = origin }
+            return evaluated != origin
         }
     }
 
@@ -207,7 +260,10 @@ public class VisibleView: UIView {
         contentOffsetObservations.append(view.observe(\.alpha, options: [.new], changeHandler: recheck))
         // A section that collapses, or a container that resizes to nothing, conceals the ad by
         // geometry rather than by a flag and emits no scroll event either.
-        contentOffsetObservations.append(view.observe(\.bounds, options: [.new], changeHandler: recheck))
+        // A scroll view's bounds are observed with its scrolling (`observeScrolling`).
+        if !(view is UIScrollView) {
+            contentOffsetObservations.append(view.observe(\.bounds, options: [.new], changeHandler: recheck))
+        }
         contentOffsetObservations.append(view.observe(\.frame, options: [.new], changeHandler: recheck))
         // A transform moves the ad without changing its frame, and toggling clipsToBounds changes
         // what an ancestor shows without changing any geometry at all. Neither emits any of the
@@ -307,10 +363,14 @@ public class VisibleView: UIView {
     /// recurse through resume -> recompute -> resume.
     private var isEvaluatingVisibility = false
 
+    /// How many visibility evaluations ran. Tests use it to pin the per-scroll-frame cost.
+    internal private(set) var visibilityEvaluationCount = 0
+
     private func checkIfFrameIsVisible() {
         guard let window = self.window else { return }
         if isEvaluatingVisibility { return }
         isEvaluatingVisibility = true
+        visibilityEvaluationCount += 1
         defer { isEvaluatingVisibility = false }
 
         let frameInWindow = window.convert(self.bounds, from: self)
